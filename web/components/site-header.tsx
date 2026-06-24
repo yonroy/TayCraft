@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { getUser } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { LogoutButton } from "@/components/logout-button";
 import { Button } from "@/components/ui/button";
 
 export async function SiteHeader() {
   const user = await getUser();
+  const admin = isAdmin(user?.email);
 
   return (
     <header className="border-b border-line">
@@ -20,6 +21,11 @@ export async function SiteHeader() {
           </Link>
           {user ? (
             <>
+              {admin && (
+                <Link href="/admin" className="hover:text-accent font-medium">
+                  Admin
+                </Link>
+              )}
               <Link href="/account" className="hover:text-accent font-medium">
                 Tài khoản
               </Link>

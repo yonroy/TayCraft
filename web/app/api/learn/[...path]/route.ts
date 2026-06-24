@@ -43,10 +43,11 @@ export async function GET(
 
   const fileName = basename(filePath);
 
-  // Kiểm tra quyền: tài nguyên free/shared → cho qua; còn lại cần enrollment.
+  // Kiểm tra quyền: tài nguyên free/shared → cho qua; còn lại cần quyền theo gói của bài.
   if (!isAlwaysAllowed(fileName)) {
+    const slug = fileName.endsWith(".html") ? fileName.replace(/\.html$/, "") : undefined;
     const user = await getUser();
-    if (!user || !(await hasAccess(user.id))) {
+    if (!user || !(await hasAccess(user.id, slug))) {
       return new NextResponse("Bạn cần mua khóa học để xem nội dung này.", { status: 402 });
     }
   }

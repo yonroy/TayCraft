@@ -16,8 +16,7 @@ export default async function LessonViewer({
   if (!lesson || !lesson.available || !lesson.slug) notFound();
 
   const user = await getUser();
-  const access = user ? await hasAccess(user.id) : false;
-  const canView = isFreeSlug(lesson.slug) || access;
+  const canView = user ? await hasAccess(user.id, lesson.slug) : isFreeSlug(lesson.slug);
 
   return (
     <>

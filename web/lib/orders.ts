@@ -12,8 +12,9 @@ export async function markOrderPaid(orderId: string, sepayTxId?: string): Promis
 
   if (!order) return;
 
+  // Cấp quyền theo gói của đơn (mặc định all-access). Unique (user, package) → idempotent.
   await db
     .insert(enrollments)
-    .values({ userId: order.userId, orderId: order.id })
+    .values({ userId: order.userId, orderId: order.id, package: order.product })
     .onConflictDoNothing();
 }

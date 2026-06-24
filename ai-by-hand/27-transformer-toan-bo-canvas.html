@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Transformer toàn bộ — trace số end-to-end (A4 ngang)</title>
+<style>
+  @page{ size:A4 landscape; margin:0; }
+  :root{
+    --ink:#1a1a1a; --dim:#6b7280; --paper:#fbf9f4;
+    --cream:#fdecd2; --creamB:#e3c489; --purple:#ece2ff; --purpleB:#c3b1f5;
+    --yellow:#fff3b0; --yellowB:#e6cf6a; --blue:#d6ecf6; --blueB:#a7d3e3;
+    --green:#dff3e4; --greenB:#9cd3ad; --pink:#fbe1ee;
+    --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
+  .sheet{width:297mm;height:210mm;background:var(--paper);margin:8mm auto;padding:9mm 12mm 8mm;
+    position:relative;box-shadow:0 2px 16px rgba(0,0,0,.2);overflow:hidden;}
+  .ttl{display:flex;align-items:baseline;gap:12px;border-bottom:3px solid var(--ink);padding-bottom:5px;}
+  .ttl h1{font-size:23px;font-weight:800;letter-spacing:-.01em;}
+  .ttl .vi{font-size:13.5px;color:var(--dim);font-weight:600;}
+  .ttl .tag{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);}
+  .ttl .badge{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:#0e6a86;border-radius:6px;padding:3px 10px;}
+  .key .ttl .badge{background:#b45309;}
+  .canvas{display:flex;gap:14px;margin-top:6px;height:178mm;}
+  .schema{flex:none;width:50mm;}
+  .schema svg{display:block;width:100%;height:auto;}
+  .work{flex:1;display:flex;flex-direction:column;gap:3px;}
+  .band{display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;}
+  .grp{display:flex;flex-direction:column;align-items:center;gap:1px;}
+  .lab{font-family:var(--mono);font-size:11px;font-weight:700;white-space:nowrap;}
+  .lab s{color:var(--dim);font-weight:400;text-decoration:none;font-size:9px;}
+  .op{font-family:var(--mono);font-size:17px;font-weight:800;color:var(--dim);align-self:center;}
+  .opn{font-family:var(--mono);font-size:9px;color:var(--dim);text-align:center;line-height:1.05;align-self:center;}
+  .sech{font-family:var(--mono);font-size:10.5px;font-weight:700;color:#0e6a86;letter-spacing:.02em;
+    border-top:1px dashed #d8d2c4;padding-top:2px;margin-top:0;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .key .sech{color:#b45309;}
+  .m{display:inline-grid;gap:2px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);
+     border-radius:2px;padding:1.5px;}
+  .c1{grid-template-columns:repeat(1,9.5mm);} .c2{grid-template-columns:repeat(2,9.5mm);} .c3{grid-template-columns:repeat(3,9.5mm);}
+  .cell{height:6.7mm;display:grid;place-items:center;font-family:var(--mono);font-size:12.5px;font-weight:700;
+     border:1.4px solid #cbcbcb;border-radius:2px;background:#fff;}
+  .giv .cell{background:var(--cream);border-color:var(--creamB);color:#3a2a08;}
+  .wgt .cell{background:var(--purple);border-color:var(--purpleB);color:#2e1f6b;}
+  .nrm .cell{background:var(--yellow);border-color:var(--yellowB);}
+  .res .cell{background:var(--blue);border-color:var(--blueB);color:#0c4a5e;}
+  .msk{background:#f0eee8 !important;border-color:#d8d2c4 !important;color:#b45309 !important;font-size:12px;}
+  .blank{background:#fff !important;border:1.5px dashed #b9b9b9 !important;color:transparent;}
+  .exp{font-family:var(--mono);font-size:11px;border:1.5px solid #ccc;border-radius:6px;overflow:hidden;align-self:flex-start;}
+  .exp div{display:flex;}
+  .exp span{padding:2px 6px;border-right:1px solid #ddd;min-width:34px;text-align:center;}
+  .exp .h{background:#f2efe6;font-weight:700;}
+  .note{font-family:var(--mono);font-size:10.5px;color:var(--dim);line-height:1.5;}
+  .note b{color:#b45309;}
+  .foot{position:absolute;left:12mm;right:12mm;bottom:5mm;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:10.5px;color:var(--dim);border-top:1px solid #ddd;padding-top:4px;}
+  .toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+  .toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid #ccc;
+    background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  @media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ===================== SHEET 1 — ENCODER (ĐỀ) ===================== -->
+<section class="sheet">
+  <div class="ttl"><h1>Transformer toàn bộ · ① ENCODER</h1><span class="vi">— nhúng + vị trí → self-attention → FFN</span>
+    <span class="tag">d=2 · 2 token · LN(γ=1,β=0)→±1 · softmax tra eˣ</span></div>
+  <div class="canvas">
+    <div class="schema"><svg id="s1" viewBox="0 0 120 360" aria-label="encoder flow"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">⓪ NHÚNG + VỊ TRÍ — X = e(token) + PE &nbsp;·&nbsp; CHO SẴN: Q,K,V (=X·W) · W₁,b₁,W₂,b₂ · bảng eˣ</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">e(tok) <s>nhúng</s></span><div class="m c2" id="mEe"></div></div>
+        <div class="op">+</div>
+        <div class="grp giv"><span class="lab">PE <s>vị trí</s></span><div class="m c2" id="mPE"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">X <s>vào encoder</s></span><div class="m c2" id="mX"></div></div>
+        <div class="exp" id="exp1"></div>
+      </div>
+      <div class="band"><span class="sech">① SELF-ATTENTION — S=QKᵀ → softmax → A → O=A·V</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">Q</span><div class="m c2" id="mQ"></div></div>
+        <div class="grp giv"><span class="lab">K</span><div class="m c2" id="mK"></div></div>
+        <div class="grp wgt"><span class="lab">V</span><div class="m c2" id="mV"></div></div>
+        <div class="op">→</div>
+        <div class="grp"><span class="lab">S=QKᵀ</span><div class="m c2" id="mS"></div></div>
+        <div class="op">→</div><div class="opn">softmax<br>theo hàng</div>
+        <div class="grp nrm"><span class="lab">A</span><div class="m c2" id="mA"></div></div>
+        <div class="op">·V=</div>
+        <div class="grp res"><span class="lab">O <s>=Attn</s></span><div class="m c2" id="mO"></div></div>
+      </div>
+      <div class="band"><span class="sech">② ADD &amp; NORM — Z = LN(X ⊕ O)</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">X</span><div class="m c2" id="mX2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp res"><span class="lab">O</span><div class="m c2" id="mO2"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">Z₀</span><div class="m c2" id="mZ0"></div></div>
+        <div class="op">→</div><div class="opn">LN→±1</div>
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="mZ"></div></div>
+      </div>
+      <div class="band"><span class="sech">③ FEED-FORWARD — U=ReLU(Z·W₁+b₁) · F=U·W₂+b₂</span></div>
+      <div class="band">
+        <div class="grp wgt"><span class="lab">W₁</span><div class="m c2" id="mW1"></div></div>
+        <div class="grp wgt"><span class="lab">b₁</span><div class="m c2" id="mB1"></div></div>
+        <div class="op">→</div>
+        <div class="grp res"><span class="lab">U=ReLU(ZW₁+b₁)</span><div class="m c2" id="mU"></div></div>
+        <div class="grp wgt"><span class="lab">W₂</span><div class="m c2" id="mW2"></div></div>
+        <div class="grp wgt"><span class="lab">b₂</span><div class="m c2" id="mB2"></div></div>
+        <div class="op">→</div>
+        <div class="grp res"><span class="lab">F=UW₂+b₂</span><div class="m c2" id="mF"></div></div>
+      </div>
+      <div class="band"><span class="sech">④ ADD &amp; NORM → ĐẦU RA ENCODER — Yₑ = LN(Z ⊕ F)</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="mZ2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp res"><span class="lab">F</span><div class="m c2" id="mF2"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">Y₀</span><div class="m c2" id="mY0"></div></div>
+        <div class="op">→</div><div class="opn">LN→±1</div>
+        <div class="grp nrm"><span class="lab">Yₑ <s>→ decoder (K,V)</s></span><div class="m c2" id="mYe"></div></div>
+      </div>
+      <div class="note">Mẹo LN (d=2): mỗi hàng → ô lớn hơn thành <b>+1</b>, ô nhỏ hơn thành <b>−1</b> (γ=1,β=0). Mỗi hàng A cộng = 1.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Transformer toàn bộ — Encoder</span><span>Trang 1/6 · ĐỀ</span></div>
+</section>
+
+<!-- ===================== SHEET 2 — DECODER (ĐỀ) ===================== -->
+<section class="sheet">
+  <div class="ttl"><h1>Transformer · ② DECODER</h1><span class="vi">— masked + cross-attention</span>
+    <span class="tag">mask · K,V cross = Yₑ</span></div>
+  <div class="canvas">
+    <div class="schema"><svg id="s2" viewBox="0 0 120 352" aria-label="decoder flow"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">⑤ NHÚNG + VỊ TRÍ (decoder) — X_d = e(out) + PE</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">e(out)</span><div class="m c2" id="mEd"></div></div>
+        <div class="op">+</div>
+        <div class="grp giv"><span class="lab">PE</span><div class="m c2" id="mPEd"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">X_d</span><div class="m c2" id="mXd"></div></div>
+        <div class="exp" id="exp2"></div>
+      </div>
+      <div class="band"><span class="sech">⑥ MASKED SELF-ATTENTION — hàng 1 chỉ thấy token 1 (ô ✗ = −∞ → A=0)</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">Qd</span><div class="m c2" id="mQd"></div></div>
+        <div class="grp giv"><span class="lab">Kd</span><div class="m c2" id="mKd"></div></div>
+        <div class="grp wgt"><span class="lab">Vd</span><div class="m c2" id="mVd"></div></div>
+        <div class="op">→</div>
+        <div class="grp"><span class="lab">S (masked)</span><div class="m c2" id="mSd"></div></div>
+        <div class="op">→</div>
+        <div class="grp nrm"><span class="lab">A</span><div class="m c2" id="mAd"></div></div>
+        <div class="op">·Vd=</div>
+        <div class="grp res"><span class="lab">Od</span><div class="m c2" id="mOd"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑦ ADD &amp; NORM — Z_d = LN(X_d ⊕ Od)</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">X_d</span><div class="m c2" id="mXd2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp res"><span class="lab">Od</span><div class="m c2" id="mOd2"></div></div>
+        <div class="op">→</div><div class="opn">LN→±1</div>
+        <div class="grp nrm"><span class="lab">Z_d</span><div class="m c2" id="mZd"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑧ CROSS-ATTENTION — Q từ decoder · K,V = Yₑ (encoder) · S=Q·Yₑᵀ</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">Qc <s>=Z_d·W</s></span><div class="m c2" id="mQc"></div></div>
+        <div class="grp nrm"><span class="lab">Yₑ <s>K,V</s></span><div class="m c2" id="mYe2"></div></div>
+        <div class="op">→</div>
+        <div class="grp"><span class="lab">S=Q·Yₑᵀ</span><div class="m c2" id="mSc"></div></div>
+        <div class="op">→</div>
+        <div class="grp nrm"><span class="lab">Ac</span><div class="m c2" id="mAc"></div></div>
+        <div class="op">·Yₑ=</div>
+        <div class="grp res"><span class="lab">Oc</span><div class="m c2" id="mOc"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑨ ADD &amp; NORM — Z_c = LN(Z_d ⊕ Oc)</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z_d</span><div class="m c2" id="mZd2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp res"><span class="lab">Oc</span><div class="m c2" id="mOc2"></div></div>
+        <div class="op">→</div><div class="opn">LN→±1</div>
+        <div class="grp nrm"><span class="lab">Z_c</span><div class="m c2" id="mZc"></div></div>
+      </div>
+      <div class="note">Cross-attn: Q (decoder) hỏi · K,V = Yₑ (encoder) trả. Z_c → trang 3 (FFN + Add&amp;Norm → Y_d).</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Transformer toàn bộ — Decoder</span><span>Trang 2/6 · ĐỀ</span></div>
+</section>
+
+<!-- ===================== SHEET 3 — OUTPUT (ĐỀ) ===================== -->
+<section class="sheet">
+  <div class="ttl"><h1>Transformer toàn bộ · ③ LINEAR + SOFTMAX</h1><span class="vi">— từ Y_d ra xác suất token kế tiếp</span>
+    <span class="tag">dùng hàng cuối Y_d · vocab = 3</span></div>
+  <div class="canvas">
+    <div class="schema"><svg id="s3" viewBox="0 0 120 230" aria-label="output flow"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">⑩ DECODER FFN + ADD&amp;NORM — Z_c (từ trang 2) → Y_d = LN(Z_c ⊕ F_d)</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z_c</span><div class="m c2" id="mZc2"></div></div>
+        <div class="op">→</div>
+        <div class="grp res"><span class="lab">U_d=ReLU(Z_cW₁ᵈ+b₁ᵈ)</span><div class="m c2" id="mUd"></div></div>
+        <div class="op">→</div>
+        <div class="grp res"><span class="lab">F_d=U_dW₂ᵈ+b₂ᵈ</span><div class="m c2" id="mFd"></div></div>
+        <div class="op">⊕Z_c→</div>
+        <div class="grp nrm"><span class="lab">Y_d</span><div class="m c2" id="mYd"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑪ LINEAR — logits = y · W_out &nbsp;(y = hàng cuối của Y_d, vị trí dự đoán)</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">y <s>1×2</s></span><div class="m c2" id="mY"></div></div>
+        <div class="op">·</div>
+        <div class="grp wgt"><span class="lab">W_out <s>2×3</s></span><div class="m c3" id="mWo"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">logits <s>1×3</s></span><div class="m c3" id="mLg"></div></div>
+        <div class="exp" id="exp3"></div>
+      </div>
+      <div class="band"><span class="sech">⑫ SOFTMAX — p = eˣ / Σeˣ (tra bảng) → xác suất 3 token</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">eˣ <s>tra bảng</s></span><div class="m c3" id="mEx"></div></div>
+        <div class="op">→</div><div class="opn">÷ Σ</div>
+        <div class="grp nrm"><span class="lab">p <s>xác suất</s></span><div class="m c3" id="mP"></div></div>
+        <div class="op">→</div>
+        <div class="grp"><span class="lab">dự đoán</span><div class="m c1" id="mArg"></div></div>
+      </div>
+      <div class="band"><span class="sech">TOÀN CẢNH — luồng dữ liệu đã đi qua</span></div>
+      <div class="note" style="font-size:11px;line-height:1.9">
+        Inputs → <b>Embedding+PE</b> → <b>Encoder</b>(Self-Attn → A&amp;N → FFN → A&amp;N) = Yₑ &nbsp;┐<br>
+        Outputs(shifted) → <b>Embedding+PE</b> → <b>Decoder</b>(Masked Self-Attn → A&amp;N → <b>Cross-Attn</b>[K,V=Yₑ] → A&amp;N → FFN → A&amp;N) = Y_d<br>
+        Y_d → <b>Linear</b> → logits → <b>Softmax</b> → <b>xác suất token kế tiếp</b>. &nbsp; (N× = lặp khối encoder/decoder; ở đây N=1 để tính tay.)
+      </div>
+      <div class="note">Σ p = 1.00 ✓. Token có p lớn nhất là token mô hình "đoán" sinh ra tiếp theo.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Transformer toàn bộ — Linear + Softmax</span><span>Trang 3/6 · ĐỀ</span></div>
+</section>
+
+<!-- ===================== SHEET 4 — ENCODER (ĐÁP ÁN) ===================== -->
+<section class="sheet key">
+  <div class="ttl"><h1>① ENCODER</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+  <div class="canvas">
+    <div class="schema"><svg id="s4" viewBox="0 0 120 360" aria-label="encoder flow"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">⓪ NHÚNG + VỊ TRÍ</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">e(tok)</span><div class="m c2" id="kEe"></div></div>
+        <div class="op">+</div><div class="grp giv"><span class="lab">PE</span><div class="m c2" id="kPE"></div></div>
+        <div class="op">=</div><div class="grp res"><span class="lab">X</span><div class="m c2" id="kX"></div></div>
+        <div class="exp" id="exp4"></div>
+      </div>
+      <div class="band"><span class="sech">① SELF-ATTENTION</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">Q</span><div class="m c2" id="kQ"></div></div>
+        <div class="grp giv"><span class="lab">K</span><div class="m c2" id="kK"></div></div>
+        <div class="grp wgt"><span class="lab">V</span><div class="m c2" id="kV"></div></div>
+        <div class="op">→</div><div class="grp"><span class="lab">S</span><div class="m c2" id="kS"></div></div>
+        <div class="op">→</div><div class="grp nrm"><span class="lab">A</span><div class="m c2" id="kA"></div></div>
+        <div class="op">·V=</div><div class="grp res"><span class="lab">O</span><div class="m c2" id="kO"></div></div>
+      </div>
+      <div class="band"><span class="sech">② ADD &amp; NORM</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">X</span><div class="m c2" id="kX2"></div></div>
+        <div class="op">⊕</div><div class="grp res"><span class="lab">O</span><div class="m c2" id="kO2"></div></div>
+        <div class="op">=</div><div class="grp res"><span class="lab">Z₀</span><div class="m c2" id="kZ0"></div></div>
+        <div class="op">→</div><div class="opn">LN</div><div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="kZ"></div></div>
+      </div>
+      <div class="band"><span class="sech">③ FEED-FORWARD</span></div>
+      <div class="band">
+        <div class="grp wgt"><span class="lab">W₁</span><div class="m c2" id="kW1"></div></div>
+        <div class="grp wgt"><span class="lab">b₁</span><div class="m c2" id="kB1"></div></div>
+        <div class="op">→</div><div class="grp res"><span class="lab">U</span><div class="m c2" id="kU"></div></div>
+        <div class="grp wgt"><span class="lab">W₂</span><div class="m c2" id="kW2"></div></div>
+        <div class="grp wgt"><span class="lab">b₂</span><div class="m c2" id="kB2"></div></div>
+        <div class="op">→</div><div class="grp res"><span class="lab">F</span><div class="m c2" id="kF"></div></div>
+      </div>
+      <div class="band"><span class="sech">④ ADD &amp; NORM → Yₑ</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="kZ2"></div></div>
+        <div class="op">⊕</div><div class="grp res"><span class="lab">F</span><div class="m c2" id="kF2"></div></div>
+        <div class="op">=</div><div class="grp res"><span class="lab">Y₀</span><div class="m c2" id="kY0"></div></div>
+        <div class="op">→</div><div class="opn">LN</div><div class="grp nrm"><span class="lab">Yₑ</span><div class="m c2" id="kYe"></div></div>
+      </div>
+      <div class="note">Kiểm: residual giữ thông tin gốc, LN kéo mỗi hàng về ±1. Yₑ là K,V cho cross-attention ở decoder.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Transformer toàn bộ — Encoder</span><span>Trang 4/6 · ĐÁP ÁN</span></div>
+</section>
+
+<!-- ===================== SHEET 5 — DECODER (ĐÁP ÁN) ===================== -->
+<section class="sheet key">
+  <div class="ttl"><h1>② DECODER</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+  <div class="canvas">
+    <div class="schema"><svg id="s5" viewBox="0 0 120 352" aria-label="decoder flow"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">⑤ NHÚNG + VỊ TRÍ (decoder)</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">e(out)</span><div class="m c2" id="kEd"></div></div>
+        <div class="op">+</div><div class="grp giv"><span class="lab">PE</span><div class="m c2" id="kPEd"></div></div>
+        <div class="op">=</div><div class="grp res"><span class="lab">Xd</span><div class="m c2" id="kXd"></div></div>
+        <div class="exp" id="exp5"></div>
+      </div>
+      <div class="band"><span class="sech">⑥ MASKED SELF-ATTENTION</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">Qd</span><div class="m c2" id="kQd"></div></div>
+        <div class="grp giv"><span class="lab">Kd</span><div class="m c2" id="kKd"></div></div>
+        <div class="grp wgt"><span class="lab">Vd</span><div class="m c2" id="kVd"></div></div>
+        <div class="op">→</div><div class="grp"><span class="lab">S(mask)</span><div class="m c2" id="kSd"></div></div>
+        <div class="op">→</div><div class="grp nrm"><span class="lab">A</span><div class="m c2" id="kAd"></div></div>
+        <div class="op">·Vd=</div><div class="grp res"><span class="lab">Od</span><div class="m c2" id="kOd"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑦ ADD &amp; NORM</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">Xd</span><div class="m c2" id="kXd2"></div></div>
+        <div class="op">⊕</div><div class="grp res"><span class="lab">Od</span><div class="m c2" id="kOd2"></div></div>
+        <div class="op">→</div><div class="opn">LN</div><div class="grp nrm"><span class="lab">Z_d</span><div class="m c2" id="kZd"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑧ CROSS-ATTENTION (K,V = Yₑ)</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">Qc</span><div class="m c2" id="kQc"></div></div>
+        <div class="grp nrm"><span class="lab">Yₑ</span><div class="m c2" id="kYe2"></div></div>
+        <div class="op">→</div><div class="grp"><span class="lab">S</span><div class="m c2" id="kSc"></div></div>
+        <div class="op">→</div><div class="grp nrm"><span class="lab">Ac</span><div class="m c2" id="kAc"></div></div>
+        <div class="op">·Yₑ=</div><div class="grp res"><span class="lab">Oc</span><div class="m c2" id="kOc"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑨ ADD &amp; NORM</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z_d</span><div class="m c2" id="kZd2"></div></div>
+        <div class="op">⊕</div><div class="grp res"><span class="lab">Oc</span><div class="m c2" id="kOc2"></div></div>
+        <div class="op">→</div><div class="opn">LN</div><div class="grp nrm"><span class="lab">Z_c</span><div class="m c2" id="kZc"></div></div>
+      </div>
+      <div class="note">Mask khiến token 1 không "nhìn trộm" token 2 (tính nhân quả khi sinh văn bản).
+        Cross-attn nối decoder với encoder. Z_c → trang 6 (FFN + Add&amp;Norm → Y_d).</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Transformer toàn bộ — Decoder</span><span>Trang 5/6 · ĐÁP ÁN</span></div>
+</section>
+
+<!-- ===================== SHEET 6 — OUTPUT (ĐÁP ÁN) ===================== -->
+<section class="sheet key">
+  <div class="ttl"><h1>③ LINEAR + SOFTMAX</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+  <div class="canvas">
+    <div class="schema"><svg id="s6" viewBox="0 0 120 230" aria-label="output flow"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">⑩ DECODER FFN + ADD&amp;NORM → Y_d</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z_c</span><div class="m c2" id="kZc2"></div></div>
+        <div class="op">→</div><div class="grp res"><span class="lab">U_d</span><div class="m c2" id="kUd"></div></div>
+        <div class="op">→</div><div class="grp res"><span class="lab">F_d</span><div class="m c2" id="kFd"></div></div>
+        <div class="op">⊕Z_c→</div><div class="grp nrm"><span class="lab">Y_d</span><div class="m c2" id="kYd"></div></div>
+      </div>
+      <div class="band"><span class="sech">⑪ LINEAR — logits = y · W_out</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">y</span><div class="m c2" id="kY"></div></div>
+        <div class="op">·</div><div class="grp wgt"><span class="lab">W_out</span><div class="m c3" id="kWo"></div></div>
+        <div class="op">=</div><div class="grp res"><span class="lab">logits</span><div class="m c3" id="kLg"></div></div>
+        <div class="exp" id="exp6"></div>
+      </div>
+      <div class="band"><span class="sech">⑫ SOFTMAX → xác suất</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">eˣ</span><div class="m c3" id="kEx"></div></div>
+        <div class="op">→</div><div class="opn">÷ Σ</div>
+        <div class="grp nrm"><span class="lab">p</span><div class="m c3" id="kP"></div></div>
+        <div class="op">→</div><div class="grp"><span class="lab">dự đoán</span><div class="m c1" id="kArg"></div></div>
+      </div>
+      <div class="band"><span class="sech">KẾT</span></div>
+      <div class="note" id="kConcl" style="font-size:11px;line-height:1.8"></div>
+      <div class="note">Đây là một lượt forward đầy đủ của Transformer: từ token đầu vào tới phân bố xác suất token kế. Lặp lại
+        (lấy token vừa đoán nối vào "Outputs") sẽ sinh ra câu — đó là cách GPT viết.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Transformer toàn bộ — Linear + Softmax</span><span>Trang 6/6 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var EXP={'-2':0.14,'-1':0.37,'0':1.00,'1':2.72,'2':7.39,'3':20.09};
+var fI=function(x){return WB.fmtInt(Math.round(x));};
+var f2=function(x){return WB.fmt2(x);};
+
+function fill(id,M,fmt,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<M.length;i++) for(var j=0;j<M[i].length;j++)
+    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fmt(M[i][j]))+'</div>';
+  el.innerHTML=s;
+}
+// S có mask: ô [0][1] = "✗"; ĐỀ để trống ô tính, nhưng ô mask luôn hiện ✗
+function fillMaskedS(id,S,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<2;i++) for(var j=0;j<2;j++){
+    if(i===0&&j===1) s+='<div class="cell msk">✗</div>';
+    else s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(S[i][j]))+'</div>';
+  }
+  el.innerHTML=s;
+}
+function matmul(A,B){var r=A.length,k=B.length,c=B[0].length,O=[];for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++){var s=0;for(var t=0;t<k;t++)s+=A[i][t]*B[t][j];row.push(s);}O.push(row);}return O;}
+function transpose(A){var r=A.length,c=A[0].length,O=[];for(var j=0;j<c;j++){var row=[];for(var i=0;i<r;i++)row.push(A[i][j]);O.push(row);}return O;}
+function addM(A,B){return A.map(function(r,i){return r.map(function(v,j){return v+B[i][j];});});}
+function addBias(M,b){return M.map(function(r){return r.map(function(v,j){return v+b[0][j];});});}
+function relu(M){return M.map(function(r){return r.map(function(v){return Math.max(0,v);});});}
+function lnRows(M){ // d=2, γ=1 β=0: ô lớn→+1, ô nhỏ→−1
+  return M.map(function(r){var mu=(r[0]+r[1])/2;return [r[0]>mu?1:-1, r[1]>mu?1:-1];});
+}
+function round2(M){return M.map(function(r){return r.map(function(v){return Math.round(v*100)/100;});});}
+// softmax từng hàng dùng bảng eˣ; mask: số cột được phép ở hàng i (null = đủ)
+function softmaxRows(S, allowed){
+  return S.map(function(r,i){
+    var lim = allowed? allowed[i] : r.length;
+    var e=r.map(function(v,j){ return j<lim ? EXP[String(Math.round(v))] : 0; });
+    var sum=e.reduce(function(p,c){return p+c;},0);
+    return e.map(function(v){return Math.round(v/sum*100)/100;});
+  });
+}
+function flat(M){ // có hàng nào hai ô bằng nhau? (LN sẽ hỏng)
+  return M.some(function(r){return Math.abs(r[0]-r[1])<1e-9;});
+}
+
+function generate(){
+  function mat(r,c,lo,hi){var m=[];for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++)row.push(WB.randInt(lo,hi));m.push(row);}return m;}
+  var D, guard=0;
+  do{
+    D=build(mat); guard++;
+  } while(guard<300 && D.bad);
+  render(D);
+  drawAll();
+}
+
+function build(mat){
+  // --- Encoder embedding + PE ---
+  var Ee=mat(2,2,-1,2), PE=mat(2,2,-1,1), X=addM(Ee,PE);
+  // --- Encoder self-attention (Q,K,V cho sẵn) ---
+  var Q=mat(2,2,0,1), K=mat(2,2,0,1), V=mat(2,2,0,2);
+  var S=matmul(Q,transpose(K));
+  var A=softmaxRows(S,null);
+  var O=round2(matmul(A,V));
+  var Z0=addM(X,O); if(flat(Z0)) return {bad:true};
+  var Z=lnRows(Z0);
+  // --- Encoder FFN ---
+  var W1=mat(2,2,-1,1), b1=mat(1,2,-1,1), W2=mat(2,2,-1,1), b2=mat(1,2,-1,1);
+  var U=relu(addBias(matmul(Z,W1),b1));
+  var F=addBias(matmul(U,W2),b2);
+  var Y0=addM(Z,F); if(flat(Y0)) return {bad:true};
+  var Ye=lnRows(Y0);
+
+  // --- Decoder embedding + PE ---
+  var Ed=mat(2,2,-1,2), PEd=mat(2,2,-1,1), Xd=addM(Ed,PEd);
+  // --- Masked self-attention ---
+  var Qd=mat(2,2,0,1), Kd=mat(2,2,0,1), Vd=mat(2,2,0,2);
+  var Sd=matmul(Qd,transpose(Kd));
+  var Ad=softmaxRows(Sd,[1,2]); // hàng0 chỉ thấy cột0
+  var Od=round2(matmul(Ad,Vd));
+  var Zd0=addM(Xd,Od); if(flat(Zd0)) return {bad:true};
+  var Zd=lnRows(Zd0);
+  // --- Cross-attention: Q decoder, K=V=Ye ---
+  var Qc=mat(2,2,0,1);
+  var Sc=matmul(Qc,transpose(Ye));
+  var Ac=softmaxRows(Sc,null);
+  var Oc=round2(matmul(Ac,Ye));
+  var Zc0=addM(Zd,Oc); if(flat(Zc0)) return {bad:true};
+  var Zc=lnRows(Zc0);
+  // --- Decoder FFN ---
+  var W1d=mat(2,2,-1,1), b1d=mat(1,2,-1,1), W2d=mat(2,2,-1,1), b2d=mat(1,2,-1,1);
+  var Ud=relu(addBias(matmul(Zc,W1d),b1d));
+  var Fd=addBias(matmul(Ud,W2d),b2d);
+  var Yd0=addM(Zc,Fd); if(flat(Yd0)) return {bad:true};
+  var Yd=lnRows(Yd0);
+
+  // --- Linear + softmax (hàng cuối Yd) ---
+  var y=[Yd[1]];
+  var Wo=mat(2,3,-1,1);
+  var Lg=matmul(y,Wo);                 // 1×3, mỗi ô ∈ [-2,2]
+  var Ex=[Lg[0].map(function(v){return EXP[String(Math.round(v))];})];
+  var sum=Ex[0][0]+Ex[0][1]+Ex[0][2];
+  var P=[Ex[0].map(function(v){return Math.round(v/sum*100)/100;})];
+  var arg=0; for(var j=1;j<3;j++) if(P[0][j]>P[0][arg]) arg=j;
+
+  return {bad:false, Ee:Ee,PE:PE,X:X, Q:Q,K:K,V:V,S:S,A:A,O:O, Z0:Z0,Z:Z,
+    W1:W1,b1:b1,W2:W2,b2:b2,U:U,F:F,Y0:Y0,Ye:Ye,
+    Ed:Ed,PEd:PEd,Xd:Xd, Qd:Qd,Kd:Kd,Vd:Vd,Sd:Sd,Ad:Ad,Od:Od, Zd0:Zd0,Zd:Zd,
+    Qc:Qc,Sc:Sc,Ac:Ac,Oc:Oc,Zc0:Zc0,Zc:Zc, Ud:Ud,Fd:Fd,Yd0:Yd0,Yd:Yd,
+    y:y,Wo:Wo,Lg:Lg,Ex:Ex,P:P,arg:arg};
+}
+
+function render(D){
+  // ----- exp table (mọi bản) -----
+  var keys=['-2','-1','0','1','2','3'], top='', bot='';
+  keys.forEach(function(x){ top+='<span class="h">e^'+x+'</span>'; bot+='<span>'+EXP[x].toFixed(2)+'</span>'; });
+  var ehtml='<div>'+top+'</div><div>'+bot+'</div>';
+  ['exp1','exp2','exp3','exp4','exp5','exp6'].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML=ehtml;});
+
+  // ============ SHEET 1 (ĐỀ) ============
+  fill('mEe',D.Ee,fI); fill('mPE',D.PE,fI); fill('mX',D.X,fI,true);
+  fill('mQ',D.Q,fI); fill('mK',D.K,fI); fill('mV',D.V,fI);
+  fill('mS',D.S,fI,true); fill('mA',D.A,f2,true); fill('mO',D.O,f2,true);
+  fill('mX2',D.X,fI); fill('mO2',D.O,f2); fill('mZ0',D.Z0,f2,true); fill('mZ',D.Z,fI,true);
+  fill('mW1',D.W1,fI); fill('mB1',D.b1,fI); fill('mW2',D.W2,fI); fill('mB2',D.b2,fI);
+  fill('mU',D.U,fI,true); fill('mF',D.F,fI,true);
+  fill('mZ2',D.Z,fI); fill('mF2',D.F,fI); fill('mY0',D.Y0,fI,true); fill('mYe',D.Ye,fI,true);
+  // ============ SHEET 2 (ĐỀ) ============
+  fill('mEd',D.Ed,fI); fill('mPEd',D.PEd,fI); fill('mXd',D.Xd,fI,true);
+  fill('mQd',D.Qd,fI); fill('mKd',D.Kd,fI); fill('mVd',D.Vd,fI);
+  fillMaskedS('mSd',D.Sd,true); fill('mAd',D.Ad,f2,true); fill('mOd',D.Od,f2,true);
+  fill('mXd2',D.Xd,fI); fill('mOd2',D.Od,f2); fill('mZd',D.Zd,fI,true);
+  fill('mQc',D.Qc,fI); fill('mYe2',D.Ye,fI); fill('mSc',D.Sc,fI,true); fill('mAc',D.Ac,f2,true); fill('mOc',D.Oc,f2,true);
+  fill('mZd2',D.Zd,fI); fill('mOc2',D.Oc,f2); fill('mZc',D.Zc,fI,true);
+  // ============ SHEET 3 (ĐỀ) ============
+  fill('mZc2',D.Zc,fI); fill('mUd',D.Ud,fI,true); fill('mFd',D.Fd,fI,true); fill('mYd',D.Yd,fI,true);
+  fill('mY',D.y,fI); fill('mWo',D.Wo,fI); fill('mLg',D.Lg,fI,true);
+  fill('mEx',D.Ex,f2,true); fill('mP',D.P,f2,true); fill('mArg',[[D.arg+1]],fI,true);
+
+  // ============ SHEET 4 (ĐÁP ÁN) ============
+  fill('kEe',D.Ee,fI); fill('kPE',D.PE,fI); fill('kX',D.X,fI);
+  fill('kQ',D.Q,fI); fill('kK',D.K,fI); fill('kV',D.V,fI);
+  fill('kS',D.S,fI); fill('kA',D.A,f2); fill('kO',D.O,f2);
+  fill('kX2',D.X,fI); fill('kO2',D.O,f2); fill('kZ0',D.Z0,f2); fill('kZ',D.Z,fI);
+  fill('kW1',D.W1,fI); fill('kB1',D.b1,fI); fill('kW2',D.W2,fI); fill('kB2',D.b2,fI);
+  fill('kU',D.U,fI); fill('kF',D.F,fI);
+  fill('kZ2',D.Z,fI); fill('kF2',D.F,fI); fill('kY0',D.Y0,fI); fill('kYe',D.Ye,fI);
+  // ============ SHEET 5 (ĐÁP ÁN) ============
+  fill('kEd',D.Ed,fI); fill('kPEd',D.PEd,fI); fill('kXd',D.Xd,fI);
+  fill('kQd',D.Qd,fI); fill('kKd',D.Kd,fI); fill('kVd',D.Vd,fI);
+  fillMaskedS('kSd',D.Sd,false); fill('kAd',D.Ad,f2); fill('kOd',D.Od,f2);
+  fill('kXd2',D.Xd,fI); fill('kOd2',D.Od,f2); fill('kZd',D.Zd,fI);
+  fill('kQc',D.Qc,fI); fill('kYe2',D.Ye,fI); fill('kSc',D.Sc,fI); fill('kAc',D.Ac,f2); fill('kOc',D.Oc,f2);
+  fill('kZd2',D.Zd,fI); fill('kOc2',D.Oc,f2); fill('kZc',D.Zc,fI);
+  // ============ SHEET 6 (ĐÁP ÁN) ============
+  fill('kZc2',D.Zc,fI); fill('kUd',D.Ud,fI); fill('kFd',D.Fd,fI); fill('kYd',D.Yd,fI);
+  fill('kY',D.y,fI); fill('kWo',D.Wo,fI); fill('kLg',D.Lg,fI);
+  fill('kEx',D.Ex,f2); fill('kP',D.P,f2); fill('kArg',[[D.arg+1]],fI);
+  var cc=document.getElementById('kConcl');
+  if(cc) cc.innerHTML='logits = ('+D.Lg[0].map(fI).join(', ')+') → p = ('+D.P[0].map(f2).join(', ')+
+    '). <b>Token '+(D.arg+1)+'</b> có xác suất cao nhất ('+f2(D.P[0][D.arg])+') → mô hình đoán <b>token '+(D.arg+1)+'</b> là token kế tiếp.';
+}
+
+// ---- sơ đồ luồng từng sheet ----
+function drawFlow(ids, boxes){
+  ids.forEach(function(id){
+    var svg=document.getElementById(id); if(!svg) return;
+    var s='<defs><marker id="ar'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a1a1a"/></marker></defs>';
+    var y=6;
+    boxes.forEach(function(b,i){
+      var h=b.h||28;
+      s+='<rect x="14" y="'+y+'" width="92" height="'+h+'" rx="6" fill="'+b.c+'" stroke="#1a1a1a" stroke-width="1.4"/>';
+      s+='<text x="60" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1a1a1a">'+b.t+'</text>';
+      if(i<boxes.length-1){ s+='<line x1="60" y1="'+(y+h)+'" x2="60" y2="'+(y+h+16)+'" stroke="#1a1a1a" stroke-width="1.6" marker-end="url(#ar'+id+')"/>'; }
+      y+=h+16;
+    });
+    svg.innerHTML=s;
+  });
+}
+function drawAll(){
+  var enc=[{t:'Embedding + PE',c:'#fdecd2'},{t:'Self-Attention',c:'#dff3e4'},{t:'Add & Norm',c:'#fff3b0'},
+    {t:'Feed Forward',c:'#fbe1ee'},{t:'Add & Norm',c:'#fff3b0'},{t:'Yₑ → decoder',c:'#d6ecf6'}];
+  var dec=[{t:'Embedding + PE',c:'#fdecd2'},{t:'Masked Self-Attn',c:'#dff3e4'},{t:'Add & Norm',c:'#fff3b0'},
+    {t:'Cross-Attention',c:'#dff3e4'},{t:'Add & Norm',c:'#fff3b0'},{t:'Feed Forward',c:'#fbe1ee'},
+    {t:'Add & Norm',c:'#fff3b0'},{t:'Y_d → Linear',c:'#d6ecf6'}];
+  var out=[{t:'Y_d',c:'#fff3b0'},{t:'Linear',c:'#ece2ff'},{t:'Softmax',c:'#dff3e4'},{t:'Probabilities',c:'#d6ecf6'}];
+  drawFlow(['s1','s4'],enc); drawFlow(['s2','s5'],dec); drawFlow(['s3','s6'],out);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

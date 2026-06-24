@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Tích vô hướng — canvas toàn cảnh (A4 ngang)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  /* tinh chỉnh riêng cho bài này */
+  .schema{width:64mm;}
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .wk{margin-top:5px;font-family:var(--mono);font-size:13px;background:#fff;border:1px dashed #d8d2c4;
+    border-radius:7px;padding:7px 11px;}
+  .wk b{color:var(--accent2);}
+  .geo{font-family:var(--mono);font-size:13px;line-height:2.0;}
+  .geo .lab{color:var(--accent);font-weight:700;}
+  .ublk{display:inline-block;min-width:30px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .scal .cell{--cw:16mm;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Tích vô hướng</h1><span class="vi">— Dot Product</span>
+    <span class="tag">điền ô trắng · a·b = Σ aᵢbᵢ = |a||b|cos θ</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Tích vô hướng là phép tính nền tảng nhất của AI: mỗi nơ-ron, mỗi ô của phép nhân
+    ma trận, mỗi điểm tương đồng trong attention đều là <b>một</b> tích vô hướng. Nắm chắc ô này, cả mạng nơ-ron
+    chỉ là hàng ngàn phép như vậy lặp lại.
+    <div class="fm">a · b = a₁b₁ + a₂b₂ + … + aₙbₙ = Σ aᵢbᵢ &nbsp;|&nbsp; a · b = |a| · |b| · cos θ</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 178 150" aria-label="hai vectơ u và v trên lưới, góc θ và hình chiếu"></svg>
+      <div class="hint"><b>Tích = 0 ⇒ vuông góc</b> (cos θ = 0): hai vectơ "không liên quan".</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">ĐẠI SỐ · nhân từng cặp cùng vị trí rồi cộng</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">a <s>1×3</s></div><div class="m c3" id="a"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">b <s>1×3</s></div><div class="m c3" id="b"></div></div>
+      </div>
+      <div class="row">
+        <div class="blk hot"><div class="nm">aᵢ · bᵢ <s>từng cặp</s></div><div class="m c3" id="p"></div></div>
+        <div class="op">→</div>
+        <div class="blk out scal"><div class="nm">a · b <s>một con số</s></div><div class="m c1" id="d"></div></div>
+      </div>
+      <div class="wk" id="wk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">HÌNH HỌC · a·b đo độ giống nhau qua cos θ (đọc u, v từ sơ đồ)</div>
+      <div class="geo">
+        <span class="lab">u·v</span> = <span data-q="u1">3</span>·<span data-q="v1">1</span> + <span data-q="u2">1</span>·<span data-q="v2">2</span> = <span class="ublk"></span>
+        &nbsp;|&nbsp; |u| = √(<span data-q="u1">3</span>²+<span data-q="u2">1</span>²) = √<span class="ublk"></span> ≈ <span class="ublk"></span>
+        &nbsp; |v| = √<span class="ublk"></span> ≈ <span class="ublk"></span><br>
+        <span class="lab">cos θ</span> = (u·v)/(|u|·|v|) ≈ <span class="ublk"></span>
+        &nbsp;→&nbsp; θ ≈ <span class="ublk"></span>°
+        &nbsp;<span style="color:var(--dim)">→ dùng thước đo độ kiểm lại góc giữa hai mũi tên.</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Tích vô hướng — Dot Product</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Tích vô hướng</h1><span class="vi">— lời giải &amp; kiểm tra</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 178 150" aria-label="hai vectơ u và v, góc θ đã điền"></svg>
+      <div class="hint">Hình chiếu (nét đứt) của v lên u; <b>u·v = |u| × độ dài bóng</b>.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">ĐẠI SỐ</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">a</div><div class="m c3" id="ka"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">b</div><div class="m c3" id="kb"></div></div>
+      </div>
+      <div class="row">
+        <div class="blk hot"><div class="nm">aᵢ · bᵢ</div><div class="m c3" id="kp"></div></div>
+        <div class="op">→</div>
+        <div class="blk out scal"><div class="nm">a · b</div><div class="m c1" id="kd"></div></div>
+      </div>
+      <div class="wk" id="kwk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">HÌNH HỌC</div>
+      <div class="geo">
+        <span class="lab">u·v</span> = <span data-q="u1">3</span>·<span data-q="v1">1</span> + <span data-q="u2">1</span>·<span data-q="v2">2</span> = <span class="ublk" data-q="udotv">5</span>
+        &nbsp;|&nbsp; |u| = √<span class="ublk" data-q="nU2">10</span> ≈ <span class="ublk" data-q="nU">3.16</span>
+        &nbsp; |v| = √<span class="ublk" data-q="nV2">5</span> ≈ <span class="ublk" data-q="nV">2.24</span><br>
+        <span class="lab">cos θ</span> = <span data-q="udotv">5</span>/(<span data-q="nU">3.16</span>·<span data-q="nV">2.24</span>) ≈ <span class="ublk" data-q="cosU">0.71</span>
+        &nbsp;→&nbsp; θ ≈ <span class="ublk" data-q="degU">45</span>°
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Tích vô hướng làm <b>hai việc</b>: (1) phép cộng-nhân để một nơ-ron gộp đầu vào;
+        (2) đo <b>độ giống nhau</b> qua cos θ. Cả hai có mặt khắp nơi — từ lớp tuyến tính <b>y=Wx+b</b> (Bài 03)
+        đến attention <b>QKᵀ</b> (Bài 11). Bài sau: xếp nhiều tích vô hướng lại thành <b>nhân ma trận</b> (Bài 02).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Tích vô hướng — Dot Product</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI=function(x){return WB.fmtInt(x);};
+function fill(id, arr, blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+function wrap(v){ return WB.wrap(fI(v)); }
+
+function generate(){
+  function vec3(){var v;do{v=[WB.randInt(-4,5),WB.randInt(-4,5),WB.randInt(-4,5)];}
+    while(v[0]===0&&v[1]===0&&v[2]===0); return v;}
+  var a=vec3(), b=vec3();
+  var p=[a[0]*b[0], a[1]*b[1], a[2]*b[2]];
+  var dot=p[0]+p[1]+p[2];
+
+  // ĐỀ: a,b cho sẵn; tích & tổng để trống
+  fill('a',a,false); fill('b',b,false); fill('p',p,true); fill('d',[dot],true);
+  // ĐÁP ÁN: điền đủ
+  fill('ka',a,false); fill('kb',b,false); fill('kp',p,false); fill('kd',[dot],false);
+
+  // dòng worked-example
+  var expr='a · b = '+fI(a[0])+'·'+wrap(b[0])+' + '+fI(a[1])+'·'+wrap(b[1])+' + '+fI(a[2])+'·'+wrap(b[2]);
+  document.getElementById('wk').innerHTML  = expr+' = <b>______</b>';
+  document.getElementById('kwk').innerHTML = expr+' = '+WB.sumExpr(p, fI)+' = <b>'+fI(dot)+'</b>';
+
+  // --- panel hình học 2D: u, v dương, không song song ---
+  var u,v;
+  do { u=[WB.randInt(1,4), WB.randInt(1,4)]; v=[WB.randInt(1,4), WB.randInt(1,4)]; }
+  while (u[0]*v[1]-u[1]*v[0]===0);
+  var udotv=u[0]*v[0]+u[1]*v[1];
+  var nU2=u[0]*u[0]+u[1]*u[1], nV2=v[0]*v[0]+v[1]*v[1];
+  var nU=Math.sqrt(nU2), nV=Math.sqrt(nV2);
+  var cosU=udotv/(nU*nV);
+  var degU=Math.round(Math.acos(Math.max(-1,Math.min(1,cosU)))*180/Math.PI);
+
+  WB.setAll({
+    u1:String(u[0]), u2:String(u[1]), v1:String(v[0]), v2:String(v[1]),
+    udotv:fI(udotv), nU2:fI(nU2), nV2:fI(nV2),
+    nU:WB.fmt2(nU), nV:WB.fmt2(nV), cosU:WB.fmt2(cosU), degU:String(degU)
+  });
+  drawGeo(u, v);
+}
+
+// vẽ hai vectơ u, v trên lưới (inline style, không dùng class của wb.css cũ)
+function drawGeo(u, v){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var isKey = !!svg.closest('.key');
+    var O={x:24,y:122}, unit=24, m=Math.max(u[0],u[1],v[0],v[1],4);
+    function X(x){return (O.x+x*unit).toFixed(1);}
+    function Y(y){return (O.y-y*unit).toFixed(1);}
+    var s='<defs>'
+      +'<marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
+      +'<marker id="au" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
+      +'<marker id="av" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
+      +'</defs>';
+    // lưới
+    for(var g=0; g<=m; g++){
+      s+='<line x1="'+X(g)+'" y1="'+Y(0)+'" x2="'+X(g)+'" y2="'+Y(m)+'" stroke="#ece7da" stroke-width="1"/>';
+      s+='<line x1="'+X(0)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'" stroke="#ece7da" stroke-width="1"/>';
+    }
+    // trục
+    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+(O.x+m*unit+9).toFixed(1)+'" y2="'+Y(0)+'" stroke="#9aa3af" stroke-width="1.3" marker-end="url(#ah)"/>';
+    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+(O.y-m*unit-9).toFixed(1)+'" stroke="#9aa3af" stroke-width="1.3" marker-end="url(#ah)"/>';
+    // hình chiếu v lên u
+    var sc=(u[0]*v[0]+u[1]*v[1])/(u[0]*u[0]+u[1]*u[1]);
+    var fx=u[0]*sc, fy=u[1]*sc;
+    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(fx)+'" y2="'+Y(fy)+'" stroke="#bfe0ee" stroke-width="5" stroke-linecap="round"/>';
+    s+='<line x1="'+X(v[0])+'" y1="'+Y(v[1])+'" x2="'+X(fx)+'" y2="'+Y(fy)+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
+    // cung góc
+    var a1=Math.atan2(u[1],u[0]), a2=Math.atan2(v[1],v[0]), r=20, pts='', n=16;
+    for(var i=0;i<=n;i++){var t=a1+(a2-a1)*i/n; pts+=(i?' ':'')+(O.x+r*Math.cos(t)).toFixed(1)+','+(O.y-r*Math.sin(t)).toFixed(1);}
+    s+='<polyline points="'+pts+'" fill="none" stroke="#1a1a1a" stroke-width="1"/>';
+    // hai vectơ
+    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(u[0])+'" y2="'+Y(u[1])+'" stroke="#0e7490" stroke-width="2.4" marker-end="url(#au)"/>';
+    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(v[0])+'" y2="'+Y(v[1])+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#av)"/>';
+    // nhãn
+    s+='<text x="'+(O.x+u[0]*unit+5).toFixed(1)+'" y="'+(O.y-u[1]*unit-3).toFixed(1)+'" font-size="9.5" fill="#0e7490" font-weight="700">u('+u[0]+','+u[1]+')</text>';
+    s+='<text x="'+(O.x+v[0]*unit+5).toFixed(1)+'" y="'+(O.y-v[1]*unit-3).toFixed(1)+'" font-size="9.5" fill="#b45309" font-weight="700">v('+v[0]+','+v[1]+')</text>';
+    if(isKey){
+      var degU=Math.round(Math.acos(Math.max(-1,Math.min(1,(u[0]*v[0]+u[1]*v[1])/(Math.sqrt(u[0]*u[0]+u[1]*u[1])*Math.sqrt(v[0]*v[0]+v[1]*v[1])))))*180/Math.PI);
+      var mt=a1+(a2-a1)/2;
+      s+='<text x="'+(O.x+30*Math.cos(mt)).toFixed(1)+'" y="'+(O.y-30*Math.sin(mt)).toFixed(1)+'" font-size="9.5" fill="#1a1a1a" font-weight="700">θ≈'+degU+'°</text>';
+    }
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

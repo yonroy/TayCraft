@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Khối Transformer Encoder — canvas toàn hệ (A4 ngang, MẪU)</title>
+<style>
+  @page{ size:A4 landscape; margin:0; }
+  :root{
+    --ink:#1a1a1a; --dim:#6b7280; --paper:#fbf9f4;
+    --cream:#fdecd2; --creamB:#e3c489; --purple:#ece2ff; --purpleB:#c3b1f5;
+    --yellow:#fff3b0; --yellowB:#e6cf6a; --blue:#d6ecf6; --blueB:#a7d3e3;
+    --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
+  .sheet{width:297mm;height:210mm;background:var(--paper);margin:8mm auto;padding:10mm 13mm 8mm;
+    position:relative;box-shadow:0 2px 16px rgba(0,0,0,.2);overflow:hidden;}
+  .ttl{display:flex;align-items:baseline;gap:13px;border-bottom:3px solid var(--ink);padding-bottom:6px;}
+  .ttl h1{font-size:27px;font-weight:800;letter-spacing:-.01em;}
+  .ttl .vi{font-size:15px;color:var(--dim);font-weight:600;}
+  .ttl .tag{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim);}
+  .ttl .badge{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#fff;background:#0e6a86;border-radius:6px;padding:3px 11px;}
+  .key .ttl .badge{background:#b45309;}
+  .canvas{display:flex;gap:16px;margin-top:9px;height:168mm;}
+  .schema{flex:none;width:60mm;}
+  .work{flex:1;display:flex;flex-direction:column;gap:9px;}
+  .band{display:flex;align-items:center;gap:13px;flex-wrap:wrap;}
+  .grp{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .lab{font-family:var(--mono);font-size:12px;font-weight:700;white-space:nowrap;}
+  .lab s{color:var(--dim);font-weight:400;text-decoration:none;font-size:10px;}
+  .op{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--dim);}
+  .opn{font-family:var(--mono);font-size:10px;color:var(--dim);text-align:center;line-height:1.1;}
+  .sech{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--dim);letter-spacing:.05em;
+    border-top:1px dashed #d8d2c4;padding-top:3px;margin-top:1px;width:100%;}
+  .m{display:inline-grid;gap:2px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);
+     border-radius:2px;padding:2px;}
+  .c1{grid-template-columns:repeat(1,10mm);} .c2{grid-template-columns:repeat(2,10mm);}
+  .cell{height:8.5mm;display:grid;place-items:center;font-family:var(--mono);font-size:15px;font-weight:700;
+     border:1.4px solid #cbcbcb;border-radius:2px;background:#fff;}
+  .giv .cell{background:var(--cream);border-color:var(--creamB);color:#3a2a08;}
+  .wgt .cell{background:var(--purple);border-color:var(--purpleB);color:#2e1f6b;}
+  .nrm .cell{background:var(--yellow);border-color:var(--yellowB);}
+  .res .cell{background:var(--blue);border-color:var(--blueB);color:#0c4a5e;}
+  .blank{background:#fff !important;border:1.5px dashed #b9b9b9 !important;color:transparent;}
+  .foot{position:absolute;left:13mm;right:13mm;bottom:5mm;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid #ddd;padding-top:5px;}
+  .toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+  .toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid #ccc;
+    background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  .hintbar{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px;}
+  @media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (điền số) ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Khối Transformer · Encoder</h1><span class="vi">— toàn hệ trên một canvas</span>
+    <span class="tag">điền ô trắng · d=2 · 2 token · LN: γ⊙x̂+β</span></div>
+
+  <div class="canvas">
+    <div class="schema"><svg viewBox="0 0 160 420" width="100%" height="100%" aria-label="khối encoder: X vào Self-Attention rồi cộng skip, LayerNorm, Feed Forward, cộng skip, LayerNorm, ra Y"></svg></div>
+
+    <div class="work">
+      <!-- CHO SẴN -->
+      <div class="band"><span class="sech">CHO SẴN</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">X <s>2 token×d2</s></span><div class="m c2" id="mX"></div></div>
+        <div class="grp giv"><span class="lab">Attn <s>ra từ Bài 11</s></span><div class="m c2" id="mAt"></div></div>
+        <div class="grp wgt"><span class="lab">W₁</span><div class="m c2" id="mW1"></div></div>
+        <div class="grp wgt"><span class="lab">b₁</span><div class="m c2" id="mB1"></div></div>
+        <div class="grp wgt"><span class="lab">W₂</span><div class="m c2" id="mW2"></div></div>
+        <div class="grp wgt"><span class="lab">b₂</span><div class="m c2" id="mB2"></div></div>
+        <div class="grp nrm"><span class="lab">γ</span><div class="m c2" id="mG"></div></div>
+        <div class="grp nrm"><span class="lab">β</span><div class="m c2" id="mBe"></div></div>
+      </div>
+
+      <!-- ATTENTION + ADD&NORM 1 -->
+      <div class="band"><span class="sech">① Add &amp; Norm sau Attention</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">X</span><div class="m c2" id="mX2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp giv"><span class="lab">Attn</span><div class="m c2" id="mAt2"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">Z₀ <s>residual</s></span><div class="m c2" id="mZ0"></div></div>
+        <div class="op">→</div><div class="opn">LayerNorm<br>γ⊙x̂+β</div>
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="mZ"></div></div>
+      </div>
+
+      <!-- FFN -->
+      <div class="band"><span class="sech">② Feed-Forward: ReLU(Z·W₁+b₁)·W₂ + b₂</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">U=ReLU(Z·W₁+b₁)</span><div class="m c2" id="mU"></div></div>
+        <div class="op">→</div>
+        <div class="grp res"><span class="lab">F = U·W₂+b₂</span><div class="m c2" id="mF"></div></div>
+      </div>
+
+      <!-- ADD&NORM 2 -->
+      <div class="band"><span class="sech">③ Add &amp; Norm sau FFN → ĐẦU RA</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="mZ2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp res"><span class="lab">F</span><div class="m c2" id="mF2"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">Y₀</span><div class="m c2" id="mY0"></div></div>
+        <div class="op">→</div><div class="opn">LayerNorm</div>
+        <div class="grp nrm"><span class="lab">Y <s>→ khối sau</s></span><div class="m c2" id="mY"></div></div>
+      </div>
+      <div class="hintbar">Mẹo LN (d=2): mỗi hàng sau khi trừ trung bình → chuẩn hóa thành (+1,−1) hoặc (−1,+1) theo dấu; rồi Y = γ⊙x̂ + β.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Khối Transformer Encoder (mẫu canvas toàn hệ)</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Khối Transformer · Encoder</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+  <div class="canvas">
+    <div class="schema"><svg viewBox="0 0 160 420" width="100%" height="100%" aria-label="cùng khối, đã điền"></svg></div>
+    <div class="work">
+      <div class="band"><span class="sech">CHO SẴN</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">X</span><div class="m c2" id="kX"></div></div>
+        <div class="grp giv"><span class="lab">Attn</span><div class="m c2" id="kAt"></div></div>
+        <div class="grp wgt"><span class="lab">W₁</span><div class="m c2" id="kW1"></div></div>
+        <div class="grp wgt"><span class="lab">b₁</span><div class="m c2" id="kB1"></div></div>
+        <div class="grp wgt"><span class="lab">W₂</span><div class="m c2" id="kW2"></div></div>
+        <div class="grp wgt"><span class="lab">b₂</span><div class="m c2" id="kB2"></div></div>
+        <div class="grp nrm"><span class="lab">γ</span><div class="m c2" id="kG"></div></div>
+        <div class="grp nrm"><span class="lab">β</span><div class="m c2" id="kBe"></div></div>
+      </div>
+      <div class="band"><span class="sech">① Add &amp; Norm sau Attention</span></div>
+      <div class="band">
+        <div class="grp giv"><span class="lab">X</span><div class="m c2" id="kX2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp giv"><span class="lab">Attn</span><div class="m c2" id="kAt2"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">Z₀</span><div class="m c2" id="kZ0"></div></div>
+        <div class="op">→</div><div class="opn">LN</div>
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="kZ"></div></div>
+      </div>
+      <div class="band"><span class="sech">② Feed-Forward</span></div>
+      <div class="band">
+        <div class="grp res"><span class="lab">U=ReLU(Z·W₁+b₁)</span><div class="m c2" id="kU"></div></div>
+        <div class="op">→</div>
+        <div class="grp res"><span class="lab">F=U·W₂+b₂</span><div class="m c2" id="kF"></div></div>
+      </div>
+      <div class="band"><span class="sech">③ Add &amp; Norm sau FFN → ĐẦU RA</span></div>
+      <div class="band">
+        <div class="grp nrm"><span class="lab">Z</span><div class="m c2" id="kZ2"></div></div>
+        <div class="op">⊕</div>
+        <div class="grp res"><span class="lab">F</span><div class="m c2" id="kF2"></div></div>
+        <div class="op">=</div>
+        <div class="grp res"><span class="lab">Y₀</span><div class="m c2" id="kY0"></div></div>
+        <div class="op">→</div><div class="opn">LN</div>
+        <div class="grp nrm"><span class="lab">Y</span><div class="m c2" id="kY"></div></div>
+      </div>
+      <div class="hintbar">Kiểm: residual (⊕ skip) giữ thông tin gốc; LayerNorm kéo mỗi hàng về cùng thang. Y này là đầu vào khối Transformer kế tiếp.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Khối Transformer Encoder (mẫu canvas toàn hệ)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function fill(id, M, blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<M.length;i++) for(var j=0;j<M[i].length;j++)
+    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':WB.fmtInt(M[i][j]))+'</div>';
+  el.innerHTML=s;
+}
+function addM(A,B){ return A.map(function(r,i){ return r.map(function(v,j){ return v+B[i][j]; }); }); }
+function matmul(A,B){ // A:r×k, B:k×c
+  var r=A.length,k=B.length,c=B[0].length,O=[];
+  for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++){var s=0;for(var t=0;t<k;t++)s+=A[i][t]*B[t][j];row.push(s);}O.push(row);}
+  return O;
+}
+function addBias(M,b){ return M.map(function(r){ return r.map(function(v,j){ return v+b[0][j]; }); }); }
+function relu(M){ return M.map(function(r){ return r.map(function(v){ return Math.max(0,v); }); }); }
+// LayerNorm theo hàng cho d=2: x̂ = sign quanh trung bình (±1), rồi γ⊙x̂+β
+function layernorm(M,g,b){
+  return M.map(function(r){
+    var mu=(r[0]+r[1])/2;
+    var xh=r.map(function(v){ return v>mu?1:(v<mu?-1:0); });
+    return xh.map(function(v,j){ return g[0][j]*v + b[0][j]; });
+  });
+}
+
+function generate(){
+  function mat(r,c,lo,hi){var m=[];for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++)row.push(WB.randInt(lo,hi));m.push(row);}return m;}
+  var X,Attn,Z0,guard=0;
+  do{ X=mat(2,2,-1,2); Attn=mat(2,2,-1,2); Z0=addM(X,Attn); guard++; }
+  while(guard<50 && (Z0[0][0]===Z0[0][1] || Z0[1][0]===Z0[1][1])); // tránh hàng phẳng (x̂=0)
+  var W1=mat(2,2,-1,1), b1=mat(1,2,-1,1), W2=mat(2,2,-1,1), b2=mat(1,2,-1,1);
+  var g=mat(1,2,1,2), be=mat(1,2,-1,1);
+
+  var Z = layernorm(Z0,g,be);
+  var U = relu(addBias(matmul(Z,W1),b1));
+  var F = addBias(matmul(U,W2),b2);
+  var Y0 = addM(Z,F);
+  var Y = layernorm(Y0,g,be);
+
+  // ĐỀ — given có số; phần tính để trống
+  var giv={mX:X,mAt:Attn,mW1:W1,mB1:b1,mW2:W2,mB2:b2,mG:g,mBe:be,mX2:X,mAt2:Attn,mZ2:Z,mF2:F};
+  Object.keys(giv).forEach(function(k){ fill(k,giv[k],false); });
+  [['mZ0',Z0],['mZ',Z],['mU',U],['mF',F],['mY0',Y0],['mY',Y]].forEach(function(p){ fill(p[0],p[1],true); });
+  // nhưng mZ2,mF2 ở band ③ cần hiện (là kết quả band trước) — để trống cho người học tự mang xuống:
+  fill('mZ2',Z,true); fill('mF2',F,true);
+
+  // ĐÁP ÁN — tất cả có số
+  var all={kX:X,kAt:Attn,kW1:W1,kB1:b1,kW2:W2,kB2:b2,kG:g,kBe:be,kX2:X,kAt2:Attn,
+           kZ0:Z0,kZ:Z,kU:U,kF:F,kZ2:Z,kF2:F,kY0:Y0,kY:Y};
+  Object.keys(all).forEach(function(k){ fill(k,all[k],false); });
+
+  drawSchema();
+}
+
+function drawSchema(){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var s='<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a1a1a"/></marker></defs>';
+    function box(y,t,fill,h){h=h||34;s+='<rect x="30" y="'+y+'" width="92" height="'+h+'" rx="7" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1.6"/><text x="76" y="'+(y+h/2+5)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a1a">'+t+'</text>';}
+    function arr(y1,y2){s+='<line x1="76" y1="'+y1+'" x2="76" y2="'+y2+'" stroke="#1a1a1a" stroke-width="1.8" marker-end="url(#ar)"/>';}
+    function plus(y){s+='<circle cx="76" cy="'+y+'" r="11" fill="#fff" stroke="#1a1a1a" stroke-width="1.8"/><text x="76" y="'+(y+5)+'" text-anchor="middle" font-size="15" font-weight="800">+</text>';}
+    function skip(yFrom,yTo){s+='<path d="M30,'+yFrom+' C6,'+yFrom+' 6,'+yTo+' 65,'+yTo+'" fill="none" stroke="#6b7280" stroke-width="1.3" stroke-dasharray="3 3" marker-end="url(#ar)"/>';}
+    box(8,'X (vào)','#fdecd2',30);
+    arr(38,52);
+    box(52,'Self-Attention','#dff3e4',34);
+    arr(86,100); plus(108); skip(70,108);
+    arr(119,133);
+    box(133,'LayerNorm','#fff3b0',32);
+    arr(165,179);
+    box(179,'Feed Forward','#fbe1ee',34);
+    arr(213,227); plus(235); skip(197,235);
+    arr(246,260);
+    box(260,'LayerNorm','#fff3b0',32);
+    arr(292,306);
+    box(306,'Y → khối sau','#d6ecf6',32);
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

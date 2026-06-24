@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Backpropagation (ma trận) — canvas toàn cảnh + giàn giáo (A4 ngang, MẪU)</title>
+<style>
+  @page{ size:A4 landscape; margin:0; }
+  :root{
+    --ink:#1a1a1a; --dim:#6b7280; --paper:#fbf9f4; --accent:#0e7490; --accent2:#b45309;
+    --blue:#dceff5; --blueB:#84c4d6; --orange:#ffe6cc; --orangeB:#e3a76a;
+    --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
+  .sheet{width:297mm;height:210mm;background:var(--paper);margin:8mm auto;padding:9mm 13mm 8mm;
+    position:relative;box-shadow:0 2px 16px rgba(0,0,0,.2);overflow:hidden;}
+  .ttl{display:flex;align-items:baseline;gap:13px;border-bottom:3px solid var(--ink);padding-bottom:6px;}
+  .ttl h1{font-size:26px;font-weight:800;letter-spacing:-.01em;}
+  .ttl .vi{font-size:15px;color:var(--dim);font-weight:600;}
+  .ttl .tag{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim);}
+  .ttl .badge{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:3px 11px;}
+  .key .ttl .badge{background:var(--accent2);}
+  .scaf{margin-top:7px;border:1px solid #e2dccb;border-left:4px solid var(--accent);border-radius:8px;
+    background:#fcfaf4;padding:6px 12px;font-size:12.5px;}
+  .scaf b{color:var(--accent);}
+  .scaf .fm{margin-top:4px;text-align:center;font-family:var(--mono);font-size:13.5px;font-weight:700;
+    background:#fff;border:1px dashed #d8d2c4;border-radius:6px;padding:4px;}
+  .canvas{display:flex;gap:16px;margin-top:8px;height:150mm;}
+  .schema{flex:none;width:54mm;}
+  .work{flex:1;display:flex;flex-direction:column;gap:5px;}
+  .bandh{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.03em;padding:1px 0;
+    border-bottom:1px dashed #d8d2c4;}
+  .bandh.fw{color:var(--accent);} .bandh.bw{color:var(--accent2);}
+  .row{display:flex;gap:11px;flex-wrap:wrap;align-items:flex-start;}
+  .blk{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .blk .nm{font-family:var(--mono);font-size:12px;font-weight:700;white-space:nowrap;}
+  .blk .fm{font-family:var(--mono);font-size:9.5px;color:var(--dim);text-align:center;white-space:nowrap;}
+  .m{display:inline-grid;gap:2px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);
+     border-radius:2px;padding:2px;}
+  .c1{grid-template-columns:repeat(1,10.5mm);} .c2{grid-template-columns:repeat(2,10.5mm);}
+  .cell{height:8.5mm;display:grid;place-items:center;font-family:var(--mono);font-size:15px;font-weight:700;
+     border:1.4px solid #cbcbcb;border-radius:2px;background:#fff;}
+  .fw .cell{background:var(--blue);border-color:var(--blueB);color:#0c4a5e;}
+  .bw .cell,.up .cell{background:var(--orange);border-color:var(--orangeB);color:#7a3d00;}
+  .blank{background:#fff !important;border:1.6px dashed #b9b9b9 !important;color:transparent;}
+  .op{font-family:var(--mono);font-size:18px;color:#c9c2b2;align-self:center;padding-top:16px;}
+  .hint{font-family:var(--mono);font-size:11px;color:var(--accent2);margin-top:2px;}
+  .rutra{margin-top:8px;border:1px solid #e2dccb;border-left:4px solid var(--accent2);border-radius:8px;
+    background:#fcf7f0;padding:7px 12px;font-size:12.5px;}
+  .rutra b{color:var(--accent2);}
+  .foot{position:absolute;left:13mm;right:13mm;bottom:5mm;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid #ddd;padding-top:5px;}
+  .toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+  .toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid #ccc;
+    background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  @media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Backpropagation</h1><span class="vi">— Lan truyền ngược (ma trận)</span>
+    <span class="tag">điền ô trắng · 2→2→2 · η=0.1</span></div>
+
+  <div class="scaf">
+    <b>Quy tắc chuỗi trên ma trận.</b> <b style="color:var(--accent)">XUÔI (lam)</b>: nhân ma trận tới mất mát ℒ.
+    <b style="color:var(--accent2)">NGƯỢC (cam)</b>: gradient của trọng số là <b>tích ngoài</b> δ·(đầu vào)ᵀ; gradient lùi qua lớp là Wᵀ·δ.
+    <div class="fm">∂ℒ/∂W = δ · (đầu vào)ᵀ &nbsp;·&nbsp; δ<sub>lớp trước</sub> = Wᵀ·δ ⊙ f′ &nbsp;|&nbsp; W ← W − η·∂ℒ/∂W</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema"><svg viewBox="0 0 150 360" width="100%" height="100%" aria-label="đồ thị: x qua W1 ra z1, ReLU ra a1, qua W2 ra y mũ, so y ra mất mát; mũi tên cam lan ngược gradient"></svg></div>
+    <div class="work">
+      <div class="bandh fw">① XUÔI — nhân ma trận (lam) · ô tô màu đậm = cho sẵn</div>
+      <div class="row" id="fwd"></div>
+      <div class="bandh bw">② NGƯỢC — gradient, quy tắc chuỗi (cam) · công thức ghi dưới mỗi khối</div>
+      <div class="row" id="bwd"></div>
+      <div class="bandh bw">③ CẬP NHẬT — W ← W − η·∂ℒ/∂W &nbsp;(η = 0.1)</div>
+      <div class="row" id="upd"></div>
+      <div class="hint"><b>Mẹo tích ngoài:</b> ∂ℒ/∂W₂ = δ₂·a₁ᵀ — cột δ₂ nhân hàng a₁ᵀ ra <b>ma trận</b> cùng cỡ W₂. Tính ngược từ phải sang trái, tái dùng δ.</div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Backpropagation ma trận (mẫu canvas + giàn giáo)</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Backpropagation</h1><span class="vi">— lời giải &amp; kiểm tra (ma trận)</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="scaf" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Đọc kết quả.</b> Forward cho ℒ = <b id="Lread">2.00</b>. Hai gradient trọng số <b>∂ℒ/∂W₁, ∂ℒ/∂W₂</b> đều có cùng cỡ với W,
+    nên trừ thẳng vào W khi cập nhật. Kiểm cỡ: δ (cột) × đầu-vàoᵀ (hàng) → ma trận.
+  </div>
+
+  <div class="canvas" style="height:142mm">
+    <div class="schema"><svg viewBox="0 0 150 360" width="100%" height="100%" aria-label="cùng đồ thị, đã điền"></svg></div>
+    <div class="work">
+      <div class="bandh fw">① XUÔI</div>
+      <div class="row" id="kfwd"></div>
+      <div class="bandh bw">② NGƯỢC</div>
+      <div class="row" id="kbwd"></div>
+      <div class="bandh bw">③ CẬP NHẬT</div>
+      <div class="row" id="kupd"></div>
+    </div>
+  </div>
+
+  <div class="rutra">
+    <b>Rút ra.</b> Backprop trên ma trận chỉ là <b>3 phép lặp đi lặp lại</b>: tích ngoài (δ·inᵀ) cho gradient trọng số, Wᵀ·δ để lùi gradient,
+    ⊙f′ qua kích hoạt. Gradient ∂ℒ/∂W này chính là thứ <b>Gradient Descent (Bài 10)</b> dùng; lặp trên nhiều mẫu = <b>huấn luyện</b>.
+    Mọi mạng (kể cả Transformer) đều backprop đúng theo 3 phép này.
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Backpropagation ma trận (mẫu canvas + giàn giáo)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI=function(x){return WB.fmtInt(Math.round(x));};
+var ft=function(x){return WB.fmtTrim(x);};
+// đại số ma trận (mảng 2D)
+function T(A){var r=A.length,c=A[0].length,O=[];for(var j=0;j<c;j++){var row=[];for(var i=0;i<r;i++)row.push(A[i][j]);O.push(row);}return O;}
+function mul(A,B){var r=A.length,k=B.length,c=B[0].length,O=[];for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++){var s=0;for(var t=0;t<k;t++)s+=A[i][t]*B[t][j];row.push(s);}O.push(row);}return O;}
+function ew(A,f){return A.map(function(r){return r.map(f);});}
+function ew2(A,B,f){return A.map(function(r,i){return r.map(function(v,j){return f(v,B[i][j]);});});}
+
+function block(item, isKey){
+  var M=item.M, cols=M[0].length, cls=item.cls;
+  var blank = !isKey && item.blankDe;
+  var cells='';
+  for(var i=0;i<M.length;i++)for(var j=0;j<cols;j++)
+    cells+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':item.fmt(M[i][j]))+'</div>';
+  return '<div class="blk '+cls+'"><div class="nm">'+item.nm+'</div>'+
+    '<div class="m c'+cols+'">'+cells+'</div><div class="fm">'+(item.fm||'')+'</div></div>';
+}
+function render(id, spec, isKey){var el=document.getElementById(id);if(!el)return;el.innerHTML=spec.map(function(c){return block(c,isKey);}).join('');}
+
+function generate(){
+  var eta=0.1;
+  // x (2×1), W1 (2×2), W2 (2×2), y (2×1) — số nguyên nhỏ, đảm bảo z1>0
+  function vec(lo,hi){return [[WB.randInt(lo,hi)],[WB.randInt(lo,hi)]];}
+  function mat(lo,hi){return [[WB.randInt(lo,hi),WB.randInt(lo,hi)],[WB.randInt(lo,hi),WB.randInt(lo,hi)]];}
+  var x,W1,z1,guard=0;
+  do{ x=vec(1,2); W1=mat(0,1); z1=mul(W1,x); guard++; }
+  while(guard<60 && (z1[0][0]<=0 || z1[1][0]<=0)); // ReLU hoạt động ở cả 2 nơ-ron
+  var a1=ew(z1,function(v){return Math.max(0,v);});
+  var W2=mat(0,1), y=vec(1,4);
+  var yh=mul(W2,a1);
+  var diff=ew2(yh,y,function(p,q){return p-q;});
+  var L=0.5*(diff[0][0]*diff[0][0]+diff[1][0]*diff[1][0]);
+  // ngược
+  var dyh=diff;                                  // 2×1
+  var dW2=mul(dyh,T(a1));                         // 2×2 = δ·a1ᵀ
+  var da1=mul(T(W2),dyh);                         // 2×1 = W2ᵀ·δ
+  var reluD=ew(z1,function(v){return v>0?1:0;});
+  var dz1=ew2(da1,reluD,function(p,q){return p*q;}); // ⊙
+  var dW1=mul(dz1,T(x));                          // 2×2 = δ1·xᵀ
+  var W1n=ew2(W1,dW1,function(p,q){return p-eta*q;});
+  var W2n=ew2(W2,dW2,function(p,q){return p-eta*q;});
+
+  var fwd=[
+    {nm:'x', M:x, fm:'đầu vào', cls:'fw', blankDe:false, fmt:fI},
+    {nm:'W₁', M:W1, fm:'trọng số 1', cls:'fw', blankDe:false, fmt:fI},
+    {nm:'z₁', M:z1, fm:'W₁·x', cls:'fw', blankDe:true, fmt:fI},
+    {nm:'a₁', M:a1, fm:'ReLU(z₁)', cls:'fw', blankDe:true, fmt:fI},
+    {nm:'W₂', M:W2, fm:'trọng số 2', cls:'fw', blankDe:false, fmt:fI},
+    {nm:'ŷ', M:yh, fm:'W₂·a₁', cls:'fw', blankDe:true, fmt:fI},
+    {nm:'y', M:y, fm:'nhãn', cls:'fw', blankDe:false, fmt:fI}
+  ];
+  var bwd=[
+    {nm:'δ₂ = ∂ℒ/∂ŷ', M:dyh, fm:'ŷ − y', cls:'bw', blankDe:true, fmt:fI},
+    {nm:'∂ℒ/∂W₂', M:dW2, fm:'δ₂ · a₁ᵀ', cls:'bw', blankDe:true, fmt:fI},
+    {nm:'∂ℒ/∂a₁', M:da1, fm:'W₂ᵀ · δ₂', cls:'bw', blankDe:true, fmt:fI},
+    {nm:'δ₁ = ∂ℒ/∂z₁', M:dz1, fm:'∂a₁ ⊙ ReLU′', cls:'bw', blankDe:true, fmt:fI},
+    {nm:'∂ℒ/∂W₁', M:dW1, fm:'δ₁ · xᵀ', cls:'bw', blankDe:true, fmt:fI}
+  ];
+  var upd=[
+    {nm:'W₁ ←', M:W1n, fm:'W₁ − η·∂ℒ/∂W₁', cls:'up', blankDe:true, fmt:ft},
+    {nm:'W₂ ←', M:W2n, fm:'W₂ − η·∂ℒ/∂W₂', cls:'up', blankDe:true, fmt:ft}
+  ];
+
+  render('fwd',fwd,false); render('bwd',bwd,false); render('upd',upd,false);
+  render('kfwd',fwd,true); render('kbwd',bwd,true); render('kupd',upd,true);
+  var lr=document.getElementById('Lread'); if(lr) lr.textContent=WB.fmt2(L);
+  drawGraph();
+}
+
+function drawGraph(){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var s='<defs>'+
+      '<marker id="af" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'+
+      '<marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
+    var nodes=[['x',18],['z₁',82],['a₁',146],['ŷ',210],['ℒ',274]];
+    var edge=['×W₁','ReLU','×W₂','½‖ŷ−y‖²'];
+    nodes.forEach(function(n,i){
+      s+='<circle cx="56" cy="'+n[1]+'" r="17" fill="#dceff5" stroke="#0e7490" stroke-width="1.8"/>';
+      s+='<text x="56" y="'+(n[1]+5)+'" text-anchor="middle" font-size="14" font-weight="700" fill="#0c4a5e">'+n[0]+'</text>';
+      if(i<nodes.length-1){
+        var y1=n[1]+17, y2=nodes[i+1][1]-17;
+        s+='<line x1="56" y1="'+y1+'" x2="56" y2="'+y2+'" stroke="#0e7490" stroke-width="1.8" marker-end="url(#af)"/>';
+        s+='<text x="63" y="'+((y1+y2)/2+3)+'" font-size="10" fill="#0e7490">'+edge[i]+'</text>';
+        s+='<line x1="34" y1="'+y2+'" x2="34" y2="'+y1+'" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 2" marker-end="url(#ab)"/>';
+      }
+    });
+    s+='<text x="12" y="16" font-size="10" fill="#0e7490" font-weight="700">xuôi</text>';
+    s+='<text x="4" y="300" font-size="10" fill="#b45309" font-weight="700">ngược δ</text>';
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

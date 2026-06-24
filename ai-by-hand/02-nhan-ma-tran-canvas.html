@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Nhân ma trận — canvas toàn cảnh (A4 ngang, MẪU)</title>
+<style>
+  @page{ size:A4 landscape; margin:0; }
+  :root{
+    --ink:#1a1a1a; --dim:#6b7280; --paper:#fbf9f4; --accent:#0e7490; --accent2:#b45309;
+    --cream:#fdecd2; --creamB:#e3c489; --purple:#ece2ff; --purpleB:#c3b1f5;
+    --blue:#d6ecf6; --blueB:#a7d3e3; --hl:#fff3b0; --hlB:#e6cf6a;
+    --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
+  .sheet{width:297mm;height:210mm;background:var(--paper);margin:8mm auto;padding:10mm 14mm 8mm;
+    position:relative;box-shadow:0 2px 16px rgba(0,0,0,.2);overflow:hidden;}
+  .ttl{display:flex;align-items:baseline;gap:13px;border-bottom:3px solid var(--ink);padding-bottom:6px;}
+  .ttl h1{font-size:28px;font-weight:800;letter-spacing:-.01em;}
+  .ttl .vi{font-size:15px;color:var(--dim);font-weight:600;}
+  .ttl .tag{margin-left:auto;font-family:var(--mono);font-size:12.5px;color:var(--dim);}
+  .ttl .badge{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:3px 11px;}
+  .key .ttl .badge{background:var(--accent2);}
+  .canvas{display:flex;gap:22px;margin-top:14px;height:158mm;align-items:flex-start;}
+  .schema{flex:none;width:74mm;display:flex;flex-direction:column;gap:14px;}
+  .shapebox{border:1px solid #e2dccb;border-left:4px solid var(--accent);border-radius:8px;background:#fcfaf4;padding:9px 12px;}
+  .shapebox .sl{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.05em;}
+  .shapebox .big{font-family:var(--mono);font-size:19px;font-weight:800;margin:5px 0;}
+  .inh{color:#b45309;background:var(--hl);border-radius:3px;padding:0 3px;}
+  .shapebox .nt{font-size:12px;color:var(--dim);}
+  .work{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  /* bố cục bậc thang B trên · A trái · C giao điểm */
+  .mm{display:inline-grid;grid-template-columns:auto auto;gap:9mm;justify-items:start;align-items:start;}
+  .lbl{font-family:var(--mono);font-size:14px;font-weight:700;margin-bottom:2px;}
+  .lbl s{color:var(--dim);text-decoration:none;font-weight:400;font-size:11px;}
+  .m{display:inline-grid;gap:2px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:2px;padding:3px 2px;}
+  .c2{grid-template-columns:repeat(2,13mm);} .c3{grid-template-columns:repeat(3,13mm);}
+  .cell{height:11mm;display:grid;place-items:center;font-family:var(--mono);font-size:18px;font-weight:700;
+    border:1.5px solid #cbcbcb;border-radius:2px;background:#fff;}
+  .A .cell{background:var(--cream);border-color:var(--creamB);color:#3a2a08;}
+  .B .cell{background:var(--purple);border-color:var(--purpleB);color:#2e1f6b;}
+  .C .cell{background:var(--blue);border-color:var(--blueB);color:#0c4a5e;}
+  .blank{background:#fff !important;border:1.7px dashed #b9b9b9 !important;color:transparent;}
+  .hlrow{box-shadow:inset 0 0 0 2px var(--hlB);}
+  .cell.hl{background:var(--hl) !important;border-color:var(--hlB) !important;}
+  .corner{display:flex;align-items:flex-end;justify-content:flex-end;font-family:var(--mono);
+    font-size:13px;color:var(--dim);font-weight:700;padding-bottom:4px;}
+  .worked{margin-top:6px;font-family:var(--mono);font-size:14px;background:#fff;border:1px dashed #d8d2c4;
+    border-radius:7px;padding:8px 12px;max-width:175mm;}
+  .worked b{color:var(--accent2);}
+  .hint{font-family:var(--mono);font-size:11.5px;color:var(--accent2);margin-top:5px;}
+  .rutra{margin-top:9px;border:1px solid #e2dccb;border-left:4px solid var(--accent2);border-radius:8px;background:#fcf7f0;padding:8px 12px;font-size:13px;}
+  .rutra b{color:var(--accent2);}
+  .foot{position:absolute;left:14mm;right:14mm;bottom:5mm;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid #ddd;padding-top:5px;}
+  .toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+  .toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid #ccc;
+    background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  @media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Nhân ma trận</h1><span class="vi">— Matrix Multiplication</span>
+    <span class="tag">điền ô trắng C · Cᵢⱼ = Σₖ Aᵢₖ·Bₖⱼ</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div class="shapebox">
+        <div class="sl">KHỚP THỨ NGUYÊN</div>
+        <div class="big">(2×<span class="inh">3</span>)·(<span class="inh">3</span>×2)→(<b>2×2</b>)</div>
+        <div class="nt">Số trong phải <b>bằng nhau</b> (3 = 3) thì mới nhân được. Cỡ kết quả C = (số ngoài) = <b>2×2</b>.</div>
+      </div>
+      <svg viewBox="0 0 150 130" width="100%" height="auto" aria-label="một hàng của A nhân một cột của B ra một ô của C"></svg>
+      <div class="hint"><b>Mỗi ô C = một tích vô hướng (Bài 01):</b> hàng i của A · cột j của B.</div>
+    </div>
+
+    <div class="work">
+      <div class="mm">
+        <div class="corner">A · B = C</div>
+        <div><div class="lbl B">B <s>3×2</s></div><div class="m c2 B" id="mB"></div></div>
+        <div><div class="lbl A">A <s>2×3</s></div><div class="m c3 A" id="mA"></div></div>
+        <div><div class="lbl C">C = A·B <s>2×2</s></div><div class="m c2 C" id="mC"></div></div>
+      </div>
+      <div class="worked" id="wk"></div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Nhân ma trận (mẫu canvas toàn cảnh)</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Nhân ma trận</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div class="shapebox" style="border-left-color:var(--accent2)">
+        <div class="sl" style="color:var(--accent2)">CÁCH ĐIỀN</div>
+        <div class="nt" style="margin-top:4px">Ô <b>C₁₁</b> (hàng 1 × cột 1), <b>C₁₂</b> (hàng 1 × cột 2), <b>C₂₁</b> (hàng 2 × cột 1), <b>C₂₂</b> (hàng 2 × cột 2). Mỗi ô: nhân từng cặp rồi cộng.</div>
+      </div>
+      <svg viewBox="0 0 150 130" width="100%" height="auto" aria-label="hàng nhân cột ra ô, đã điền"></svg>
+      <div class="hint">Kiểm cỡ: A có 2 hàng, B có 2 cột → C đúng 2×2.</div>
+    </div>
+
+    <div class="work">
+      <div class="mm">
+        <div class="corner">A · B = C</div>
+        <div><div class="lbl B">B</div><div class="m c2 B" id="kB"></div></div>
+        <div><div class="lbl A">A</div><div class="m c3 A" id="kA"></div></div>
+        <div><div class="lbl C">C</div><div class="m c2 C" id="kC"></div></div>
+      </div>
+      <div class="worked" id="kwk"></div>
+    </div>
+  </div>
+
+  <div class="rutra">
+    <b>Rút ra.</b> Nhân ma trận = xếp nhiều <b>tích vô hướng</b> (Bài 01) lại: ô Cᵢⱼ là hàng i gặp cột j. Đây là phép tính
+    chạy nhiều nhất trong AI — mọi lớp tuyến tính <b>y = Wx + b</b> (Bài 03), attention <b>QKᵀ</b> (Bài 11) đều là nhân ma trận.
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Nhân ma trận (mẫu canvas toàn cảnh)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI=function(x){return WB.fmtInt(x);};
+function mul(A,B){var r=A.length,k=B.length,c=B[0].length,O=[];for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++){var s=0;for(var t=0;t<k;t++)s+=A[i][t]*B[t][j];row.push(s);}O.push(row);}return O;}
+
+function grid(id, M, cls, blank, hlRow, hlCol){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++){
+    var hl = (hlRow!=null && i===hlRow) || (hlCol!=null && j===hlCol);
+    s+='<div class="cell'+(blank?' blank':'')+(hl?' hl':'')+'">'+(blank?'':fI(M[i][j]))+'</div>';
+  }
+  el.innerHTML=s;
+}
+
+function generate(){
+  function mat(r,c){var m=[];for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++)row.push(WB.randInt(-1,3));m.push(row);}return m;}
+  var A=mat(2,3), B=mat(3,2);
+  var C=mul(A,B);
+
+  // ĐỀ: A,B cho sẵn (tô màu), C để trống; tô sáng hàng 0 của A & cột 0 của B (ô đang làm mẫu)
+  grid('mA',A,'A',false,0,null);
+  grid('mB',B,'B',false,null,0);
+  grid('mC',C,'C',true,null,null);
+  // ĐÁP ÁN: tất cả có số
+  grid('kA',A,'A',false,null,null);
+  grid('kB',B,'B',false,null,null);
+  grid('kC',C,'C',false,null,null);
+
+  // ví dụ ô C₁₁ (giàn giáo)
+  var t=A[0], col=[B[0][0],B[1][0],B[2][0]];
+  document.getElementById('wk').innerHTML =
+    '<b>Ví dụ ô C₁₁</b> = hàng 1 (A) · cột 1 (B) = '+
+    fI(t[0])+'·'+wrap(col[0])+' + '+fI(t[1])+'·'+wrap(col[1])+' + '+fI(t[2])+'·'+wrap(col[2])+' = <b>______</b>';
+  var prods=[t[0]*col[0], t[1]*col[1], t[2]*col[2]];
+  document.getElementById('kwk').innerHTML =
+    '<b>C₁₁</b> = '+fI(t[0])+'·'+wrap(col[0])+' + '+fI(t[1])+'·'+wrap(col[1])+' + '+fI(t[2])+'·'+wrap(col[2])+
+    ' = '+WB.sumExpr(prods, WB.fmtInt)+' = <b>'+fI(C[0][0])+'</b>';
+
+  drawRC(A[0], [B[0][0],B[1][0],B[2][0]], C[0][0]);
+}
+function wrap(v){ return WB.wrap(WB.fmtInt(v)); }
+
+// sơ đồ "hàng · cột → ô"
+function drawRC(rowA, colB, c11){
+  document.querySelectorAll('.schema svg').forEach(function(svg, idx){
+    var key = svg.closest('.key'); // đáp án thì hiện số kết quả
+    var s='<defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a1a1a"/></marker></defs>';
+    // hàng A (ngang)
+    for(var j=0;j<3;j++) s+='<rect x="'+(8+j*22)+'" y="16" width="20" height="20" fill="#fdecd2" stroke="#e3c489" stroke-width="1.4"/><text x="'+(18+j*22)+'" y="30" text-anchor="middle" font-size="12" font-weight="700">'+rowA[j]+'</text>';
+    s+='<text x="8" y="12" font-size="10" fill="#6b7280">hàng (A)</text>';
+    // cột B (dọc)
+    for(var i=0;i<3;i++) s+='<rect x="100" y="'+(16+i*22)+'" width="20" height="20" fill="#ece2ff" stroke="#c3b1f5" stroke-width="1.4"/><text x="110" y="'+(30+i*22)+'" text-anchor="middle" font-size="12" font-weight="700">'+colB[i]+'</text>';
+    s+='<text x="124" y="26" font-size="10" fill="#6b7280">cột (B)</text>';
+    // mũi tên xuống ô C
+    s+='<line x1="60" y1="40" x2="60" y2="92" stroke="#1a1a1a" stroke-width="1.4" marker-end="url(#ar2)"/>';
+    s+='<line x1="110" y1="84" x2="70" y2="100" stroke="#1a1a1a" stroke-width="1.2"/>';
+    s+='<rect x="44" y="96" width="32" height="24" fill="#d6ecf6" stroke="#a7d3e3" stroke-width="1.6"/>';
+    s+='<text x="60" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a5e">'+(svg.closest('.key')?WB.fmtInt(c11):'C₁₁')+'</text>';
+    s+='<text x="84" y="112" font-size="11" fill="#6b7280">= Σ tích</text>';
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

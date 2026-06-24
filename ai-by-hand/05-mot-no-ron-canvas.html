@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Một nơ-ron — canvas toàn cảnh (A4 ngang)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  /* tinh chỉnh riêng cho bài này */
+  .schema{width:70mm;}
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .flow{align-items:center;}
+  .wk{margin-top:6px;font-family:var(--mono);font-size:12.5px;background:#fff;border:1px dashed #d8d2c4;
+    border-radius:7px;padding:7px 11px;line-height:1.8;}
+  .wk b{color:var(--accent2);}
+  .param{font-family:var(--mono);font-size:13px;line-height:2.0;}
+  .param .lab{color:var(--accent);font-weight:700;}
+  .ublk{display:inline-block;min-width:30px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .stab{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+  .stab td,.stab th{border:1px solid #d8d2c4;padding:2px 6px;text-align:center;}
+  .stab th{background:#fdecd2;color:#3a2a08;}
+  .stab .cap{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:3px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Một nơ-ron</h1><span class="vi">— Neuron</span>
+    <span class="tag">điền ô trắng · z = w·x + b → a = f(z)</span></div>
+
+  <div class="scaf">
+    <b>Tế bào của mạng.</b> Một nơ-ron làm 2 việc: (1) tính <b>tổng có trọng số</b> z = w·x + b (tích vô hướng Bài 01
+    + bias Bài 03); (2) cho z qua <b>hàm kích hoạt</b> f (Bài 04) ra <b>một con số</b> a. Cả mạng khổng lồ chỉ là hàng
+    triệu tế bào này nối nhau.
+    <div class="fm">z = w · x + b = Σ wᵢxᵢ + b &nbsp;→&nbsp; a = f(z) = ReLU(z) hoặc σ(z)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 230 150" aria-label="nơ-ron: ba đầu vào nhân trọng số, cộng tại Σ rồi qua f ra a"></svg>
+      <div class="hint"><b>Mỗi mũi tên mang một trọng số w;</b> nút tròn cộng lại (Σ) rồi áp f → một đầu ra a.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BƯỚC 1 · tổng có trọng số z = w·x + b</div>
+      <div class="row flow">
+        <div class="blk w"><div class="nm">w <s>trọng số</s></div><div class="m c3" id="w"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x <s>đầu vào</s></div><div class="m c3" id="x"></div></div>
+        <div class="op">=</div>
+        <div class="blk hot"><div class="nm">w·x</div><div class="m c1" id="wx"></div></div>
+        <div class="op">+</div>
+        <div class="blk w"><div class="nm">b <s>bias</s></div><div class="m c1" id="b"></div></div>
+        <div class="op">=</div>
+        <div class="blk hot"><div class="nm">z</div><div class="m c1" id="z"></div></div>
+      </div>
+      <div class="wk" id="wk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">BƯỚC 2 · qua kích hoạt → a = f(z)</div>
+      <div style="display:flex;gap:22px;align-items:center">
+        <div class="param">
+          a = ReLU(z) = max(0, <span data-q="z">2</span>) = <span class="ublk"></span><br>
+          a = σ(z) = σ(<span data-q="z">2</span>) = <span class="ublk"></span> <span style="color:var(--dim)">(tra bảng →)</span>
+        </div>
+        <table class="stab">
+          <caption class="cap">Bảng tra σ(z)</caption>
+          <tr><th>z</th><th>−3</th><th>−2</th><th>−1</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+          <tr><th>σ</th><td>.05</td><td>.12</td><td>.27</td><td>.50</td><td>.73</td><td>.88</td><td>.95</td></tr>
+        </table>
+      </div>
+      <div class="param" style="margin-top:5px">
+        <span class="lab">Thử lại:</span> x=(0,0,0) → z = <span class="ublk"></span> (chỉ còn bias)
+        &nbsp;|&nbsp; x=(2,2,2) → z = <span class="ublk"></span>, a=ReLU = <span class="ublk"></span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Một nơ-ron — Neuron</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Một nơ-ron</h1><span class="vi">— lời giải &amp; kiểm tra</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 230 150" aria-label="nơ-ron đã điền số"></svg>
+      <div class="hint">Trọng số w âm/dương quyết định đầu vào nào được khuếch đại hay kìm hãm.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BƯỚC 1 · z = w·x + b</div>
+      <div class="row flow">
+        <div class="blk w"><div class="nm">w</div><div class="m c3" id="kw"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x</div><div class="m c3" id="kx"></div></div>
+        <div class="op">=</div>
+        <div class="blk hot"><div class="nm">w·x</div><div class="m c1" id="kwx"></div></div>
+        <div class="op">+</div>
+        <div class="blk w"><div class="nm">b</div><div class="m c1" id="kb"></div></div>
+        <div class="op">=</div>
+        <div class="blk hot"><div class="nm">z</div><div class="m c1" id="kz"></div></div>
+      </div>
+      <div class="wk" id="kwk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">BƯỚC 2 · a = f(z)</div>
+      <div style="display:flex;gap:22px;align-items:center">
+        <div class="param">
+          a = ReLU(z) = max(0, <span data-q="z">2</span>) = <span class="ublk" data-q="reluZ">2</span><br>
+          a = σ(z) = σ(<span data-q="z">2</span>) = <span class="ublk" data-q="sigZ">0.88</span>
+        </div>
+        <table class="stab">
+          <caption class="cap">Bảng tra σ(z)</caption>
+          <tr><th>z</th><th>−3</th><th>−2</th><th>−1</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+          <tr><th>σ</th><td>.05</td><td>.12</td><td>.27</td><td>.50</td><td>.73</td><td>.88</td><td>.95</td></tr>
+        </table>
+      </div>
+      <div class="param" style="margin-top:5px" id="probe"></div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Một nơ-ron = <b>tích vô hướng + bias + kích hoạt</b> → 1 con số. Khi mọi đầu vào = 0, nơ-ron chỉ
+        còn bias ("mức nền"). Bài 06: đặt <b>nhiều nơ-ron song song</b> trên cùng đầu vào → thành <b>một lớp</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Một nơ-ron — Neuron</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var SIG={'-3':0.05,'-2':0.12,'-1':0.27,'0':0.50,'1':0.73,'2':0.88,'3':0.95};
+var fI=function(x){return WB.fmtInt(x);};
+function wrap(v){ return WB.wrap(fI(v)); }
+function fill1D(id, arr, blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  var w,x,b,prod,dot,z,guard=0;
+  do {                                   // ép z ∈ [−3,3] để σ(z) tra được bảng
+    w=[WB.randInt(-2,2), WB.randInt(-2,2), WB.randInt(-2,2)];
+    x=[WB.randInt(-1,2), WB.randInt(-1,2), WB.randInt(-1,2)];
+    b=-WB.randInt(1,3);
+    prod=[w[0]*x[0], w[1]*x[1], w[2]*x[2]];
+    dot=prod[0]+prod[1]+prod[2];
+    z=dot+b;
+  } while ((z<-3 || z>3) && ++guard<400);
+  var reluZ=Math.max(0,z), sigZ=SIG[String(z)];
+
+  // probe
+  var z0=b;                              // x=(0,0,0)
+  var prod2=[w[0]*2,w[1]*2,w[2]*2], wx2=prod2[0]+prod2[1]+prod2[2], z2=wx2+b, relu2=Math.max(0,z2);
+
+  // ĐỀ
+  fill1D('w',w,false); fill1D('x',x,false); fill1D('wx',[dot],true); fill1D('b',[b],false); fill1D('z',[z],true);
+  // ĐÁP ÁN
+  fill1D('kw',w,false); fill1D('kx',x,false); fill1D('kwx',[dot],false); fill1D('kb',[b],false); fill1D('kz',[z],false);
+
+  var wkExpr='<b>w·x</b> = '+fI(w[0])+'·'+wrap(x[0])+' + '+fI(w[1])+'·'+wrap(x[1])+' + '+fI(w[2])+'·'+wrap(x[2]);
+  document.getElementById('wk').innerHTML =
+    wkExpr+' = <b>______</b> &nbsp;→&nbsp; z = (w·x) + '+wrap(b)+' = <b>______</b>';
+  document.getElementById('kwk').innerHTML =
+    wkExpr+' = '+WB.sumExpr(prod, fI)+' = <b>'+fI(dot)+'</b> &nbsp;→&nbsp; z = '+fI(dot)+WB.opTerm(b)+' = <b>'+fI(z)+'</b>';
+
+  document.getElementById('probe').innerHTML =
+    '<span class="lab">Thử lại:</span> x=(0,0,0) → z = bias = <span class="ublk" style="border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700">'+fI(z0)+
+    '</span> &nbsp;|&nbsp; x=(2,2,2) → w·x = '+WB.sumExpr(prod2, fI)+' = '+fI(wx2)+', z = <span class="ublk" style="border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700">'+fI(z2)+
+    '</span>, a=ReLU = <span class="ublk" style="border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700">'+fI(relu2)+'</span>';
+
+  WB.setAll({ z: fI(z), reluZ: fI(reluZ), sigZ: WB.fmt2(sigZ) });
+  drawNeuron(w, x, b);
+}
+
+// nơ-ron: 3 đầu vào (kem, mang giá trị x) → cạnh mang trọng số w → Σf → a. Vẽ vào cả 2 sheet.
+function drawNeuron(w, x, b){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var inN=[{x:30,y:32},{x:30,y:75},{x:30,y:118}];
+    var cx=138, cy=75;
+    var s='<defs><marker id="an" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
+      +'<marker id="ao" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker></defs>';
+    // cạnh + nhãn trọng số
+    inN.forEach(function(a,i){
+      s+='<line x1="'+(a.x+13)+'" y1="'+a.y+'" x2="'+(cx-25)+'" y2="'+cy+'" stroke="#b45309" stroke-width="1.3" opacity="0.7" marker-end="url(#an)"/>';
+      var mx=(a.x+13+cx-25)/2, my=(a.y+cy)/2 - 4;
+      s+='<text x="'+mx+'" y="'+my+'" text-anchor="middle" font-size="9.5" fill="#b45309" font-weight="700">w'+(i+1)+'='+fI(w[i])+'</text>';
+    });
+    // nút vào (giá trị x)
+    inN.forEach(function(a,i){
+      s+='<circle cx="'+a.x+'" cy="'+a.y+'" r="13" fill="#fdecd2" stroke="#e3c489" stroke-width="1.6"/>';
+      s+='<text x="'+a.x+'" y="'+(a.y+4)+'" text-anchor="middle" font-size="11" fill="#3a2a08" font-weight="700">'+fI(x[i])+'</text>';
+      s+='<text x="'+(a.x-18)+'" y="'+(a.y+4)+'" text-anchor="middle" font-size="9" fill="#6b7280">x'+(i+1)+'</text>';
+    });
+    // nút Σ/f
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="24" fill="#fff3b0" stroke="#e6cf6a" stroke-width="1.8"/>';
+    s+='<text x="'+cx+'" y="'+(cy-3)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#7a5a00">Σ</text>';
+    s+='<text x="'+cx+'" y="'+(cy+13)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#7a5a00">f</text>';
+    s+='<text x="'+cx+'" y="'+(cy+38)+'" text-anchor="middle" font-size="9.5" fill="#6b7280">b='+fI(b)+'</text>';
+    // đầu ra a
+    s+='<line x1="'+(cx+25)+'" y1="'+cy+'" x2="206" y2="'+cy+'" stroke="#0e7490" stroke-width="1.8" marker-end="url(#ao)"/>';
+    s+='<circle cx="206" cy="'+cy+'" r="13" fill="#d6ecf6" stroke="#a7d3e3" stroke-width="1.6"/>';
+    s+='<text x="206" y="'+(cy+4)+'" text-anchor="middle" font-size="12" fill="#0c4a5e" font-weight="700">a</text>';
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+/* ===== AI by Hand — STYLE "CANVAS TOÀN CẢNH" (Tom Yeh) — dùng chung =====
+   Phiếu kiểu canvas: A4 NGANG, sơ đồ kiến trúc bên TRÁI + bảng số bên PHẢI,
+   điền vào ô trắng, mã màu in được. KHÁC wb.css (phiếu dọc cũ) — additive, không đụng wb.css.
+   Dùng kèm wb-random.js (window.WB) cho nút 🎲.
+   File phiếu: <link rel="stylesheet" href="wb-canvas.css"> + (tuỳ) <style> tinh chỉnh nội bộ. */
+@page{ size:A4 landscape; margin:0; }
+:root{
+  --ink:#1a1a1a; --dim:#6b7280; --paper:#fbf9f4; --accent:#0e7490; --accent2:#b45309;
+  /* màu ô (mã màu nhất quán, in laser được) */
+  --in:#fdecd2;     --inB:#e3c489;     /* đầu vào / cho sẵn (kem)  */
+  --w:#ece2ff;      --wB:#c3b1f5;      /* trọng số / tham số (tím) */
+  --hot:#fff3b0;    --hotB:#e6cf6a;    /* nổi bật: attention/softmax/chuẩn hóa (vàng) */
+  --out:#d6ecf6;    --outB:#a7d3e3;    /* kết quả / đầu ra (xanh)  */
+  --bw:#ffe6cc;     --bwB:#e3a76a;     /* chiều ngược / gradient (cam) */
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
+/* trang = "sheet" (KHÁC ".page" của wb.css) */
+.sheet{width:297mm;height:210mm;background:var(--paper);margin:8mm auto;padding:10mm 13mm 8mm;
+  position:relative;box-shadow:0 2px 16px rgba(0,0,0,.2);overflow:hidden;}
+/* tiêu đề */
+.ttl{display:flex;align-items:baseline;gap:13px;border-bottom:3px solid var(--ink);padding-bottom:6px;}
+.ttl h1{font-size:27px;font-weight:800;letter-spacing:-.01em;}
+.ttl .vi{font-size:15px;color:var(--dim);font-weight:600;}
+.ttl .tag{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim);}
+.ttl .badge{font-family:var(--mono);font-size:12.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:3px 11px;}
+.key .ttl .badge{background:var(--accent2);}
+/* GIÀN GIÁO (tuỳ chọn): hộp intro/công thức + hộp "rút ra" */
+.scaf{margin-top:7px;border:1px solid #e2dccb;border-left:4px solid var(--accent);border-radius:8px;background:#fcfaf4;padding:7px 12px;font-size:13px;}
+.scaf b{color:var(--accent);}
+.scaf .fm{margin-top:4px;text-align:center;font-family:var(--mono);font-size:13.5px;font-weight:700;background:#fff;border:1px dashed #d8d2c4;border-radius:6px;padding:4px;}
+.rutra{margin-top:8px;border:1px solid #e2dccb;border-left:4px solid var(--accent2);border-radius:8px;background:#fcf7f0;padding:7px 12px;font-size:13px;}
+.rutra b{color:var(--accent2);}
+/* khung canvas: sơ đồ trái + bảng phải */
+.canvas{display:flex;gap:18px;margin-top:9px;}
+.schema{flex:none;width:60mm;}
+.work{flex:1;display:flex;flex-direction:column;gap:7px;}
+/* nhãn dải bước (giàn giáo nhẹ) */
+.bandh{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.03em;padding:1px 0;border-bottom:1px dashed #d8d2c4;}
+.bandh.fw{color:var(--accent);} .bandh.bw{color:var(--accent2);}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;}
+/* khối có nhãn (label trên + ma trận + công thức dưới) */
+.blk{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.blk .nm,.lbl{font-family:var(--mono);font-size:12.5px;font-weight:700;white-space:nowrap;}
+.lbl s,.blk .nm s{color:var(--dim);text-decoration:none;font-weight:400;font-size:11px;}
+.blk .fm{font-family:var(--mono);font-size:9.5px;color:var(--dim);text-align:center;white-space:nowrap;}
+/* ma trận: ngoặc dày 2 bên + lưới ô */
+.m{display:inline-grid;gap:2px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:2px;padding:2px;}
+.m.c1{grid-template-columns:repeat(1,var(--cw,11mm));}
+.m.c2{grid-template-columns:repeat(2,var(--cw,11mm));}
+.m.c3{grid-template-columns:repeat(3,var(--cw,11mm));}
+.m.c4{grid-template-columns:repeat(4,var(--cw,11mm));}
+.m.c5{grid-template-columns:repeat(5,var(--cw,11mm));}
+.cell{height:var(--ch,9mm);display:grid;place-items:center;font-family:var(--mono);font-size:15px;font-weight:700;
+  border:1.5px solid #cbcbcb;border-radius:2px;background:#fff;}
+/* lớp màu ngữ nghĩa (gắn lên .blk/.grp cha hoặc .m) */
+.in  .cell{background:var(--in); border-color:var(--inB); color:#3a2a08;}
+.w   .cell{background:var(--w);  border-color:var(--wB);  color:#2e1f6b;}
+.hot .cell{background:var(--hot);border-color:var(--hotB);}
+.out .cell{background:var(--out);border-color:var(--outB);color:#0c4a5e;}
+.fw  .cell{background:var(--out);border-color:var(--outB);color:#0c4a5e;}  /* chiều xuôi  */
+.bw  .cell,.up .cell{background:var(--bw);border-color:var(--bwB);color:#7a3d00;} /* ngược/cập nhật */
+.cell.mark{background:var(--hot) !important;border-color:var(--hotB) !important;} /* ô làm mẫu */
+/* ô để TRỐNG cho học sinh điền (luôn trắng nét đứt, đè mọi màu) */
+.blank{background:#fff !important;border:1.6px dashed #b9b9b9 !important;color:transparent !important;}
+/* toán tử giữa các ma trận */
+.op{font-family:var(--mono);font-size:20px;font-weight:800;color:#c9c2b2;align-self:center;}
+.opn{font-family:var(--mono);font-size:10px;color:var(--dim);text-align:center;line-height:1.1;align-self:center;}
+/* gợi ý + chân trang */
+.hint{font-family:var(--mono);font-size:11px;color:var(--accent2);margin-top:2px;}
+.hint b{color:var(--accent2);}
+.foot{position:absolute;left:13mm;right:13mm;bottom:5mm;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid #ddd;padding-top:5px;}
+/* thanh công cụ (không in) */
+.toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+.toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid #ccc;
+  background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent);}
+@media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }

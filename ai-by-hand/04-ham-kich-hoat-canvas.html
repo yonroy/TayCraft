@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Hàm kích hoạt — canvas toàn cảnh (A4 ngang)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  /* tinh chỉnh riêng cho bài này */
+  .schema{width:66mm;}
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .acts{display:flex;flex-direction:column;gap:7px;}
+  .acts .m{--cw:14mm;}
+  .actrow{display:flex;align-items:center;gap:11px;}
+  .rlab{font-family:var(--mono);font-size:13px;font-weight:700;min-width:104px;text-align:right;white-space:nowrap;}
+  .rlab s{color:var(--dim);text-decoration:none;font-weight:400;font-size:10.5px;display:block;}
+  .stab{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+  .stab td,.stab th{border:1px solid #d8d2c4;padding:2px 6px;text-align:center;}
+  .stab th{background:#fdecd2;color:#3a2a08;}
+  .stab .cap{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:3px;}
+  .wk{margin-top:6px;font-family:var(--mono);font-size:12.5px;background:#fff;border:1px dashed #d8d2c4;
+    border-radius:7px;padding:7px 11px;line-height:1.8;}
+  .wk b{color:var(--accent2);}
+  .param{font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Hàm kích hoạt</h1><span class="vi">— Activation</span>
+    <span class="tag">điền ô trắng · ReLU(z)=max(0,z) · σ(z)∈(0,1)</span></div>
+
+  <div class="scaf">
+    <b>Bẻ cong đường thẳng.</b> Sau lớp tuyến tính (Bài 03), đưa kết quả qua một <b>hàm phi tuyến</b>. Không có nó,
+    xếp bao nhiêu lớp cũng chỉ ra một đường thẳng. ReLU đơn giản &amp; phổ biến nhất; sigmoid ép giá trị về (0,1).
+    <div class="fm">ReLU(z) = max(0, z) &nbsp;|&nbsp; σ(z) = 1 / (1 + e⁻ᶻ) ∈ (0, 1) &nbsp;|&nbsp; tanh(z) ∈ (−1, 1)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 200 250" aria-label="đồ thị ReLU (gấp khúc tại 0) và sigmoid (đường cong chữ S)"></svg>
+      <div class="hint"><b>ReLU = van một chiều:</b> chặn âm, cho dương qua. Chỗ gấp tại 0 giúp mạng học hàm cong.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">MỘT DÃY z → HAI KÍCH HOẠT (so từng cột)</div>
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div class="acts">
+          <div class="actrow"><div class="rlab in" style="color:#3a2a08">z <s>đầu vào</s></div><div class="m c5 in" id="z"></div></div>
+          <div class="actrow"><div class="rlab" style="color:#0c4a5e">ReLU(z) <s>max(0, z)</s></div><div class="m c5 out" id="r"></div></div>
+          <div class="actrow"><div class="rlab" style="color:#7a5a00">σ(z) <s>tra bảng →</s></div><div class="m c5 hot" id="s"></div></div>
+        </div>
+        <table class="stab">
+          <caption class="cap">Bảng tra σ(z)</caption>
+          <tr><th>z</th><th>−3</th><th>−2</th><th>−1</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+          <tr><th>σ</th><td>.05</td><td>.12</td><td>.27</td><td>.50</td><td>.73</td><td>.88</td><td>.95</td></tr>
+        </table>
+      </div>
+      <div class="wk" id="wk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">VÌ SAO PHẢI PHI TUYẾN</div>
+      <div class="param">
+        Tuyến tính + tuyến tính = vẫn tuyến tính. Chèn ReLU giữa các lớp cho mạng <b>gấp khúc</b> không gian →
+        xấp xỉ <b>bất kỳ hàm nào</b>. ReLU rẻ (chỉ so với 0) &amp; ít "gradient biến mất" hơn sigmoid ở mạng sâu.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Hàm kích hoạt — Activation</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Hàm kích hoạt</h1><span class="vi">— lời giải &amp; kiểm tra</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 200 250" aria-label="đồ thị ReLU và sigmoid đã vẽ"></svg>
+      <div class="hint">ReLU nằm ngang 0 ở nửa trái rồi lên 45°; σ là chữ S kẹp giữa 0 và 1.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">MỘT DÃY z → HAI KÍCH HOẠT</div>
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div class="acts">
+          <div class="actrow"><div class="rlab" style="color:#3a2a08">z</div><div class="m c5 in" id="kz"></div></div>
+          <div class="actrow"><div class="rlab" style="color:#0c4a5e">ReLU(z)</div><div class="m c5 out" id="kr"></div></div>
+          <div class="actrow"><div class="rlab" style="color:#7a5a00">σ(z)</div><div class="m c5 hot" id="ks"></div></div>
+        </div>
+        <table class="stab">
+          <caption class="cap">Bảng tra σ(z)</caption>
+          <tr><th>z</th><th>−3</th><th>−2</th><th>−1</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>
+          <tr><th>σ</th><td>.05</td><td>.12</td><td>.27</td><td>.50</td><td>.73</td><td>.88</td><td>.95</td></tr>
+        </table>
+      </div>
+      <div class="wk" id="kwk"></div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> ReLU = "van một chiều": chặn âm, cho dương qua; chính chỗ gấp tại 0 cho mạng học hàm cong.
+        σ ép mọi số về (0,1) nên hợp biểu diễn <b>xác suất</b>. Bài 05 ghép <b>lớp tuyến tính + kích hoạt</b> thành
+        <b>một nơ-ron hoàn chỉnh</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Hàm kích hoạt — Activation</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var SIG={'-3':0.05,'-2':0.12,'-1':0.27,'0':0.50,'1':0.73,'2':0.88,'3':0.95};
+function fill1D(id, arr, blank, fmt){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fmt(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  function srt(a){return a.slice().sort(function(p,q){return p-q;});}
+  var negs=srt(WB.pickDistinct([-3,-2,-1],2));
+  var pos=srt(WB.pickDistinct([1,2,3],2));
+  var z=negs.concat([0]).concat(pos);            // 5 số nguyên, sắp tăng, luôn có âm/0/dương
+  var relu=z.map(function(v){return Math.max(0,v);});
+  var sig=z.map(function(v){return SIG[String(v)];});
+
+  // ĐỀ
+  fill1D('z',z,false,WB.fmtInt);
+  fill1D('r',relu,true,WB.fmtInt);
+  fill1D('s',sig,true,WB.fmt2);
+  // ĐÁP ÁN
+  fill1D('kz',z,false,WB.fmtInt);
+  fill1D('kr',relu,false,WB.fmtInt);
+  fill1D('ks',sig,false,WB.fmt2);
+
+  // ví dụ (dùng số thật trong dãy)
+  var neg=z[0], p=z[4];
+  var rule='<b>ReLU:</b> z &lt; 0 → 0 · z ≥ 0 → giữ nguyên. &nbsp; VD ReLU('+WB.wrap(WB.fmtInt(neg))+')=0, ReLU('+WB.fmtInt(p)+')='+WB.fmtInt(p)+'.';
+  var srule='<b>Sigmoid:</b> tra bảng từng giá trị. &nbsp; VD σ('+WB.fmtInt(z[1])+') = '+WB.fmt2(sig[1])+' (z nhỏ → tiến 0; z lớn → tiến 1).';
+  document.getElementById('wk').innerHTML  = rule+'<br>'+srule;
+  document.getElementById('kwk').innerHTML = rule+'<br>'+srule;
+
+  drawCurves();
+}
+
+// hai đồ thị tĩnh: ReLU (trên) + sigmoid (dưới). Vẽ vào cả 2 sheet.
+function drawCurves(){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var s='<defs><marker id="aa" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker></defs>';
+    // ---- ReLU (vùng trên) ----
+    s+='<text x="20" y="16" font-size="11" fill="#0c4a5e" font-weight="700">ReLU(z) = max(0, z)</text>';
+    s+='<line x1="24" y1="100" x2="190" y2="100" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#aa)"/>'; // trục z
+    s+='<line x1="104" y1="112" x2="104" y2="26" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#aa)"/>'; // trục y
+    s+='<text x="182" y="113" font-size="9" fill="#6b7280">z</text>';
+    s+='<polyline points="30,100 104,100 178,40" fill="none" stroke="#0e7490" stroke-width="2.6"/>';
+    s+='<circle cx="104" cy="100" r="2.6" fill="#b45309"/>';
+    s+='<text x="108" y="118" font-size="8.5" fill="#6b7280">gấp tại 0</text>';
+    // ---- Sigmoid (vùng dưới) ----
+    s+='<text x="20" y="150" font-size="11" fill="#7a5a00" font-weight="700">σ(z) ∈ (0, 1)</text>';
+    s+='<line x1="24" y1="225" x2="190" y2="225" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#aa)"/>';
+    s+='<line x1="104" y1="240" x2="104" y2="160" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#aa)"/>';
+    s+='<line x1="30" y1="170" x2="178" y2="170" stroke="#e3c489" stroke-width="1" stroke-dasharray="3 3"/>'; // y=1
+    s+='<text x="180" y="173" font-size="8.5" fill="#b45309">1</text>';
+    s+='<text x="182" y="238" font-size="9" fill="#6b7280">z</text>';
+    s+='<path d="M30,222 C70,220 92,210 104,197 C116,184 138,172 178,170" fill="none" stroke="#b45309" stroke-width="2.6"/>';
+    s+='<circle cx="104" cy="197" r="2.6" fill="#0e7490"/>';
+    s+='<text x="108" y="210" font-size="8.5" fill="#6b7280">σ(0)=0.5</text>';
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -11,6 +11,10 @@
 /* Khổ A3: thêm class "a3" vào <html> hoặc <body>. Để IN đúng A3, thêm 1 dòng
    trong file: <style>@page{ size:A3 portrait; }</style> (không ghi đè được @page bằng class). */
 .a3{ --paper-w:297mm; --paper-h:420mm; --pad-x:18mm; --pad-top:18mm; --pad-bot:16mm; }
+/* A4 NGANG (landscape): bề rộng nhiều hơn cho ma trận/pipeline/sơ đồ kiến trúc.
+   Thêm class "landscape" vào <body> + 1 dòng trong file đó: <style>@page{size:A4 landscape}</style>.
+   Lưu ý: diện tích = A4 dọc (chỉ xoay) — cần thêm chỗ thì tăng số trang, đừng quay lại A3. */
+.landscape{ --paper-w:297mm; --paper-h:210mm; --pad-x:16mm; --pad-top:13mm; --pad-bot:11mm; }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.45;}
 .page{width:var(--paper-w);height:var(--paper-h);overflow:hidden;background:#fff;margin:10mm auto;

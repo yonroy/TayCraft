@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Self-Attention — canvas toàn cảnh (A4 ngang, MẪU)</title>
+<style>
+  @page{ size:A4 landscape; margin:0; }
+  :root{
+    --ink:#1a1a1a; --dim:#6b7280; --paper:#fbf9f4; --line:#222;
+    --cream:#fdecd2; --creamL:#7a5b1e; --purple:#ece2ff; --purpleL:#5b3ed6;
+    --yellow:#fff3b0; --blue:#d6ecf6; --blueL:#0e6a86;
+    --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
+  .sheet{width:297mm;height:210mm;background:var(--paper);margin:8mm auto;padding:11mm 14mm 9mm;
+    position:relative;box-shadow:0 2px 16px rgba(0,0,0,.2);overflow:hidden;}
+  .ttl{display:flex;align-items:baseline;gap:14px;border-bottom:3px solid var(--ink);padding-bottom:7px;}
+  .ttl h1{font-size:30px;font-weight:800;letter-spacing:-.01em;}
+  .ttl .vi{font-size:16px;color:var(--dim);font-weight:600;}
+  .ttl .tag{margin-left:auto;font-family:var(--mono);font-size:12.5px;color:var(--dim);}
+  .ttl .badge{font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;background:var(--blueL);border-radius:6px;padding:3px 11px;}
+  .key .ttl .badge{background:#b45309;}
+  .canvas{display:flex;gap:20px;margin-top:12px;height:165mm;}
+  /* --- sơ đồ kiến trúc (trái) --- */
+  .schema{flex:none;width:62mm;}
+  /* --- bảng số (phải) --- */
+  .work{flex:1;display:flex;flex-direction:column;gap:13px;}
+  .band{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;}
+  .grp{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .lab{font-family:var(--mono);font-size:13.5px;font-weight:700;}
+  .lab s{color:var(--dim);font-weight:400;text-decoration:none;font-size:11px;}
+  .op{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--dim);align-self:center;padding:0 2px;}
+  .opnote{font-family:var(--mono);font-size:11px;color:var(--dim);align-self:center;text-align:center;}
+  /* ma trận kiểu ngoặc to */
+  .m{display:inline-grid;gap:2px;border-left:3px solid var(--ink);border-right:3px solid var(--ink);
+     border-radius:2px;padding:3px 2px;}
+  .c3{grid-template-columns:repeat(3,var(--cw,11mm));}
+  .c4{grid-template-columns:repeat(4,var(--cw,11mm));}
+  .cell{height:9.5mm;display:grid;place-items:center;font-family:var(--mono);font-size:17px;font-weight:700;
+     border:1.5px solid #cbcbcb;border-radius:2px;background:#fff;}
+  .q .cell,.k .cell{background:var(--cream);border-color:#e3c489;color:#3a2a08;}
+  .v .cell{background:var(--purple);border-color:#c3b1f5;color:#2e1f6b;}
+  .a .cell{background:var(--yellow);border-color:#e6cf6a;}
+  .o .cell{background:var(--blue);border-color:#a7d3e3;color:#0c4a5e;}
+  .blank{background:#fff !important;border:1.6px dashed #b9b9b9 !important;color:transparent;}
+  /* bảng exp */
+  .exp{font-family:var(--mono);font-size:12px;border:1.5px solid #ccc;border-radius:6px;overflow:hidden;align-self:center;}
+  .exp div{display:flex;}
+  .exp span{padding:2px 8px;border-right:1px solid #ddd;min-width:38px;text-align:center;}
+  .exp .h{background:#f2efe6;font-weight:700;}
+  .foot{position:absolute;left:14mm;right:14mm;bottom:5mm;display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid #ddd;padding-top:5px;}
+  .toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+  .toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid #ccc;
+    background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  .hintbar{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:2px;}
+  @media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (điền số) ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Self-Attention</h1><span class="vi">— Tự chú ý</span>
+    <span class="tag">điền vào ô trắng · d=4 · √d=2 · 3 token</span></div>
+
+  <div class="canvas">
+    <!-- SƠ ĐỒ KIẾN TRÚC -->
+    <div class="schema">
+      <svg viewBox="0 0 150 380" width="100%" height="100%" aria-label="luồng self-attention: X tách thành Q, K, V; Q nhân K chuyển vị ra điểm S; chia căn d; softmax thành A; A nhân V ra O"></svg>
+    </div>
+
+    <!-- BẢNG SỐ -->
+    <div class="work">
+      <!-- hàng 1: cho sẵn Q, K, V -->
+      <div class="band">
+        <div class="grp q"><span class="lab">Q <s>truy vấn</s></span>
+          <div class="m c4" id="mQ"></div></div>
+        <div class="grp k"><span class="lab">K <s>khóa</s></span>
+          <div class="m c4" id="mK"></div></div>
+        <div class="grp v"><span class="lab">V <s>giá trị</s></span>
+          <div class="m c4" id="mV"></div></div>
+        <div class="exp" id="expTab"></div>
+      </div>
+
+      <!-- hàng 2: S = QKᵀ → ÷√d → softmax → A -->
+      <div class="band">
+        <div class="grp"><span class="lab">S = Q·Kᵀ <s>điểm thô</s></span>
+          <div class="m c3" id="mS"></div></div>
+        <div class="op">÷</div><div class="opnote">√d<br>= 2</div>
+        <div class="grp"><span class="lab">S/2</span>
+          <div class="m c3" id="mSc"></div></div>
+        <div class="op">→</div><div class="opnote">softmax<br>theo hàng</div>
+        <div class="grp a"><span class="lab">A <s>trọng số chú ý</s></span>
+          <div class="m c3" id="mA"></div></div>
+      </div>
+
+      <!-- hàng 3: O = A·V -->
+      <div class="band">
+        <div class="grp a"><span class="lab">A</span><div class="m c3" id="mA2"></div></div>
+        <div class="op">·</div>
+        <div class="grp v"><span class="lab">V</span><div class="m c4" id="mV2"></div></div>
+        <div class="op">=</div>
+        <div class="grp o"><span class="lab">O <s>đầu ra</s></span><div class="m c4" id="mO"></div></div>
+      </div>
+      <div class="hintbar">Mỗi ô S = một tích vô hướng (hàng Q · hàng K). softmax: eˣ tra bảng → chia tổng hàng → mỗi hàng A cộng = 1. O = A·V.</div>
+    </div>
+  </div>
+
+  <div class="foot"><span>AI by Hand ✍️ · Self-Attention (mẫu canvas toàn cảnh)</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Self-Attention</h1><span class="vi">— lời giải</span>
+    <span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 150 380" width="100%" height="100%" aria-label="cùng luồng, đã điền số"></svg>
+    </div>
+    <div class="work">
+      <div class="band">
+        <div class="grp q"><span class="lab">Q</span><div class="m c4" id="kQ"></div></div>
+        <div class="grp k"><span class="lab">K</span><div class="m c4" id="kK"></div></div>
+        <div class="grp v"><span class="lab">V</span><div class="m c4" id="kV"></div></div>
+        <div class="exp" id="expTab2"></div>
+      </div>
+      <div class="band">
+        <div class="grp"><span class="lab">S = Q·Kᵀ</span><div class="m c3" id="kS"></div></div>
+        <div class="op">÷</div><div class="opnote">√d=2</div>
+        <div class="grp"><span class="lab">S/2</span><div class="m c3" id="kSc"></div></div>
+        <div class="op">→</div><div class="opnote">softmax</div>
+        <div class="grp a"><span class="lab">A</span><div class="m c3" id="kA"></div></div>
+      </div>
+      <div class="band">
+        <div class="grp a"><span class="lab">A</span><div class="m c3" id="kA2"></div></div>
+        <div class="op">·</div>
+        <div class="grp v"><span class="lab">V</span><div class="m c4" id="kV2"></div></div>
+        <div class="op">=</div>
+        <div class="grp o"><span class="lab">O</span><div class="m c4" id="kO"></div></div>
+      </div>
+      <div class="hintbar">Kiểm: mỗi hàng A cộng = 1.00 ✓ &nbsp;·&nbsp; token nào có điểm S cao thì "chú ý" nhiều hơn → O nghiêng về V của token đó.</div>
+    </div>
+  </div>
+
+  <div class="foot"><span>AI by Hand ✍️ · Self-Attention (mẫu canvas toàn cảnh)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var EXP = {0:1.00, 0.5:1.65, 1:2.72, 1.5:4.48, 2:7.39, 2.5:12.18, 3:20.09, 3.5:33.12, 4:54.60};
+function expLook(x){ var r=Math.round(x*2)/2; return EXP[r] != null ? EXP[r] : Math.exp(r); }
+
+// vẽ một ma trận vào #id từ mảng 2D; mode: 'val' điền số (màu theo lớp), 'blank' để trống
+function fill(id, M, fmt, blank){
+  var el = document.getElementById(id); if(!el) return;
+  var s='';
+  for(var i=0;i<M.length;i++) for(var j=0;j<M[i].length;j++){
+    s += '<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fmt(M[i][j]))+'</div>';
+  }
+  el.innerHTML = s;
+}
+var fI = function(x){ return WB.fmtInt(Math.round(x)); };
+var f2 = function(x){ return WB.fmt2(x); };
+
+function generate(){
+  // Q, K nhị phân {0,1} (giữ S/2 ∈ bội 0.5 để tra bảng exp); V ∈ {0,1,2}.
+  function mat(r,c,lo,hi){ var m=[]; for(var i=0;i<r;i++){var row=[];for(var j=0;j<c;j++)row.push(WB.randInt(lo,hi));m.push(row);} return m; }
+  var Q=mat(3,4,0,1), K=mat(3,4,0,1), V=mat(3,4,0,2);
+  function dot(a,b){ var s=0; for(var k=0;k<a.length;k++) s+=a[k]*b[k]; return s; }
+  // S = Q·Kᵀ
+  var S=[]; for(var i=0;i<3;i++){ var row=[]; for(var j=0;j<3;j++) row.push(dot(Q[i],K[j])); S.push(row); }
+  var Sc = S.map(function(r){ return r.map(function(v){ return v/2; }); });
+  // softmax theo hàng (dùng exp tra bảng để khớp tính tay)
+  var A=[]; for(var i=0;i<3;i++){ var e=Sc[i].map(expLook); var sum=e[0]+e[1]+e[2]; A.push(e.map(function(v){return v/sum;})); }
+  // O = A·V
+  var O=[]; for(var i=0;i<3;i++){ var row=[]; for(var j=0;j<4;j++){ var s=0; for(var k=0;k<3;k++) s+=A[i][k]*V[k][j]; row.push(s); } O.push(row); }
+
+  // ĐỀ: given có số, phần tính để trống
+  fill('mQ',Q,fI); fill('mK',K,fI); fill('mV',V,fI); fill('mV2',V,fI);
+  fill('mS',S,fI,true); fill('mSc',Sc,f2,true); fill('mA',A,f2,true); fill('mA2',A,f2,true); fill('mO',O,f2,true);
+  // ĐÁP ÁN: tất cả có số
+  fill('kQ',Q,fI); fill('kK',K,fI); fill('kV',V,fI); fill('kV2',V,fI);
+  fill('kS',S,fI); fill('kSc',Sc,f2); fill('kA',A,f2); fill('kA2',A,f2); fill('kO',O,f2);
+
+  // bảng exp tra sẵn
+  var keys=[0,0.5,1,1.5,2]; var top='', bot='';
+  keys.forEach(function(x){ top+='<span class="h">e^'+x+'</span>'; bot+='<span>'+EXP[x].toFixed(2)+'</span>'; });
+  var html='<div>'+top+'</div><div>'+bot+'</div>';
+  document.getElementById('expTab').innerHTML=html;
+  document.getElementById('expTab2').innerHTML=html;
+
+  drawSchema();
+}
+
+// sơ đồ luồng (giống bản đồ kiến trúc bên trái của Tom Yeh) — tĩnh
+function drawSchema(){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var s='<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a1a1a"/></marker></defs>';
+    function box(y,t,fill,h){ h=h||30; s+='<rect x="35" y="'+y+'" width="80" height="'+h+'" rx="6" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1.6"/><text x="75" y="'+(y+h/2+5)+'" text-anchor="middle" font-family="var(--sans)" font-size="14" font-weight="700" fill="#1a1a1a">'+t+'</text>'; }
+    function arrow(y1,y2){ s+='<line x1="75" y1="'+y1+'" x2="75" y2="'+y2+'" stroke="#1a1a1a" stroke-width="1.8" marker-end="url(#ar)"/>'; }
+    box(8,'X (token)','#eee');
+    arrow(38,58);
+    // Q K V nhánh
+    s+='<text x="75" y="72" text-anchor="middle" font-size="11" fill="#6b7280">×Wq,Wk,Wv</text>';
+    box(80,'Q · K · V','#fdecd2');
+    arrow(110,130);
+    box(132,'S = QKᵀ','#fff');
+    arrow(162,182);
+    box(184,'÷ √d','#fff',26);
+    arrow(210,230);
+    box(232,'softmax → A','#fff3b0',30);
+    arrow(262,282);
+    box(284,'O = A·V','#d6ecf6',30);
+    arrow(314,334);
+    s+='<text x="75" y="352" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a5e">đầu ra</text>';
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

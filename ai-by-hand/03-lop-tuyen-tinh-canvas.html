@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Lớp tuyến tính — canvas toàn cảnh (A4 ngang)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  /* tinh chỉnh riêng cho bài này */
+  .schema{width:72mm;}
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .wk{margin-top:5px;font-family:var(--mono);font-size:13px;background:#fff;border:1px dashed #d8d2c4;
+    border-radius:7px;padding:7px 11px;line-height:1.7;}
+  .wk b{color:var(--accent2);}
+  .param{font-family:var(--mono);font-size:13px;line-height:2.0;}
+  .param .lab{color:var(--accent);font-weight:700;}
+  .ublk{display:inline-block;min-width:26px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .flow{align-items:center;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Lớp tuyến tính</h1><span class="vi">— Linear Layer</span>
+    <span class="tag">điền ô trắng · y = W x + b</span></div>
+
+  <div class="scaf">
+    <b>Lớp cơ bản nhất.</b> Lớp tuyến tính (fully-connected / Dense) nhân đầu vào <b>x</b> với <b>ma trận trọng số W</b>
+    rồi cộng <b>bias b</b>. W "trộn" đầu vào, b dịch kết quả lên/xuống — khối Lego lặp lại trong toàn bộ deep learning.
+    <div class="fm">y = W x + b &nbsp;|&nbsp; W (3×2) · x (2×1) → Wx (3×1) · + b (3×1) → y (3×1)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 250 132" aria-label="lớp nối đầy đủ: 2 đầu vào nối tới 3 đầu ra, mỗi mũi tên là một trọng số"></svg>
+      <div class="hint"><b>Mỗi hàng W = một bộ dò</b>: hỏi đầu vào một câu (tích vô hướng, Bài 01) → một đầu ra.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">LAN TRUYỀN · mỗi hàng W chấm x, rồi cộng bias</div>
+      <div class="row flow">
+        <div class="blk w"><div class="nm">W <s>3×2</s></div><div class="m c2" id="W"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x <s>2×1</s></div><div class="m c1" id="x"></div></div>
+        <div class="op">=</div>
+        <div class="blk hot"><div class="nm">Wx <s>3×1</s></div><div class="m c1" id="Wx"></div></div>
+        <div class="op">+</div>
+        <div class="blk w"><div class="nm">b <s>3×1</s></div><div class="m c1" id="b"></div></div>
+        <div class="op">=</div>
+        <div class="blk out"><div class="nm">y <s>3×1</s></div><div class="m c1" id="y"></div></div>
+      </div>
+      <div class="wk" id="wk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">ĐẾM THAM SỐ · đổi số đầu ra thì W, b đổi cỡ ra sao?</div>
+      <div class="param">
+        Muốn <span class="lab">5 đầu ra</span> từ <span class="lab">2 đầu vào</span>:
+        W cỡ <span class="ublk"></span> × <span class="ublk"></span>, b dài <span class="ublk"></span>
+        &nbsp;→&nbsp; tổng tham số = <span class="ublk"></span> (W) + <span class="ublk"></span> (b) = <span class="ublk"></span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Lớp tuyến tính — y = Wx + b</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Lớp tuyến tính</h1><span class="vi">— lời giải &amp; kiểm tra</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <svg viewBox="0 0 250 132" aria-label="lớp nối đầy đủ đã điền"></svg>
+      <div class="hint">6 mũi tên = 6 trọng số (W 3×2); mỗi đầu ra cộng thêm một bias b.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">LAN TRUYỀN</div>
+      <div class="row flow">
+        <div class="blk w"><div class="nm">W</div><div class="m c2" id="kW"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x</div><div class="m c1" id="kx"></div></div>
+        <div class="op">=</div>
+        <div class="blk hot"><div class="nm">Wx</div><div class="m c1" id="kWx"></div></div>
+        <div class="op">+</div>
+        <div class="blk w"><div class="nm">b</div><div class="m c1" id="kb"></div></div>
+        <div class="op">=</div>
+        <div class="blk out"><div class="nm">y</div><div class="m c1" id="ky"></div></div>
+      </div>
+      <div class="wk" id="kwk"></div>
+
+      <div class="bandh fw" style="margin-top:6px">ĐẾM THAM SỐ</div>
+      <div class="param">
+        W cỡ <span class="ublk">5</span> × <span class="ublk">2</span>, b dài <span class="ublk">5</span>
+        &nbsp;→&nbsp; tổng = <span class="ublk">10</span> (W) + <span class="ublk">5</span> (b) = <span class="ublk">15</span>
+        &nbsp;<span style="color:var(--dim)">(số đầu ra = số hàng W = độ dài b)</span>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> y = <span id="kyT">(5, 1, 7)</span>. Lớp tuyến tính = <b>nhân ma trận (Bài 02) + cộng bias</b>.
+        Nhưng xếp bao nhiêu lớp tuyến tính lại vẫn ra một hàm tuyến tính — <b>chưa học được điều phức tạp</b>.
+        Bài 04 thêm <b>hàm kích hoạt phi tuyến</b> để mạng "bẻ cong" được.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Lớp tuyến tính — y = Wx + b</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI=function(x){return WB.fmtInt(x);};
+function wrap(v){ return WB.wrap(fI(v)); }
+function fill(id, M, blank){            // M: mảng 2D
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<M.length;i++) for(var j=0;j<M[i].length;j++)
+    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(M[i][j]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  function R(){ return WB.randInt(-3,4); }
+  var W=[[R(),R()],[R(),R()],[R(),R()]];
+  var x=[R(),R()];
+  var b=[R(),R(),R()];
+  var Wx=[0,0,0], terms=[];
+  for(var i=0;i<3;i++){ var t=[W[i][0]*x[0], W[i][1]*x[1]]; terms.push(t); Wx[i]=t[0]+t[1]; }
+  var y=[Wx[0]+b[0], Wx[1]+b[1], Wx[2]+b[2]];
+
+  // ĐỀ: W,x,b cho sẵn; Wx & y để trống
+  fill('W',W,false); fill('x',[[x[0]],[x[1]]],false); fill('b',[[b[0]],[b[1]],[b[2]]],false);
+  fill('Wx',[[Wx[0]],[Wx[1]],[Wx[2]]],true); fill('y',[[y[0]],[y[1]],[y[2]]],true);
+  // ĐÁP ÁN: điền đủ
+  fill('kW',W,false); fill('kx',[[x[0]],[x[1]]],false); fill('kb',[[b[0]],[b[1]],[b[2]]],false);
+  fill('kWx',[[Wx[0]],[Wx[1]],[Wx[2]]],false); fill('ky',[[y[0]],[y[1]],[y[2]]],false);
+
+  // worked-example: hàng 1
+  var expr='<b>(Wx)₁</b> = '+fI(W[0][0])+'·'+wrap(x[0])+' + '+fI(W[0][1])+'·'+wrap(x[1]);
+  document.getElementById('wk').innerHTML =
+    expr+' = <b>______</b> &nbsp;→&nbsp; y₁ = (Wx)₁ + '+wrap(b[0])+' = <b>______</b>';
+  document.getElementById('kwk').innerHTML =
+    expr+' = '+WB.sumExpr(terms[0], fI)+' = <b>'+fI(Wx[0])+'</b> &nbsp;→&nbsp; '+
+    'y₁ = '+fI(Wx[0])+WB.opTerm(b[0])+' = <b>'+fI(y[0])+'</b>';
+
+  document.getElementById('kyT').textContent =
+    '('+fI(y[0])+', '+fI(y[1])+', '+fI(y[2])+')';
+}
+
+// Sơ đồ tĩnh: 2 nút vào (lam) nối đầy đủ tới 3 nút ra — 6 cạnh = W (3×2). Vẽ vào cả 2 sheet.
+function drawLin(){
+  document.querySelectorAll('.schema svg').forEach(function(svg){
+    var inN=[{x:48,y:46,t:'x₁'},{x:48,y:96,t:'x₂'}];
+    var outN=[{x:198,y:30,t:'y₁'},{x:198,y:71,t:'y₂'},{x:198,y:112,t:'y₃'}];
+    var s='<defs><marker id="alin" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
+    inN.forEach(function(a){ outN.forEach(function(o){
+      s+='<line x1="'+(a.x+14)+'" y1="'+a.y+'" x2="'+(o.x-15)+'" y2="'+o.y+'" stroke="#b45309" stroke-width="1" opacity="0.55" marker-end="url(#alin)"/>';
+    }); });
+    inN.forEach(function(a){
+      s+='<circle cx="'+a.x+'" cy="'+a.y+'" r="14" fill="#fdecd2" stroke="#e3c489" stroke-width="1.6"/>';
+      s+='<text x="'+a.x+'" y="'+(a.y+4)+'" text-anchor="middle" font-size="12" fill="#3a2a08" font-weight="700">'+a.t+'</text>';
+    });
+    outN.forEach(function(o){
+      s+='<circle cx="'+o.x+'" cy="'+o.y+'" r="14" fill="#d6ecf6" stroke="#a7d3e3" stroke-width="1.6"/>';
+      s+='<text x="'+o.x+'" y="'+(o.y+4)+'" text-anchor="middle" font-size="12" fill="#0c4a5e" font-weight="700">'+o.t+'</text>';
+      s+='<text x="'+(o.x+18)+'" y="'+(o.y+4)+'" font-size="10" fill="#6b7280">+ b</text>';
+    });
+    s+='<text x="48" y="124" text-anchor="middle" font-size="10" fill="#3a2a08" font-weight="700">đầu vào x</text>';
+    s+='<text x="198" y="14" text-anchor="middle" font-size="10" fill="#0c4a5e" font-weight="700">đầu ra y</text>';
+    s+='<text x="123" y="14" text-anchor="middle" font-size="9.5" fill="#b45309" font-weight="700">W (6 trọng số)</text>';
+    svg.innerHTML=s;
+  });
+}
+WB.wire(generate);
+generate();
+drawLin();
+</script>
+</body>
+</html>

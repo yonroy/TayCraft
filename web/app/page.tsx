@@ -2,7 +2,9 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { LESSONS, SECTIONS, TOTAL_AVAILABLE } from "@/lib/lessons";
+import { CourseCatalog } from "@/components/course-catalog";
+import { PackageGrid } from "@/components/package-grid";
+import { TOTAL_AVAILABLE, TOTAL_PLANNED } from "@/lib/lessons";
 import { formatVnd } from "@/lib/utils";
 
 const PRICE = Number(process.env.COURSE_PRICE_VND ?? 199000);
@@ -55,48 +57,27 @@ export default function Home() {
         ))}
       </section>
 
+      {/* Packages */}
+      <section className="mx-auto max-w-5xl px-5 py-12">
+        <h2 className="text-2xl font-bold">Các gói khóa học</h2>
+        <p className="text-dim mt-1">
+          Lộ trình {TOTAL_PLANNED} phiếu chia 4 khóa. Hiện mở bán <b className="text-ink">Trọn bộ</b>;
+          các gói lẻ sẽ mở khi đủ phiếu.
+        </p>
+        <div className="mt-6">
+          <PackageGrid />
+        </div>
+      </section>
+
       {/* Curriculum */}
       <section className="mx-auto max-w-5xl px-5 py-12">
-        <h2 className="text-2xl font-bold">Nội dung trọn bộ</h2>
-        <p className="text-dim mt-1">{TOTAL_AVAILABLE} bài đã phát hành, thêm bài mới liên tục.</p>
-
-        {SECTIONS.map((section) => (
-          <div key={section} className="mt-8">
-            <div className="font-mono text-xs tracking-[0.12em] uppercase text-accent font-bold mb-3">
-              {section}
-            </div>
-            <div className="grid gap-2">
-              {LESSONS.filter((l) => l.section === section).map((l) => (
-                <div
-                  key={l.no}
-                  className={`flex items-center gap-4 rounded-xl border border-line px-4 py-3 ${
-                    l.available ? "" : "opacity-55 border-dashed"
-                  }`}
-                >
-                  <span
-                    className={`font-mono text-sm font-bold text-white rounded-lg px-2.5 py-1.5 ${
-                      l.available ? "bg-accent" : "bg-line"
-                    }`}
-                  >
-                    {l.no}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">
-                      {l.title} <span className="text-dim font-normal">— {l.english}</span>
-                    </div>
-                    <div className="text-sm text-dim truncate">{l.blurb}</div>
-                  </div>
-                  {l.isFree && (
-                    <span className="text-xs font-mono font-bold text-accent-2 border border-accent-2/40 rounded-full px-2 py-0.5">
-                      FREE
-                    </span>
-                  )}
-                  {!l.available && <span className="text-xs text-dim font-mono">sắp ra</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+        <h2 className="text-2xl font-bold">Toàn bộ lộ trình</h2>
+        <p className="text-dim mt-1">
+          {TOTAL_AVAILABLE} phiếu đã phát hành / {TOTAL_PLANNED} theo lộ trình — thêm bài mới liên tục.
+        </p>
+        <div className="mt-8">
+          <CourseCatalog />
+        </div>
       </section>
 
       {/* Pricing CTA */}

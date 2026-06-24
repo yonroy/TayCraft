@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { LESSONS, SECTIONS } from "@/lib/lessons";
+import { CourseCatalog } from "@/components/course-catalog";
 import { getUser, hasAccess } from "@/lib/auth";
 import { formatVnd } from "@/lib/utils";
 
@@ -32,56 +32,9 @@ export default async function LearnPage() {
           )}
         </div>
 
-        {SECTIONS.map((section) => (
-          <section key={section} className="mt-8">
-            <div className="font-mono text-xs tracking-[0.12em] uppercase text-accent font-bold mb-3">
-              {section}
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {LESSONS.filter((l) => l.section === section).map((l) => {
-                const unlocked = l.available && (l.isFree || access);
-                const card = (
-                  <div
-                    className={`h-full rounded-2xl border p-4 transition ${
-                      l.available
-                        ? "border-line hover:border-accent"
-                        : "border-dashed border-line opacity-55"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`font-mono text-sm font-bold text-white rounded-lg px-2.5 py-1.5 ${
-                          l.available ? "bg-accent" : "bg-line"
-                        }`}
-                      >
-                        {l.no}
-                      </span>
-                      <div className="flex-1" />
-                      {l.isFree && (
-                        <span className="text-xs font-mono font-bold text-accent-2">FREE</span>
-                      )}
-                      {l.available && !unlocked && <span>🔒</span>}
-                      {!l.available && (
-                        <span className="text-xs text-dim font-mono">sắp ra</span>
-                      )}
-                    </div>
-                    <h3 className="mt-3 font-semibold leading-snug">{l.title}</h3>
-                    <p className="text-sm text-dim mt-1 line-clamp-2">{l.blurb}</p>
-                  </div>
-                );
-
-                if (l.available && l.slug) {
-                  return (
-                    <Link key={l.no} href={`/learn/${l.slug}`}>
-                      {card}
-                    </Link>
-                  );
-                }
-                return <div key={l.no}>{card}</div>;
-              })}
-            </div>
-          </section>
-        ))}
+        <div className="mt-8">
+          <CourseCatalog access={access} />
+        </div>
       </main>
       <SiteFooter />
     </>

@@ -49,6 +49,16 @@ export function packagesGrantingCourse(course: Course): ProductId[] {
   return PRODUCTS.filter((p) => p.courses === "all" || p.courses.includes(course)).map((p) => p.id);
 }
 
+// Danh sách khóa một gói mở ("all" → cả 4 khóa). Dùng để liệt kê nội dung gói.
+export function coursesOfProduct(p: Product): Course[] {
+  return p.courses === "all" ? COURSES.map((c) => c.id) : p.courses;
+}
+
+// Các gói (Product) chứa khóa này — để header mỗi khóa ghi "Có trong gói…".
+export function productsIncludingCourse(course: Course): Product[] {
+  return PRODUCTS.filter((p) => p.courses === "all" || p.courses.includes(course));
+}
+
 export function isActiveProduct(id: string): boolean {
   return productById(id)?.active ?? false;
 }

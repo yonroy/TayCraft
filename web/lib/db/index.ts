@@ -12,8 +12,14 @@ function getDb(): PostgresJsDatabase<typeof schema> {
   if (!connectionString) {
     throw new Error("DATABASE_URL chưa được cấu hình");
   }
-  // prepare:false để tương thích connection pooler của Supabase (transaction mode).
-  const client = postgres(connectionString, { prepare: false });
+  // prepare:false để tương thích transaction pooler của Supabase; max:1 + idle_timeout
+  // hợp với môi trường serverless (mỗi invocation 1 connection, tự đóng khi rảnh).
+  const client = postgres(connectionString, {
+    prepare: false,
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 15,
+  });
   _db = drizzle(client, { schema });
   return _db;
 }

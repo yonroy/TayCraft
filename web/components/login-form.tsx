@@ -10,7 +10,9 @@ export function LoginForm({ next }: { next: string }) {
   const [loading, setLoading] = useState<"google" | "email" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  // Tính trong trình duyệt (client component vẫn bị SSR — không có window trên server).
+  const redirectUrl = () =>
+    `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
   async function signInGoogle() {
     setError(null);
@@ -18,7 +20,7 @@ export function LoginForm({ next }: { next: string }) {
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: { redirectTo: redirectUrl() },
     });
     if (error) {
       setError(error.message);
@@ -33,7 +35,7 @@ export function LoginForm({ next }: { next: string }) {
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo },
+      options: { emailRedirectTo: redirectUrl() },
     });
     setLoading(null);
     if (error) setError(error.message);

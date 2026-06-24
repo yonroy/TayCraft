@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { CourseCatalog } from "@/components/course-catalog";
 import { PackageGrid } from "@/components/package-grid";
 import { TOTAL_AVAILABLE, TOTAL_PLANNED } from "@/lib/lessons";
+import { productById } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 
-const PRICE = Number(process.env.COURSE_PRICE_VND ?? 199000);
+const PRICE = productById("all-access")!.priceVnd; // giá K5 Full (đích)
 
 const FEATURES = [
   { t: "Không code", d: "Tự điền ma trận, nhân–cộng từng ô bằng số thật. Hiểu cơ chế tận gốc." },
@@ -61,8 +62,9 @@ export default function Home() {
       <section className="mx-auto max-w-5xl px-5 py-12">
         <h2 className="text-2xl font-bold">Các gói khóa học</h2>
         <p className="text-dim mt-1">
-          Lộ trình {TOTAL_PLANNED} phiếu chia 4 khóa. Hiện mở bán <b className="text-ink">Trọn bộ</b>;
-          các gói lẻ sẽ mở khi đủ phiếu.
+          <b className="text-ink">Khóa 1 học miễn phí.</b> Chọn gói để mở K2–K4 — hoặc{" "}
+          <b className="text-ink">K5 Full</b> để có trọn đời + mọi phiếu ra trong tương lai (lộ trình{" "}
+          {TOTAL_PLANNED} phiếu).
         </p>
         <div className="mt-6">
           <PackageGrid />

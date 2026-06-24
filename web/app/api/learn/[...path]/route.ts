@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join, normalize, extname, basename } from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
 import { getUser, hasAccess } from "@/lib/auth";
-import { FREE_SLUGS, SHARED_ASSETS } from "@/lib/lessons";
+import { isFreeContentSlug, SHARED_ASSETS } from "@/lib/lessons";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ function isAlwaysAllowed(fileName: string): boolean {
   if (SHARED_ASSETS.includes(fileName)) return true; // wb.css, wb-random.js
   if (fileName.endsWith(".html")) {
     const slug = fileName.replace(/\.html$/, "");
-    return FREE_SLUGS.includes(slug);
+    return isFreeContentSlug(slug); // free slug lẻ + toàn bộ khóa free (K1)
   }
   return false;
 }

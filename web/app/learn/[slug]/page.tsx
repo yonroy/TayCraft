@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { Paywall } from "@/components/paywall";
-import { Button } from "@/components/ui/button";
-import { lessonBySlug, isFreeSlug } from "@/lib/lessons";
+import { lessonBySlug, isFreeLesson } from "@/lib/lessons";
 import { getUser, hasAccess } from "@/lib/auth";
 
 export default async function LessonViewer({
@@ -16,7 +15,7 @@ export default async function LessonViewer({
   if (!lesson || !lesson.available || !lesson.slug) notFound();
 
   const user = await getUser();
-  const canView = user ? await hasAccess(user.id, lesson.slug) : isFreeSlug(lesson.slug);
+  const canView = user ? await hasAccess(user.id, lesson.slug) : isFreeLesson(lesson);
 
   return (
     <>

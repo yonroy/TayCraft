@@ -13,7 +13,7 @@ interface OrderData {
   bank: { bank: string; account: string; accountName: string };
 }
 
-export function QrCheckout() {
+export function QrCheckout({ product }: { product?: string }) {
   const router = useRouter();
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,11 @@ export function QrCheckout() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const res = await fetch("/api/orders", { method: "POST" });
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product }),
+      });
       const data = await res.json();
       if (!active) return;
       if (data.alreadyOwned) {
@@ -41,7 +45,7 @@ export function QrCheckout() {
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, product]);
 
   // Poll trạng thái mỗi 4s.
   useEffect(() => {

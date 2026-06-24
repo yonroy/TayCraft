@@ -46,6 +46,14 @@ export interface Lesson {
 
 export const FREE_SLUGS = ["01-tich-vo-huong", "02-nhan-ma-tran", "03-lop-tuyen-tinh"];
 
+// Khóa mở miễn phí cho MỌI người (lead magnet của phễu). K1 = Nền tảng AI.
+export const FREE_COURSES: Course[] = ["K1"];
+
+// Bài này có miễn phí không (free slug riêng lẻ HOẶC thuộc khóa free).
+export function isFreeLesson(l: Lesson): boolean {
+  return l.isFree || (l.slug != null && FREE_SLUGS.includes(l.slug)) || FREE_COURSES.includes(l.course);
+}
+
 // Các asset dùng chung luôn được phép tải (kể cả khi xem bài free).
 export const SHARED_ASSETS = ["wb.css", "wb-random.js"];
 
@@ -230,6 +238,13 @@ export function lessonBySlug(slug: string): Lesson | undefined {
 
 export function isFreeSlug(slug: string): boolean {
   return FREE_SLUGS.includes(slug);
+}
+
+// Bài (theo slug) có mở miễn phí cho mọi người không — gồm free slug lẻ + toàn bộ khóa free (K1).
+export function isFreeContentSlug(slug: string): boolean {
+  if (FREE_SLUGS.includes(slug)) return true;
+  const l = lessonBySlug(slug);
+  return l ? isFreeLesson(l) : false;
 }
 
 // Khóa (K1–K4) chứa bài có slug này — dùng để phân quyền theo gói.

@@ -4,9 +4,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { CourseCatalog } from "@/components/course-catalog";
 import { getUser, hasAccess } from "@/lib/auth";
+import { productById } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 
-const PRICE = Number(process.env.COURSE_PRICE_VND ?? 199000);
+const PRICE = productById("all-access")!.priceVnd; // giá K5 Full (đích)
 
 export default async function LearnPage() {
   const user = await getUser();

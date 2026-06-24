@@ -213,44 +213,44 @@ footer a{color:var(--accent);}
       <div class="go">Mở →</div>
     </a>
 
-    <div class="card todo"><div class="no">19</div>
+    <a class="card adv done" href="19-embedding-vitri.html"><div class="no">19</div>
       <div class="body"><h2>Embedding &amp; Positional Encoding</h2>
         <p>Cửa vào của Transformer: tra bảng token → vectơ, cộng thêm <b>dấu vị trí</b> sin/cos. Biến chữ thành số có thứ tự.</p>
-        <div class="tags"><i>nhúng</i><i>sin/cos vị trí</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>nhúng</i><i>sin/cos vị trí</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
 
-    <div class="card todo"><div class="no">20</div>
+    <a class="card adv done" href="20-layernorm.html"><div class="no">20</div>
       <div class="body"><h2>LayerNorm / RMSNorm — chuẩn hóa theo hàng</h2>
         <p>Trừ trung bình, chia độ lệch chuẩn, rồi nhân γ cộng β. RMSNorm bỏ phần trừ mean (rẻ hơn, dùng trong LLaMA).</p>
-        <div class="tags"><i>ổn định</i><i>μ, σ, γ, β</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>ổn định</i><i>μ, σ, γ, β</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
 
-    <div class="card todo"><div class="no">21</div>
+    <a class="card adv done" href="21-rnn-mot-buoc.html"><div class="no">21</div>
       <div class="body"><h2>RNN — một bước hồi quy</h2>
         <p>hₜ = tanh(Wₓxₜ + Wₕhₜ₋₁ + b): trạng thái ẩn mang "ký ức" qua thời gian. Nền móng trước khi tới LSTM.</p>
-        <div class="tags"><i>chuỗi</i><i>tanh · hồi quy</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>chuỗi</i><i>tanh · hồi quy</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
 
-    <div class="card todo"><div class="no">22</div>
+    <a class="card adv done" href="22-lstm-mot-o-nho.html"><div class="no">22</div>
       <div class="body"><h2>LSTM — một ô nhớ</h2>
         <p>Cổng quên / vào / ra với số thật; cập nhật trạng thái ô qua 1 bước thời gian (gating ⊙). Vì sao nó nhớ lâu hơn RNN.</p>
-        <div class="tags"><i>chuỗi</i><i>cổng ⊙</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>chuỗi</i><i>cổng ⊙</i><i>A3 · ~22 phút</i></div></div>
+      <div class="go">Mở →</div></a>
   </div>
 
   <div class="sec">Huấn luyện &amp; mô hình sinh</div>
   <div class="list">
-    <div class="card todo"><div class="no">23</div>
+    <a class="card adv done" href="23-adam-mot-buoc.html"><div class="no">23</div>
       <div class="body"><h2>Adam — một bước cập nhật</h2>
         <p>Trung bình động gradient (m) &amp; bình phương (v), hiệu chỉnh bias, bước thích nghi θ ← θ − η·m̂/√v̂. Vì sao Adam "tự chỉnh tốc độ".</p>
-        <div class="tags"><i>tối ưu</i><i>m, v, bias-correct</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>tối ưu</i><i>m, v, bias-correct</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div></a>
 
-    <div class="card todo"><div class="no">24</div>
+    <a class="card adv done" href="24-autoencoder-vae.html"><div class="no">24</div>
       <div class="body"><h2>Autoencoder / VAE — nén &amp; sinh</h2>
         <p>Encoder ép x → mã z nhỏ, decoder dựng lại x̂. VAE thêm reparam z = μ + σ⊙ε để <b>sinh</b> mẫu mới. Học biểu diễn.</p>
-        <div class="tags"><i>biểu diễn</i><i>reparam z=μ+σε</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>biểu diễn</i><i>reparam z=μ+σε</i><i>~18 phút</i></div></div>
+      <div class="go">Mở →</div></a>
 
     <a class="card adv done" href="25-diffusion-khu-nhieu.html">
       <div class="no">25</div>
@@ -260,11 +260,11 @@ footer a{color:var(--accent);}
       <div class="go">Mở →</div>
     </a>
 
-    <div class="card todo"><div class="no">26</div>
+    <a class="card adv done" href="26-mixture-of-experts.html"><div class="no">26</div>
       <div class="body"><h2>Mixture of Experts — router + chuyên gia</h2>
         <p>Router softmax chọn top-k chuyên gia cho mỗi token, trộn đầu ra theo trọng số cổng. Cách scale tham số mà giữ chi phí tính thấp.</p>
-        <div class="tags"><i>quy mô lớn</i><i>router · top-k</i><i>sắp ra</i></div></div>
-      <div class="go">○</div></div>
+        <div class="tags"><i>quy mô lớn</i><i>router · top-k</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div></a>
   </div>
 
   <footer>

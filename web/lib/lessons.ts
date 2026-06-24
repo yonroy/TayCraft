@@ -39,15 +39,15 @@ export const LESSONS: Lesson[] = [
   { no: "16", slug: "16-cnn-tich-chap", title: "CNN — một bộ lọc", english: "Convolution", blurb: "Trượt kernel 3×3 → feature map → ReLU → max-pool.", section: "Nâng cao", available: true, isFree: false },
   { no: "17", slug: "17-cross-entropy", title: "Cross-Entropy", english: "Loss", blurb: "ℒ = −ln p(đúng); gradient gọn g = p − y.", section: "Nâng cao", available: true, isFree: false },
   { no: "18", slug: "18-multi-head-attention", title: "Multi-Head Attention", english: "Nhiều đầu chú ý", blurb: "Chạy nhiều đầu song song, Concat rồi trộn bằng Wᴼ.", section: "Nâng cao", available: true, isFree: false },
-  { no: "19", slug: null, title: "Embedding & Positional", english: "Sắp ra", blurb: "Tra bảng token → vectơ, cộng dấu vị trí sin/cos.", section: "Nâng cao", available: false, isFree: false },
-  { no: "20", slug: null, title: "LayerNorm / RMSNorm", english: "Sắp ra", blurb: "Chuẩn hóa theo hàng: μ, σ, γ, β.", section: "Nâng cao", available: false, isFree: false },
-  { no: "21", slug: null, title: "RNN — một bước hồi quy", english: "Sắp ra", blurb: "hₜ = tanh(Wₓxₜ + Wₕhₜ₋₁ + b).", section: "Nâng cao", available: false, isFree: false },
-  { no: "22", slug: null, title: "LSTM — một ô nhớ", english: "Sắp ra", blurb: "Cổng quên / vào / ra với số thật.", section: "Nâng cao", available: false, isFree: false },
+  { no: "19", slug: "19-embedding-vitri", title: "Embedding & Positional", english: "Embedding", blurb: "Tra bảng token → vectơ, cộng dấu vị trí sin/cos.", section: "Nâng cao", available: true, isFree: false },
+  { no: "20", slug: "20-layernorm", title: "LayerNorm / RMSNorm", english: "Normalization", blurb: "Chuẩn hóa theo hàng: μ, σ, γ, β; RMSNorm rẻ hơn.", section: "Nâng cao", available: true, isFree: false },
+  { no: "21", slug: "21-rnn-mot-buoc", title: "RNN — một bước hồi quy", english: "Recurrent", blurb: "hₜ = tanh(Wₓxₜ + Wₕhₜ₋₁ + b): ký ức qua thời gian.", section: "Nâng cao", available: true, isFree: false },
+  { no: "22", slug: "22-lstm-mot-o-nho", title: "LSTM — một ô nhớ", english: "Long Short-Term Memory", blurb: "Cổng quên / vào / ra với số thật; băng chuyền ký ức.", section: "Nâng cao", available: true, isFree: false },
 
-  { no: "23", slug: null, title: "Adam — một bước cập nhật", english: "Sắp ra", blurb: "m, v, hiệu chỉnh bias, bước thích nghi.", section: "Huấn luyện & sinh", available: false, isFree: false },
-  { no: "24", slug: null, title: "Autoencoder / VAE", english: "Sắp ra", blurb: "Nén x → z → dựng lại; reparam z = μ + σ⊙ε.", section: "Huấn luyện & sinh", available: false, isFree: false },
+  { no: "23", slug: "23-adam-mot-buoc", title: "Adam — một bước cập nhật", english: "Adam", blurb: "m, v, hiệu chỉnh bias, bước thích nghi θ ← θ − η·m̂/√v̂.", section: "Huấn luyện & sinh", available: true, isFree: false },
+  { no: "24", slug: "24-autoencoder-vae", title: "Autoencoder / VAE", english: "Autoencoder", blurb: "Nén x → z → dựng lại; reparam z = μ + σ⊙ε để sinh mẫu.", section: "Huấn luyện & sinh", available: true, isFree: false },
   { no: "25", slug: "25-diffusion-khu-nhieu", title: "Diffusion — một bước khử nhiễu", english: "Denoising", blurb: "Đoán nhiễu ε → ước lượng x̂₀ → trộn lại ít nhiễu hơn.", section: "Huấn luyện & sinh", available: true, isFree: false },
-  { no: "26", slug: null, title: "Mixture of Experts", english: "Sắp ra", blurb: "Router softmax chọn top-k chuyên gia cho mỗi token.", section: "Huấn luyện & sinh", available: false, isFree: false },
+  { no: "26", slug: "26-mixture-of-experts", title: "Mixture of Experts", english: "MoE", blurb: "Router softmax chọn top-k chuyên gia cho mỗi token.", section: "Huấn luyện & sinh", available: true, isFree: false },
 ];
 
 export const SECTIONS: Section[] = ["Nền tảng", "Nâng cao", "Huấn luyện & sinh"];

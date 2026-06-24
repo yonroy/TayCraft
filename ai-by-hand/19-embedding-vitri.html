@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 19 — Embedding &amp; Positional Encoding (A4 in được)</title>
+<link rel="stylesheet" href="wb.css">
+<style>
+  /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
+  .page .step{ margin-top:6px; }
+  .page .grid2{ margin-top:2px; gap:4px 24px; }
+  .page .intro{ margin-top:6px; }
+  .page .calc{ line-height:1.65; }
+  .page .note{ margin-top:4px; }
+  .page .mtx .cell{ height:8mm; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · cửa vào Transformer</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 19</span><h1>Embedding &amp; Vị trí <small>— biến chữ thành vectơ có thứ tự</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Transformer không đọc chữ — chỉ đọc số.</b> Mỗi <b>token</b> được tra trong <b>bảng nhúng E</b> ra một vectơ. Vì
+    chú ý (Bài 11) không phân biệt thứ tự, ta cộng thêm <b>dấu vị trí</b> sin/cos cố định → cùng một từ ở vị trí khác nhau
+    sẽ có vectơ khác nhau. Kết quả là đầu vào <b>X</b> cho Transformer.
+    <div class="formula">
+      X<sub>pos</sub> = E[token<sub>pos</sub>] <s style="color:var(--accent2)">+ PE[pos]</s>
+      &nbsp;&nbsp;|&nbsp;&nbsp; PE(pos,2i)=sin(pos/10000<sup>2i/d</sup>), &nbsp;PE(pos,2i+1)=cos(…)
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: bảng nhúng E, câu, bảng vị trí PE</h2><span class="tag">vocab 4 từ · d = 4</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">E <s>bảng nhúng (4 từ × d=4)</s></div>
+        <div class="mtx c4" style="--cell:10mm">
+          <div class="cell given" data-q="e00">2</div><div class="cell given" data-q="e01">-1</div><div class="cell given" data-q="e02">0</div><div class="cell given" data-q="e03">3</div>
+          <div class="cell given" data-q="e10">1</div><div class="cell given" data-q="e11">2</div><div class="cell given" data-q="e12">-2</div><div class="cell given" data-q="e13">0</div>
+          <div class="cell given" data-q="e20">-1</div><div class="cell given" data-q="e21">3</div><div class="cell given" data-q="e22">1</div><div class="cell given" data-q="e23">-2</div>
+          <div class="cell given" data-q="e30">0</div><div class="cell given" data-q="e31">-2</div><div class="cell given" data-q="e32">2</div><div class="cell given" data-q="e33">1</div>
+        </div>
+        <div class="note" style="text-align:center">hàng 0=<b>tôi</b> · 1=<b>yêu</b> · 2=<b>AI</b> · 3=<b>nhiều</b></div>
+      </div>
+      <div class="mwrap" style="margin-left:6px"><div class="mlabel">PE <s>dấu vị trí (cho sẵn)</s></div>
+        <div class="mtx c4" style="--cell:10mm;border-color:var(--accent2)">
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.00</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">1.00</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.00</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">1.00</div>
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.84</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.54</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.01</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">1.00</div>
+        </div>
+        <div class="note" style="text-align:center">hàng = vị trí <b>0</b> rồi <b>1</b> · sin/cos tra sẵn</div>
+      </div>
+    </div>
+    <div class="note" style="max-width:165mm">Câu cần mã hóa: <b>“<span data-q="w0">tôi</span> <span data-q="w1">yêu</span>”</b>
+      → token id = (<b data-q="id0">0</b>, <b data-q="id1">1</b>). Mỗi từ lấy <b>một hàng</b> của E theo id; PE không đổi theo từ, chỉ theo vị trí.</div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tra bảng: token → vectơ E</h2><span class="tag">lookup</span></div>
+    <div class="calc">
+      e<sub>0</sub> (“<span data-q="w0b">tôi</span>”, hàng <span data-q="id0c">0</span>) = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
+      e<sub>1</sub> (“<span data-q="w1b">yêu</span>”, hàng <span data-q="id1c">1</span>) = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <div class="hint"><b>Mẹo:</b> "embedding" chỉ là <b>tra bảng</b> — chép đúng hàng, chưa tính gì.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Cộng dấu vị trí</h2><span class="tag">e + PE</span></div>
+    <div class="calc">
+      X<sub>0</sub> = e<sub>0</sub>+PE[0] = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
+      X<sub>1</sub> = e<sub>1</sub>+PE[1] = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <div class="note">Cộng <b>theo từng ô</b> (element-wise). PE[0]=(0,1,0,1) nên vị trí 0 chỉ thêm 1 vào ô lẻ.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Ma trận đầu vào X (2 × d)</h2><span class="tag">gửi vào Transformer</span></div>
+    <div class="row" style="gap:14px">
+      <div class="mwrap"><div class="mlabel">X = E[token] + PE</div>
+        <div class="mtx c4" style="--cell:13mm">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="note" style="align-self:center;max-width:95mm">Mỗi hàng = 1 token đã "biết mình đứng ở đâu" — đầu vào thật của <b>Bài 11/13</b>.</div>
+    </div>
+  </div>
+
+  <!-- FIGURE -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: tra bảng + cộng sóng vị trí</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figEmb" class="fig" viewBox="0 0 270 104" width="100mm" height="38mm" aria-label="trái: bảng nhúng E với hai hàng được chọn tô đậm, mũi tên kéo ra hai vectơ token; phải: hai sóng sin và cos, chấm lấy mẫu tại vị trí 0 và 1 minh họa dấu vị trí cộng thêm"></svg>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 19 · Embedding &amp; Positional</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 19</span><h1>Embedding &amp; Vị trí <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tra bảng (chép hàng của E)</h2></div>
+    <div class="calc ans">
+      e<sub>0</sub> = ( <span class="blk" data-q="r0_0">2</span> , <span class="blk" data-q="r0_1">−1</span> , <span class="blk" data-q="r0_2">0</span> , <span class="blk" data-q="r0_3">3</span> )<br>
+      e<sub>1</sub> = ( <span class="blk" data-q="r1_0">1</span> , <span class="blk" data-q="r1_1">2</span> , <span class="blk" data-q="r1_2">−2</span> , <span class="blk" data-q="r1_3">0</span> )
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Cộng PE theo từng ô</h2></div>
+    <div class="calc ans">
+      X<sub>0</sub> = (<span data-q="s0">2+0, −1+1, 0+0, 3+1</span>) = ( <span class="blk" data-q="x0_0">2.00</span> , <span class="blk" data-q="x0_1">0.00</span> , <span class="blk" data-q="x0_2">0.00</span> , <span class="blk" data-q="x0_3">4.00</span> )<br>
+      X<sub>1</sub> = (<span data-q="s1">1+0.84, 2+0.54, −2+0.01, 0+1</span>) = ( <span class="blk" data-q="x1_0">1.84</span> , <span class="blk" data-q="x1_1">2.54</span> , <span class="blk" data-q="x1_2">−1.99</span> , <span class="blk" data-q="x1_3">1.00</span> )
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Ma trận đầu vào X</h2></div>
+    <div class="mwrap"><div class="mlabel">X (hàng = token đã gắn vị trí)</div>
+      <div class="mtx c4" style="--cell:18mm">
+        <div class="cell ans" data-q="x0_0b">2.00</div><div class="cell ans" data-q="x0_1b">0.00</div><div class="cell ans" data-q="x0_2b">0.00</div><div class="cell ans" data-q="x0_3b">4.00</div>
+        <div class="cell ans" data-q="x1_0b">1.84</div><div class="cell ans" data-q="x1_1b">2.54</div><div class="cell ans" data-q="x1_2b">−1.99</div><div class="cell ans" data-q="x1_3b">1.00</div>
+      </div></div>
+    <div class="note">Hai token có thể là <b>cùng một từ</b> mà vẫn ra vectơ khác nhau — đó chính là tác dụng của dấu vị trí.</div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> "Hiểu chữ" của AI bắt đầu từ hai phép cực đơn giản: <b>tra bảng</b> (E, học được khi train)
+    và <b>cộng một dấu vị trí cố định</b> (PE, không học). Sóng sin/cos có tần số giảm dần nên mỗi vị trí mang một
+    "vân tay" riêng mà mô hình có thể suy ra khoảng cách giữa các token. Ma trận X này chính là đầu vào cho
+    <b>Self-Attention (Bài 11)</b> và <b>Khối Transformer (Bài 13)</b> — cửa đã mở, phần còn lại là các bài đã học.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 19 · Embedding &amp; Positional</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+// PE cố định cho 2 vị trí đầu, d=4 (sin/cos đã làm tròn 2 chữ số — học sinh tra, không tự tính).
+var PE = [[0,1,0,1],[0.84,0.54,0.01,1.00]];
+var VOCAB = ['tôi','yêu','AI','nhiều'];
+
+function generate(){
+  // Bảng nhúng E: 4 từ × d=4, số nguyên nhỏ.
+  var E = [];
+  for (var r=0;r<4;r++){ E.push([WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3)]); }
+  // Câu: 2 token (cho phép trùng để minh họa "cùng từ, khác vị trí").
+  var id0 = WB.randInt(0,3), id1 = WB.randInt(0,3);
+  var e0 = E[id0], e1 = E[id1];
+  var X0 = e0.map(function(v,i){ return v + PE[0][i]; });
+  var X1 = e1.map(function(v,i){ return v + PE[1][i]; });
+
+  var map = {
+    w0: VOCAB[id0], w1: VOCAB[id1], w0b: VOCAB[id0], w1b: VOCAB[id1],
+    id0: String(id0), id1: String(id1), id0b: String(id0), id1b: String(id1), id0c: String(id0), id1c: String(id1),
+    s0: e0.map(function(v,i){ return WB.fmtInt(v)+'+'+WB.fmt2(PE[0][i]).replace('−','-'); }).join(', '),
+    s1: e1.map(function(v,i){ return WB.fmtInt(v)+'+'+WB.fmt2(PE[1][i]).replace('−','-'); }).join(', ')
+  };
+  // điền bảng E
+  for (var r=0;r<4;r++) for (var c=0;c<4;c++) map['e'+r+c] = WB.fmtInt(E[r][c]);
+  // hàng tra được
+  for (var c=0;c<4;c++){ map['r0_'+c]=WB.fmtInt(e0[c]); map['r1_'+c]=WB.fmtInt(e1[c]); }
+  // X
+  for (var c=0;c<4;c++){
+    map['x0_'+c]=WB.fmt2(X0[c]); map['x0_'+c+'b']=WB.fmt2(X0[c]);
+    map['x1_'+c]=WB.fmt2(X1[c]); map['x1_'+c+'b']=WB.fmt2(X1[c]);
+  }
+  WB.setAll(map);
+  drawEmb(id0, id1);
+}
+
+// Trái: bảng E (4×4) với 2 hàng được chọn tô đậm + mũi tên ra 2 vectơ. Phải: sóng sin & cos, chấm tại pos 0,1.
+function drawEmb(id0, id1){
+  var svg = document.getElementById('figEmb'); if (!svg) return;
+  var s = '<defs><marker id="aem" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker></defs>';
+  // --- bảng E ---
+  var x0=8, y0=14, cw=11, ch=13;
+  for (var r=0;r<4;r++){
+    var on = (r===id0 || r===id1);
+    s += '<rect x="'+x0+'" y="'+(y0+r*ch)+'" width="'+(cw*4)+'" height="'+ch+'" fill="'+(on?'#dff0f3':'#fff')+'" stroke="'+(on?'#0e7490':'#dbe3ec')+'" stroke-width="'+(on?1.3:0.8)+'"/>';
+    for (var c=1;c<4;c++) s += '<line x1="'+(x0+c*cw)+'" y1="'+(y0+r*ch)+'" x2="'+(x0+c*cw)+'" y2="'+(y0+(r+1)*ch)+'" stroke="#eef2f6" stroke-width="0.6"/>';
+    s += '<text x="'+(x0-3)+'" y="'+(y0+r*ch+9)+'" text-anchor="end" style="font-size:8px" fill="'+(on?'#0e7490':'#9fb0c0')+'" font-weight="'+(on?700:400)+'">'+r+'</text>';
+  }
+  s += '<text x="'+(x0+cw*2)+'" y="'+(y0-3)+'" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">bảng E</text>';
+  // mũi tên từ 2 hàng chọn ra 2 ô token
+  var tx=78, ty=[26,52];
+  [id0,id1].forEach(function(id,k){
+    var sy = y0 + id*ch + ch/2;
+    s += '<path d="M'+(x0+cw*4+1)+','+sy+' C '+(tx-14)+','+sy+' '+(tx-14)+','+ty[k]+' '+(tx-1)+','+ty[k]+'" fill="none" stroke="#0e7490" stroke-width="1.1" marker-end="url(#aem)"/>';
+    s += '<rect x="'+tx+'" y="'+(ty[k]-7)+'" width="34" height="14" rx="3" fill="#eaf4f6" stroke="#7fb4bf"/>';
+    s += '<text x="'+(tx+17)+'" y="'+(ty[k]+3.5)+'" text-anchor="middle" style="font-size:8px" fill="#0e7490" font-weight="700">'+VOCAB[id]+'</text>';
+    s += '<text x="'+(tx+17)+'" y="'+(ty[k]+13)+'" text-anchor="middle" style="font-size:7px" fill="#9fb0c0">vị trí '+k+'</text>';
+  });
+  // dấu cộng PE
+  s += '<text x="128" y="42" text-anchor="middle" style="font-size:13px" fill="#b45309" font-weight="700">+ PE</text>';
+  // --- sóng sin / cos ---
+  var ox=148, oy=52, w=110, amp=20;
+  s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+(ox+w)+'" y2="'+oy+'" stroke="#c2ccd8" stroke-width="0.8"/>';
+  function wave(fn, color){
+    var p='';
+    for (var i=0;i<=80;i++){ var t=i/80*9; var X=ox+i/80*w; var Y=oy-fn(t)*amp; p+=(i===0?'M':'L')+X.toFixed(1)+','+Y.toFixed(1)+' '; }
+    return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.4"/>';
+  }
+  s += wave(Math.sin, '#b45309');
+  s += wave(Math.cos, '#7c5cff');
+  // chấm lấy mẫu tại pos 0 & 1 — giãn cách để nhãn không chồng
+  [0,1].forEach(function(pos){
+    var X = ox + (0.06 + pos*0.20)*w;
+    s += '<line x1="'+X.toFixed(1)+'" y1="'+(oy-amp-2)+'" x2="'+X.toFixed(1)+'" y2="'+(oy+amp+2)+'" stroke="#dbe3ec" stroke-width="0.7" stroke-dasharray="2 2"/>';
+    s += '<circle cx="'+X.toFixed(1)+'" cy="'+(oy-Math.sin(pos)*amp).toFixed(1)+'" r="2.2" fill="#b45309"/>';
+    s += '<circle cx="'+X.toFixed(1)+'" cy="'+(oy-Math.cos(pos)*amp).toFixed(1)+'" r="2.2" fill="#7c5cff"/>';
+    s += '<text x="'+X.toFixed(1)+'" y="'+(oy+amp+10)+'" text-anchor="middle" style="font-size:7.5px" fill="#5b6776">vị trí '+pos+'</text>';
+  });
+  s += '<text x="'+(ox+w)+'" y="'+(oy-amp-3)+'" text-anchor="end" style="font-size:8px" fill="#b45309">sin</text>';
+  s += '<text x="'+(ox+w)+'" y="'+(oy+amp+0)+'" text-anchor="end" style="font-size:8px" fill="#7c5cff">cos</text>';
+  s += '<text x="'+(ox+w/2)+'" y="14" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">dấu vị trí = lấy mẫu sin/cos</text>';
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+drawEmb(0, 1);
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 16 — CNN: một bộ lọc tích chập (A3 · 4 trang)</title>
+<style>
+@page{ size:A3 portrait; margin:0; }
+:root{
+  --ink:#16202e; --dim:#5b6776; --line:#c2ccd8; --accent:#0e7490; --accent2:#b45309; --v:#7c5cff;
+  --given:#eaf4f6; --givenline:#7fb4bf; --blank:#ffffff;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.45;}
+.page{width:297mm;height:420mm;overflow:hidden;background:#fff;margin:10mm auto;padding:18mm 18mm 16mm;
+  box-shadow:0 2px 14px rgba(0,0,0,.18);position:relative;}
+.wb-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--ink);padding-bottom:8px;}
+.wb-head .brand{font-weight:800;font-size:17px;letter-spacing:.02em;}
+.wb-head .brand span{color:var(--accent);}
+.wb-head .meta{text-align:right;font-family:var(--mono);font-size:12px;color:var(--dim);}
+.wb-title{margin-top:11px;display:flex;align-items:baseline;gap:12px;}
+.wb-title .no{font-family:var(--mono);font-weight:700;color:#fff;background:var(--accent);border-radius:7px;padding:3px 10px;font-size:15px;}
+.wb-title h1{font-size:24px;font-weight:800;letter-spacing:-.01em;}
+.wb-title h1 small{font-weight:600;color:var(--dim);font-size:16px;}
+.namebar{margin-top:8px;display:flex;gap:26px;font-size:13px;color:var(--dim);font-family:var(--mono);}
+.namebar u{text-decoration:none;border-bottom:1.4px dotted var(--line);display:inline-block;min-width:120px;}
+.crumb{font-family:var(--mono);font-size:12px;color:var(--dim);}
+.intro{margin-top:11px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;
+  background:#f7fafb;padding:11px 16px;font-size:14px;}
+.intro b{color:var(--accent);}
+.formula{margin-top:9px;text-align:center;font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink);
+  background:#fff;border:1px dashed var(--line);border-radius:8px;padding:10px 6px;}
+.step{margin-top:15px;break-inside:avoid;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;}
+.step-h{display:flex;align-items:center;gap:11px;margin-bottom:9px;}
+.step-h .b{font-family:var(--mono);font-weight:700;font-size:14px;color:#fff;background:var(--ink);border-radius:50%;
+  width:27px;height:27px;display:grid;place-items:center;flex:none;}
+.step-h h2{font-size:16.5px;font-weight:700;}
+.step-h .tag{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line);
+  border-radius:20px;padding:2px 10px;}
+.row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.op{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--dim);}
+.hint{margin-top:10px;font-size:13px;color:var(--accent2);font-family:var(--mono);}
+.hint b{color:var(--accent2);}
+.mwrap{display:inline-flex;flex-direction:column;align-items:center;gap:5px;}
+.mlabel{font-family:var(--mono);font-size:13.5px;font-weight:700;color:var(--ink);}
+.mlabel s{color:var(--dim);font-weight:400;text-decoration:none;font-size:11.5px;}
+.mtx{display:grid;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:3px;
+  padding:3px;gap:3px;background:#fff;}
+.mtx.c2{grid-template-columns:repeat(2,var(--cell,16mm));}
+.mtx.c3{grid-template-columns:repeat(3,var(--cell,16mm));}
+.mtx.c5{grid-template-columns:repeat(5,var(--cell,14mm));}
+.cell{height:13mm;display:grid;place-items:center;font-family:var(--mono);font-size:17px;border:1px solid var(--line);border-radius:3px;}
+.mtx.tall .cell{height:16mm;}
+.mtx.c5 .cell{height:14mm;}
+.cell.px{background:#dbeaf0;border-color:#7fb4bf;font-weight:700;color:#0e5566;}
+.cell.px0{background:#fbfdfe;color:#9fb0c0;}
+.cell.ker{background:#f1eeff;border-color:#bcb0ff;font-weight:700;color:#4a36b0;}
+.cell.blank{background:var(--blank);}
+.note{font-size:12.5px;color:var(--dim);margin-top:8px;}
+.worked{margin-top:9px;font-family:var(--mono);font-size:12.5px;color:#7a3d00;background:#fff5e9;
+  border:1px solid #e3b780;border-radius:7px;padding:7px 12px;}
+.kvbox{font-family:var(--mono);font-size:13px;color:var(--ink);background:#f7fbfc;border:1px solid #cfe4e8;
+  border-left:4px solid var(--accent);border-radius:8px;padding:10px 14px;line-height:1.9;}
+.kvbox b{color:var(--accent);}
+.wb-foot{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;}
+.page.key .wb-title .no{background:var(--accent2);}
+.page.key .cell.ans{background:#fff5e9;border-color:#e3b780;font-weight:700;color:#7a3d00;}
+.key-badge{font-family:var(--mono);font-size:12px;color:#fff;background:var(--accent2);border-radius:5px;padding:3px 10px;font-weight:700;}
+.toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+.toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid var(--line);
+  background:#fff;color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent);}
+@media print{ body{background:#fff;} .page{margin:0;box-shadow:none;} .page+.page{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1/4 — KHÁI NIỆM & TOÀN CẢNH ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A3 · 4 trang<br>Mức: nền tảng</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 16</span><h1>CNN — một bộ lọc tích chập <small>— Convolution by hand</small></h1></div>
+
+  <div class="intro">
+    <b>Ý chính.</b> CNN <b>trượt một bộ lọc nhỏ</b> (kernel) khắp ảnh: ở mỗi vị trí, <b>nhân từng ô rồi cộng</b> → một con số.
+    Tập hợp các con số đó là <b>bản đồ đặc trưng</b> (feature map) — cho biết "đặc trưng" (cạnh, góc…) xuất hiện ở đâu.
+    Một kernel = <b>vài trọng số dùng chung cho cả ảnh</b> (chia sẻ trọng số) → ít tham số, bắt được mẫu cục bộ dù nằm ở đâu.
+    <div class="formula">
+      O[i,j] = Σ<sub>u,v</sub> &nbsp; Ảnh[i+u, j+v] · Kernel[u,v]
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:8px">
+    <div class="step">
+      <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trượt cửa sổ</h2><span class="tag">stride = 1</span></div>
+      <svg id="figSlide" viewBox="0 0 300 200" width="116mm" height="77mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="cửa sổ 3x3 trượt trên ảnh 5x5"></svg>
+    </div>
+    <div class="step">
+      <div class="step-h"><div class="b" style="background:var(--v)">⇶</div><h2>Pipeline một tầng CNN</h2></div>
+      <svg id="figPipe" viewBox="0 0 300 200" width="116mm" height="77mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="pipeline conv relu pool"></svg>
+      <div class="note">Ảnh 5×5, kernel 3×3, stride 1, không đệm → feature map <b>3×3</b> (5−3+1=3). Sau đó <b>ReLU</b> bỏ số âm, <b>max-pool</b> thu gọn.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--ink)">?</div><h2>Vì sao tích chập hợp với ảnh</h2></div>
+    <div class="kvbox">
+      <b>Cục bộ:</b> mỗi ô đầu ra chỉ nhìn một vùng nhỏ 3×3 (đặc trưng ảnh mang tính cục bộ).&nbsp;
+      <b>Chia sẻ trọng số:</b> cùng 1 kernel quét cả ảnh → bắt cùng một mẫu (vd cạnh dọc) ở mọi vị trí, rất ít tham số.&nbsp;
+      <b>Bất biến tịnh tiến:</b> vật dịch chỗ thì đặc trưng vẫn được phát hiện.
+    </div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 16 · CNN tích chập</span><span>Trang 1/4 · TOÀN CẢNH</span></div>
+</section>
+
+<!-- ============ TRANG 2/4 — DỮ LIỆU ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta crumb">Bài 16 · CNN<br>ảnh 5×5 · kernel 3×3</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 16</span><h1>Dữ liệu &amp; cách trượt kernel</h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~20 phút</span></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: ảnh &amp; bộ lọc</h2><span class="tag">ô sáng = giá trị · ô tối = 0</span></div>
+    <div class="row" style="align-items:flex-start;gap:34px">
+      <div class="mwrap"><div class="mlabel">Ảnh <s>5×5 (có cạnh dọc)</s></div>
+        <div class="mtx c5">
+          <div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px0">0</div><div class="cell px0">0</div>
+          <div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px0">0</div><div class="cell px0">0</div>
+          <div class="cell px0">0</div><div class="cell px0">0</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div>
+          <div class="cell px0">0</div><div class="cell px0">0</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div>
+          <div class="cell px0">0</div><div class="cell px0">0</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div><div class="cell px" data-q="b">2</div>
+        </div></div>
+      <div class="mwrap"><div class="mlabel" style="color:var(--v)">Kernel K <s>3×3 · dò cạnh dọc</s></div>
+        <div class="mtx c3" style="--cell:16mm">
+          <div class="cell ker">1</div><div class="cell ker">0</div><div class="cell ker">−1</div>
+          <div class="cell ker">1</div><div class="cell ker">0</div><div class="cell ker">−1</div>
+          <div class="cell ker">1</div><div class="cell ker">0</div><div class="cell ker">−1</div>
+        </div>
+        <div class="note" style="max-width:60mm">Cột giữa = 0 → mỗi ô đầu ra chỉ là <b>(tổng cột trái) − (tổng cột phải)</b> của ô 3×3.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">✦</div><h2>Ví dụ một cửa sổ (ô trên-trái)</h2></div>
+    <div class="kvbox">
+      Cửa sổ 3×3 góc trên-trái (hàng 1–3, cột 1–3) nhân với K rồi cộng:<br>
+      <span data-q="wEx">(cột trái − cột phải) từng hàng = (2−2) + (2−2) + (0−2) = <b>−2</b></span><br>
+      Số âm nghĩa là "bên phải sáng hơn bên trái". ReLU sẽ cắt số âm này về 0 ở bước sau.
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--v)">∑</div><h2>Ba bước cần làm (trang 3)</h2></div>
+    <div class="kvbox" style="border-left-color:var(--v);background:#fbf7ff">
+      ① <b>Tích chập</b>: trượt K khắp ảnh → feature map 3×3. &nbsp; ② <b>ReLU</b>: max(0, ·) từng ô. &nbsp;
+      ③ <b>Max-pool 2×2</b> (stride 1): lấy số lớn nhất mỗi cửa sổ 2×2 → bản đồ 2×2.
+    </div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 16 · CNN tích chập</span><span>Trang 2/4 · ĐỀ — dữ liệu</span></div>
+</section>
+
+<!-- ============ TRANG 3/4 — ĐỀ tính tay ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta crumb">Bài 16 · CNN<br>3 bước · điền bằng bút chì</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 16</span><h1>Tính tay tích chập <small>— điền các ô trống</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tích chập: trượt K → feature map</h2><span class="tag">9 vị trí · mỗi ô = Σ nhân</span></div>
+    <div class="mwrap"><div class="mlabel">Feature map O <s>3×3</s></div>
+      <div class="mtx c3 tall" style="--cell:20mm">
+        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+      </div></div>
+    <div class="hint"><b>Mẹo:</b> ô (i,j) lấy vùng 3×3 bắt đầu ở hàng i, cột j; vì cột giữa kernel = 0 → chỉ cần (Σ cột trái) − (Σ cột phải).</div>
+  </div>
+
+  <div class="grid2" style="margin-top:6px">
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>ReLU(O) = max(0, O)</h2><span class="tag">bỏ số âm</span></div>
+      <div class="mwrap"><div class="mlabel">ReLU <s>3×3</s></div>
+        <div class="mtx c3 tall" style="--cell:18mm">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="hint"><b>Cách làm:</b> số âm → 0, số ≥ 0 giữ nguyên.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">3</div><h2>Max-pool 2×2 (stride 1)</h2><span class="tag">3×3 → 2×2</span></div>
+      <div class="mwrap"><div class="mlabel">Pool <s>2×2</s></div>
+        <div class="mtx c2 tall" style="--cell:20mm">
+          <div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="hint"><b>Cách làm:</b> mỗi ô = số lớn nhất trong cửa sổ 2×2 của ReLU.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--dim)">✎</div><h2>Chỗ tính nháp</h2><span class="tag">9 cửa sổ tích chập</span></div>
+    <div style="border:1.4px dashed var(--line);border-radius:10px;height:96mm;background:repeating-linear-gradient(transparent,transparent 13mm,#eef2f6 13mm,#eef2f6 13.4mm)"></div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 16 · CNN tích chập</span><span>Trang 3/4 · ĐỀ — tính tay</span></div>
+</section>
+
+<!-- ============ TRANG 4/4 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 16</span><h1>Lời giải <small>— tích chập · ReLU · pooling</small></h1></div>
+
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Feature map O</h2></div>
+      <div class="mwrap"><div class="mlabel">O</div>
+        <div class="mtx c3" style="--cell:18mm">
+          <div class="cell ans" data-q="o11">−2</div><div class="cell ans" data-q="o12">2</div><div class="cell ans" data-q="o13">4</div>
+          <div class="cell ans" data-q="o21">−4</div><div class="cell ans" data-q="o22">−2</div><div class="cell ans" data-q="o23">2</div>
+          <div class="cell ans" data-q="o31">−6</div><div class="cell ans" data-q="o32">−6</div><div class="cell ans" data-q="o33">0</div>
+        </div></div>
+      <div class="worked" data-q="wO">Ô (1,3): vùng cột 3–5, (2−0)+(2−0)+(2−2) = 4 → kernel "thấy" cạnh sáng→tối.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>ReLU(O)</h2></div>
+      <div class="mwrap"><div class="mlabel">ReLU</div>
+        <div class="mtx c3" style="--cell:18mm">
+          <div class="cell ans" data-q="r11">0</div><div class="cell ans" data-q="r12">2</div><div class="cell ans" data-q="r13">4</div>
+          <div class="cell ans" data-q="r21">0</div><div class="cell ans" data-q="r22">0</div><div class="cell ans" data-q="r23">2</div>
+          <div class="cell ans" data-q="r31">0</div><div class="cell ans" data-q="r32">0</div><div class="cell ans" data-q="r33">0</div>
+        </div></div>
+      <div class="note">Mọi số âm → 0. Chỉ giữ nơi cạnh "sáng bên trái" được phát hiện.</div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:4px">
+    <div class="step">
+      <div class="step-h"><div class="b">3</div><h2>Max-pool 2×2 (stride 1)</h2></div>
+      <div class="mwrap"><div class="mlabel">Pool</div>
+        <div class="mtx c2" style="--cell:20mm">
+          <div class="cell ans" data-q="p11">2</div><div class="cell ans" data-q="p12">4</div>
+          <div class="cell ans" data-q="p21">0</div><div class="cell ans" data-q="p22">2</div>
+        </div></div>
+      <div class="worked" data-q="wP">Ô (1,2): max(2, 4, 0, 2) = 4.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b" style="background:var(--accent)">◳</div><h2>Bản đồ đặc trưng (heatmap)</h2></div>
+      <svg id="figHeat" viewBox="0 0 230 160" width="86mm" height="60mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap feature map"></svg>
+    </div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Một <b>tích chập</b> = trượt kernel, nhân–cộng từng cửa sổ. Kernel dò-cạnh làm feature map <b>sáng đúng nơi có cạnh</b>;
+    <b>ReLU</b> giữ tín hiệu dương, <b>pooling</b> thu nhỏ &amp; chọn phản hồi mạnh nhất. Một tầng CNN thật chỉ là <b>nhiều kernel như vậy chạy song song</b>,
+    rồi xếp chồng nhiều tầng để bắt đặc trưng từ cạnh → hình → vật thể.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 16 · CNN tích chập</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var M=[[-1,1,2],[-2,-1,1],[-3,-3,0]];   // hệ số (× giá trị điểm sáng b)
+function generate(){
+  var b=WB.randInt(1,3);
+  var map={b:WB.fmtInt(b)};
+  var O=[],R=[];
+  for(var i=0;i<3;i++){O[i]=[];R[i]=[];for(var j=0;j<3;j++){
+    var o=b*M[i][j], r=Math.max(0,o);
+    O[i][j]=o; R[i][j]=r;
+    map['o'+(i+1)+(j+1)]=WB.fmtInt(o);
+    map['r'+(i+1)+(j+1)]=WB.fmtInt(r);
+  }}
+  function mx(a){return Math.max.apply(null,a);}
+  map['p11']=WB.fmtInt(mx([R[0][0],R[0][1],R[1][0],R[1][1]]));
+  map['p12']=WB.fmtInt(mx([R[0][1],R[0][2],R[1][1],R[1][2]]));
+  map['p21']=WB.fmtInt(mx([R[1][0],R[1][1],R[2][0],R[2][1]]));
+  map['p22']=WB.fmtInt(mx([R[1][1],R[1][2],R[2][1],R[2][2]]));
+  map['wEx']='(cột trái − cột phải) từng hàng = ('+b+'−'+b+') + ('+b+'−'+b+') + (0−'+b+') = '+WB.fmtInt(-b);
+  map['wO']='Ô (1,3): vùng cột 3–5, ('+b+'−0)+('+b+'−0)+('+b+'−'+b+') = '+WB.fmtInt(2*b)+' → kernel "thấy" cạnh sáng→tối.';
+  map['wP']='Ô (1,2): max('+R[0][1]+', '+R[0][2]+', '+R[1][1]+', '+R[1][2]+') = '+R[0][2]+'.';
+  WB.setAll(map);
+  drawHeat(O);
+}
+
+// cửa sổ 3x3 trượt trên ảnh 5x5
+function drawSlide(){
+  var svg=document.getElementById('figSlide'); if(!svg) return;
+  var img=[[1,1,1,0,0],[1,1,1,0,0],[0,0,1,1,1],[0,0,1,1,1],[0,0,1,1,1]];
+  var cs=28, ox=40, oy=24, s='';
+  for(var r=0;r<5;r++)for(var c=0;c<5;c++){
+    var on=img[r][c];
+    s+='<rect x="'+(ox+c*cs)+'" y="'+(oy+r*cs)+'" width="'+cs+'" height="'+cs+'" fill="'+(on?'#dbeaf0':'#fbfdfe')+'" stroke="#c2ccd8" stroke-width="0.8"/>';
+  }
+  // cửa sổ 3x3 vị trí (0,0) đậm + (0,2) đứt nét
+  s+='<rect x="'+ox+'" y="'+oy+'" width="'+(3*cs)+'" height="'+(3*cs)+'" fill="none" stroke="#b45309" stroke-width="2.4"/>';
+  s+='<rect x="'+(ox+2*cs)+'" y="'+oy+'" width="'+(3*cs)+'" height="'+(3*cs)+'" fill="none" stroke="#b45309" stroke-width="1.6" stroke-dasharray="5 3"/>';
+  s+='<path d="M'+(ox+3*cs-4)+' '+(oy+cs*1.5)+' h'+(cs*2-6)+'" stroke="#b45309" stroke-width="1.6" marker-end="url(#a1)"/>';
+  s+='<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
+  s+='<text x="'+(ox+1.5*cs)+'" y="'+(oy+5*cs+18)+'" text-anchor="middle" style="font-size:9px" fill="#b45309" font-weight="700">cửa sổ 3×3</text>';
+  s+='<text x="'+(ox+3.5*cs)+'" y="'+(oy+5*cs+18)+'" text-anchor="middle" style="font-size:9px" fill="#b45309">trượt 1 ô →</text>';
+  s+='<text x="'+(ox+2.5*cs)+'" y="14" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">ảnh 5×5</text>';
+  svg.innerHTML=s;
+}
+
+// pipeline: Ảnh → Conv → Feature → ReLU → Pool
+function drawPipe(){
+  var svg=document.getElementById('figPipe'); if(!svg) return;
+  var s='<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
+  var items=[['Ảnh','5×5','#eaf4f6','#7fb4bf'],['Conv','kernel','#f1eeff','#bcb0ff'],['Feature','3×3','#fff5e9','#e3b780'],['ReLU','max(0,·)','#f1eeff','#bcb0ff'],['Pool','2×2','#fff5e9','#e3b780']];
+  var y=70,h=44,x=14,w=46,gap=11;
+  for(var i=0;i<items.length;i++){
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="6" fill="'+items[i][2]+'" stroke="'+items[i][3]+'" stroke-width="1.4"/>';
+    s+='<text x="'+(x+w/2)+'" y="'+(y+h/2-2)+'" text-anchor="middle" style="font-size:10px" font-weight="700" fill="#16202e">'+items[i][0]+'</text>';
+    s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+12)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">'+items[i][1]+'</text>';
+    if(i<items.length-1) s+='<line x1="'+(x+w)+'" y1="'+(y+h/2)+'" x2="'+(x+w+gap-3)+'" y2="'+(y+h/2)+'" stroke="#5b6776" stroke-width="1.5" marker-end="url(#a2)"/>';
+    x+=w+gap;
+  }
+  s+='<text x="150" y="150" text-anchor="middle" style="font-size:9px" fill="#16202e">một tầng CNN = (nhiều) kernel · ReLU · pooling</text>';
+  svg.innerHTML=s;
+}
+
+// heatmap feature map O (dương = lam, âm = cam)
+function drawHeat(O){
+  var svg=document.getElementById('figHeat'); if(!svg) return;
+  var mx=0; for(var i=0;i<3;i++)for(var j=0;j<3;j++) mx=Math.max(mx,Math.abs(O[i][j]));
+  if(mx===0)mx=1;
+  var cs=40, ox=44, oy=18, s='';
+  for(var r=0;r<3;r++)for(var c=0;c<3;c++){
+    var val=O[r][c], pos=val>=0, op=Math.abs(val)/mx;
+    s+='<rect x="'+(ox+c*cs)+'" y="'+(oy+r*cs)+'" width="'+cs+'" height="'+cs+'" fill="'+(pos?'#0e7490':'#b45309')+'" fill-opacity="'+op.toFixed(2)+'" stroke="#9fb0c0" stroke-width="0.8"/>';
+    s+='<text x="'+(ox+c*cs+cs/2)+'" y="'+(oy+r*cs+cs/2+4)+'" text-anchor="middle" style="font-size:11px" font-weight="700" fill="'+(op>0.5?'#fff':'#16202e')+'">'+val+'</text>';
+  }
+  s+='<text x="'+(ox+1.5*cs)+'" y="'+(oy+3*cs+18)+'" text-anchor="middle" style="font-size:8.5px" fill="#16202e">lam = dương (cạnh) · cam = âm</text>';
+  svg.innerHTML=s;
+}
+
+WB.wire(generate);
+drawSlide();
+drawPipe();
+drawHeat([[-2,2,4],[-4,-2,2],[-6,-6,0]]);
+</script>
+</body>
+</html>

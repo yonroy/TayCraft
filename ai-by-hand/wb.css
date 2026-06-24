@@ -1,0 +1,113 @@
+/* ====== AI by Hand — STYLE CHUNG cho phiếu in (khổ giấy linh hoạt) ====== */
+@page{ size:A4 portrait; margin:0; }
+:root{
+  --ink:#16202e; --dim:#5b6776; --line:#c2ccd8; --accent:#0e7490; --accent2:#b45309;
+  --given:#eaf4f6; --givenline:#7fb4bf; --blank:#ffffff;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  /* khổ giấy — KHÔNG cố định A4: đổi sang A3 bằng class "a3" (xem dưới) */
+  --paper-w:210mm; --paper-h:297mm; --pad-x:14mm; --pad-top:14mm; --pad-bot:12mm;
+}
+/* Khổ A3: thêm class "a3" vào <html> hoặc <body>. Để IN đúng A3, thêm 1 dòng
+   trong file: <style>@page{ size:A3 portrait; }</style> (không ghi đè được @page bằng class). */
+.a3{ --paper-w:297mm; --paper-h:420mm; --pad-x:18mm; --pad-top:18mm; --pad-bot:16mm; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.45;}
+.page{width:var(--paper-w);height:var(--paper-h);overflow:hidden;background:#fff;margin:10mm auto;
+  padding:var(--pad-top) var(--pad-x) var(--pad-bot);
+  box-shadow:0 2px 14px rgba(0,0,0,.18);position:relative;}
+/* ---- chrome ---- */
+.wb-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--ink);padding-bottom:8px;}
+.wb-head .brand{font-weight:800;font-size:17px;letter-spacing:.02em;}
+.wb-head .brand span{color:var(--accent);}
+.wb-head .meta{text-align:right;font-family:var(--mono);font-size:12px;color:var(--dim);}
+.wb-title{margin-top:9px;display:flex;align-items:baseline;gap:12px;}
+.wb-title .no{font-family:var(--mono);font-weight:700;color:#fff;background:var(--accent);border-radius:7px;padding:3px 10px;font-size:15px;}
+.wb-title h1{font-size:25px;font-weight:800;letter-spacing:-.01em;}
+.wb-title h1 small{font-weight:600;color:var(--dim);font-size:16px;}
+.namebar{margin-top:7px;display:flex;gap:26px;font-size:13px;color:var(--dim);font-family:var(--mono);}
+.namebar b{color:var(--ink);font-weight:600;}
+.namebar u{text-decoration:none;border-bottom:1.4px dotted var(--line);display:inline-block;min-width:120px;}
+/* ---- intro ---- */
+.intro{margin-top:9px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;
+  background:#f7fafb;padding:9px 14px;font-size:13.5px;}
+.intro b{color:var(--accent);}
+.formula{margin-top:6px;text-align:center;font-family:var(--mono);font-size:15.5px;font-weight:600;color:var(--ink);
+  background:#fff;border:1px dashed var(--line);border-radius:8px;padding:6px;}
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 2px;}
+.frac .n{border-bottom:1.6px solid var(--ink);padding:0 6px;}
+.frac .d{padding:0 6px;}
+/* ---- steps ---- */
+.step{margin-top:9px;break-inside:avoid;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin-top:4px;}
+.grid2 .step{margin-top:9px;}
+.step-h{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.step-h .b{font-family:var(--mono);font-weight:700;font-size:13px;color:#fff;background:var(--ink);border-radius:50%;
+  width:25px;height:25px;display:grid;place-items:center;flex:none;}
+.step-h h2{font-size:16.5px;font-weight:700;}
+.step-h .tag{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line);
+  border-radius:20px;padding:2px 10px;}
+.row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.col{display:flex;flex-direction:column;gap:6px;}
+.op{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--dim);}
+.hint{margin-top:7px;font-size:12.5px;color:var(--accent2);font-family:var(--mono);}
+.hint b{color:var(--accent2);}
+/* ---- matrix / vector ---- */
+.mwrap{display:inline-flex;flex-direction:column;align-items:center;gap:4px;}
+.mlabel{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);}
+.mlabel s{color:var(--dim);font-weight:400;text-decoration:none;font-size:11px;}
+.mtx{display:grid;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:3px;
+  padding:2px;gap:2px;background:#fff;}
+.mtx.c1{grid-template-columns:repeat(1,var(--cell,12mm));}
+.mtx.c2{grid-template-columns:repeat(2,var(--cell,12mm));}
+.mtx.c3{grid-template-columns:repeat(3,var(--cell,12mm));}
+.mtx.c4{grid-template-columns:repeat(4,var(--cell,12mm));}
+.mtx.c5{grid-template-columns:repeat(5,var(--cell,12mm));}
+.cell{height:9mm;display:grid;place-items:center;font-family:var(--mono);font-size:15px;border:1px solid var(--line);border-radius:3px;}
+.cell.given{background:var(--given);border-color:var(--givenline);font-weight:700;}
+.cell.blank{background:var(--blank);}
+.cell.blank.tall{height:11mm;}
+.cell.wide{font-size:13px;}
+/* inline calc lines (cho tính tay từng dòng) */
+.calc{font-family:var(--mono);font-size:13.5px;line-height:1.8;}
+.calc .blk{display:inline-block;min-width:46px;border-bottom:1.4px solid var(--line);text-align:center;}
+.calc.ans .blk{border-bottom:none;background:#fff5e9;border-radius:4px;color:#7a3d00;font-weight:700;padding:0 4px;}
+/* exp / lookup helper */
+.exptab{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-family:var(--mono);font-size:11.5px;}
+.exptab div{padding:3px 10px;border-right:1px solid var(--line);text-align:center;}
+.exptab div:last-child{border-right:none;}
+.exptab b{display:block;color:var(--accent);}
+.note{font-size:12px;color:var(--dim);margin-top:6px;}
+.note b{color:var(--ink);}
+.wb-foot{position:absolute;left:var(--pad-x);right:var(--pad-x);bottom:7mm;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;}
+/* answer key accent */
+.page.key .wb-title .no{background:var(--accent2);}
+.page.key .cell.ans{background:#fff5e9;border-color:#e3b780;font-weight:700;color:#7a3d00;}
+.key-badge{font-family:var(--mono);font-size:12px;color:#fff;background:var(--accent2);border-radius:5px;padding:3px 10px;font-weight:700;}
+/* svg figure (đường cong activation / parabol gradient) */
+.fig{background:#fff;border:1px solid var(--line);border-radius:8px;}
+.fig .axis{stroke:var(--dim);stroke-width:1;}
+.fig .curve{fill:none;stroke:var(--accent);stroke-width:2.2;}
+.fig .grid{stroke:#e7edf2;stroke-width:1;}
+.fig text{font-family:var(--mono);font-size:11px;fill:var(--dim);}
+/* hình vectơ 2D (tích vô hướng / chiếu) */
+.figrow{display:flex;gap:14px;align-items:center;}
+.figrow .fig{flex:none;}
+.fig .vec{fill:none;stroke-width:2.6;stroke-linecap:round;}
+.fig .vU{stroke:var(--accent);}
+.fig .vV{stroke:var(--accent2);}
+.fig .proj{stroke:var(--dim);stroke-width:1.3;stroke-dasharray:3 3;}
+.fig .arc{fill:none;stroke:var(--ink);stroke-width:1.4;}
+.fig .base{stroke:var(--accent);stroke-width:6;opacity:.16;stroke-linecap:round;}
+/* screen toolbar (không in) */
+.toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+.toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid var(--line);
+  background:#fff;color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent);}
+@media print{
+  body{background:#fff;}
+  .page{margin:0;box-shadow:none;}
+  .page+.page{page-break-before:always;}
+  .toolbar{display:none;}
+}

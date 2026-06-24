@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 14 — Khối GPT / Masked Self-Attention (A3 · 4 trang)</title>
+<style>
+@page{ size:A3 portrait; margin:0; }
+:root{
+  --ink:#16202e; --dim:#5b6776; --line:#c2ccd8; --accent:#0e7490; --accent2:#b45309; --v:#7c5cff;
+  --mask:#9aa6b4; --given:#eaf4f6; --givenline:#7fb4bf; --blank:#ffffff;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.45;}
+.page{width:297mm;height:420mm;overflow:hidden;background:#fff;margin:10mm auto;padding:18mm 18mm 16mm;
+  box-shadow:0 2px 14px rgba(0,0,0,.18);position:relative;}
+.wb-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--ink);padding-bottom:8px;}
+.wb-head .brand{font-weight:800;font-size:17px;letter-spacing:.02em;}
+.wb-head .brand span{color:var(--accent);}
+.wb-head .meta{text-align:right;font-family:var(--mono);font-size:12px;color:var(--dim);}
+.wb-title{margin-top:11px;display:flex;align-items:baseline;gap:12px;}
+.wb-title .no{font-family:var(--mono);font-weight:700;color:#fff;background:var(--accent);border-radius:7px;padding:3px 10px;font-size:15px;}
+.wb-title h1{font-size:25px;font-weight:800;letter-spacing:-.01em;}
+.wb-title h1 small{font-weight:600;color:var(--dim);font-size:16px;}
+.namebar{margin-top:8px;display:flex;gap:26px;font-size:13px;color:var(--dim);font-family:var(--mono);}
+.namebar u{text-decoration:none;border-bottom:1.4px dotted var(--line);display:inline-block;min-width:120px;}
+.crumb{font-family:var(--mono);font-size:12px;color:var(--dim);}
+.intro{margin-top:11px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;
+  background:#f7fafb;padding:11px 16px;font-size:14px;}
+.intro b{color:var(--accent);}
+.formula{margin-top:9px;text-align:center;font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink);
+  background:#fff;border:1px dashed var(--line);border-radius:8px;padding:10px 6px;line-height:2;}
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 3px;}
+.frac .n{border-bottom:1.6px solid var(--ink);padding:0 6px;}
+.frac .d{padding:0 6px;}
+.step{margin-top:15px;break-inside:avoid;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 30px;}
+.step-h{display:flex;align-items:center;gap:11px;margin-bottom:9px;}
+.step-h .b{font-family:var(--mono);font-weight:700;font-size:14px;color:#fff;background:var(--ink);border-radius:50%;
+  width:27px;height:27px;display:grid;place-items:center;flex:none;}
+.step-h h2{font-size:17px;font-weight:700;}
+.step-h .tag{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line);
+  border-radius:20px;padding:2px 10px;}
+.row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.op{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--dim);}
+.hint{margin-top:10px;font-size:13px;color:var(--accent2);font-family:var(--mono);}
+.hint b{color:var(--accent2);}
+.mwrap{display:inline-flex;flex-direction:column;align-items:center;gap:5px;}
+.mlabel{font-family:var(--mono);font-size:13.5px;font-weight:700;color:var(--ink);}
+.mlabel s{color:var(--dim);font-weight:400;text-decoration:none;font-size:11.5px;}
+.mtx{display:grid;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:3px;
+  padding:3px;gap:3px;background:#fff;}
+.mtx.c3{grid-template-columns:repeat(3,var(--cell,18mm));}
+.mtx.c4{grid-template-columns:repeat(4,var(--cell,18mm));}
+.cell{height:13mm;display:grid;place-items:center;font-family:var(--mono);font-size:17px;border:1px solid var(--line);border-radius:3px;}
+.mtx.tall .cell{height:16mm;}
+.cell.given{background:var(--given);border-color:var(--givenline);font-weight:700;}
+.cell.blank{background:var(--blank);}
+.cell.mask{background:repeating-linear-gradient(45deg,#eef2f6,#eef2f6 4px,#e2e8ef 4px,#e2e8ef 8px);color:var(--mask);font-weight:700;}
+.note{font-size:12.5px;color:var(--dim);margin-top:8px;}
+.exptab{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-family:var(--mono);font-size:12.5px;margin-top:6px;}
+.exptab div{padding:5px 14px;border-right:1px solid var(--line);text-align:center;}
+.exptab div:last-child{border-right:none;}
+.exptab b{display:block;color:var(--accent);}
+.worked{margin-top:9px;font-family:var(--mono);font-size:12.5px;color:#7a3d00;background:#fff5e9;
+  border:1px solid #e3b780;border-radius:7px;padding:7px 12px;}
+.cmp{margin-top:10px;border-collapse:collapse;width:100%;font-size:13px;}
+.cmp th,.cmp td{border:1px solid var(--line);padding:7px 11px;text-align:left;}
+.cmp th{background:#f3f6f9;font-family:var(--mono);font-size:12px;}
+.cmp td b{color:var(--accent);}
+.lnbox{font-family:var(--mono);font-size:13px;color:var(--ink);background:#fbf5ff;border:1px solid #d8caff;
+  border-left:4px solid var(--v);border-radius:8px;padding:10px 14px;line-height:1.9;}
+.lnbox b{color:var(--v);}
+.wb-foot{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;}
+.page.key .wb-title .no{background:var(--accent2);}
+.page.key .cell.ans{background:#fff5e9;border-color:#e3b780;font-weight:700;color:#7a3d00;}
+.key-badge{font-family:var(--mono);font-size:12px;color:#fff;background:var(--accent2);border-radius:5px;padding:3px 10px;font-weight:700;}
+.toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+.toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid var(--line);
+  background:#fff;color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent);}
+@media print{ body{background:#fff;} .page{margin:0;box-shadow:none;} .page+.page{page-break-before:always;} .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1/4 — TOÀN CẢNH GPT ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A3 · 4 trang<br>Mức: nâng cao</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 14</span><h1>Khối GPT (Decoder-only) <small>— điều khác biệt: Masked Self-Attention</small></h1></div>
+
+  <div class="intro">
+    <b>Ý chính.</b> Khối <b>GPT</b> giống hệt khối <b>encoder</b> (Bài 13): Self-Attention → Add&amp;Norm → FFN → Add&amp;Norm.
+    Chỉ khác <b>một chỗ</b>: self-attention <b>có MASK nhân quả</b> — mỗi token chỉ được "nhìn" chính nó và các token <b>phía trước</b>,
+    không nhìn tương lai. Nhờ đó model sinh chữ tuần tự mà không gian lận nhìn đáp án sau. Trang này là toàn cảnh; tính tay ở trang 3.
+    <div class="formula">
+      Mask: đặt &nbsp; S<sub>ij</sub> = −∞ &nbsp; với mọi &nbsp; j &gt; i &nbsp; (trước softmax) &nbsp;→&nbsp; e<sup>−∞</sup> = 0 &nbsp;→&nbsp; A thành <b>tam giác dưới</b>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ khối GPT — chỉ khác encoder ở ô tô đậm</h2></div>
+    <svg id="figBlock" viewBox="0 0 760 150" width="255mm" height="50mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="sơ đồ khối GPT decoder-only với masked self-attention"></svg>
+  </div>
+
+  <div class="grid2" style="margin-top:6px">
+    <div class="step">
+      <div class="step-h"><div class="b" style="background:var(--accent)">◣</div><h2>Bản đồ chú ý CÓ MASK</h2><span class="tag">tam giác dưới</span></div>
+      <svg id="figHero" viewBox="0 0 300 175" width="120mm" height="70mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap chú ý tam giác dưới"></svg>
+    </div>
+    <div class="step">
+      <div class="step-h"><div class="b" style="background:var(--ink)">≟</div><h2>Encoder vs Decoder-only</h2></div>
+      <table class="cmp">
+        <tr><th>Thành phần</th><th>Encoder (Bài 13)</th><th>Decoder-only (GPT)</th></tr>
+        <tr><td>Self-Attention</td><td>hai chiều (no mask)</td><td><b>có mask nhân quả</b></td></tr>
+        <tr><td>Cross-Attention</td><td>✗</td><td>✗</td></tr>
+        <tr><td>FFN</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Add &amp; Norm</td><td>✓ (×2)</td><td>✓ (×2)</td></tr>
+        <tr><td>Tiêu biểu</td><td>BERT</td><td>GPT, LLaMA</td></tr>
+      </table>
+      <div class="note">Decoder <b>đầy đủ</b> (dịch máy, T5) còn thêm <b>cross-attention</b> giữa 2 lớp con — đó là kiểu encoder–decoder, không bàn ở phiếu này.</div>
+    </div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 1/4 · TOÀN CẢNH</span></div>
+</section>
+
+<!-- ============ TRANG 2/4 — DỮ LIỆU ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta crumb">Bài 14 · Khối GPT<br>3 token · d = 4</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 14</span><h1>Dữ liệu &amp; cơ chế mask <small>— dùng lại ví dụ Bài 11</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~22 phút</span></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn Q, K, V</h2><span class="tag">3 token · d = 4 · √d = 2</span></div>
+    <div class="row" style="align-items:flex-start;gap:30px">
+      <div class="mwrap"><div class="mlabel">Q <s>3×4</s></div>
+        <div class="mtx c4" style="--cell:15mm">
+          <div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">0</div><div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div>
+        </div></div>
+      <div class="mwrap"><div class="mlabel">K <s>3×4</s></div>
+        <div class="mtx c4" style="--cell:15mm">
+          <div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">0</div><div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">1</div><div class="cell given">1</div><div class="cell given">0</div><div class="cell given">0</div>
+        </div></div>
+      <div class="mwrap"><div class="mlabel">V <s>3×4</s></div>
+        <div class="mtx c4" style="--cell:15mm">
+          <div class="cell given" data-q="p">1</div><div class="cell given">0</div><div class="cell given" data-q="q">2</div><div class="cell given">0</div>
+          <div class="cell given">0</div><div class="cell given" data-q="p">1</div><div class="cell given">0</div><div class="cell given" data-q="q">2</div>
+          <div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div>
+        </div></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">◣</div><h2>Mask nhân quả là gì?</h2><span class="tag">che nửa tam giác trên</span></div>
+    <div class="row" style="align-items:center;gap:26px">
+      <div class="mwrap"><div class="mlabel">Mặt nạ M <s>3×3 · giữ j ≤ i</s></div>
+        <div class="mtx c3" style="--cell:17mm">
+          <div class="cell given">✓</div><div class="cell mask">−∞</div><div class="cell mask">−∞</div>
+          <div class="cell given">✓</div><div class="cell given">✓</div><div class="cell mask">−∞</div>
+          <div class="cell given">✓</div><div class="cell given">✓</div><div class="cell given">✓</div>
+        </div></div>
+      <div style="max-width:150mm">
+        <div class="note" style="margin-top:0">Hàng i = token đang hỏi, cột j = token được nhìn. Ô <b>✓</b> (j ≤ i) giữ nguyên điểm số;
+        ô <b>−∞</b> (j &gt; i, tô gạch) là "tương lai" → cộng −∞ trước softmax → e<sup>−∞</sup>=0 → trọng số 0.</div>
+        <div class="note"><b>Tra cứu e<sup>x</sup>:</b></div>
+        <div class="exptab"><div>x=0<b>1.00</b></div><div>x=1<b>2.72</b></div><div>x=2<b>7.39</b></div></div>
+        <div class="note">Token 1 chỉ thấy 1 ô → trọng số <b>1.00</b>. Token 2 thấy 2 ô. Token 3 thấy cả 3 ô.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--v)">∑</div><h2>Phần còn lại của khối: y như Bài 13</h2></div>
+    <div class="lnbox">
+      Sau khi có <b>O</b> (đầu ra masked attention): &nbsp; Z = LayerNorm(X + O) &nbsp;→&nbsp; Y = LayerNorm(Z + FFN(Z)).<br>
+      Hai lớp Add &amp; Norm và FFN <b>giống hệt Bài 13</b> — phiếu này tập trung vào phần <b>mask</b> mới. Tính tay phần wrapper: xem Bài 13.
+    </div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 2/4 · ĐỀ — dữ liệu</span></div>
+</section>
+
+<!-- ============ TRANG 3/4 — ĐỀ tính tay ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta crumb">Bài 14 · Masked Self-Attention<br>4 bước · điền bằng bút chì</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 14</span><h1>Tính tay masked attention <small>— điền các ô trống</small></h1></div>
+
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Điểm số S = Q·K<sup>⊤</sup></h2><span class="tag">tích vô hướng từng cặp hàng</span></div>
+      <div class="mwrap"><div class="mlabel">S <s>3×3</s></div>
+        <div class="mtx c3 tall">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="hint"><b>Mẫu:</b> S₁₁ = Q₁·K₁ = 2·2 = 4.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Áp mask, rồi chia √d</h2><span class="tag">ô tương lai = −∞ · còn lại ÷ 2</span></div>
+      <div class="mwrap"><div class="mlabel">S′ = mask(S)/2 <s>3×3</s></div>
+        <div class="mtx c3 tall">
+          <div class="cell blank"></div><div class="cell mask">−∞</div><div class="cell mask">−∞</div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell mask">−∞</div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="hint"><b>Cách làm:</b> giữ ô j ≤ i rồi chia 2; ô j &gt; i để −∞ (đã in sẵn).</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">3</div><h2>softmax theo từng hàng → A</h2><span class="tag">mỗi hàng cộng = 1</span></div>
+      <div class="mwrap"><div class="mlabel">A <s>3×3 · tam giác dưới</s></div>
+        <div class="mtx c3 tall">
+          <div class="cell blank"></div><div class="cell mask">0</div><div class="cell mask">0</div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell mask">0</div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="hint"><b>Cách làm:</b> aⱼ = e<sup>s′ⱼ</sup> / Σe<sup>s′</sup>, chỉ tính trên ô không bị che. Hàng 1 chỉ 1 ô → 1.00.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">4</div><h2>Đầu ra O = A·V</h2><span class="tag">trộn V theo trọng số</span></div>
+      <div class="mwrap"><div class="mlabel">O <s>3×4</s></div>
+        <div class="mtx c4 tall" style="--cell:16mm">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="hint"><b>Mẫu:</b> O₁ = 1.00·V₁ (token 1 chỉ chú ý chính nó) = V₁.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--dim)">✎</div><h2>Chỗ tính nháp</h2><span class="tag">softmax từng hàng</span></div>
+    <div style="border:1.4px dashed var(--line);border-radius:10px;height:70mm;background:repeating-linear-gradient(transparent,transparent 13mm,#eef2f6 13mm,#eef2f6 13.4mm)"></div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 3/4 · ĐỀ — tính tay</span></div>
+</section>
+
+<!-- ============ TRANG 4/4 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 14</span><h1>Lời giải <small>— masked self-attention</small></h1></div>
+
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>S = Q·K<sup>⊤</sup></h2></div>
+      <div class="mwrap"><div class="mlabel">S</div>
+        <div class="mtx c3">
+          <div class="cell ans">4</div><div class="cell ans">0</div><div class="cell ans">2</div>
+          <div class="cell ans">0</div><div class="cell ans">4</div><div class="cell ans">2</div>
+          <div class="cell ans">2</div><div class="cell ans">2</div><div class="cell ans">2</div>
+        </div></div>
+      <div class="note">Giống Bài 11 (chưa mask). Hàng 3: Q₃·K₁=2, Q₃·K₂=2, Q₃·K₃=2.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>mask(S) / 2</h2></div>
+      <div class="mwrap"><div class="mlabel">S′</div>
+        <div class="mtx c3">
+          <div class="cell ans">2</div><div class="cell mask">−∞</div><div class="cell mask">−∞</div>
+          <div class="cell ans">0</div><div class="cell ans">2</div><div class="cell mask">−∞</div>
+          <div class="cell ans">1</div><div class="cell ans">1</div><div class="cell ans">1</div>
+        </div></div>
+      <div class="note">Che nửa trên (tương lai) → −∞, phần còn lại chia 2.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">3</div><h2>A = softmax(S′) theo hàng</h2></div>
+      <div class="mwrap"><div class="mlabel">A</div>
+        <div class="mtx c3" style="--cell:16mm">
+          <div class="cell ans">1.00</div><div class="cell mask">0</div><div class="cell mask">0</div>
+          <div class="cell ans">0.12</div><div class="cell ans">0.88</div><div class="cell mask">0</div>
+          <div class="cell ans">0.33</div><div class="cell ans">0.33</div><div class="cell ans">0.33</div>
+        </div></div>
+      <div class="worked">Hàng 2: e⁰=1, e²=7.39; tổng=8.39 → 1/8.39=0.12 · 7.39/8.39=0.88</div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="b">4</div><h2>O = A·V</h2></div>
+      <div class="mwrap"><div class="mlabel">O</div>
+        <div class="mtx c4" style="--cell:16mm">
+          <div class="cell ans" data-q="o11">1.00</div><div class="cell ans" data-q="o12">0.00</div><div class="cell ans" data-q="o13">2.00</div><div class="cell ans" data-q="o14">0.00</div>
+          <div class="cell ans" data-q="o21">0.12</div><div class="cell ans" data-q="o22">0.88</div><div class="cell ans" data-q="o23">0.24</div><div class="cell ans" data-q="o24">1.76</div>
+          <div class="cell ans" data-q="o31">0.66</div><div class="cell ans" data-q="o32">0.66</div><div class="cell ans" data-q="o33">0.99</div><div class="cell ans" data-q="o34">0.99</div>
+        </div></div>
+      <div class="worked" data-q="oNote">Hàng 2: 0.12·V₁ + 0.88·V₂ = (0.12, 0.88, 0.24, 1.76).</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">⇄</div><h2>So sánh: KHÔNG mask (Bài 11) vs CÓ mask (GPT)</h2><span class="tag">cùng điểm số, khác kết quả</span></div>
+    <div class="row" style="gap:34px;align-items:flex-start">
+      <svg id="figNoMask" viewBox="0 0 280 168" width="106mm" height="64mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap không mask"></svg>
+      <svg id="figMask" viewBox="0 0 280 168" width="106mm" height="64mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap có mask tam giác"></svg>
+    </div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Mask chỉ là <b>đặt −∞ ở nửa tam giác trên trước softmax</b> → ma trận chú ý thành <b>tam giác dưới</b>:
+    token 1 chỉ thấy chính nó, token 2 thấy {1,2}, token 3 thấy tất cả. Đó là toàn bộ khác biệt biến một khối encoder thành khối <b>GPT</b>.
+    Phần Add &amp; Norm + FFN bọc quanh thì y hệt Bài 13.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function generate(){
+  var p = WB.randInt(1,4), q = WB.randInt(1,4);
+  // A masked = [[1,0,0],[0.12,0.88,0],[0.33,0.33,0.33]]
+  var O = {
+    o11:p,        o12:0,        o13:q,        o14:0,
+    o21:0.12*p,   o22:0.88*p,   o23:0.12*q,   o24:0.88*q,
+    o31:0.33*(p+1), o32:0.33*(p+1), o33:0.33*(q+1), o34:0.33*(q+1)
+  };
+  var map = { p:WB.fmtInt(p), q:WB.fmtInt(q),
+    oNote:'Hàng 2: 0.12·V₁ + 0.88·V₂ = ('+WB.fmt2(0.12*p)+', '+WB.fmt2(0.88*p)+', '+WB.fmt2(0.12*q)+', '+WB.fmt2(0.88*q)+').' };
+  Object.keys(O).forEach(function(k){ map[k]=WB.fmt2(O[k]); });
+  WB.setAll(map);
+}
+
+// Sơ đồ khối GPT (structural) — ô Self-Attention tô đậm vì có mask
+function drawBlock(){
+  var svg=document.getElementById('figBlock'); if(!svg) return;
+  var s='<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
+  var y=64,h=38;
+  function box(x,w,fill,stroke,label,sw){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sw||1.4)+'"/>'
+    +'<text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" style="font-size:11px" font-weight="700" fill="#16202e">'+label+'</text>'; }
+  function arrow(x1,x2){ return '<line x1="'+x1+'" y1="'+(y+h/2)+'" x2="'+(x2-3)+'" y2="'+(y+h/2)+'" stroke="#5b6776" stroke-width="1.6" marker-end="url(#ah)"/>'; }
+  function plus(cx){ return '<circle cx="'+cx+'" cy="'+(y+h/2)+'" r="12" fill="#fff" stroke="#5b6776" stroke-width="1.4"/><text x="'+cx+'" y="'+(y+h/2+5)+'" text-anchor="middle" style="font-size:16px" font-weight="700" fill="#5b6776">+</text>'; }
+  s+=box(14,70,'#eaf4f6','#7fb4bf','Input X');
+  s+=arrow(84,118);
+  s+=box(118,124,'#fff1e6','#b45309','Masked Self-Attn',2.4);
+  s+='<text x="180" y="'+(y-8)+'" text-anchor="middle" style="font-size:9.5px" fill="#b45309" font-weight="700">★ chỗ khác encoder</text>';
+  s+=arrow(242,272); s+=plus(283);
+  s+='<path d="M100,'+y+' C100,18 283,18 283,'+(y-12)+'" fill="none" stroke="#0e7490" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ah)"/>';
+  s+=arrow(295,316);
+  s+=box(316,80,'#fbf5ff','#7c5cff','LayerNorm');
+  s+=arrow(396,426);
+  s+=box(426,84,'#fbf5ff','#7c5cff','FFN (ReLU)');
+  s+=arrow(510,540); s+=plus(551);
+  s+='<path d="M408,'+y+' C408,18 551,18 551,'+(y-12)+'" fill="none" stroke="#7c5cff" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ah)"/>';
+  s+=arrow(563,584);
+  s+=box(584,80,'#fbf5ff','#7c5cff','LayerNorm');
+  s+=arrow(664,694);
+  s+=box(694,52,'#fff5e9','#e3b780','Y');
+  svg.innerHTML=s;
+}
+
+// heatmap 3x3, masked=true tô gạch nửa trên
+function heat(id,A,masked,title){
+  var svg=document.getElementById(id); if(!svg) return;
+  var cs=34, ox=70, oy=34, s='';
+  s+='<text x="'+(ox+1.5*cs)+'" y="16" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">được chú ý →</text>';
+  for(var c=0;c<3;c++) s+='<text x="'+(ox+c*cs+cs/2)+'" y="'+(oy-5)+'" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">t'+(c+1)+'</text>';
+  s+='<text x="14" y="'+(oy+1.5*cs)+'" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700" transform="rotate(-90 14 '+(oy+1.5*cs)+')">token hỏi</text>';
+  for(var r=0;r<3;r++){
+    s+='<text x="'+(ox-7)+'" y="'+(oy+r*cs+cs/2+3)+'" text-anchor="end" style="font-size:8.5px" fill="#5b6776">t'+(r+1)+'</text>';
+    for(var c2=0;c2<3;c2++){
+      var future = masked && c2>r, w=A[r][c2];
+      if(future){
+        s+='<rect x="'+(ox+c2*cs)+'" y="'+(oy+r*cs)+'" width="'+cs+'" height="'+cs+'" fill="#eef2f6" stroke="#9fb0c0" stroke-width="0.8"/>';
+        s+='<line x1="'+(ox+c2*cs)+'" y1="'+(oy+r*cs)+'" x2="'+(ox+c2*cs+cs)+'" y2="'+(oy+r*cs+cs)+'" stroke="#c2ccd8" stroke-width="1"/>';
+        s+='<text x="'+(ox+c2*cs+cs/2)+'" y="'+(oy+r*cs+cs/2+3)+'" text-anchor="middle" style="font-size:8px" fill="#9aa6b4">−∞</text>';
+      } else {
+        s+='<rect x="'+(ox+c2*cs)+'" y="'+(oy+r*cs)+'" width="'+cs+'" height="'+cs+'" fill="#0e7490" fill-opacity="'+w+'" stroke="#9fb0c0" stroke-width="0.8"/>';
+        s+='<text x="'+(ox+c2*cs+cs/2)+'" y="'+(oy+r*cs+cs/2+3)+'" text-anchor="middle" style="font-size:9px" font-weight="700" fill="'+(w>0.5?'#fff':'#16202e')+'">'+w.toFixed(2)+'</text>';
+      }
+    }
+  }
+  s+='<text x="150" y="160" text-anchor="middle" style="font-size:8.5px" fill="#16202e">'+title+'</text>';
+  svg.innerHTML=s;
+}
+
+var A_nomask=[[0.67,0.09,0.24],[0.09,0.67,0.24],[0.33,0.33,0.33]];
+var A_mask  =[[1.00,0,0],[0.12,0.88,0],[0.33,0.33,0.33]];
+
+WB.wire(generate);
+drawBlock();
+heat('figHero',A_mask,true,'token chỉ nhìn về TRƯỚC · tổng mỗi hàng = 1');
+heat('figNoMask',A_nomask,false,'KHÔNG mask — nhìn mọi token (Bài 11)');
+heat('figMask',A_mask,true,'CÓ mask — tam giác dưới (GPT)');
+</script>
+</body>
+</html>

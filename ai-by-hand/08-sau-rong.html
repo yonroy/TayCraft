@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 08 — Mạng sâu / rộng (A4 in được)</title>
+<link rel="stylesheet" href="wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 08</span><h1>Mạng sâu / rộng <small>— Deep vs Wide · đếm tham số</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Hai cách lớn lên.</b> Muốn mạng mạnh hơn: thêm <b>lớp</b> (sâu hơn) hay thêm <b>nơ-ron mỗi lớp</b> (rộng hơn)?
+    Mỗi lớp <i>k</i> đầu vào → <i>m</i> đầu ra tốn <b>m×k trọng số + m bias</b> (Bài 03). Đếm tham số là cách
+    "cân" kích thước một mạng.
+    <div class="formula">
+      tham số 1 lớp = (số ra × số vào) + số ra &nbsp;&nbsp;|&nbsp;&nbsp; tổng = cộng mọi lớp
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Hai kiến trúc, cùng 2 đầu vào → 1 đầu ra</h2><span class="tag">so cùng nhiệm vụ</span></div>
+    <div class="row">
+      <div class="col">
+        <div class="mlabel" style="color:var(--accent)" data-q="deepLabel">A · SÂU &nbsp;2 → 3 → 3 → 1</div>
+        <svg class="fig" id="svgDeep" viewBox="0 0 230 96" width="270" height="80">
+          <g fill="#fff" stroke="var(--dim)"><circle cx="22" cy="30" r="7"/><circle cx="22" cy="66" r="7"/></g>
+          <g fill="#eaf4f6" stroke="#7fb4bf"><circle cx="90" cy="22" r="7"/><circle cx="90" cy="48" r="7"/><circle cx="90" cy="74" r="7"/>
+            <circle cx="155" cy="22" r="7"/><circle cx="155" cy="48" r="7"/><circle cx="155" cy="74" r="7"/></g>
+          <circle cx="210" cy="48" r="8" fill="#fff5e9" stroke="#e3b780"/>
+        </svg>
+      </div>
+      <div class="col">
+        <div class="mlabel" style="color:var(--accent2)" data-q="wideLabel">B · RỘNG &nbsp;2 → 6 → 1</div>
+        <svg class="fig" id="svgWide" viewBox="0 0 230 96" width="270" height="80">
+          <g fill="#fff" stroke="var(--dim)"><circle cx="26" cy="30" r="7"/><circle cx="26" cy="66" r="7"/></g>
+          <g fill="#eaf4f6" stroke="#7fb4bf"><circle cx="120" cy="14" r="7"/><circle cx="120" cy="32" r="7"/><circle cx="120" cy="50" r="7"/>
+            <circle cx="120" cy="68" r="7"/><circle cx="120" cy="86" r="7"/><circle cx="120" cy="100" r="6"/></g>
+          <circle cx="206" cy="50" r="8" fill="#fff5e9" stroke="#e3b780"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>A · mạng SÂU</h2><span class="tag">3 lớp</span></div>
+    <div class="calc">
+      Lớp 1 (2→<span data-q="h1">3</span>): <span data-q="h1">3</span>×2 + <span data-q="h1">3</span> = <span class="blk"></span><br>
+      Lớp 2 (<span data-q="h1">3</span>→<span data-q="h2">3</span>): <span data-q="h2">3</span>×<span data-q="h1">3</span> + <span data-q="h2">3</span> = <span class="blk"></span><br>
+      Lớp 3 (<span data-q="h2">3</span>→1): 1×<span data-q="h2">3</span> + 1 = <span class="blk"></span><br>
+      <b>Tổng A</b> = <span class="blk" style="min-width:50px"></span>
+    </div>
+    <div class="hint"><b>Mẫu:</b> <span data-q="hint1">lớp 1 có 6 trọng số + 3 bias = 9.</span></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>B · mạng RỘNG</h2><span class="tag">2 lớp</span></div>
+    <div class="calc">
+      Lớp 1 (2→<span data-q="w">6</span>): <span data-q="w">6</span>×2 + <span data-q="w">6</span> = <span class="blk"></span><br>
+      Lớp 2 (<span data-q="w">6</span>→1): 1×<span data-q="w">6</span> + 1 = <span class="blk"></span><br>
+      <b>Tổng B</b> = <span class="blk" style="min-width:50px"></span>
+    </div>
+    <div class="note">Cùng nhiệm vụ 2→1, hai dáng mạng rất khác — hãy so tổng tham số.</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>So sánh</h2><span class="tag">ai nhiều hơn?</span></div>
+    <div class="calc">
+      Tổng A = <span class="blk"></span> &nbsp; Tổng B = <span class="blk"></span> &nbsp;→&nbsp;
+      <span class="blk" style="min-width:90px"></span>
+    </div>
+    <div class="note">Số đường nối (mũi tên) chính là số trọng số: đếm mũi tên trên sơ đồ để kiểm tra chéo.</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Khi nào dùng gì</h2><span class="tag">trực giác</span></div>
+    <div class="note" style="margin-top:2px">
+      <b>Sâu</b> = nhiều tầng biến đổi nối tiếp → học <b>đặc trưng phân cấp</b> (cạnh → hình → vật). <b>Rộng</b> = nhiều
+      đặc trưng cùng tầng → ghi nhớ nhiều mẫu hơn nhưng nông. Thực tế cần <b>cân bằng cả hai</b>; quá sâu mà không
+      có kết nối tắt (residual) thì khó huấn luyện.
+    </div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 08 · Mạng sâu / rộng</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 08</span><h1>Mạng sâu / rộng <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2 data-q="deepTitle">A · SÂU 2-3-3-1</h2></div>
+    <div class="calc ans">
+      Lớp1 = <span data-q="sum1A">6+3</span> = <span class="blk" data-q="layer1A">9</span> &nbsp;|&nbsp; Lớp2 = <span data-q="sum2A">9+3</span> = <span class="blk" data-q="layer2A">12</span> &nbsp;|&nbsp;
+      Lớp3 = <span data-q="sum3A">3+1</span> = <span class="blk" data-q="layer3A">4</span> &nbsp;|&nbsp; <b>Tổng = <span class="blk" data-q="totalA">25</span></b>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2 data-q="wideTitle">B · RỘNG 2-6-1</h2></div>
+    <div class="calc ans">
+      Lớp1 = <span data-q="sum1B">12+6</span> = <span class="blk" data-q="layer1B">18</span> &nbsp;|&nbsp; Lớp2 = <span data-q="sum2B">6+1</span> = <span class="blk" data-q="layer2B">7</span> &nbsp;|&nbsp;
+      <b>Tổng = <span class="blk" data-q="totalB">25</span></b>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>So sánh</h2></div>
+    <div class="calc ans">
+      A = <span class="blk" data-q="totalA">25</span> &nbsp; B = <span class="blk" data-q="totalB">25</span> &nbsp;→&nbsp;
+      <span class="blk" style="min-width:130px">bằng nhau!</span>
+    </div>
+    <div class="note">Trùng hợp đẹp: cùng "ngân sách" <span data-q="totalA">25</span> tham số nhưng <b>hình dáng khác hẳn</b> — đó chính là điểm mấu chốt.</div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Cùng số tham số (<span data-q="totalA">25</span>) vẫn có <b>nhiều cách xếp</b>. Sâu nhân (composition) khả năng biểu diễn theo cấp số,
+    rộng cộng thêm đặc trưng. Chọn kiến trúc = chọn cách "tiêu" ngân sách tham số. Bài 09: biến đầu ra thô (logit)
+    thành <b>xác suất</b> bằng softmax.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 08 · Mạng sâu / rộng</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function generate(){
+  function col(cx, n, fill, stroke, top, bottom, r){
+    top = top==null?14:top; bottom = bottom==null?82:bottom; r = r||7;
+    if ((bottom-top)/Math.max(n-1,1) < r*2+2) r = Math.max(4, (bottom-top)/(n*2.2));
+    var html = '';
+    for (var i=0;i<n;i++){
+      var y = n===1 ? (top+bottom)/2 : top + i*(bottom-top)/(n-1);
+      html += '<circle cx="'+cx+'" cy="'+y.toFixed(1)+'" r="'+r.toFixed(1)+'" fill="'+fill+'" stroke="'+stroke+'"/>';
+    }
+    return html;
+  }
+  function deepSVG(h1,h2){
+    return col(22,2,'#fff','var(--dim)',24,72) + col(90,h1,'#eaf4f6','#7fb4bf') +
+      col(155,h2,'#eaf4f6','#7fb4bf') + col(210,1,'#fff5e9','#e3b780',48,48,8);
+  }
+  function wideSVG(w){
+    return col(26,2,'#fff','var(--dim)',24,72) + col(120,w,'#eaf4f6','#7fb4bf') +
+      col(206,1,'#fff5e9','#e3b780',50,50,8);
+  }
+
+  var h1, h2, w, totalA;
+  for (var tries=0; tries<300; tries++){
+    h1 = WB.randInt(2,5); h2 = WB.randInt(2,5);
+    totalA = 3*h1 + h2*(h1+1) + h2 + 1;
+    if ((totalA-1) % 4 === 0){
+      w = (totalA-1)/4;
+      if (w >= 2 && w <= 9) break;
+    }
+  }
+  var layer1A = 3*h1, layer2A = h2*(h1+1), layer3A = h2+1;
+  var layer1B = 3*w, layer2B = w+1;
+  var totalB = layer1B + layer2B;
+
+  document.getElementById('svgDeep').innerHTML = deepSVG(h1,h2);
+  document.getElementById('svgWide').innerHTML = wideSVG(w);
+
+  WB.setAll({
+    h1: WB.fmtInt(h1), h2: WB.fmtInt(h2), w: WB.fmtInt(w),
+    deepLabel: 'A · SÂU  2 → ' + h1 + ' → ' + h2 + ' → 1',
+    wideLabel: 'B · RỘNG  2 → ' + w + ' → 1',
+    deepTitle: 'A · SÂU 2-' + h1 + '-' + h2 + '-1',
+    wideTitle: 'B · RỘNG 2-' + w + '-1',
+    hint1: 'lớp 1 có ' + (h1*2) + ' trọng số + ' + h1 + ' bias = ' + layer1A + '.',
+    sum1A: (h1*2) + '+' + h1, layer1A: WB.fmtInt(layer1A),
+    sum2A: (h2*h1) + '+' + h2, layer2A: WB.fmtInt(layer2A),
+    sum3A: h2 + '+1', layer3A: WB.fmtInt(layer3A),
+    totalA: WB.fmtInt(totalA),
+    sum1B: (w*2) + '+' + w, layer1B: WB.fmtInt(layer1B),
+    sum2B: w + '+1', layer2B: WB.fmtInt(layer2B),
+    totalB: WB.fmtInt(totalB)
+  });
+}
+WB.wire(generate);
+</script>
+</body>
+</html>

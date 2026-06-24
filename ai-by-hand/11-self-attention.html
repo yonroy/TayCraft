@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 11 — Self-Attention (A3 in được)</title>
+<style>
+/* ====== A3 PRINT-FIRST WORKSHEET ====== */
+@page{ size:A3 portrait; margin:0; }
+:root{
+  --ink:#16202e; --dim:#5b6776; --line:#c2ccd8; --accent:#0e7490; --accent2:#b45309;
+  --given:#eaf4f6; --givenline:#7fb4bf; --blank:#ffffff;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.45;}
+.page{width:297mm;height:420mm;overflow:hidden;background:#fff;margin:10mm auto;padding:18mm 18mm 16mm;
+  box-shadow:0 2px 14px rgba(0,0,0,.18);position:relative;}
+/* ---- chrome ---- */
+.wb-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--ink);padding-bottom:8px;}
+.wb-head .brand{font-weight:800;font-size:17px;letter-spacing:.02em;}
+.wb-head .brand span{color:var(--accent);}
+.wb-head .meta{text-align:right;font-family:var(--mono);font-size:12px;color:var(--dim);}
+.wb-title{margin-top:9px;display:flex;align-items:baseline;gap:12px;}
+.wb-title .no{font-family:var(--mono);font-weight:700;color:#fff;background:var(--accent);border-radius:7px;padding:3px 10px;font-size:15px;}
+.wb-title h1{font-size:25px;font-weight:800;letter-spacing:-.01em;}
+.wb-title h1 small{font-weight:600;color:var(--dim);font-size:16px;}
+.namebar{margin-top:7px;display:flex;gap:26px;font-size:13px;color:var(--dim);font-family:var(--mono);}
+.namebar b{color:var(--ink);font-weight:600;}
+.namebar u{text-decoration:none;border-bottom:1.4px dotted var(--line);display:inline-block;min-width:120px;}
+/* ---- intro ---- */
+.intro{margin-top:9px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;
+  background:#f7fafb;padding:9px 14px;font-size:13.5px;}
+.intro b{color:var(--accent);}
+.formula{margin-top:6px;text-align:center;font-family:var(--mono);font-size:15.5px;font-weight:600;color:var(--ink);
+  background:#fff;border:1px dashed var(--line);border-radius:8px;padding:6px;}
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 2px;}
+.frac .n{border-bottom:1.6px solid var(--ink);padding:0 6px;}
+.frac .d{padding:0 6px;}
+/* ---- steps ---- */
+.step{margin-top:11px;break-inside:avoid;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 30px;margin-top:6px;}
+.grid2 .step{margin-top:11px;}
+.step-h{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.step-h .b{font-family:var(--mono);font-weight:700;font-size:13px;color:#fff;background:var(--ink);border-radius:50%;
+  width:25px;height:25px;display:grid;place-items:center;flex:none;}
+.step-h h2{font-size:16.5px;font-weight:700;}
+.step-h .tag{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line);
+  border-radius:20px;padding:2px 10px;}
+.row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.op{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--dim);}
+.hint{margin-top:7px;font-size:12.5px;color:var(--accent2);font-family:var(--mono);}
+.hint b{color:var(--accent2);}
+/* ---- matrix ---- */
+.mwrap{display:inline-flex;flex-direction:column;align-items:center;gap:4px;}
+.mlabel{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);}
+.mlabel s{color:var(--dim);font-weight:400;text-decoration:none;font-size:11px;}
+.mtx{display:grid;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:3px;
+  padding:2px;gap:2px;background:#fff;}
+.mtx.c3{grid-template-columns:repeat(3,var(--cell,16mm));}
+.mtx.c4{grid-template-columns:repeat(4,var(--cell,16mm));}
+.cell{height:11mm;display:grid;place-items:center;font-family:var(--mono);font-size:16px;border:1px solid var(--line);border-radius:3px;}
+.cell.given{background:var(--given);border-color:var(--givenline);font-weight:700;}
+.cell.blank{background:var(--blank);}
+.cell.blank.tall{height:13mm;}
+/* exp helper */
+.exptab{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;font-family:var(--mono);font-size:11.5px;}
+.exptab div{padding:3px 10px;border-right:1px solid var(--line);text-align:center;}
+.exptab div:last-child{border-right:none;}
+.exptab b{display:block;color:var(--accent);}
+.note{font-size:12px;color:var(--dim);margin-top:6px;}
+.wb-foot{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;}
+/* answer key accent */
+.page.key .wb-title .no{background:var(--accent2);}
+.page.key .cell.ans{background:#fff5e9;border-color:#e3b780;font-weight:700;color:#7a3d00;}
+.key-badge{font-family:var(--mono);font-size:12px;color:#fff;background:var(--accent2);border-radius:5px;padding:3px 10px;font-weight:700;}
+/* screen toolbar (không in) */
+.toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
+.toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid var(--line);
+  background:#fff;color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent);}
+@media print{
+  body{background:#fff;}
+  .page{margin:0;box-shadow:none;}
+  .page+.page{page-break-before:always;}
+  .toolbar{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A3 · tính tay<br>Mức: nhập môn</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 11</span><h1>Self-Attention <small>— cơ chế Tự chú ý</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~20 phút</span></div>
+
+  <div class="intro">
+    <b>Mục tiêu.</b> Tính tay một lớp self-attention với 3 token. Cho sẵn ma trận <b>Q</b> (truy vấn),
+    <b>K</b> (khóa), <b>V</b> (giá trị), mỗi token là 1 hàng, số chiều <b>d = 4</b>. Hãy điền các ô trống theo 4 bước.
+    <div class="formula">
+      Attention(Q,K,V) = softmax<span style="font-size:20px">(</span>
+      <span class="frac"><span class="n">Q&nbsp;K<sup>⊤</sup></span><span class="d">√d</span></span>
+      <span style="font-size:20px">)</span> · V
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn</h2><span class="tag">3 token · d = 4</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">Q <s>3×4</s></div>
+        <div class="mtx c4">
+          <div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">0</div><div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div>
+        </div></div>
+      <div class="mwrap"><div class="mlabel">K <s>3×4</s></div>
+        <div class="mtx c4">
+          <div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">0</div><div class="cell given">2</div><div class="cell given">0</div><div class="cell given">0</div>
+          <div class="cell given">1</div><div class="cell given">1</div><div class="cell given">0</div><div class="cell given">0</div>
+        </div></div>
+      <div class="mwrap"><div class="mlabel">V <s>3×4</s></div>
+        <div class="mtx c4">
+          <div class="cell given" data-q="p">1</div><div class="cell given">0</div><div class="cell given" data-q="q">2</div><div class="cell given">0</div>
+          <div class="cell given">0</div><div class="cell given" data-q="p">1</div><div class="cell given">0</div><div class="cell given" data-q="q">2</div>
+          <div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div><div class="cell given">1</div>
+        </div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Điểm tương đồng &nbsp;S = Q · K<sup>⊤</sup></h2><span class="tag">tích vô hướng từng cặp hàng</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">S <s>3×3</s></div>
+        <div class="mtx c3">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div style="max-width:78mm">
+        <div class="hint"><b>Mẫu:</b> S₁₁ = Q₁·K₁ = 2·2 + 0·0 + 0·0 + 0·0 = <b>4</b></div>
+        <div class="note">S<sub>ij</sub> = (hàng i của Q) · (hàng j của K). Mỗi ô là tổng tích 4 thành phần.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Chia thang &nbsp;S / √d</h2><span class="tag">d = 4 → √d = 2</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">S′ = S / 2 <s>3×3</s></div>
+        <div class="mtx c3">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="note" style="max-width:78mm">Chia tỉ lệ giúp điểm số không quá lớn trước khi đưa vào softmax (giữ gradient ổn định).</div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>softmax theo từng hàng → A</h2><span class="tag">mỗi hàng cộng lại = 1</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">A <s>3×3 · trọng số chú ý</s></div>
+        <div class="mtx c3" style="--cell:18mm">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div style="max-width:74mm">
+        <div class="note" style="margin-bottom:4px">a<sub>j</sub> = e<sup>s′<sub>j</sub></sup> / Σ e<sup>s′</sup> · làm tròn 2 số, tổng hàng ≈ 1. Tra e<sup>x</sup>:</div>
+        <div class="exptab">
+          <div>x=0<b>1.00</b></div><div>x=1<b>2.72</b></div><div>x=2<b>7.39</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đầu ra &nbsp;O = A · V</h2><span class="tag">trộn V theo trọng số chú ý</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">O <s>3×4</s></div>
+        <div class="mtx c4">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="note" style="max-width:74mm">O<sub>i</sub> = a<sub>i1</sub>·V₁ + a<sub>i2</sub>·V₂ + a<sub>i3</sub>·V₃ (mỗi token mới = trung bình có trọng số của các V).</div>
+    </div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hiểu bản đồ chú ý A — cách đọc heatmap</h2><span class="tag">ví dụ minh họa · QKᵀ→÷√d→softmax→·V</span></div>
+    <svg id="figDemo" viewBox="0 0 380 168" width="151mm" height="67mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="ví dụ heatmap chú ý kèm chú giải cách đọc"></svg>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 11 · Self-Attention</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 11</span><h1>Self-Attention <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <!-- S -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>S = Q · K<sup>⊤</sup></h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">S</div>
+        <div class="mtx c3">
+          <div class="cell ans">4</div><div class="cell ans">0</div><div class="cell ans">2</div>
+          <div class="cell ans">0</div><div class="cell ans">4</div><div class="cell ans">2</div>
+          <div class="cell ans">2</div><div class="cell ans">2</div><div class="cell ans">2</div>
+        </div></div>
+      <div class="note" style="max-width:90mm">VD hàng 3: Q₃=(1,1,1,1). Q₃·K₁=2, Q₃·K₂=2, Q₃·K₃=1+1=2 → (2,2,2).</div>
+    </div>
+  </div>
+
+  <!-- S' -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>S′ = S / 2</h2></div>
+    <div class="mwrap"><div class="mlabel">S′</div>
+      <div class="mtx c3">
+        <div class="cell ans">2</div><div class="cell ans">0</div><div class="cell ans">1</div>
+        <div class="cell ans">0</div><div class="cell ans">2</div><div class="cell ans">1</div>
+        <div class="cell ans">1</div><div class="cell ans">1</div><div class="cell ans">1</div>
+      </div></div>
+  </div>
+
+  <!-- A -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>A = softmax(S′) theo hàng</h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">A</div>
+        <div class="mtx c3" style="--cell:16mm">
+          <div class="cell ans">0.67</div><div class="cell ans">0.09</div><div class="cell ans">0.24</div>
+          <div class="cell ans">0.09</div><div class="cell ans">0.67</div><div class="cell ans">0.24</div>
+          <div class="cell ans">0.33</div><div class="cell ans">0.33</div><div class="cell ans">0.33</div>
+        </div></div>
+      <div class="note" style="max-width:78mm">Hàng 1: e<sup>2</sup>,e<sup>0</sup>,e<sup>1</sup> = 7.39, 1, 2.72; tổng = 11.11 →
+        7.39/11.11=0.67 · 1/11.11=0.09 · 2.72/11.11=0.24. Hàng 3 đều nhau → 0.33 mỗi ô.</div>
+    </div>
+  </div>
+
+  <!-- O -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>O = A · V</h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">O</div>
+        <div class="mtx c4" style="--cell:16mm">
+          <div class="cell ans" data-q="oX1">0.91</div><div class="cell ans" data-q="oX2">0.33</div><div class="cell ans" data-q="oX3">1.58</div><div class="cell ans" data-q="oX4">0.42</div>
+          <div class="cell ans" data-q="oX2">0.33</div><div class="cell ans" data-q="oX1">0.91</div><div class="cell ans" data-q="oX4">0.42</div><div class="cell ans" data-q="oX3">1.58</div>
+          <div class="cell ans" data-q="oX5">0.66</div><div class="cell ans" data-q="oX5">0.66</div><div class="cell ans" data-q="oX6">0.99</div><div class="cell ans" data-q="oX6">0.99</div>
+        </div></div>
+      <div class="note" style="max-width:74mm" data-q="oNote">Hàng 1, cột 1: 0.67·1 + 0.09·0 + 0.24·1 = 0.91. Token 1 chú ý nhiều vào chính nó (0.67) nên O₁ gần V₁.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Bản đồ chú ý A (heatmap)</h2><span class="tag">token nào nhìn token nào</span></div>
+    <svg id="figAtt" viewBox="0 0 320 152" width="118mm" height="56mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap ma trận chú ý A"></svg>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Hàng A cho biết mỗi token “nhìn” vào đâu: token 1 & 2 tập trung vào chính mình,
+    token 3 chia đều. Output O chính là <b>V trộn lại theo mức chú ý</b> — đó là toàn bộ phép màu của self-attention.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 11 · Self-Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function generate(){
+  var p = WB.randInt(1,4);
+  var q = WB.randInt(1,4);
+  var a1 = 0.67, a2 = 0.09, a3 = 0.24, a33 = 0.33;
+
+  var X1 = Math.round((a1*p+a3)*100)/100;
+  var X2 = Math.round((a2*p+a3)*100)/100;
+  var X3 = Math.round((a1*q+a3)*100)/100;
+  var X4 = Math.round((a2*q+a3)*100)/100;
+  var X5 = Math.round(a33*(p+1)*100)/100;
+  var X6 = Math.round(a33*(q+1)*100)/100;
+
+  WB.setAll({
+    p: WB.fmtInt(p), q: WB.fmtInt(q),
+    oX1: WB.fmt2(X1), oX2: WB.fmt2(X2), oX3: WB.fmt2(X3),
+    oX4: WB.fmt2(X4), oX5: WB.fmt2(X5), oX6: WB.fmt2(X6),
+    oNote: 'Hàng 1, cột 1: 0.67·' + p + ' + 0.09·0 + 0.24·1 = ' + WB.fmt2(X1) +
+      '. Token 1 chú ý nhiều vào chính nó (0.67) nên O₁ gần V₁.'
+  });
+}
+
+// Heatmap ma trận chú ý A (tĩnh): hàng = token đang hỏi, cột = token được chú ý; ô càng đậm càng chú ý.
+function drawAtt(){
+  var svg = document.getElementById('figAtt'); if (!svg) return;
+  var A = [[0.67, 0.09, 0.24], [0.09, 0.67, 0.24], [0.33, 0.33, 0.33]];
+  var cs = 30, ox = 92, oy = 34, s = '';
+  s += '<text x="' + (ox + 1.5 * cs) + '" y="14" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">được chú ý →</text>';
+  for (var c = 0; c < 3; c++)
+    s += '<text x="' + (ox + c * cs + cs / 2) + '" y="' + (oy - 5) + '" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">tok ' + (c + 1) + '</text>';
+  s += '<text x="16" y="' + (oy + 1.5 * cs) + '" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700" transform="rotate(-90 16 ' + (oy + 1.5 * cs) + ')">token đang hỏi</text>';
+  for (var r = 0; r < 3; r++) {
+    s += '<text x="' + (ox - 7) + '" y="' + (oy + r * cs + cs / 2 + 3) + '" text-anchor="end" style="font-size:8.5px" fill="#5b6776">tok ' + (r + 1) + '</text>';
+    for (var c2 = 0; c2 < 3; c2++) {
+      var w = A[r][c2];
+      s += '<rect x="' + (ox + c2 * cs) + '" y="' + (oy + r * cs) + '" width="' + cs + '" height="' + cs + '" fill="#0e7490" fill-opacity="' + w + '" stroke="#9fb0c0" stroke-width="0.8"/>';
+      s += '<text x="' + (ox + c2 * cs + cs / 2) + '" y="' + (oy + r * cs + cs / 2 + 3) + '" text-anchor="middle" style="font-size:9px" font-weight="700" fill="' + (w > 0.5 ? '#fff' : '#16202e') + '">' + w.toFixed(2) + '</text>';
+    }
+  }
+  s += '<text x="160" y="145" text-anchor="middle" style="font-size:8px" fill="#16202e">Ô càng đậm = chú ý càng nhiều · tổng mỗi hàng = 1</text>';
+  svg.innerHTML = s;
+}
+
+// Heatmap VÍ DỤ trên trang đề: dạy cách đọc bản đồ chú ý (số khác đáp án, kèm thước màu).
+function drawAttDemo(){
+  var svg = document.getElementById('figDemo'); if (!svg) return;
+  var D = [[0.66, 0.25, 0.09], [0.10, 0.21, 0.69], [0.34, 0.33, 0.33]];
+  var cs = 32, ox = 96, oy = 30, s = '';
+  s += '<defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0%" stop-color="#0e7490" stop-opacity="0.95"/>'
+    + '<stop offset="100%" stop-color="#0e7490" stop-opacity="0.06"/></linearGradient></defs>';
+  s += '<text x="' + (ox - 8) + '" y="14" style="font-size:8px" fill="#b45309" font-weight="700">VÍ DỤ minh họa (không phải đáp án)</text>';
+  s += '<text x="' + (ox + 1.5 * cs) + '" y="26" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">được chú ý →</text>';
+  for (var c = 0; c < 3; c++) s += '<text x="' + (ox + c * cs + cs / 2) + '" y="' + (oy + 14) + '" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">tok ' + (c + 1) + '</text>';
+  var oy2 = oy + 18;
+  s += '<text x="22" y="' + (oy2 + 1.5 * cs) + '" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700" transform="rotate(-90 22 ' + (oy2 + 1.5 * cs) + ')">token đang hỏi</text>';
+  for (var r = 0; r < 3; r++) {
+    s += '<text x="' + (ox - 7) + '" y="' + (oy2 + r * cs + cs / 2 + 3) + '" text-anchor="end" style="font-size:8.5px" fill="#5b6776">tok ' + (r + 1) + '</text>';
+    for (var c2 = 0; c2 < 3; c2++) {
+      var w = D[r][c2];
+      s += '<rect x="' + (ox + c2 * cs) + '" y="' + (oy2 + r * cs) + '" width="' + cs + '" height="' + cs + '" fill="#0e7490" fill-opacity="' + w + '" stroke="#9fb0c0" stroke-width="0.8"/>';
+      s += '<text x="' + (ox + c2 * cs + cs / 2) + '" y="' + (oy2 + r * cs + cs / 2 + 3) + '" text-anchor="middle" style="font-size:9px" font-weight="700" fill="' + (w > 0.5 ? '#fff' : '#16202e') + '">' + w.toFixed(2) + '</text>';
+    }
+  }
+  var lx = ox + 3 * cs + 28, lh = 3 * cs;
+  s += '<rect x="' + lx + '" y="' + oy2 + '" width="15" height="' + lh + '" fill="url(#lg)" stroke="#9fb0c0" stroke-width="0.8"/>';
+  s += '<text x="' + (lx + 21) + '" y="' + (oy2 + 9) + '" style="font-size:8px" fill="#16202e">chú ý nhiều (≈1)</text>';
+  s += '<text x="' + (lx + 21) + '" y="' + (oy2 + lh) + '" style="font-size:8px" fill="#16202e">ít chú ý (≈0)</text>';
+  s += '<text x="190" y="162" text-anchor="middle" style="font-size:8.5px" fill="#16202e">Mỗi hàng = 1 token hỏi “tôi chú ý ai?” · ô càng đậm càng chú ý · tổng mỗi hàng = 1</text>';
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+drawAtt();
+drawAttDemo();
+</script>
+</body>
+</html>

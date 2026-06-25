@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, timestamp, pgEnum, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, timestamp, pgEnum, unique, boolean } from "drizzle-orm/pg-core";
 
 export const orderStatus = pgEnum("order_status", ["pending", "paid", "canceled"]);
 
@@ -35,5 +35,18 @@ export const enrollments = pgTable(
   (t) => [unique("enrollments_user_package_unique").on(t.userId, t.package)],
 );
 
+// Cấu hình flash-sale (1 dòng singleton) — admin chỉnh runtime. Đồng hồ đếm ngược là
+// evergreen phía client (mỗi khách 1 mốc, hết thì reset); ở đây chỉ lưu tham số chung.
+export const flashSale = pgTable("flash_sale", {
+  id: text("id").primaryKey().default("singleton"),
+  enabled: boolean("enabled").notNull().default(true),
+  headline: text("headline").notNull().default("⚡ FLASH SALE — Ưu đãi early-bird sắp kết thúc"),
+  countdownMinutes: integer("countdown_minutes").notNull().default(720), // độ dài đếm ngược/khách
+  viewerMin: integer("viewer_min").notNull().default(6),
+  viewerMax: integer("viewer_max").notNull().default(24),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type Order = typeof orders.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
+export type FlashSale = typeof flashSale.$inferSelect;

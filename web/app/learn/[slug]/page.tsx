@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { Paywall } from "@/components/paywall";
+import { ViewerCount } from "@/components/viewer-count";
 import { lessonBySlug, isFreeLesson } from "@/lib/lessons";
 import { getUser, hasAccess } from "@/lib/auth";
+import { getFlashSale } from "@/lib/settings";
 
 export default async function LessonViewer({
   params,
@@ -16,6 +18,7 @@ export default async function LessonViewer({
 
   const user = await getUser();
   const canView = user ? await hasAccess(user.id, lesson.slug) : isFreeLesson(lesson);
+  const flash = await getFlashSale();
 
   return (
     <>
@@ -25,8 +28,17 @@ export default async function LessonViewer({
           <Link href="/learn" className="text-accent font-medium hover:underline">
             ← Tất cả bài học
           </Link>
-          <div className="text-sm text-dim font-mono">
-            Bài {lesson.no} · {lesson.title}
+          <div className="flex items-center gap-4">
+            {flash.enabled && (
+              <ViewerCount
+                min={flash.viewerMin}
+                max={flash.viewerMax}
+                label="đang xem tài liệu này"
+              />
+            )}
+            <span className="text-sm text-dim font-mono">
+              Bài {lesson.no} · {lesson.title}
+            </span>
           </div>
         </div>
 

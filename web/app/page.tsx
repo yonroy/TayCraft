@@ -4,8 +4,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { CourseCatalog } from "@/components/course-catalog";
 import { PackageGrid } from "@/components/package-grid";
+import { FlashSaleBar } from "@/components/flash-sale-bar";
+import { ViewerCount } from "@/components/viewer-count";
 import { TOTAL_AVAILABLE, TOTAL_PLANNED } from "@/lib/lessons";
 import { productById } from "@/lib/products";
+import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
 const PRICE = productById("all-access")!.priceVnd; // giá K5 Full (đích)
@@ -17,9 +20,15 @@ const FEATURES = [
   { t: "Học theo thứ tự", d: "Mỗi bài dùng lại kết quả bài trước, dắt từ dot product đến Transformer." },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const flash = await getFlashSale();
   return (
     <>
+      <FlashSaleBar
+        enabled={flash.enabled}
+        headline={flash.headline}
+        countdownMinutes={flash.countdownMinutes}
+      />
       <SiteHeader />
 
       {/* Hero */}
@@ -45,7 +54,7 @@ export default function Home() {
             </Button>
           </Link>
         </div>
-        <p className="mt-3 text-sm text-dim">3 bài đầu miễn phí · thanh toán QR chuyển khoản</p>
+        <p className="mt-3 text-sm text-dim">Khóa 1 học miễn phí · thanh toán QR chuyển khoản</p>
       </section>
 
       {/* Features */}
@@ -60,7 +69,12 @@ export default function Home() {
 
       {/* Packages */}
       <section className="mx-auto max-w-5xl px-5 py-12">
-        <h2 className="text-2xl font-bold">Các gói khóa học</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-2xl font-bold">Các gói khóa học</h2>
+          {flash.enabled && (
+            <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang chọn gói" />
+          )}
+        </div>
         <p className="text-dim mt-1">
           <b className="text-ink">Khóa 1 học miễn phí.</b> Chọn gói để mở K2–K4 — hoặc{" "}
           <b className="text-ink">K5 Full</b> để có trọn đời + mọi phiếu ra trong tương lai (lộ trình{" "}

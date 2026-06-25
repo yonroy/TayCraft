@@ -3,7 +3,9 @@ import { desc, eq } from "drizzle-orm";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AdminConfirmButton } from "@/components/admin-order-actions";
+import { AdminFlashSale } from "@/components/admin-flash-sale";
 import { getUser, isAdmin } from "@/lib/auth";
+import { getFlashSale } from "@/lib/settings";
 import { db } from "@/lib/db";
 import { orders, profiles } from "@/lib/db/schema";
 import { formatVnd } from "@/lib/utils";
@@ -38,6 +40,7 @@ export default async function AdminPage() {
 
   const pending = rows.filter((r) => r.status === "pending").length;
   const paid = rows.filter((r) => r.status === "paid").length;
+  const flash = await getFlashSale();
 
   return (
     <>
@@ -47,6 +50,10 @@ export default async function AdminPage() {
         <p className="text-dim mt-1">
           {rows.length} đơn · {pending} chờ thanh toán · {paid} đã trả
         </p>
+
+        <div className="mt-6">
+          <AdminFlashSale initial={flash} />
+        </div>
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
           <table className="w-full text-sm">

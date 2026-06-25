@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · RMSProp — bước thích nghi theo √(EMA g²)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 4px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .lntab{font-family:var(--mono);font-size:11px;color:#0c4a5e;background:#eef6fa;border:1px solid #cfe3ec;
+    border-radius:6px;padding:4px 7px;margin-top:5px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>RMSProp</h1><span class="vi">— Root Mean Square Prop</span>
+    <span class="tag">s ← βs + (1−β)g² · θ ← θ − η·g/√s · β=0.5, η=1</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mỗi tham số có độ dốc khác nhau; dùng chung một η thì chỗ dốc mạnh sẽ "vọt", chỗ
+    thoải sẽ "ì". RMSProp giữ trung bình động của <b>g²</b> (độ lớn gradient) rồi <b>chia</b> bước cho √s — tự động
+    thu nhỏ bước ở nơi gradient lớn, nới bước ở nơi gradient nhỏ.
+    <div class="fm">sₜ = β·sₜ₋₁ + (1−β)·gₜ² &nbsp;·&nbsp; θₜ = θₜ₋₁ − η·gₜ/√sₜ &nbsp;·&nbsp; s₀=0, β=0.5, η=1 (ε≈0)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    √s ≈ "độ lớn điển hình" của gradient gần đây. Chia g cho √s → bước được <b>chuẩn hóa</b> về cỡ ~1, gần như
+    không phụ thuộc gradient to hay nhỏ. Nhờ vậy mọi hướng tiến đều đặn.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xám</b> = gradient gₜ (lớn nhỏ khác nhau) · <b>cam</b> = bước g/√s (đã chuẩn hóa, đều ~1).</div>
+      <div class="lntab" id="sqt1"></div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">LẶP RMSProp (s₀ = 0)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>t</th><th>gₜ</th><th>gₜ²</th><th>sₜ = 0.5sₜ₋₁ + 0.5gₜ²</th><th>√sₜ</th><th>θₜ = θₜ₋₁ − gₜ/√sₜ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">QUAN SÁT</div>
+      <div class="expr">
+        Bước g/√s ở mọi t đều cỡ <span class="ublk" style="display:inline-block;min-width:36px;border-bottom:1.6px dashed #b9b9b9"></span>
+        (≈1) dù gₜ thay đổi → tốc độ <b>thích nghi</b> theo từng tham số.
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Gradient càng lớn thì bước g/√s càng <span class="ublk" style="min-width:60px"></span> (to/nhỏ tương đối).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · RMSProp</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>RMSProp</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">ε (≈10⁻⁸) thêm vào dưới căn chỉ để tránh chia 0; ở đây bỏ qua cho gọn.</div>
+      <div class="lntab" id="sqt2"></div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">LẶP RMSProp</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>t</th><th>gₜ</th><th>gₜ²</th><th>sₜ</th><th>√sₜ</th><th>θₜ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        bước g/√s: <span data-q="kstep">?</span> &nbsp; → đều quanh 1 &nbsp;·&nbsp; θ cuối = <b><span data-q="kthL">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Gradient lớn → √s lớn → g/√s vẫn cỡ 1 → bước <span class="qa">nhỏ tương đối</span> (đã hãm lại).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> RMSProp = "mỗi tham số một tốc độ học riêng" theo độ lớn gradient gần đây. Nó lo phần
+        <b>tỉ lệ bước</b>; Momentum (D11) lo phần <b>hướng/đà</b>. Ghép cả hai + hiệu chỉnh bias = <b>Adam</b> (Bài 23).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · RMSProp</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return WB.fmt2(v);}
+function fI(v){return WB.fmtInt(v);}
+function fT(v){return WB.fmtTrim(v);}
+
+function generate(){
+  var beta=0.5, eta=1;
+  var th0=WB.pick([8,10]);
+  var gs=[WB.pick([2,4]), WB.pick([2,4]), WB.pick([2,4])];
+  var g2=gs.map(function(g){return g*g;});
+  var s=[], rs=[], step=[], th=[th0], sp=0;
+  for(var t=0;t<3;t++){
+    var st=beta*sp + (1-beta)*g2[t];
+    s.push(st);
+    var r=Math.sqrt(st);
+    rs.push(r);
+    var stp=eta*gs[t]/r;
+    step.push(stp);
+    th.push(th[t]-stp);
+    sp=st;
+  }
+
+  buildTbl('qtbl',gs,g2,s,rs,th,true);
+  buildTbl('ktbl',gs,g2,s,rs,th,false);
+  renderSqrt('sqt1',s); renderSqrt('sqt2',s);
+  WB.setAll({ kstep:step.map(f2).join(', '), kthL:fT(th[3]) });
+
+  drawBars('sch1',gs,step,false);
+  drawBars('sch2',gs,step,true);
+}
+
+function buildTbl(id,gs,g2,s,rs,th,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var t=0;t<3;t++){
+    var tr=document.createElement('tr');
+    var c=[String(t+1), fI(gs[t]), fI(g2[t]), f2(s[t]), f2(rs[t]), fT(th[t+1])];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j>=3) td.className='blank';   // sₜ, √sₜ, θₜ để trống
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+}
+
+function renderSqrt(id,s){
+  var el=document.getElementById(id); if(!el) return;
+  var seen={}, arr=[];
+  s.forEach(function(v){ var k=Math.round(v*100)/100; if(!seen[k]){seen[k]=1; arr.push(f2(k)+'→'+f2(Math.sqrt(k)));} });
+  el.innerHTML='Tra √: '+arr.join(' · ');
+}
+
+function drawBars(id,gs,step,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120, padl=16,padr=8,padt=10,padb=16;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var mx=Math.max.apply(null,gs)+1;
+  var gw=pw/3;
+  function bh(v,ref){return v/ref*ph;}
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  for(var t=0;t<3;t++){
+    var x0=padl+t*gw, bw=gw*0.3;
+    var xg=x0+gw*0.14, xs=x0+gw*0.5;
+    var hg=bh(gs[t],mx), hs=bh(step[t],2.2);  // step ~1, thang riêng để thấy đều
+    s+='<rect x="'+xg.toFixed(1)+'" y="'+(H-padb-hg).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hg.toFixed(1)+'" fill="#e5e5e5" stroke="#9aa3af" stroke-width="1"/>';
+    s+='<rect x="'+xs.toFixed(1)+'" y="'+(H-padb-hs).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hs.toFixed(1)+'" fill="#e3a76a" stroke="#b45309" stroke-width="1"/>';
+    s+='<text x="'+(x0+gw/2).toFixed(1)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="8" fill="#6b7280">t='+(t+1)+'</text>';
+    if(show){
+      s+='<text x="'+(xg+bw/2).toFixed(1)+'" y="'+(H-padb-hg-2).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#6b7280">'+fI(gs[t])+'</text>';
+      s+='<text x="'+(xs+bw/2).toFixed(1)+'" y="'+(H-padb-hs-2).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#b45309">'+f2(step[t])+'</text>';
+    }
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="gradient và bước chuẩn hóa RMSProp">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

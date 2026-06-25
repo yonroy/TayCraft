@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · MSE / MAE — Regression Loss</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.05;margin-top:3px;}
+  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11.5px;}
+  .dtbl td{padding:3px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl tr.sumr td{background:#eef6fa;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>MSE / MAE</h1><span class="vi">— Regression Loss</span>
+    <span class="tag">eᵢ = yᵢ − ŷᵢ · MSE = Σeᵢ²/n · MAE = Σ|eᵢ|/n</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Để "dạy" một mô hình hồi quy, ta cần một con số đo mức <b>sai</b> của dự đoán so với
+    thực tế — đó là <b>hàm mất mát</b>. MSE và MAE là hai thước cơ bản nhất; gradient của chúng chính là tín hiệu
+    để cập nhật trọng số ở mọi bài sau.
+    <div class="fm">MSE = (1/n)·Σ(yᵢ − ŷᵢ)² &nbsp;|&nbsp; MAE = (1/n)·Σ|yᵢ − ŷᵢ|</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    MSE <b>bình phương</b> sai số nên <b>phạt rất nặng</b> những cú trượt lớn (lỗi 4 → đóng góp 16); MAE đếm sai số
+    <b>tuyến tính</b> nên "đều tay", ít nhạy với điểm ngoại lai. Chọn loss = chọn cách bạn quan tâm tới lỗi lớn.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Cam</b> = giá trị thật yᵢ · <b>lam</b> = dự đoán ŷᵢ · <b>nét đứt</b> = sai số eᵢ. MSE/MAE tóm các đoạn này thành một số.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG SAI SỐ (n = 4 điểm)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>i</th><th>yᵢ (thật)</th><th>ŷᵢ (đoán)</th><th>eᵢ = yᵢ−ŷᵢ</th><th>eᵢ²</th><th>|eᵢ|</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">GỘP THÀNH MỘT SỐ</div>
+      <div class="expr">
+        MSE = Σeᵢ² / n = <span class="ublk" id="ssqB"></span> / <span data-q="n">4</span> = <span class="ublk" id="mseB"></span>
+      </div>
+      <div class="expr">
+        MAE = Σ|eᵢ| / n = <span class="ublk" id="sabsB"></span> / <span data-q="n">4</span> = <span class="ublk" id="maeB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Loss nào <b>phạt nặng hơn</b> một cú trượt lớn? → <span class="ublk" style="min-width:70px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · MSE / MAE</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>MSE / MAE</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">eᵢ² ≥ 0 luôn (bình phương); |eᵢ| ≥ 0. Cả hai loss = 0 ⇔ dự đoán khớp hoàn toàn.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG SAI SỐ</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>i</th><th>yᵢ</th><th>ŷᵢ</th><th>eᵢ</th><th>eᵢ²</th><th>|eᵢ|</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        MSE = <span data-q="kssq">?</span> / <span data-q="n">4</span> = <b><span data-q="kmse">?</span></b>
+        &nbsp;&nbsp;·&nbsp;&nbsp; MAE = <span data-q="ksabs">?</span> / <span data-q="n">4</span> = <b><span data-q="kmae">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Phạt nặng cú trượt lớn hơn: <span class="qa">MSE</span> (vì bình phương sai số).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> MSE và MAE biến cả bảng sai số thành <b>một con số</b> để tối ưu. MSE trơn, dễ lấy đạo hàm
+        (gradient = 2e) nên hay dùng để huấn luyện; MAE bền với ngoại lai. Bài sau chuyển sang loss cho <b>phân loại</b>:
+        Binary Cross-Entropy (D2) và Cross-Entropy (Bài 17).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · MSE / MAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fT(v){return WB.fmtTrim(v);}
+
+function generate(){
+  var n=4;
+  var ys=[], es=[], yh=[];
+  for(var i=0;i<n;i++){
+    ys.push(WB.randInt(3,9));
+    es.push(WB.randIntNZ(-3,3));     // sai số eᵢ = yᵢ − ŷᵢ
+    yh.push(ys[i]-es[i]);
+  }
+  var sq=es.map(function(e){return e*e;});
+  var ab=es.map(function(e){return Math.abs(e);});
+  var ssq=sq.reduce(function(s,v){return s+v;},0);
+  var sabs=ab.reduce(function(s,v){return s+v;},0);
+  var mse=ssq/n, mae=sabs/n;
+
+  buildTbl('qtbl',ys,yh,es,sq,ab,true);
+  buildTbl('ktbl',ys,yh,es,sq,ab,false);
+
+  // xoá ô trống trang ĐỀ
+  ['ssqB','mseB','sabsB','maeB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+
+  WB.setAll({
+    n:String(n),
+    kssq:fI(ssq), ksabs:fI(sabs), kmse:fT(mse), kmae:fT(mae)
+  });
+
+  drawErr('sch1',ys,yh,false);
+  drawErr('sch2',ys,yh,true);
+}
+
+function buildTbl(id,ys,yh,es,sq,ab,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var i=0;i<ys.length;i++){
+    var tr=document.createElement('tr');
+    var cells=[i+1,ys[i],yh[i],es[i],sq[i],ab[i]];
+    cells.forEach(function(v,j){
+      var td=document.createElement('td');
+      td.textContent=fI(v);
+      if(blank && j>=3){ td.className='blank'; }   // eᵢ, eᵢ², |eᵢ| để trống ở ĐỀ
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+  // hàng tổng Σ
+  var ssq=sq.reduce(function(s,v){return s+v;},0);
+  var sabs=ab.reduce(function(s,v){return s+v;},0);
+  var tr2=document.createElement('tr'); tr2.className='sumr';
+  var labels=['Σ','','','', ssq, sabs];
+  labels.forEach(function(v,j){
+    var td=document.createElement('td');
+    if(j===0){ td.innerHTML='<b>Σ</b>'; }
+    else if(j>=4){ if(blank){ td.className='blank'; } else { td.textContent=fI(v); } }
+    else { td.textContent=''; }
+    tr2.appendChild(td);
+  });
+  el.appendChild(tr2);
+}
+
+function drawErr(id,ys,yh,showVals){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=150, padl=14,padr=10,padt=12,padb=16;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var all=ys.concat(yh);
+  var ymin=Math.min.apply(null,all)-1, ymax=Math.max.apply(null,all)+1;
+  var n=ys.length;
+  function px(i){return (padl + (i+0.5)/n*pw).toFixed(1);}
+  function py(y){return (padt+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  for(var i=0;i<n;i++){
+    var x=px(i);
+    // sai số (nét đứt)
+    s+='<line x1="'+x+'" y1="'+py(ys[i])+'" x2="'+x+'" y2="'+py(yh[i])+'" stroke="#9aa3af" stroke-width="1.1" stroke-dasharray="3 2"/>';
+    // dự đoán ŷ (lam, rỗng)
+    s+='<circle cx="'+x+'" cy="'+py(yh[i])+'" r="3.4" fill="#fff" stroke="#0e7490" stroke-width="1.8"/>';
+    // thật y (cam, đặc)
+    s+='<circle cx="'+x+'" cy="'+py(ys[i])+'" r="3.4" fill="#b45309"/>';
+    s+='<text x="'+x+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="8" fill="#6b7280">'+(i+1)+'</text>';
+    if(showVals){
+      s+='<text x="'+(parseFloat(x)+5)+'" y="'+py(ys[i])+'" font-size="7.5" fill="#b45309">'+fI(ys[i])+'</text>';
+      s+='<text x="'+(parseFloat(x)+5)+'" y="'+py(yh[i])+'" font-size="7.5" fill="#0e7490">'+fI(yh[i])+'</text>';
+    }
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="giá trị thật vs dự đoán, sai số dọc">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

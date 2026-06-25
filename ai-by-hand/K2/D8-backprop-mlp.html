@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Backprop qua MLP nhiều lớp — Backprop MLP</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:2px;}
+  .expr b.fwn{color:#0c4a5e;} .expr b.bwn{color:#7a3d00;}
+  .ublk{display:inline-block;min-width:30px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.3;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  [data-q]{font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Backprop qua MLP 2 lớp</h1><span class="vi">— Backprop MLP</span>
+    <span class="tag">forward → ℒ · backward: δ lan ngược từng lớp</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Backprop = áp <b>quy tắc chuỗi</b> để lấy gradient của loss theo MỌI trọng số, lan từ
+    đầu ra <b>ngược</b> về đầu vào. "Nhiều lớp" nghĩa là δ (độ nhạy của loss) của lớp sau được <b>truyền lại</b> làm
+    δ của lớp trước. Đây là động cơ huấn luyện mọi mạng nơ-ron.
+    <div class="fm">z₁=w₁x+b₁ · a₁=ReLU(z₁) · ŷ=w₂a₁+b₂ · ℒ=½(ŷ−y)² &nbsp;→&nbsp; δ₂=ŷ−y · δ₁=δ₂·w₂·ReLU′(z₁)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam</b> = chiều xuôi (forward) · <b>cam</b> = chiều ngược (δ, gradient). δ₂ đẻ ra δ₁.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">XUÔI (forward) — cho x=<span data-q="x">2</span>, y=<span data-q="y">2</span></div>
+      <div class="expr">
+        z₁ = w₁·x + b₁ = <span data-q="w1">1</span>·<span data-q="x">2</span> + <span data-q="b1">1</span> = <span class="ublk"></span>
+        &nbsp;→&nbsp; a₁ = ReLU(z₁) = <span class="ublk"></span><br>
+        ŷ = w₂·a₁ + b₂ = <span data-q="w2">2</span>·a₁ + <span data-q="b2">−1</span> = <span class="ublk"></span>
+        &nbsp;→&nbsp; ℒ = ½(ŷ−y)² = <span class="ublk"></span>
+      </div>
+      <div class="bandh bw" style="margin-top:6px">NGƯỢC (backward) — ReLU′(z₁)=1 vì z₁&gt;0</div>
+      <div class="expr">
+        δ₂ = ŷ − y = <span class="ublk"></span> &nbsp;|&nbsp; ∂ℒ/∂w₂ = δ₂·a₁ = <span class="ublk"></span> &nbsp;|&nbsp; ∂ℒ/∂b₂ = δ₂ = <span class="ublk"></span><br>
+        δ₁ = δ₂·w₂·1 = <span class="ublk"></span> &nbsp;|&nbsp; ∂ℒ/∂w₁ = δ₁·x = <span class="ublk"></span> &nbsp;|&nbsp; ∂ℒ/∂b₁ = δ₁ = <span class="ublk"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu z₁ &lt; 0 thì ReLU′=0 → δ₁ = <span class="ublk" style="min-width:36px"></span> (gradient bị "chặn").</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Backprop qua MLP</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Backprop qua MLP 2 lớp</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">∂ℒ/∂w = δ(lớp đó) · đầu-vào(lớp đó). Cùng một δ dùng cho cả w và b của lớp.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">XUÔI (forward)</div>
+      <div class="expr">
+        z₁ = <span data-q="w1">1</span>·<span data-q="x">2</span> + <span data-q="b1">1</span> = <b class="fwn"><span data-q="z1">?</span></b>
+        &nbsp;→&nbsp; a₁ = <b class="fwn"><span data-q="a1">?</span></b><br>
+        ŷ = <span data-q="w2">2</span>·<span data-q="a1">?</span> + <span data-q="b2">−1</span> = <b class="fwn"><span data-q="yhat">?</span></b>
+        &nbsp;→&nbsp; ℒ = ½(<span data-q="yhat">?</span>−<span data-q="y">2</span>)² = <b class="fwn"><span data-q="loss">?</span></b>
+      </div>
+      <div class="bandh bw" style="margin-top:6px">NGƯỢC (backward)</div>
+      <div class="expr">
+        δ₂ = ŷ−y = <b class="bwn"><span data-q="d2">?</span></b> &nbsp;|&nbsp; ∂w₂ = δ₂·a₁ = <b class="bwn"><span data-q="gw2">?</span></b> &nbsp;|&nbsp; ∂b₂ = <b class="bwn"><span data-q="gb2">?</span></b><br>
+        δ₁ = δ₂·w₂ = <b class="bwn"><span data-q="d1">?</span></b> &nbsp;|&nbsp; ∂w₁ = δ₁·x = <b class="bwn"><span data-q="gw1">?</span></b> &nbsp;|&nbsp; ∂b₁ = <b class="bwn"><span data-q="gb1">?</span></b>
+      </div>
+      <div class="expr" style="font-size:11.5px;color:var(--dim)">
+        Cập nhật (η=0.1): w₂ ← <span data-q="w2">2</span> − 0.1·<span data-q="gw2">?</span> = <span data-q="nw2">?</span> ·
+        w₁ ← <span data-q="w1">1</span> − 0.1·<span data-q="gw1">?</span> = <span data-q="nw1">?</span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>z₁&lt;0 → ReLU′=0 → δ₁ = δ₂·w₂·0 = <span class="qa">0</span> → w₁,b₁ không được cập nhật (nơ-ron "chết").</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Một lần forward lưu lại z,a; một lần backward trả về mọi gradient — chi phí ~ gấp đôi forward.
+        Quy tắc lặp: <b>δ_trước = δ_sau · W · f′</b>, <b>∂W = δ · vào</b>. Mạng sâu chỉ là lặp bước này nhiều lần
+        (D9: backprop qua softmax+CE cho ra δ = p − y cực gọn).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Backprop qua MLP</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fT(v){return WB.fmtTrim(v);}
+
+function generate(){
+  var x=WB.pick([2,3]), w1=WB.pick([1,2]), b1=WB.pick([1,2]);
+  var w2=WB.pick([1,2,3]), b2=WB.pick([-1,1,2]), y=WB.pick([1,2,3,4]);
+  var z1=w1*x+b1;            // >0 luôn
+  var a1=z1;                 // ReLU(z1), z1>0
+  var yhat=w2*a1+b2;
+  var e=yhat-y;
+  var loss=0.5*e*e;
+  var d2=e, gw2=d2*a1, gb2=d2;
+  var d1=d2*w2, gw1=d1*x, gb1=d1;
+  var nw2=w2-0.1*gw2, nw1=w1-0.1*gw1;
+
+  WB.setAll({
+    x:fT(x), y:fT(y), w1:fT(w1), b1:fT(b1), w2:fT(w2), b2:fT(b2),
+    z1:fT(z1), a1:fT(a1), yhat:fT(yhat), loss:fT(loss),
+    d2:fT(d2), gw2:fT(gw2), gb2:fT(gb2), d1:fT(d1), gw1:fT(gw1), gb1:fT(gb1),
+    nw2:fT(nw2), nw1:fT(nw1)
+  });
+
+  drawNet('sch1',false);
+  drawNet('sch2',true);
+}
+
+function drawNet(id,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=140;
+  var nodes=[['x',22,70],['h',70,70],['ŷ',118,70],['ℒ',160,70]];
+  var s='<defs>'
+    +'<marker id="af'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'
+    +'<marker id="ab'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
+    +'</defs>';
+  // forward arrows (trên)
+  for(var i=0;i<nodes.length-1;i++){
+    s+='<line x1="'+(nodes[i][1]+11)+'" y1="62" x2="'+(nodes[i+1][1]-11)+'" y2="62" stroke="#0e7490" stroke-width="1.6" marker-end="url(#af'+id+')"/>';
+  }
+  // backward arrows (dưới)
+  for(var j=nodes.length-1;j>0;j--){
+    s+='<line x1="'+(nodes[j][1]-11)+'" y1="86" x2="'+(nodes[j-1][1]+11)+'" y2="86" stroke="#b45309" stroke-width="1.6" stroke-dasharray="4 2" marker-end="url(#ab'+id+')"/>';
+  }
+  // nodes
+  nodes.forEach(function(n){
+    s+='<circle cx="'+n[1]+'" cy="'+n[2]+'" r="11" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>';
+    s+='<text x="'+n[1]+'" y="'+(n[2]+4)+'" text-anchor="middle" font-size="11" font-weight="700">'+n[0]+'</text>';
+  });
+  s+='<text x="92" y="50" text-anchor="middle" font-size="8" fill="#0e7490">xuôi: w₁,w₂,b</text>';
+  s+='<text x="92" y="102" text-anchor="middle" font-size="8" fill="#b45309">ngược: δ₁ ← δ₂</text>';
+  s+='<text x="70" y="124" text-anchor="middle" font-size="7.5" fill="#6b7280">h = ReLU(w₁x+b₁)</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="sơ đồ MLP forward và backward">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

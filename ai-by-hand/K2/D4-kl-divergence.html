@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · KL Divergence — Khoảng cách hai phân phối</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 4px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl tr.sumr td{background:#eef6fa;font-weight:700;}
+  .lntab{font-family:var(--mono);font-size:11px;color:#0c4a5e;background:#eef6fa;border:1px solid #cfe3ec;
+    border-radius:6px;padding:4px 7px;margin-top:5px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>KL Divergence</h1><span class="vi">— Kullback–Leibler</span>
+    <span class="tag">D(p‖q) = Σ pᵢ·ln(pᵢ/qᵢ)</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> KL đo <b>p khác q bao nhiêu</b> — "cái giá" khi dùng phân phối q để mã hóa dữ liệu thật
+    theo p. Là linh hồn của cross-entropy, VAE (phạt KL) và distillation. KL ≥ 0, và = 0 ⇔ p ≡ q.
+    <div class="fm">D(p‖q) = Σᵢ pᵢ·ln(pᵢ / qᵢ) &nbsp;|&nbsp; chỉ tính trên 3 lớp · ln tra bảng tỉ số</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi lớp đóng góp pᵢ·ln(pᵢ/qᵢ): nơi p <b>nhiều hơn</b> q (tỉ số > 1, ln > 0) bị phạt dương; nơi p ít hơn
+    (tỉ số < 1, ln < 0) đóng góp âm. <b>Bất đối xứng</b>: D(p‖q) ≠ D(q‖p).
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam</b> = p (thật) · <b>cam</b> = q (xấp xỉ). KL lớn khi hai cột lệch nhau nhiều.</div>
+      <div class="lntab">Bảng ln(tỉ số): 0.25→−1.39 · 0.5→−0.69 · 1→0 · 2→0.69 · 4→1.39</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG TÍNH (3 lớp)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>lớp</th><th>pᵢ</th><th>qᵢ</th><th>pᵢ/qᵢ</th><th>ln(pᵢ/qᵢ)</th><th>pᵢ·ln(·)</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">CỘNG LẠI</div>
+      <div class="expr">
+        D(p‖q) = Σ pᵢ·ln(pᵢ/qᵢ) = <span class="ublk" id="klB" style="display:inline-block;min-width:60px;text-align:center;border-bottom:1.6px dashed #b9b9b9"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu p ≡ q (mọi tỉ số = 1) thì KL = <span class="ublk" style="display:inline-block;min-width:46px;border-bottom:1.6px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · KL Divergence</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>KL Divergence</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">KL ≥ 0 luôn (bất đẳng thức Gibbs). Đóng góp âm ở vài lớp, nhưng tổng không bao giờ < 0.</div>
+      <div class="lntab">Bảng ln(tỉ số): 0.25→−1.39 · 0.5→−0.69 · 1→0 · 2→0.69 · 4→1.39</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG TÍNH</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>lớp</th><th>pᵢ</th><th>qᵢ</th><th>pᵢ/qᵢ</th><th>ln(pᵢ/qᵢ)</th><th>pᵢ·ln(·)</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        D(p‖q) = <b><span data-q="kkl">?</span></b>
+        &nbsp;&nbsp;(để so: đổi vai trò p↔q sẽ ra số khác → KL bất đối xứng)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>p ≡ q → mọi ln(1) = 0 → KL = <span class="qa">0</span>.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> KL = "thông tin thừa" khi xấp xỉ p bằng q. Cross-Entropy = Entropy(p) + KL(p‖q); tối thiểu
+        cross-entropy chính là kéo q về p. VAE thêm KL(q‖N(0,1)) để ràng buộc không gian ẩn (Bài 24).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · KL Divergence</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var LNR = {0.25:-1.39, 0.5:-0.69, 1:0, 2:0.69, 4:1.39};
+function f2(v){return WB.fmt2(v);}
+function fr(r){ // hiển thị tỉ số gọn
+  if(r===0.25) return '1/4'; if(r===0.5) return '1/2'; if(r===1) return '1'; if(r===2) return '2'; if(r===4) return '4';
+  return String(r);
+}
+
+// các cặp (p,q) trên bội 0.25, tỉ số ∈ {1/4,1/2,1,2,4}
+var PAIRS=[
+  [[0.5,0.25,0.25],[0.25,0.5,0.25]],
+  [[0.25,0.5,0.25],[0.25,0.25,0.5]],
+  [[0.5,0.25,0.25],[0.25,0.25,0.5]],
+  [[0.25,0.25,0.5],[0.5,0.25,0.25]],
+  [[0.25,0.25,0.5],[0.25,0.5,0.25]],
+  [[0.25,0.5,0.25],[0.5,0.25,0.25]]
+];
+
+function generate(){
+  // chọn cặp có mọi tỉ số nằm trong bảng
+  var p,q,ratios;
+  do{
+    var pr=WB.pick(PAIRS); p=pr[0]; q=pr[1];
+    ratios=p.map(function(pi,i){return Math.round(pi/q[i]*100)/100;});
+  } while(!ratios.every(function(r){return LNR.hasOwnProperty(r);}));
+
+  var lns=ratios.map(function(r){return LNR[r];});
+  var prod=p.map(function(pi,i){return Math.round(pi*lns[i]*100)/100;});
+  var kl=Math.round(prod.reduce(function(s,v){return s+v;},0)*100)/100;
+
+  buildTbl('qtbl',p,q,ratios,lns,prod,true);
+  buildTbl('ktbl',p,q,ratios,lns,prod,false);
+  var kb=document.getElementById('klB'); if(kb) kb.textContent='';
+  WB.setAll({ kkl:f2(kl) });
+
+  drawBars('sch1',p,q,false);
+  drawBars('sch2',p,q,true);
+}
+
+function buildTbl(id,p,q,ratios,lns,prod,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var i=0;i<3;i++){
+    var tr=document.createElement('tr');
+    var c=[String(i+1), f2(p[i]), f2(q[i]), fr(ratios[i]), f2(lns[i]), f2(prod[i])];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j>=3) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+  var kl=Math.round(prod.reduce(function(s,v){return s+v;},0)*100)/100;
+  var tr2=document.createElement('tr'); tr2.className='sumr';
+  ['Σ','','','','',f2(kl)].forEach(function(v,j){
+    var td=document.createElement('td');
+    if(j===0) td.innerHTML='<b>Σ</b>';
+    else if(j===5){ if(blank) td.className='blank'; else td.textContent=v; }
+    else td.textContent='';
+    tr2.appendChild(td);
+  });
+  el.appendChild(tr2);
+}
+
+function drawBars(id,p,q,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, padl=14,padr=8,padt=12,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var vmax=0.75;
+  var gw=pw/3;
+  function bh(v){return v/vmax*ph;}
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  for(var i=0;i<3;i++){
+    var x0=padl+i*gw;
+    var bw=gw*0.32;
+    var xp=x0+gw*0.16, xq=x0+gw*0.52;
+    var hp=bh(p[i]), hq=bh(q[i]);
+    s+='<rect x="'+xp.toFixed(1)+'" y="'+(H-padb-hp).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hp.toFixed(1)+'" fill="#a7d3e3" stroke="#0e7490" stroke-width="1"/>';
+    s+='<rect x="'+xq.toFixed(1)+'" y="'+(H-padb-hq).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hq.toFixed(1)+'" fill="#e3a76a" stroke="#b45309" stroke-width="1"/>';
+    s+='<text x="'+(x0+gw/2).toFixed(1)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="8" fill="#6b7280">lớp '+(i+1)+'</text>';
+    if(show){
+      s+='<text x="'+(xp+bw/2).toFixed(1)+'" y="'+(H-padb-hp-2).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#0e7490">'+f2(p[i])+'</text>';
+      s+='<text x="'+(xq+bw/2).toFixed(1)+'" y="'+(H-padb-hq-2).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#b45309">'+f2(q[i])+'</text>';
+    }
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="cột p và q trên 3 lớp">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

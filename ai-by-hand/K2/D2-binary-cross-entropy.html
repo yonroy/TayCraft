@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Binary Cross-Entropy — BCE</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.05;margin-top:3px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11.5px;}
+  .dtbl td{padding:3px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .lntab{font-family:var(--mono);font-size:11px;color:#0c4a5e;background:#eef6fa;border:1px solid #cfe3ec;
+    border-radius:6px;padding:4px 7px;margin-top:5px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Binary Cross-Entropy</h1><span class="vi">— BCE</span>
+    <span class="tag">ℒ = −[y·ln p + (1−y)·ln(1−p)]</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Với bài phân loại <b>nhị phân</b> (có/không, spam/không), mô hình xuất ra một xác suất
+    p ∈ (0,1). BCE đo "độ ngạc nhiên" khi nhãn thật là y: dự đoán đúng và chắc → loss nhỏ; sai và chắc → loss lớn.
+    <div class="fm">ℒᵢ = −[yᵢ·ln pᵢ + (1−yᵢ)·ln(1−pᵢ)] &nbsp; → &nbsp; nếu y=1: ℒ = −ln p &nbsp;·&nbsp; nếu y=0: ℒ = −ln(1−p)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Chỉ có <b>xác suất gán cho nhãn đúng</b> mới được tính: q = p nếu y=1, q = 1−p nếu y=0. Loss = <b>−ln q</b>.
+    q→1 (đoán đúng, tự tin) → loss→0; q→0 (đoán sai, tự tin) → loss→∞.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Đường −ln q</b>: phạt nhẹ khi q gần 1, <b>nổ tung</b> khi q gần 0. Chấm = các ví dụ.</div>
+      <div class="lntab" id="lntab1"></div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">3 VÍ DỤ — xác suất nhãn đúng q & loss</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>i</th><th>yᵢ</th><th>pᵢ = P(lớp 1)</th><th>qᵢ = P(nhãn đúng)</th><th>ℒᵢ = −ln qᵢ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">TRUNG BÌNH BCE</div>
+      <div class="expr">
+        BCE = (ℒ₁ + ℒ₂ + ℒ₃) / 3 = <span class="ublk" id="sumB"></span> / 3 = <span class="ublk" id="bceB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu y=1 mà p = 0.9 thì loss to hay nhỏ? → <span class="ublk" style="min-width:60px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Binary Cross-Entropy</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Binary Cross-Entropy</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">q = xác suất gán cho nhãn ĐÚNG. Tra −ln q ở bảng rồi cộng, chia 3.</div>
+      <div class="lntab" id="lntab2"></div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">3 VÍ DỤ</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>i</th><th>yᵢ</th><th>pᵢ</th><th>qᵢ</th><th>ℒᵢ = −ln qᵢ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        BCE = <span data-q="ksum">?</span> / 3 = <b><span data-q="kbce">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>y=1, p=0.9 → q=0.9 → ℒ = −ln 0.9 = <span class="qa">0.11</span> (loss <b>nhỏ</b>: đoán đúng & tự tin).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> BCE = trung bình −ln(xác suất nhãn đúng). Nó là dạng <b>2 lớp</b> của Cross-Entropy (Bài 17).
+        Gradient của BCE theo logit cũng rút gọn đẹp thành <b>p − y</b> — chính tín hiệu để cập nhật trọng số (D9).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Binary Cross-Entropy</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+// Bảng −ln(q) cho q = 0.1 … 0.9 (2 chữ số) — tính tay tra bảng
+var NL = {1:2.30, 2:1.61, 3:1.20, 4:0.92, 5:0.69, 6:0.51, 7:0.36, 8:0.22, 9:0.11};
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+function negln(q){return NL[Math.round(q*10)];}
+
+function generate(){
+  var n=3;
+  var ys=[], ps=[], qs=[], ls=[];
+  for(var i=0;i<n;i++){
+    var y=WB.pick([0,1]);
+    // p ∈ {0.2..0.8}; bảo đảm q ∈ [0.1,0.9]
+    var p=WB.pick([0.2,0.3,0.4,0.5,0.6,0.7,0.8]);
+    var q=(y===1)?p:Math.round((1-p)*10)/10;
+    ys.push(y); ps.push(p); qs.push(q); ls.push(negln(q));
+  }
+  var sum=ls.reduce(function(s,v){return s+v;},0);
+  sum=Math.round(sum*100)/100;
+  var bce=Math.round(sum/n*100)/100;
+
+  buildTbl('qtbl',ys,ps,qs,ls,true);
+  buildTbl('ktbl',ys,ps,qs,ls,false);
+  ['sumB','bceB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+
+  WB.setAll({ ksum:f2(sum), kbce:f2(bce) });
+
+  renderLn('lntab1'); renderLn('lntab2');
+  drawCurve('sch1',qs,false);
+  drawCurve('sch2',qs,true);
+}
+
+function buildTbl(id,ys,ps,qs,ls,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var i=0;i<ys.length;i++){
+    var tr=document.createElement('tr');
+    var td0=document.createElement('td'); td0.textContent=(i+1); tr.appendChild(td0);
+    var td1=document.createElement('td'); td1.textContent=ys[i]; tr.appendChild(td1);
+    var td2=document.createElement('td'); td2.textContent=f2(ps[i]); tr.appendChild(td2);
+    var td3=document.createElement('td'); td3.textContent=f2(qs[i]); if(blank) td3.className='blank'; tr.appendChild(td3);
+    var td4=document.createElement('td'); td4.textContent=f2(ls[i]); if(blank) td4.className='blank'; tr.appendChild(td4);
+    el.appendChild(tr);
+  }
+}
+
+function renderLn(id){
+  var el=document.getElementById(id); if(!el) return;
+  var arr=[]; for(var j=1;j<=9;j++) arr.push('0.'+j+'→'+f2(NL[j]));
+  el.innerHTML='Bảng −ln q: '+arr.join(' · ');
+}
+
+function drawCurve(id,qs,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, padl=16,padr=8,padt=10,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var Lmax=2.6;
+  function px(q){return (padl+q*pw).toFixed(1);}
+  function py(L){return (padt+ph-Math.min(L,Lmax)/Lmax*ph).toFixed(1);}
+  var s='';
+  // trục
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<line x1="'+padl+'" y1="'+padt+'" x2="'+padl+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  // đường −ln q
+  var d=''; for(var q=0.06;q<=1.0001;q+=0.02){ var L=-Math.log(q); d+=(d?'L':'M')+px(q)+','+py(L)+' '; }
+  s+='<path d="'+d+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
+  s+='<text x="'+(W-padr)+'" y="'+(H-padb+11)+'" text-anchor="end" font-size="8" fill="#6b7280">q→1</text>';
+  s+='<text x="'+(padl+2)+'" y="'+(padt+8)+'" font-size="8" fill="#6b7280">ℒ</text>';
+  // chấm ví dụ
+  qs.forEach(function(q){
+    var L=-Math.log(q);
+    s+='<circle cx="'+px(q)+'" cy="'+py(L)+'" r="3.2" fill="#b45309"/>';
+    if(show){ s+='<text x="'+(parseFloat(px(q))+3)+'" y="'+(parseFloat(py(L))-3)+'" font-size="7.5" fill="#b45309">'+f2(q)+'</text>'; }
+  });
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đường cong âm log q">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

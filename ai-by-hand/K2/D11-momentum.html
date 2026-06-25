@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Momentum — quán tính cho gradient descent</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Momentum</h1><span class="vi">— quán tính cho GD</span>
+    <span class="tag">v ← β·v + g · θ ← θ − η·v · β=0.5, η=0.2</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Gradient descent thuần "quên" quá khứ ở mỗi bước. Momentum giữ một <b>vận tốc</b> v —
+    trung bình động của các gradient — nên khi gradient nhất quán một hướng, v <b>tích lũy</b> và đi nhanh hơn; khi
+    gradient dao động, v làm <b>mượt</b> bớt. Giống hòn bi lăn có đà.
+    <div class="fm">vₜ = β·vₜ₋₁ + gₜ &nbsp;·&nbsp; θₜ = θₜ₋₁ − η·vₜ &nbsp;·&nbsp; v₀ = 0, β = 0.5, η = 0.2</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    β là "độ nhớ" của vận tốc cũ. Gradient cùng dấu liên tục → v lớn dần vượt cả g (tăng tốc); gradient đổi dấu →
+    v cũ ghìm lại (giảm rung). SGD thường = Momentum với β = 0.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xám</b> = gradient gₜ · <b>cam</b> = vận tốc vₜ. Cùng hướng → cột cam <b>cao hơn</b> cột xám (có đà).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">LẶP MOMENTUM (v₀ = 0)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>bước t</th><th>gₜ</th><th>vₜ = 0.5·vₜ₋₁ + gₜ</th><th>θₜ = θₜ₋₁ − 0.2·vₜ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">SO VỚI SGD (không momentum)</div>
+      <div class="expr">
+        θ₀ = <span data-q="th0">5</span> &nbsp;·&nbsp; Tổng quãng đi của Momentum =
+        <span class="ublk" id="dispB" style="display:inline-block;min-width:50px;border-bottom:1.6px dashed #b9b9b9"></span>
+        &nbsp;(SGD chỉ đi −0.2·Σg)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu β = 0, công thức v ← g → Momentum trở thành <span class="ublk" style="min-width:60px"></span>.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Momentum</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Momentum</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">v tích lũy gradient quá khứ với trọng số giảm dần βᵏ: vₜ = gₜ + β·gₜ₋₁ + β²·gₜ₋₂ + …</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">LẶP MOMENTUM</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>bước t</th><th>gₜ</th><th>vₜ</th><th>θₜ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        θ: <span data-q="th0">5</span> → <span data-q="kth1">?</span> → <span data-q="kth2">?</span> → <span data-q="kth3">?</span>
+        &nbsp;·&nbsp; v cuối = <b><span data-q="kvL">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>β = 0 → vₜ = gₜ → công thức thành <span class="qa">SGD</span> (θ ← θ − η·g).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Momentum = trung bình động (chưa chuẩn hóa) của gradient → vượt khe hẹp nhanh, bớt dao động.
+        RMSProp (D12) chia bước theo độ lớn gradient; <b>Adam</b> (Bài 23) = Momentum + RMSProp gộp lại, có hiệu chỉnh bias.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Momentum</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fT(v){return WB.fmtTrim(v);}
+function fI(v){return WB.fmtInt(v);}
+
+function generate(){
+  var beta=0.5, eta=0.2;
+  var th0=WB.pick([4,5,6]);
+  // 3 gradient phần lớn cùng dấu (dương) để thấy tích lũy
+  var gs=[WB.pick([2,4]), WB.pick([2,4]), WB.pick([2,4])];
+  var v=[], th=[th0], vp=0;
+  for(var t=0;t<3;t++){
+    var vt=beta*vp + gs[t];
+    v.push(vt);
+    th.push(th[t]-eta*vt);
+    vp=vt;
+  }
+  var disp=eta*(v[0]+v[1]+v[2]);
+
+  buildTbl('qtbl',gs,v,th,true);
+  buildTbl('ktbl',gs,v,th,false);
+  var db=document.getElementById('dispB'); if(db) db.textContent='';
+  WB.setAll({
+    th0:fI(th0),
+    kth1:fT(th[1]), kth2:fT(th[2]), kth3:fT(th[3]), kvL:fT(v[2])
+  });
+
+  drawBars('sch1',gs,v,false);
+  drawBars('sch2',gs,v,true);
+}
+
+function buildTbl(id,gs,v,th,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var t=0;t<3;t++){
+    var tr=document.createElement('tr');
+    var c=[String(t+1), fI(gs[t]), fT(v[t]), fT(th[t+1])];
+    c.forEach(function(val,j){
+      var td=document.createElement('td'); td.textContent=val;
+      if(blank && j>=2) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+}
+
+function drawBars(id,gs,v,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, padl=16,padr=8,padt=12,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var mx=Math.max.apply(null,gs.concat(v))+1;
+  var gw=pw/3;
+  function bh(val){return val/mx*ph;}
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  for(var t=0;t<3;t++){
+    var x0=padl+t*gw, bw=gw*0.3;
+    var xg=x0+gw*0.14, xv=x0+gw*0.5;
+    var hg=bh(gs[t]), hv=bh(v[t]);
+    s+='<rect x="'+xg.toFixed(1)+'" y="'+(H-padb-hg).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hg.toFixed(1)+'" fill="#e5e5e5" stroke="#9aa3af" stroke-width="1"/>';
+    s+='<rect x="'+xv.toFixed(1)+'" y="'+(H-padb-hv).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hv.toFixed(1)+'" fill="#e3a76a" stroke="#b45309" stroke-width="1"/>';
+    s+='<text x="'+(x0+gw/2).toFixed(1)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="8" fill="#6b7280">t='+(t+1)+'</text>';
+    if(show){
+      s+='<text x="'+(xg+bw/2).toFixed(1)+'" y="'+(H-padb-hg-2).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#6b7280">'+fI(gs[t])+'</text>';
+      s+='<text x="'+(xv+bw/2).toFixed(1)+'" y="'+(H-padb-hv-2).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#b45309">'+fT(v[t])+'</text>';
+    }
+  }
+  s+='<text x="'+(W-padr)+'" y="'+(padt+6)+'" text-anchor="end" font-size="8" fill="#6b7280">xám g · cam v</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="gradient và vận tốc momentum">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

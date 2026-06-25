@@ -171,6 +171,90 @@ footer a{color:var(--accent);}
     </a>
   </div>
 
+  <div class="sec">Phần D · Mất mát, gradient &amp; tối ưu (K2)</div>
+  <div class="list">
+
+    <a class="card adv done" href="K2/D1-mse-mae.html">
+      <div class="no">D1</div>
+      <div class="body"><h2>MSE / MAE — Regression Loss</h2>
+        <p>Đo sai số hồi quy: bình phương (phạt nặng lỗi lớn) so với tuyệt đối (đều tay). Nền của mọi gradient.</p>
+        <div class="tags"><i>loss</i><i>Σe²/n</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D2-binary-cross-entropy.html">
+      <div class="no">D2</div>
+      <div class="body"><h2>Binary Cross-Entropy — BCE</h2>
+        <p>Phân loại nhị phân: ℒ = −ln(xác suất nhãn đúng). Tra bảng ln, trung bình trên 3 ví dụ.</p>
+        <div class="tags"><i>loss</i><i>−ln p</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D4-kl-divergence.html">
+      <div class="no">D4</div>
+      <div class="body"><h2>KL Divergence — khoảng cách hai phân phối</h2>
+        <p>Σ pᵢ·ln(pᵢ/qᵢ): "cái giá" khi dùng q thay cho p. Bất đối xứng, luôn ≥ 0.</p>
+        <div class="tags"><i>phân phối</i><i>ln tỉ số</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D6-gradient-descent-2-bien.html">
+      <div class="no">D6</div>
+      <div class="body"><h2>Gradient Descent 2 biến — GD 2D</h2>
+        <p>f = x²+y², ∇ = (2x,2y), bước ngược dốc η. Trượt về đáy bát qua các đường đồng mức.</p>
+        <div class="tags"><i>tối ưu</i><i>θ − η∇</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D8-backprop-mlp.html">
+      <div class="no">D8</div>
+      <div class="body"><h2>Backprop qua MLP — δ lan ngược từng lớp</h2>
+        <p>MLP 2 lớp: forward ra ℒ, backward bằng quy tắc chuỗi cho mọi gradient. δ lớp sau truyền thành δ lớp trước.</p>
+        <div class="tags"><i>quy tắc chuỗi</i><i>δ, ∂W</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D9-backprop-softmax-ce.html">
+      <div class="no">D9</div>
+      <div class="body"><h2>Backprop qua Softmax + CE — g = p − y</h2>
+        <p>Phép màu: gradient của softmax+cross-entropy theo logit rút gọn cực đẹp thành p − y. Tổng = 0.</p>
+        <div class="tags"><i>gradient</i><i>p − y</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D10-sgd.html">
+      <div class="no">D10</div>
+      <div class="body"><h2>SGD mini-batch — trung bình gradient</h2>
+        <p>Lấy một batch nhỏ, trung bình gradient các mẫu rồi cập nhật — nhanh và đỡ nhiễu hơn dùng 1 mẫu.</p>
+        <div class="tags"><i>tối ưu</i><i>ḡ = Σg/m</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D11-momentum.html">
+      <div class="no">D11</div>
+      <div class="body"><h2>Momentum — quán tính cho gradient descent</h2>
+        <p>Vận tốc v ← βv + ∇ tích lũy đà: nhanh ở hướng nhất quán, mượt khi gradient dao động.</p>
+        <div class="tags"><i>quán tính</i><i>v, β</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D12-rmsprop.html">
+      <div class="no">D12</div>
+      <div class="body"><h2>RMSProp — bước thích nghi theo √(EMA g²)</h2>
+        <p>Chia bước cho √s: mỗi tham số một tốc độ học riêng theo độ lớn gradient gần đây.</p>
+        <div class="tags"><i>thích nghi</i><i>g/√s</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/D14-adamw.html">
+      <div class="no">D14</div>
+      <div class="body"><h2>AdamW — Adam + weight decay tách rời</h2>
+        <p>Bước thích nghi m̂/√v̂ cộng lực co trọng số η·λ·θ <b>độc lập</b> với gradient. Mặc định của Transformer/LLM.</p>
+        <div class="tags"><i>tối ưu</i><i>m̂, v̂, λθ</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+  </div>
+
   <div class="sec">Nâng cao · kiến trúc thật</div>
   <div class="list">
     <a class="card adv done" href="K3/11-self-attention.html">

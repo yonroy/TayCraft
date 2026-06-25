@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// check.mjs — Đo tràn lề phiếu "AI by Hand" BẰNG SỐ (+ tuỳ chọn chụp ảnh).
+// check.mjs — Đo tràn lề phiếu "Làm toán AI" BẰNG SỐ (+ tuỳ chọn chụp ảnh).
 // Thay cho màn tạo _measure.html thủ công. Chạy:
 //   node tools/check.mjs <file.html> [--runs N] [--shot] [--keep]
 // Ví dụ: node tools/check.mjs A1-vecto-cong-tru.html --runs 5 --shot

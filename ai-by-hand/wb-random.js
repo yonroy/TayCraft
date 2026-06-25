@@ -1,4 +1,4 @@
-// wb-random.js — cơ chế "🎲 Đổi số" dùng chung cho mọi phiếu AI by Hand.
+// wb-random.js — cơ chế "🎲 Đổi số" dùng chung cho mọi phiếu Làm toán AI.
 // Mỗi bài tự viết generate() tính số liệu mới, rồi gọi WB.setAll({...}) để ghi vào
 // các thẻ có data-q="<key>" (mọi thẻ cùng key được cập nhật cùng lúc).
 (function () {

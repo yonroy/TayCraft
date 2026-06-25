@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// new.mjs — Sinh khung phiếu "AI by Hand" kiểu GIẢNG GIẢI (skill /phieu-giai-thich).
+// new.mjs — Sinh khung phiếu "Làm toán AI" kiểu GIẢNG GIẢI (skill /phieu-giai-thich).
 // Đã cân sẵn 2 trang theo bài học budget: trang ĐỀ nhẹ (intro+trực giác+cho sẵn+các bước),
 // sơ đồ + tự-kiểm-tra-đáp-án dồn sang trang ĐÁP ÁN. Chỉ còn điền TOÁN (chỗ /* TODO */).
 //
@@ -48,7 +48,7 @@ const T = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI by Hand · Bài ${code} — ${title} (A4 in được)</title>
+<title>Làm toán AI · Bài ${code} — ${title} (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 <style>
 /* siết nhẹ chiều cao (additive, không đụng wb.css) — chỉnh nếu check.mjs báo tràn */
@@ -70,7 +70,7 @@ const T = `<!DOCTYPE html>
 <!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
 <section class="page">
   <div class="wb-head">
-    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần ${code[0]}</div>
   </div>
 
@@ -127,13 +127,13 @@ const T = `<!DOCTYPE html>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>AI by Hand ✍️ — Bài ${code} · ${title}</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài ${code} · ${title}</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
-    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
   <div class="wb-title"><span class="no">Bài ${code}</span><h1>${title} <small>— lời giải</small></h1></div>
@@ -173,7 +173,7 @@ const T = `<!DOCTYPE html>
     <b style="color:var(--accent2)">Rút ra.</b> /* TODO: 2–3 câu chốt + nối sang bài kế. */
   </div>
 
-  <div class="wb-foot"><span>AI by Hand ✍️ — Bài ${code} · ${title}</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài ${code} · ${title}</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

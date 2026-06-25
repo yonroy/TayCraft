@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { CourseCatalog } from "@/components/course-catalog";
 import { PackageGrid } from "@/components/package-grid";
+import { Reviews } from "@/components/reviews";
 import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
 import { TOTAL_AVAILABLE } from "@/lib/lessons";
@@ -98,11 +99,16 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Reviews */}
+      <Reviews />
+
       {/* Pricing CTA */}
       <section className="mx-auto max-w-5xl px-5 py-12">
         <div className="rounded-3xl border border-line bg-paper p-8 sm:p-12 text-center">
           <h2 className="text-2xl font-bold">Trọn bộ, một lần trả</h2>
-          <p className="mt-2 text-dim">Mở khóa tất cả bài hiện có và mọi bài ra trong tương lai.</p>
+          <p className="mt-2 text-dim">
+            Mở khóa tất cả bài hiện có, kèm cập nhật mới miễn phí trong 12 tháng.
+          </p>
           <div className="mt-5 text-4xl font-extrabold text-accent">{formatVnd(PRICE)}</div>
           <div className="mt-6">
             <Link href="/checkout">

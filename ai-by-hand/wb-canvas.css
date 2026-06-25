@@ -79,3 +79,20 @@ body{font-family:var(--sans);color:var(--ink);background:#e7e2d6;}
   background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);}
 .toolbar button:hover{border-color:var(--accent);color:var(--accent);}
 @media print{ body{background:#fff;} .sheet{margin:0;box-shadow:none;} .sheet+.sheet{page-break-before:always;} .toolbar{display:none;} }
+
+/* ===== KHỐI GIẢNG GIẢI cho canvas (additive — bản gọn cho A4 ngang) =====
+   Mirror của .intuition/.why/.quiz trong wb.css, thu nhỏ cho khổ ngang ít chiều cao. */
+.intuition{margin-top:7px;border:1px solid #d9d2ff;border-left:4px solid #7c5cff;border-radius:8px;
+  background:#f7f5ff;padding:6px 12px;font-size:12.5px;}
+.intuition b{color:#5b3fd6;}
+.intuition .lead{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:#5b3fd6;margin-right:6px;}
+/* "Vì sao" gọn — một dòng mono dưới một dải bước */
+.why{margin-top:3px;font-family:var(--mono);font-size:10.5px;color:var(--accent);line-height:1.5;}
+.why b{color:var(--accent);}
+/* "Tự kiểm tra" — đáp án .qa chỉ lộ ở trang ĐÁP ÁN */
+.quiz{margin-top:7px;border:1.4px dashed var(--accent2);border-radius:8px;background:#fcf7f0;padding:6px 12px;font-size:12px;}
+.quiz .qh{font-family:var(--mono);font-weight:700;color:var(--accent2);font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.quiz ol{margin:0 0 0 16px;padding:0;} .quiz li{margin-top:2px;}
+.quiz .qa{color:#7a3d00;font-weight:700;background:#ffe9d2;border-radius:4px;padding:0 5px;}

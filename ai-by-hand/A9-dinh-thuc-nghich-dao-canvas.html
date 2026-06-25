@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Định thức &amp; Nghịch đảo 2×2 — Determinant &amp; Inverse</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:2.2;margin-top:4px;}
+  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-family:var(--mono);font-size:12px;line-height:1.3;}
+  .frac .num{border-bottom:1.5px solid currentColor;padding:0 3px;text-align:center;}
+  .frac .den{padding:0 3px;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Định thức &amp; Nghịch đảo 2×2</h1><span class="vi">— Determinant &amp; Inverse</span>
+    <span class="tag">det = ad−bc · A⁻¹ = (1/det)·adj</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Định thức đo <b>"thể tích biến dạng"</b> khi áp ma trận — det = 0 nghĩa là ma trận
+    "xẹp" không gian, không có nghịch đảo. Nghịch đảo A⁻¹ dùng trong <b>normal equation</b> (hồi quy tuyến tính):
+    w = (XᵀX)⁻¹Xᵀy. Thuộc 2×2 đủ để hiểu cơ chế trước khi dùng thư viện cho ma trận lớn hơn.
+    <div class="fm">det(A) = ad−bc &nbsp;|&nbsp; A⁻¹ = (1/det)·[[d,−b],[−c,a]] &nbsp;|&nbsp; A·A⁻¹ = I</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Hai vectơ hàng của A tạo thành <b>hình bình hành</b> — det = diện tích có dấu.
+    det > 0: quay thuận chiều kim đồng hồ; det < 0: ngược; det = 0: hai hàng song song (không lập).
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xanh</b> = hàng 1 (a,b); <b>Cam</b> = hàng 2 (c,d). Diện tích hình bình hành = |det|.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN · ma trận A (2×2)</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">A</div>
+          <div class="m c2">
+            <div class="cell" data-q="a">2</div><div class="cell" data-q="b">1</div>
+            <div class="cell" data-q="c">3</div><div class="cell" data-q="d">4</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">BƯỚC 1 · Tính định thức</div>
+      <div class="expr">
+        det(A) = <span data-q="a">2</span>·<span data-q="d">4</span> − <span data-q="b">1</span>·<span data-q="c">3</span>
+        = <span class="ublk" id="ad_b"></span> − <span class="ublk" id="bc_b"></span>
+        = <span class="ublk" id="det_b"></span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">BƯỚC 2 · Tính ma trận bổ phụ (adjugate) rồi chia det</div>
+      <div class="expr" style="font-size:12px">
+        A⁻¹ =
+        <span class="frac"><span class="num">1</span><span class="den" id="det_frac">det</span></span>
+        ·
+        <span style="font-size:12px">
+          [[<span data-q="d">4</span>, −<span data-q="bw">1</span>],
+           [−<span data-q="cw">3</span>, <span data-q="a">2</span>]]
+        </span>
+        =
+        <div class="blk out" style="display:inline-flex;margin-left:4px">
+          <div class="m c2" id="invM"></div>
+        </div>
+      </div>
+
+      <div class="why"><b>Vì sao:</b> đổi chỗ a↔d, đổi dấu b và c, rồi chia tất cả cho det. Nếu det=0 → không nghịch đảo được.</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>A·A⁻¹ = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Khi nào A⁻¹ không tồn tại? → <span style="display:inline-block;min-width:100px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Định thức &amp; Nghịch đảo 2×2</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Định thức &amp; Nghịch đảo 2×2</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">|det| = diện tích hình bình hành. det>0: định hướng giữ nguyên; det&lt;0: lật.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">A</div>
+          <div class="m c2">
+            <div class="cell" data-q="a">2</div><div class="cell" data-q="b">1</div>
+            <div class="cell" data-q="c">3</div><div class="cell" data-q="d">4</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        det(A) = <span data-q="a">2</span>·<span data-q="d">4</span> − <span data-q="b">1</span>·<span data-q="c">3</span>
+        = <b><span data-q="ad">8</span></b> − <b><span data-q="bc">3</span></b> = <b><span data-q="det">5</span></b>
+      </div>
+      <div class="expr" style="font-size:12px">
+        A⁻¹ =
+        <span class="frac"><span class="num">1</span><span class="den" data-q="det2">5</span></span>
+        ·[[<span data-q="d">4</span>, −<span data-q="bw">1</span>],[−<span data-q="cw">3</span>, <span data-q="a">2</span>]]
+      </div>
+      <div class="row" style="margin-top:4px">
+        <div class="blk out"><div class="nm">A⁻¹</div>
+          <div class="m c2" id="kinvM"></div>
+        </div>
+        <div class="blk" style="margin-left:12px"><div class="nm">Kiểm: A·A⁻¹</div>
+          <div class="m c2" id="kcheckM"></div>
+        </div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>A·A⁻¹ = <span class="qa">I (ma trận đơn vị — đường chéo = 1, còn lại = 0)</span></li>
+          <li>A⁻¹ không tồn tại khi <span class="qa">det(A) = 0 (hai hàng tuyến tính phụ thuộc)</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Định thức đo "diện tích biến dạng" của phép biến đổi tuyến tính.
+        Trong ML, ma trận nghịch đảo xuất hiện ở <b>normal equation</b> (hồi quy) và
+        <b>Gaussian mixture models</b>. Với ma trận lớn, dùng thuật toán LU/Cholesky thay vì công thức tay.
+        Bài kế A10: giải hệ Ax = b bằng khử Gauss thay vì tính A⁻¹.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Định thức &amp; Nghịch đảo 2×2</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI=WB.fmtInt;
+
+function fmt2(v){
+  if(Number.isInteger(v)) return fI(v);
+  // round to 2 decimal
+  var r=Math.round(v*100)/100;
+  return r.toFixed(2);
+}
+
+function generate(){
+  // Sinh a,b,c,d sao cho det != 0
+  var a,b,c,d,det;
+  do {
+    a=WB.randIntNZ(-4,5); b=WB.randInt(-3,4); c=WB.randInt(-3,4); d=WB.randIntNZ(-4,5);
+    det=a*d-b*c;
+  } while(det===0);
+
+  var ad=a*d, bc=b*c;
+  // A^-1 = 1/det * [[d,-b],[-c,a]]
+  var i11=d/det, i12=-b/det, i21=-c/det, i22=a/det;
+
+  WB.setAll({
+    a:fI(a), b:fI(b), c:fI(c), d:fI(d),
+    bw:WB.wrap(b), cw:WB.wrap(c),
+    ad:fI(ad), bc:fI(bc), det:fI(det), det2:fI(det)
+  });
+
+  // det fraction label
+  ['det_frac'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent=fI(det);
+  });
+
+  // ĐỀ: ô trống
+  ['ad_b','bc_b','det_b'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';
+  });
+  var invMel=document.getElementById('invM');
+  if(invMel){
+    invMel.innerHTML='<div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>';
+  }
+
+  // ĐÁP ÁN
+  var kinvM=document.getElementById('kinvM');
+  if(kinvM){
+    kinvM.innerHTML=[i11,i12,i21,i22].map(function(v){return '<div class="cell">'+fmt2(v)+'</div>';}).join('');
+  }
+  // kiểm A·A⁻¹ ≈ I
+  var r00=a*i11+b*i21, r01=a*i12+b*i22, r10=c*i11+d*i21, r11=c*i12+d*i22;
+  var kcheckM=document.getElementById('kcheckM');
+  if(kcheckM){
+    kcheckM.innerHTML=[r00,r01,r10,r11].map(function(v){
+      return '<div class="cell">'+fmt2(Math.round(v*1000)/1000)+'</div>';
+    }).join('');
+  }
+
+  drawParallelogram('sch1',a,b,c,d,det,false);
+  drawParallelogram('sch2',a,b,c,d,det,true);
+}
+
+function drawParallelogram(id,a,b,c,d,det,showArea){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=148;
+  var pad={l:24,r:14,t:14,b:18};
+  // scale so vectors fit
+  var scale=Math.min(30,60/Math.max(Math.abs(a),Math.abs(b),Math.abs(c),Math.abs(d),1));
+  var cx=W/2, cy=H/2;
+  function px(x){return cx+x*scale;}
+  function py(y){return cy-y*scale;}
+
+  var s='<defs>'
+    +'<marker id="ah'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'
+    +'<marker id="ah2'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
+    +'</defs>';
+
+  // trục
+  s+='<line x1="'+pad.l+'" y1="'+cy+'" x2="'+(W-pad.r)+'" y2="'+cy+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<line x1="'+cx+'" y1="'+(H-pad.b)+'" x2="'+cx+'" y2="'+pad.t+'" stroke="#ddd" stroke-width="1"/>';
+
+  // hình bình hành
+  var p0x=px(0),p0y=py(0);
+  var p1x=px(a),p1y=py(b);
+  var p2x=px(c),p2y=py(d);
+  var p3x=px(a+c),p3y=py(b+d);
+  s+='<polygon points="'+p0x+','+p0y+' '+p1x+','+p1y+' '+p3x+','+p3y+' '+p2x+','+p2y+'" fill="#f0f9ff" stroke="#93c5fd" stroke-width="1.2" opacity="0.8"/>';
+
+  // vector hàng 1 (xanh)
+  s+='<line x1="'+p0x+'" y1="'+p0y+'" x2="'+p1x+'" y2="'+p1y+'" stroke="#0e7490" stroke-width="2" marker-end="url(#ah'+id+')"/>';
+  s+='<text x="'+(p1x+4)+'" y="'+(p1y-3)+'" font-size="9" fill="#0e7490" font-weight="700">('+fI(a)+','+fI(b)+')</text>';
+
+  // vector hàng 2 (cam)
+  s+='<line x1="'+p0x+'" y1="'+p0y+'" x2="'+p2x+'" y2="'+p2y+'" stroke="#b45309" stroke-width="2" marker-end="url(#ah2'+id+')"/>';
+  s+='<text x="'+(p2x+4)+'" y="'+(p2y+3)+'" font-size="9" fill="#b45309" font-weight="700">('+fI(c)+','+fI(d)+')</text>';
+
+  if(showArea){
+    var midx=(p0x+p3x)/2, midy=(p0y+p3y)/2;
+    s+='<text x="'+midx+'" y="'+midy+'" text-anchor="middle" font-size="9" fill="#7c5cff" font-weight="700">|det|='+Math.abs(det)+'</text>';
+  }
+
+  var fI2=function(v){return WB.fmtInt(v);};
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="hình bình hành biểu diễn định thức">'+s+'</svg>';
+}
+
+var fI=WB.fmtInt;
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

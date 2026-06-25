@@ -55,7 +55,7 @@ export function isFreeLesson(l: Lesson): boolean {
 }
 
 // Các asset dùng chung luôn được phép tải (kể cả khi xem bài free).
-export const SHARED_ASSETS = ["wb.css", "wb-random.js"];
+export const SHARED_ASSETS = ["wb.css", "wb-canvas.css", "wb-random.js"];
 
 // Helper dựng placeholder "sắp ra" (slug=null, available=false, isFree=false).
 function soon(no: string, part: Part, course: Course, title: string, english: string, blurb: string): Lesson {
@@ -86,17 +86,17 @@ export const LESSONS: Lesson[] = [
   soon("A20", "A", "K1", "One-hot encoding", "One-hot", "Nhãn → vectơ 0/1 để máy hiểu được."),
 
   // ── PHẦN B · Học máy cổ điển (K1) ───────────────────────────────────────
-  soon("B1", "B", "K1", "Hồi quy tuyến tính 1 biến", "Linear Regression", "Least squares, tìm y = ax + b khớp dữ liệu."),
-  soon("B2", "B", "K1", "Hồi quy tuyến tính nhiều biến", "Multivariate LR", "Normal equation nhỏ (XᵀX) bằng tay."),
-  soon("B3", "B", "K1", "Hồi quy logistic 1 bước", "Logistic Regression", "sigmoid(wx+b) → loss → một bước cập nhật."),
-  soon("B4", "B", "K1", "k-NN — k láng giềng gần nhất", "k-NN", "Tính khoảng cách, bỏ phiếu chọn lớp."),
-  soon("B5", "B", "K1", "k-means 1 vòng", "k-means", "Gán điểm vào cụm + cập nhật tâm cụm."),
-  soon("B6", "B", "K1", "PCA 2D", "PCA", "Hiệp phương sai → trục chính → chiếu dữ liệu."),
-  soon("B7", "B", "K1", "Naive Bayes", "Naive Bayes", "Nhân các xác suất → so sánh hậu nghiệm."),
-  soon("B8", "B", "K1", "Cây quyết định: Entropy & Information Gain", "Decision Tree", "Chọn split tốt nhất theo độ lợi thông tin."),
-  soon("B9", "B", "K1", "Cây quyết định: Gini", "Gini", "Tính chỉ số Gini cho từng split."),
-  soon("B10", "B", "K1", "SVM: lề hình học", "Margin", "Khoảng cách điểm tới siêu phẳng phân tách."),
-  soon("B11", "B", "K1", "Gradient Boosting — ý tưởng", "Boosting", "Khớp phần dư của mô hình trước, một bước."),
+  { no: "B1", slug: "B1-hoi-quy-tuyen-tinh", title: "Hồi quy tuyến tính 1 biến", english: "Linear Regression", blurb: "Least squares, tìm y = ax + b khớp dữ liệu.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B2", slug: "B2-hoi-quy-da-bien", title: "Hồi quy tuyến tính nhiều biến", english: "Multivariate LR", blurb: "Normal equation nhỏ (XᵀX) bằng tay.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B3", slug: "B3-hoi-quy-logistic", title: "Hồi quy logistic 1 bước", english: "Logistic Regression", blurb: "sigmoid(wx+b) → loss → một bước cập nhật.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B4", slug: "B4-knn", title: "k-NN — k láng giềng gần nhất", english: "k-NN", blurb: "Tính khoảng cách, bỏ phiếu chọn lớp.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B5", slug: "B5-kmeans", title: "k-means 1 vòng", english: "k-means", blurb: "Gán điểm vào cụm + cập nhật tâm cụm.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B6", slug: "B6-pca", title: "PCA 2D", english: "PCA", blurb: "Hiệp phương sai → trục chính → chiếu dữ liệu.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B7", slug: "B7-naive-bayes", title: "Naive Bayes", english: "Naive Bayes", blurb: "Nhân các xác suất → so sánh hậu nghiệm.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B8", slug: "B8-cay-quyet-dinh-entropy", title: "Cây quyết định: Entropy & Information Gain", english: "Decision Tree", blurb: "Chọn split tốt nhất theo độ lợi thông tin.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B9", slug: "B9-cay-quyet-dinh-gini", title: "Cây quyết định: Gini", english: "Gini", blurb: "Tính chỉ số Gini cho từng split.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B10", slug: "B10-svm-margin", title: "SVM: lề hình học", english: "Margin", blurb: "Khoảng cách điểm tới siêu phẳng phân tách.", part: "B", course: "K1", available: true, isFree: false },
+  { no: "B11", slug: "B11-gradient-boosting", title: "Gradient Boosting — ý tưởng", english: "Boosting", blurb: "Khớp phần dư của mô hình trước, một bước.", part: "B", course: "K1", available: true, isFree: false },
 
   // ── PHẦN C · Nơ-ron & MLP (K1) ──────────────────────────────────────────
   { no: "03", slug: "03-lop-tuyen-tinh", title: "Lớp tuyến tính", english: "y = Wx + b", blurb: "Khối Lego của deep learning: W trộn đầu vào, b dịch chuyển.", part: "C", course: "K1", available: true, isFree: true },

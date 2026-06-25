@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 07 — Lớp ẩn / MLP 2 lớp (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 07</span><h1>Lớp ẩn <small>— MLP 2 lớp · Forward Pass</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~18 phút</span></div>
+
+  <div class="intro">
+    <b>Xếp lớp chồng lớp.</b> Lấy đầu ra của một lớp (Bài 06) làm đầu vào cho lớp tiếp theo. Lớp ở giữa gọi là
+    <b>lớp ẩn</b> (hidden) vì ta không quan sát trực tiếp. Chạy số từ trái sang phải gọi là <b>lan truyền xuôi</b>
+    (forward pass) — đây là cách mạng đưa ra dự đoán.
+    <div class="formula">
+      h = ReLU(W₁x + b₁) &nbsp;→&nbsp; y = W₂h + b₂
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 → 2 (ẩn) → 1</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">W₁ <s>2×2</s></div>
+        <div class="mtx c2"><div class="cell given" data-q="w1_11">1</div><div class="cell given" data-q="w1_12">0</div><div class="cell given" data-q="w1_21">1</div><div class="cell given" data-q="w1_22">−1</div></div></div>
+      <div class="mwrap"><div class="mlabel">b₁ <s>2×1</s></div>
+        <div class="mtx c1"><div class="cell given" data-q="b1_1">0</div><div class="cell given" data-q="b1_2">1</div></div></div>
+      <div class="mwrap"><div class="mlabel">x <s>2×1</s></div>
+        <div class="mtx c1"><div class="cell given" data-q="x1">1</div><div class="cell given" data-q="x2">2</div></div></div>
+      <div style="width:1px;height:34px;background:var(--line)"></div>
+      <div class="mwrap"><div class="mlabel">W₂ <s>1×2</s></div>
+        <div class="mtx c2"><div class="cell given" data-q="w2_1">2</div><div class="cell given" data-q="w2_2">3</div></div></div>
+      <div class="mwrap"><div class="mlabel">b₂ <s>1×1</s></div>
+        <div class="mtx c1"><div class="cell given" data-q="b2">1</div></div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Lớp ẩn: z₁ = W₁x + b₁</h2><span class="tag">trước ReLU</span></div>
+    <div class="calc">
+      z₁<sub>(1)</sub> = (<span data-q="w1_11w">1</span>·<span data-q="x1w">1</span> + <span data-q="w1_12w">0</span>·<span data-q="x2w">2</span>)<span data-q="b1_1term"> + 0</span> = <span class="blk"></span><br>
+      z₁<sub>(2)</sub> = (<span data-q="w1_21w">1</span>·<span data-q="x1w">1</span> + <span data-q="w1_22w">(−1)</span>·<span data-q="x2w">2</span>)<span data-q="b1_2term"> + 1</span> = <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mẫu:</b> <span data-q="hint1">hàng 1 của W₁ = (1,0) chấm x = (1,2) → 1, cộng b₁=0 → 1.</span></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>ReLU → h</h2><span class="tag">đầu ra lớp ẩn</span></div>
+    <div class="row">
+      <div class="calc">
+        h<sub>1</sub> = ReLU(<span class="blk"></span>) = <span class="blk"></span><br>
+        h<sub>2</sub> = ReLU(<span class="blk"></span>) = <span class="blk"></span>
+      </div>
+      <div class="mwrap"><div class="mlabel">h <s>2×1</s></div>
+        <div class="mtx c1" style="--cell:14mm"><div class="cell blank"></div><div class="cell blank"></div></div></div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Lớp ra: y = W₂h + b₂</h2><span class="tag">dự đoán cuối</span></div>
+    <div class="calc">
+      y = (<span data-q="w2_1w">2</span>·h<sub>1</sub> + <span data-q="w2_2w">3</span>·h<sub>2</sub>)<span data-q="b2term"> + 1</span> = (<span data-q="w2_1w">2</span>·<span class="blk"></span> + <span data-q="w2_2w">3</span>·<span class="blk"></span>)<span data-q="b2term"> + 1</span> = <span class="blk" style="min-width:54px"></span>
+    </div>
+    <div class="note">Đầu ra h của lớp ẩn trở thành đầu vào của lớp ra — "đầu ra nối đầu vào".</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Sơ đồ mạng</h2><span class="tag">2-2-1</span></div>
+    <svg class="fig" viewBox="0 0 250 110" width="100%" height="90">
+      <circle cx="36" cy="38" r="11" fill="#fff" stroke="var(--dim)"/><text x="26" y="42">x₁</text>
+      <circle cx="36" cy="78" r="11" fill="#fff" stroke="var(--dim)"/><text x="26" y="82">x₂</text>
+      <circle cx="125" cy="38" r="12" fill="#eaf4f6" stroke="#7fb4bf"/><text x="116" y="42">h₁</text>
+      <circle cx="125" cy="78" r="12" fill="#eaf4f6" stroke="#7fb4bf"/><text x="116" y="82">h₂</text>
+      <circle cx="214" cy="58" r="13" fill="#fff5e9" stroke="#e3b780"/><text x="207" y="62">y</text>
+      <g stroke="var(--line)">
+        <line x1="47" y1="38" x2="113" y2="38"/><line x1="47" y1="38" x2="113" y2="78"/>
+        <line x1="47" y1="78" x2="113" y2="38"/><line x1="47" y1="78" x2="113" y2="78"/>
+        <line x1="137" y1="38" x2="201" y2="58"/><line x1="137" y1="78" x2="201" y2="58"/>
+      </g>
+      <text x="20" y="16">vào</text><text x="108" y="16">ẩn (ReLU)</text><text x="196" y="16">ra</text>
+    </svg>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 07 · Lớp ẩn (MLP)</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 07</span><h1>Lớp ẩn <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>z₁ = W₁x + b₁</h2></div>
+    <div class="calc ans">
+      z₁<sub>(1)</sub> = (<span data-q="sum1">1+0</span>)<span data-q="b1_1term"> + 0</span> = <span class="blk" data-q="z11">1</span> &nbsp;|&nbsp;
+      z₁<sub>(2)</sub> = (<span data-q="sum2">1−2</span>)<span data-q="b1_2term"> + 1</span> = <span class="blk" data-q="z12">0</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>h = ReLU(z₁)</h2></div>
+    <div class="row">
+      <div class="calc ans">
+        h<sub>1</sub> = ReLU(<span data-q="z11">1</span>) = <span class="blk" data-q="h1">1</span> &nbsp;|&nbsp; h<sub>2</sub> = ReLU(<span data-q="z12">0</span>) = <span class="blk" data-q="h2">0</span>
+      </div>
+      <div class="mwrap"><div class="mlabel">h</div>
+        <div class="mtx c1" style="--cell:14mm"><div class="cell ans" data-q="h1">1</div><div class="cell ans" data-q="h2">0</div></div></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>y = W₂h + b₂</h2></div>
+    <div class="calc ans">
+      y = (<span data-q="w2_1w">2</span>·<span data-q="h1">1</span> + <span data-q="w2_2w">3</span>·<span data-q="h2">0</span>)<span data-q="b2term"> + 1</span> = <span data-q="ySum">2 + 0 + 1</span> = <span class="blk" data-q="yVal" style="min-width:54px">3</span>
+    </div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Dự đoán y = <span data-q="yVal">3</span>. Cả mạng = <b>lặp lại "nhân W → cộng b → ReLU"</b> qua từng lớp. Nhờ ReLU ở giữa,
+    hàm tổng hợp <b>không còn tuyến tính</b> nên học được quan hệ phức tạp. Bài 08: thêm lớp (sâu) hay thêm nơ-ron
+    (rộng) thì khác nhau ra sao.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 07 · Lớp ẩn (MLP)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function generate(){
+  function R(){ return WB.randInt(-3,4); }
+  var W1 = [[R(),R()],[R(),R()]];
+  var b1 = [R(),R()];
+  var x = [R(),R()];
+  var W2 = [R(),R()];
+  var b2 = R();
+
+  var terms1 = [W1[0][0]*x[0], W1[0][1]*x[1]];
+  var terms2 = [W1[1][0]*x[0], W1[1][1]*x[1]];
+  var z11 = terms1[0]+terms1[1]+b1[0];
+  var z12 = terms2[0]+terms2[1]+b1[1];
+  var h1 = Math.max(0,z11), h2 = Math.max(0,z12);
+  var yTerms = [W2[0]*h1, W2[1]*h2, b2];
+  var yVal = yTerms[0]+yTerms[1]+yTerms[2];
+
+  WB.setAll({
+    w1_11: WB.fmtInt(W1[0][0]), w1_12: WB.fmtInt(W1[0][1]),
+    w1_21: WB.fmtInt(W1[1][0]), w1_22: WB.fmtInt(W1[1][1]),
+    b1_1: WB.fmtInt(b1[0]), b1_2: WB.fmtInt(b1[1]),
+    x1: WB.fmtInt(x[0]), x2: WB.fmtInt(x[1]),
+    w2_1: WB.fmtInt(W2[0]), w2_2: WB.fmtInt(W2[1]), b2: WB.fmtInt(b2),
+    w1_11w: WB.wrap(WB.fmtInt(W1[0][0])), w1_12w: WB.wrap(WB.fmtInt(W1[0][1])),
+    w1_21w: WB.wrap(WB.fmtInt(W1[1][0])), w1_22w: WB.wrap(WB.fmtInt(W1[1][1])),
+    x1w: WB.wrap(WB.fmtInt(x[0])), x2w: WB.wrap(WB.fmtInt(x[1])),
+    w2_1w: WB.wrap(WB.fmtInt(W2[0])), w2_2w: WB.wrap(WB.fmtInt(W2[1])),
+    b1_1term: WB.opTerm(b1[0]), b1_2term: WB.opTerm(b1[1]), b2term: WB.opTerm(b2),
+    sum1: WB.sumExpr(terms1), sum2: WB.sumExpr(terms2),
+    z11: WB.fmtInt(z11), z12: WB.fmtInt(z12),
+    h1: WB.fmtInt(h1), h2: WB.fmtInt(h2),
+    ySum: WB.sumExpr(yTerms), yVal: WB.fmtInt(yVal),
+    hint1: 'hàng 1 của W₁ = (' + WB.fmtInt(W1[0][0]) + ',' + WB.fmtInt(W1[0][1]) + ') chấm x = (' +
+      WB.fmtInt(x[0]) + ',' + WB.fmtInt(x[1]) + ') → ' + WB.fmtInt(terms1[0]+terms1[1]) +
+      ', cộng b₁=' + WB.fmtInt(b1[0]) + ' → ' + WB.fmtInt(z11) + '.'
+  });
+}
+WB.wire(generate);
+</script>
+</body>
+</html>

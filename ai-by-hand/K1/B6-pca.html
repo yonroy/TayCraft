@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · PCA 2D — Phân tích thành phần chính</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12px;line-height:1.85;margin-top:3px;}
+  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:2px 4px;border:1px solid #d5c49a;text-align:center;font-size:10.5px;}
+  .dtbl td{padding:2px 4px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>PCA 2D — thành phần chính</h1><span class="vi">— Principal Component Analysis</span>
+    <span class="tag">căn giữa → hiệp phương sai → trục chính</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> PCA tìm <b>hướng dữ liệu biến thiên mạnh nhất</b> để nén chiều mà giữ thông tin.
+    Đây là "giảm chiều" cổ điển, là cách hiểu trực quan về <b>không gian ẩn (latent space)</b> và là họ hàng của SVD
+    dùng khắp nơi (nén, khử nhiễu, khởi tạo embedding).
+    <div class="fm">căn giữa: x′ = x − x̄ &nbsp;|&nbsp; S = Σ x′x′ᵀ &nbsp;|&nbsp; trị riêng λ → trục chính (vector riêng) &nbsp;|&nbsp; chiếu: t = x′·v</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Xoay trục sao cho trục mới <b>PC1</b> nằm dọc theo "đám mây" điểm kéo dài nhất. Ở bài này hai phương sai bằng nhau
+    nên trục chính là đường chéo <b>[1, 1]</b> hoặc <b>[1, −1]</b> — căn bậc hai trong công thức trị riêng tự triệt tiêu.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Chấm</b> = dữ liệu (đã căn giữa quanh ✕ = trung bình); <span style="color:#0e7490;font-weight:700">PC1</span> = hướng biến thiên mạnh nhất; <span style="color:#b45309;font-weight:700">PC2</span> ⟂ PC1.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BƯỚC 1 — CĂN GIỮA (x′ = x − x̄)</div>
+      <table class="dtbl" id="tbl">
+        <tr><th>i</th><th>x</th><th>y</th><th>x′</th><th>y′</th><th>x′²</th><th>y′²</th><th>x′y′</th></tr>
+      </table>
+      <div class="expr">x̄ = (<span data-q="mx">0</span>, <span data-q="my">0</span>)</div>
+
+      <div class="bandh fw" style="margin-top:5px">BƯỚC 2 — MA TRẬN PHÂN TÁN S</div>
+      <div class="row">
+        <div class="blk hot"><div class="nm">S = Σx′x′ᵀ</div><div class="m c2" id="S"></div></div>
+        <div class="opn">S₁₁=Σx′²<br>S₂₂=Σy′²<br>S₁₂=Σx′y′</div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">BƯỚC 3 — TRỊ RIÊNG (S₁₁=S₂₂ ⇒ λ = a ± |b|)</div>
+      <div class="expr">
+        λ₁ = a + |b| = <span class="ublk" id="l1B"></span> &nbsp; λ₂ = a − |b| = <span class="ublk" id="l2B"></span>
+        &nbsp;→&nbsp; PC1 = <span class="ublk" id="pcB" style="min-width:60px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Tỉ lệ phương sai PC1 giữ được = λ₁/(λ₁+λ₂) = <span class="ublk" id="vrB" style="min-width:70px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · PCA 2D</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>PCA 2D — thành phần chính</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Chiếu dữ liệu lên PC1 → giảm 2D về 1D mà giữ nhiều phương sai nhất. PC2 (ít phương sai) thường bị bỏ.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">PHÂN TÁN & TRỊ RIÊNG (điền đủ)</div>
+      <div class="row">
+        <div class="blk hot"><div class="nm">S</div><div class="m c2" id="kS"></div></div>
+        <div class="expr" style="margin:0">
+          λ₁ = <b><span data-q="kl1">?</span></b>, λ₂ = <b><span data-q="kl2">?</span></b><br>
+          PC1 = <b><span data-q="kpc">?</span></b> &nbsp;(‖·‖=√2)<br>
+          PC2 = <span data-q="kpc2">?</span>
+        </div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">CHIẾU LÊN PC1 (t = x′·PC1)</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>i</th><th>x′</th><th>y′</th><th>t = chiếu PC1</th></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>λ₁/(λ₁+λ₂) = <span class="qa" id="kvrQA">?</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> PCA = xoay trục về hướng phương sai lớn nhất rồi giữ vài trục đầu. Trị riêng = lượng phương sai mỗi trục.
+        Cùng tư tưởng "nén giữ thông tin" với <b>autoencoder</b> (Bài 24) — chỉ khác PCA là tuyến tính.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · PCA 2D</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var PTS,MX,MY,Sa,Sb,L1,L2,PC1;
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+
+function generate(){
+  // template điểm đã căn giữa (mean 0), cho S = [[a,b],[b,a]] (chéo bằng nhau)
+  var temps=[
+    [[2,1],[1,2],[-1,-2],[-2,-1]],   // S=[[10,8],[8,10]]  λ=18,2  b>0 → PC1 [1,1]
+    [[2,2],[1,-1],[-1,1],[-2,-2]],   // S=[[10,6],[6,10]]  λ=16,4  b>0 → PC1 [1,1]
+    [[1,1],[2,-2],[-1,-1],[-2,2]]    // S=[[10,-6],[-6,10]] λ=16,4 b<0 → PC1 [1,-1]
+  ];
+  var C=WB.pick(temps);
+  MX=WB.randInt(0,4); MY=WB.randInt(0,4);          // dời trung bình (số nguyên)
+  PTS=C.map(function(c){return {xp:c[0], yp:c[1], x:c[0]+MX, y:c[1]+MY};});
+
+  Sa=PTS.reduce(function(s,p){return s+p.xp*p.xp;},0);     // = Σy′² (bằng nhau)
+  var Syy=PTS.reduce(function(s,p){return s+p.yp*p.yp;},0);
+  Sb=PTS.reduce(function(s,p){return s+p.xp*p.yp;},0);
+  L1=Sa+Math.abs(Sb); L2=Sa-Math.abs(Sb);
+  PC1 = Sb>0 ? '[1, 1]' : '[1, −1]';
+  var PC2 = Sb>0 ? '[1, −1]' : '[1, 1]';
+  var dir = Sb>0 ? 1 : -1;                          // y hệ số của PC1
+  var vr=L1/(L1+L2);
+
+  WB.setAll({
+    mx:String(MX), my:String(MY),
+    kl1:String(L1), kl2:String(L2), kpc:PC1, kpc2:PC2,
+    kvr:f2(vr)
+  });
+
+  buildTbl('tbl',true);
+  buildKTbl(dir);
+  fill('S',[Sa,Sb,Sb,Sa],true);
+  fill('kS',[Sa,Sb,Sb,Sa],false);
+
+  ['l1B','l2B','pcB','vrB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  document.getElementById('kvrQA').textContent=f2(vr);
+
+  drawPCA('sch1',false); drawPCA('sch2',true,dir);
+}
+
+function fill(id,arr,blank){var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':WB.fmtInt(arr[i]))+'</div>';
+  el.innerHTML=s;}
+
+function buildTbl(id,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  PTS.forEach(function(p,i){
+    var tr=document.createElement('tr');
+    var add=function(txt,bl){var td=document.createElement('td'); if(bl){td.className='blank';td.textContent=txt;} else td.textContent=txt; tr.appendChild(td);};
+    add(i+1,false); add(p.x,false); add(p.y,false);
+    add(WB.fmtInt(p.xp),blank); add(WB.fmtInt(p.yp),blank);
+    add(p.xp*p.xp,blank); add(p.yp*p.yp,blank); add(WB.fmtInt(p.xp*p.yp),blank);
+    el.appendChild(tr);
+  });
+}
+function buildKTbl(dir){
+  var el=document.getElementById('ktbl'); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  PTS.forEach(function(p,i){
+    var t=p.xp*1 + p.yp*dir;                 // chiếu lên PC1 chưa chuẩn hóa (·√2 là chuẩn hóa)
+    var tr=document.createElement('tr');
+    [i+1, WB.fmtInt(p.xp), WB.fmtInt(p.yp), WB.fmtInt(t)+' (·1/√2)'].forEach(function(v){
+      var td=document.createElement('td'); td.textContent=v; tr.appendChild(td);});
+    el.appendChild(tr);
+  });
+}
+
+function drawPCA(id,showAxes,dir){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=150, cx=W/2, cy=H/2, sc=11;
+  function sx(x){return(cx+x*sc).toFixed(1);}
+  function sy(y){return(cy-y*sc).toFixed(1);}
+  var s='';
+  // trục gốc nhạt
+  s+='<line x1="6" y1="'+cy+'" x2="'+(W-6)+'" y2="'+cy+'" stroke="#eee"/>';
+  s+='<line x1="'+cx+'" y1="6" x2="'+cx+'" y2="'+(H-6)+'" stroke="#eee"/>';
+  if(showAxes){
+    var d=dir||1;
+    // PC1 (lam) dọc [1,d], PC2 (cam) dọc [1,-d]
+    s+='<line x1="'+sx(-3)+'" y1="'+sy(-3*d)+'" x2="'+sx(3)+'" y2="'+sy(3*d)+'" stroke="#0e7490" stroke-width="2"/>';
+    s+='<line x1="'+sx(-3)+'" y1="'+sy(3*d)+'" x2="'+sx(3)+'" y2="'+sy(-3*d)+'" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    s+='<text x="'+sx(3)+'" y="'+(parseFloat(sy(3*d))-3)+'" font-size="8" fill="#0e7490" font-weight="700">PC1</text>';
+  }
+  // điểm (dùng tọa độ đã căn giữa)
+  PTS.forEach(function(p){ s+='<circle cx="'+sx(p.xp)+'" cy="'+sy(p.yp)+'" r="3.5" fill="#333"/>'; });
+  s+='<text x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#888">✕</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="PCA scatter và trục chính">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

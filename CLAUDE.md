@@ -10,24 +10,29 @@ Nếu `MEMORY\CONTEXT.md` chưa tồn tại, thông báo cho người dùng.
 ---
 
 ## Tổng quan dự án
-Bộ **phiếu tính tay** dạy nền tảng AI/Deep Learning theo tinh thần Prof. Tom Yeh ("AI by Hand"): không code — người học tự điền ma trận, nhân–cộng từng ô, chạy softmax/backprop/attention bằng số thật. Mỗi chủ đề = 1 file HTML = 2 trang A4/A3 (ĐỀ + ĐÁP ÁN), in ra giải bằng bút chì hoặc lưu PDF. Toàn bộ tiếng Việt, học theo thứ tự.
+Bộ **phiếu tính tay** dạy nền tảng AI/Deep Learning theo tinh thần Prof. Tom Yeh ("AI by Hand"): không code — người học tự điền ma trận, nhân–cộng từng ô, chạy softmax/backprop/attention bằng số thật. Mỗi chủ đề = 1 file HTML = 2 trang A4 (ĐỀ + ĐÁP ÁN), in ra giải bằng bút chì hoặc lưu PDF. Toàn bộ tiếng Việt, học theo thứ tự.
 
 ## Tech Stack
 - **Frontend:** HTML5 + CSS3 thuần (không framework)
 - **Tương tác:** JavaScript thuần (vanilla, không jQuery/React/Vue); SVG vẽ bằng JS
 - **Build / Database / Backend:** KHÔNG có — tài liệu tĩnh, không bundler, không package manager, không server
-- **Output:** in-ra-PDF qua trình duyệt (`window.print()`); CSS print-first (A4 mặc định, A3 khi cần)
+- **Output:** in-ra-PDF qua trình duyệt (`window.print()`); CSS print-first (A4-only: dọc = `wb.css`, ngang = `wb-canvas.css`)
 
 ## Cấu trúc quan trọng
 ```
 TayCraft AI/
-├── init-project-prompt.md       ← prompt meta khởi tạo Second Brain (không phải nội dung dự án)
-└── ai-by-hand/                  ← TOÀN BỘ nội dung
-    ├── index.html               ← mục lục + tracker (26 thẻ bài)
-    ├── wb.css                   ← style dùng chung (print-first)
+├── init-project-prompt.md
+└── ai-by-hand/
+    ├── index.html               ← mục lục + tracker
+    ├── wb.css                   ← style GIẢNG GIẢI (A4 dọc, print-first)
+    ├── wb-canvas.css            ← style CANVAS (A4 ngang, house style hiện tại)
     ├── wb-random.js             ← engine "🎲 Đổi số" (window.WB)
+    ├── tools/new.mjs            ← scaffold phiếu GIẢNG GIẢI → <khóa>/slug.html
+    ├── tools/check.mjs          ← đo tràn lề bằng số (Edge headless)
     ├── CACH-TAO-PHIEU.md        ← công thức + checklist dựng phiếu mới
-    └── NN-ten-khong-dau.html    ← các phiếu bài (01..26)
+    ├── 01..26-*.html            ← phiếu gốc (flat, A4)
+    ├── *-canvas.html            ← phiếu canvas hiện có (flat)
+    └── K1/ K2/ K3/ K4/         ← phiếu mới tạo bởi tools/new.mjs
 ```
 
 ---
@@ -75,19 +80,20 @@ WB.wire(generate);                          // gắn nút 🎲
 - `<section class="page">` (ĐỀ) và `<section class="page key">` (ĐÁP ÁN) — xem mục 4 của `CACH-TAO-PHIEU.md`.
 - Hình **động** (phụ thuộc số): gọi `drawX()` bên trong `generate()`. Hình **tĩnh**: gọi một lần sau `WB.wire(generate)`.
 
-### Đổi khổ giấy A4 → A3
-```html
-<body class="a3">
-<!-- và trong <head> của file đó (CSS không cho ghi đè @page bằng class): -->
-<style>@page{ size:A3 portrait; }</style>
-```
+### A4 ngang (landscape)
+Phiếu canvas dùng `wb-canvas.css` (đã nhúng `@page{size:A4 landscape}` sẵn trong CSS).
+Phiếu GIẢNG GIẢI muốn ngang: thêm `<body class="landscape">` + `<style>@page{size:A4 landscape;}</style>`.
+**Không dùng A3** — xem quy tắc mục 7 của `CACH-TAO-PHIEU.md`.
 
 ---
 
 ## Files quan trọng — đọc trước khi sửa
 - `ai-by-hand/CACH-TAO-PHIEU.md` — công thức + checklist dựng phiếu (đọc đầu tiên khi làm bài mới)
-- `ai-by-hand/wb.css` — style dùng chung; chỉ thêm additive, không sửa class cũ
+- `ai-by-hand/wb.css` — style GIẢNG GIẢI; chỉ thêm additive, không sửa class cũ
+- `ai-by-hand/wb-canvas.css` — style CANVAS; không đụng wb.css
 - `ai-by-hand/wb-random.js` — engine `window.WB`; danh sách hàm randomize/format
+- `ai-by-hand/tools/new.mjs` — scaffold phiếu mới; `node tools/new.mjs --help` xem cú pháp
+- `ai-by-hand/tools/check.mjs` — đo tràn lề bằng số; `node tools/check.mjs <file> --runs 5`
 - `ai-by-hand/index.html` — mục lục + tracker; nhớ cập nhật khi ra bài mới
 - `d:\SecondBrain\_projects\TayCraft AI\MEMORY\DECISIONS.md` — lịch sử quyết định kiến trúc
 

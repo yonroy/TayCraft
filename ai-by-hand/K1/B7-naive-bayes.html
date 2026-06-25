@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Naive Bayes — phân loại xác suất</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.95;margin-top:3px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+  .dtbl th{background:#f3ede0;padding:3px 7px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 7px;border:1px solid #e2d5b5;text-align:center;}
+  .cS{color:#b45309;font-weight:700;} .cH{color:#0e7490;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Naive Bayes</h1><span class="vi">— Naive Bayes Classifier</span>
+    <span class="tag">tiên nghiệm × khả năng → hậu nghiệm</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Naive Bayes phân loại bằng <b>xác suất</b>: giả định các đặc trưng độc lập rồi <b>nhân</b>
+    khả năng của từng đặc trưng với xác suất tiên nghiệm. Đơn giản mà mạnh (lọc spam kinh điển), và dạy rõ định lý Bayes —
+    nền của suy luận xác suất trong AI.
+    <div class="fm">P(C | x) ∝ P(C) · ∏ᵢ P(xᵢ | C) &nbsp;|&nbsp; dự đoán = argmax_C P(C)·∏P(xᵢ|C)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    "Email này có từ <i>khuyến mãi</i> và <i>link lạ</i> — trong số spam đã thấy, bao nhiêu phần cũng vậy?" Nhân các tỉ lệ đó
+    với độ phổ biến của spam → điểm số. Lớp nào điểm cao hơn thì chọn. "Naive" = giả định các đặc trưng <b>độc lập</b>.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Hai cột = điểm hậu nghiệm (chưa chuẩn hóa) của <span class="cS">Spam</span> và <span class="cH">Ham</span>. Cột cao hơn → dự đoán.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">DỮ LIỆU HUẤN LUYỆN (đếm) — 10 email: 6 spam, 4 ham</div>
+      <table class="dtbl">
+        <tr><th>đặc trưng = "có"</th><th class="cS">Spam (6)</th><th class="cH">Ham (4)</th></tr>
+        <tr><td>F₁: từ "khuyến mãi"</td><td data-q="a1">4</td><td data-q="b1">1</td></tr>
+        <tr><td>F₂: link lạ</td><td data-q="a2">5</td><td data-q="b2">1</td></tr>
+      </table>
+      <div class="expr">Email cần phân loại: F₁ = <span data-q="q1">có</span>, F₂ = <span data-q="q2">có</span></div>
+
+      <div class="bandh fw" style="margin-top:5px">TIÊN NGHIỆM & KHẢ NĂNG</div>
+      <div class="expr">
+        P(S) = 6/10 = .6 &nbsp; P(H) = 4/10 = .4<br>
+        P(F₁|S) = <span class="ublk" id="ls1B"></span> &nbsp; P(F₂|S) = <span class="ublk" id="ls2B"></span><br>
+        P(F₁|H) = <span class="ublk" id="lh1B"></span> &nbsp; P(F₂|H) = <span class="ublk" id="lh2B"></span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">HẬU NGHIỆM ∝ P(C)·∏P(Fᵢ|C)</div>
+      <div class="expr">
+        điểm(S) = .6 × <span class="ublk" id="ls1B2"></span> × <span class="ublk" id="ls2B2"></span> = <span class="ublk" id="ssB"></span><br>
+        điểm(H) = .4 × <span class="ublk" id="lh1B2"></span> × <span class="ublk" id="lh2B2"></span> = <span class="ublk" id="shB"></span>
+        &nbsp;→&nbsp; dự đoán = <span class="ublk" id="predB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>P(Spam | email) = điểm(S)/(điểm(S)+điểm(H)) = <span class="ublk" id="postB" style="min-width:70px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Naive Bayes</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Naive Bayes</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">So sánh điểm chưa chuẩn hóa là đủ để chọn lớp; chuẩn hóa chỉ để ra xác suất. Thực tế dùng log để tránh nhân nhiều số nhỏ → tràn số.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">KHẢ NĂNG (điền đủ)</div>
+      <div class="expr">
+        P(F₁|S)=<span data-q="kls1">?</span>, P(F₂|S)=<span data-q="kls2">?</span> &nbsp;|&nbsp;
+        P(F₁|H)=<span data-q="klh1">?</span>, P(F₂|H)=<span data-q="klh2">?</span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">HẬU NGHIỆM</div>
+      <div class="expr">
+        điểm(S) = .6 × <span data-q="kls1">?</span> × <span data-q="kls2">?</span> = <b><span data-q="kss">?</span></b><br>
+        điểm(H) = .4 × <span data-q="klh1">?</span> × <span data-q="klh2">?</span> = <b><span data-q="ksh">?</span></b><br>
+        → dự đoán = <b><span data-q="kpred">?</span></b>
+      </div>
+      <div class="expr">P(Spam | email) = <b><span data-q="kpost">?</span></b></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>P(Spam|email) = <span class="qa" id="kpostQA">?</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Bayes: hậu nghiệm ∝ tiên nghiệm × khả năng. "Naive" bỏ qua tương quan giữa đặc trưng để nhân cho gọn.
+        Cùng phép "log rồi cộng thay vì nhân" sẽ gặp lại ở <b>cross-entropy</b> (Bài 17) và softmax.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Naive Bayes</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+var SS,SH;
+
+function generate(){
+  var nS=6,nH=4;
+  var a1=WB.randInt(3,5), a2=WB.randInt(3,5);   // spam thiên "có"
+  var b1=WB.randInt(1,3), b2=WB.randInt(1,3);   // ham thiên "không"
+  var q1=WB.pick(['có','không']), q2=WB.pick(['có','không']);
+
+  function lik(count,n,q){ var c=(q==='có')?count:(n-count); return c/n; }
+  var ls1=lik(a1,nS,q1), ls2=lik(a2,nS,q2);
+  var lh1=lik(b1,nH,q1), lh2=lik(b2,nH,q2);
+  SS=0.6*ls1*ls2; SH=0.4*lh1*lh2;
+  var pred = SS>=SH ? 'Spam' : 'Ham';
+  var post = SS/(SS+SH);
+
+  WB.setAll({
+    a1:String(a1), a2:String(a2), b1:String(b1), b2:String(b2),
+    q1:q1, q2:q2,
+    kls1:f2(ls1), kls2:f2(ls2), klh1:f2(lh1), klh2:f2(lh2),
+    kss:f2(SS), ksh:f2(SH), kpred:pred, kpost:f2(post)
+  });
+  ['ls1B','ls2B','lh1B','lh2B','ls1B2','ls2B2','lh1B2','lh2B2','ssB','shB','predB','postB'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';});
+  document.getElementById('kpostQA').textContent=f2(post);
+
+  drawBars('sch1'); drawBars('sch2');
+}
+
+function drawBars(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=130, base=H-22, maxh=base-14;
+  var mx=Math.max(SS,SH,0.001);
+  function bar(x,val,col,lab){
+    var h=val/mx*maxh;
+    var y=base-h;
+    return '<rect x="'+x+'" y="'+y+'" width="38" height="'+h.toFixed(1)+'" rx="3" fill="'+col+'"/>'
+      +'<text x="'+(x+19)+'" y="'+(y-3)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#333">'+f2(val)+'</text>'
+      +'<text x="'+(x+19)+'" y="'+(base+13)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+col+'">'+lab+'</text>';
+  }
+  var s='<line x1="20" y1="'+base+'" x2="'+(W-12)+'" y2="'+base+'" stroke="#ccc"/>';
+  s+=bar(48,SS,'#b45309','Spam');
+  s+=bar(108,SH,'#0e7490','Ham');
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="cột điểm hậu nghiệm">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

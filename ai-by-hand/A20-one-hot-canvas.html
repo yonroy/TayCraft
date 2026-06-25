@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · One-hot Encoding — Mã hóa nhãn rời rạc</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
+  .ublk{display:inline-block;min-width:28px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .ohtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+  .ohtbl th{background:#f3ede0;padding:3px 7px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .ohtbl td{padding:3px 7px;border:1px solid #e2d5b5;text-align:center;min-width:28px;}
+  .ohtbl td.on{background:#d6ecf6;font-weight:700;color:#0e7490;}
+  .ohtbl td.off{color:#aaa;}
+  .ohtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .ohtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>One-hot Encoding</h1><span class="vi">— Mã hóa nhãn rời rạc</span>
+    <span class="tag">nhãn → vectơ 0/1 · Σeᵢ = 1</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mạng nơ-ron làm việc với <b>số thực</b>, không với nhãn văn bản.
+    One-hot biến "chó/mèo/chim" → [1,0,0]/[0,1,0]/[0,0,1] để có thể so sánh với đầu ra softmax.
+    <b>Cross-entropy loss</b> = −Σ yᵢ·ln(pᵢ) chỉ còn −ln(p_{nhãn đúng}) vì các yᵢ còn lại = 0.
+    <div class="fm">Nhãn k trong K lớp → vectơ e_k ∈ {0,1}^K, eₖ=1, eⱼ=0 (j≠k)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    One-hot là "phân phối Categorical hoàn hảo chắc chắn 100%": tất cả xác suất dồn vào một lớp.
+    Khi huấn luyện, ta muốn <b>softmax output</b> tiến gần nhất đến one-hot nhãn thật.
+    Cross-entropy đo khoảng cách KL-divergence giữa hai phân phối này.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xanh</b> = nhãn thật (one-hot, 1 ô = 1); <b>Cam</b> = softmax dự đoán. Loss = −ln(pₖ) với k = vị trí 1 trong one-hot.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BÀI TẬP · K = <span data-q="K">5</span> lớp</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:4px">Mã hóa các nhãn sau thành vectơ one-hot</div>
+      <table class="ohtbl" id="ohTable">
+        <tr id="ohHeader"></tr>
+        <tr id="ohRow1"><td><b>Nhãn 2</b></td></tr>
+        <tr id="ohRow2"><td><b>Nhãn <span data-q="yb">4</span></b></td></tr>
+        <tr id="ohRow3"><td><b>Nhãn 1</b></td></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">CROSS-ENTROPY · nhãn thật vs. dự đoán</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:3px">Nhãn thật: lớp <span data-q="yb">4</span> &nbsp;| Softmax: p = [<span data-q="pdisp">…</span>]</div>
+      <div class="expr">
+        Loss = −ln(p_<span data-q="yb">4</span>) = −ln(<span data-q="py">0.6</span>) = <span class="ublk" id="lossB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu mô hình dự đoán đúng 100% (p_y = 1): Loss = ? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Vectơ one-hot có bao nhiêu số 1? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · One-hot Encoding</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>One-hot Encoding</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Loss = 0 khi p_y = 1 (hoàn hảo); Loss → ∞ khi p_y → 0 (sai chắc chắn). Đây là cơ chế phạt của cross-entropy.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">ĐÁP ÁN ONE-HOT (K = <span data-q="K">5</span>)</div>
+      <table class="ohtbl" id="kohTable">
+        <tr id="kohHeader"></tr>
+        <tr id="kohRow1"><td><b>Nhãn 2</b></td></tr>
+        <tr id="kohRow2"><td><b>Nhãn <span data-q="yb">4</span></b></td></tr>
+        <tr id="kohRow3"><td><b>Nhãn 1</b></td></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">CROSS-ENTROPY LOSS</div>
+      <div class="expr">
+        y = one-hot(lớp <span data-q="yb">4</span>) = [<span data-q="kohvec">0,0,0,1,0</span>]<br>
+        Loss = −ln(p_<span data-q="yb">4</span>) = −ln(<span data-q="py">0.6</span>) ≈ <b><span data-q="kloss">0.51</span></b>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:3px">Vì yᵢ = 0 với mọi i ≠ y, tổng −Σyᵢ ln pᵢ chỉ còn 1 số hạng.</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>p_y = 1: Loss = −ln(1) = <span class="qa">0</span></li>
+          <li>Vectơ one-hot luôn có <span class="qa">đúng 1 số 1, các ô còn lại = 0</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> One-hot + softmax + cross-entropy = bộ ba chuẩn cho phân loại đa lớp.
+        One-hot = mục tiêu "lý tưởng"; softmax = dự đoán xác suất; cross-entropy = đo khoảng cách.
+        Trong <b>language model</b>: one-hot nhãn là token đúng tiếp theo; mô hình huấn luyện để softmax output
+        khớp nhất với one-hot đó (tối thiểu cross-entropy = tối đa log-likelihood).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · One-hot Encoding</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+
+function generate(){
+  var K = WB.pick([4,5,6]);
+  var y1=2, y3=1; // nhãn cố định (1-indexed)
+  var y2 = WB.pick([3,4,5,6].filter(function(v){return v<=K;}));
+
+  // Softmax output cho y2
+  var rawP=[]; for(var i=0;i<K;i++) rawP.push(WB.randInt(1,5));
+  var tot=rawP.reduce(function(s,v){return s+v;},0);
+  var softP=rawP.map(function(v){return Math.round(v/tot*100)/100;});
+  var diff2=1-softP.reduce(function(s,v){return s+v;},0);
+  softP[y2-1]=Math.round((softP[y2-1]+diff2)*100)/100;
+  var py=softP[y2-1];
+  var loss=-Math.log(py);
+
+  var pdisp=softP.map(function(v){return f2(v);}).join(',');
+  var ohvec=Array(K).fill(0); ohvec[y2-1]=1;
+
+  WB.setAll({
+    K: String(K), yb: String(y2), py: f2(py), kloss: f2(loss),
+    pdisp: pdisp, kohvec: ohvec.join(',')
+  });
+
+  // Headers
+  buildHeader('ohHeader',K); buildHeader('kohHeader',K);
+
+  // Rows ĐỀ
+  buildRow('ohRow1',K,y1,true);
+  buildRow('ohRow2',K,y2,true);
+  buildRow('ohRow3',K,y3,true);
+  // Rows ĐÁP ÁN
+  buildRow('kohRow1',K,y1,false);
+  buildRow('kohRow2',K,y2,false);
+  buildRow('kohRow3',K,y3,false);
+
+  // Loss ĐỀ blank
+  var lb=document.getElementById('lossB'); if(lb) lb.textContent='';
+
+  drawOneHot('sch1',K,y2,softP,false);
+  drawOneHot('sch2',K,y2,softP,true);
+}
+
+function buildHeader(id,K){
+  var tr=document.getElementById(id); if(!tr) return;
+  while(tr.children.length) tr.removeChild(tr.lastChild);
+  var th0=document.createElement('th'); th0.textContent='Nhãn'; tr.appendChild(th0);
+  for(var i=1;i<=K;i++){
+    var th=document.createElement('th'); th.textContent='e'+i; tr.appendChild(th);
+  }
+}
+
+function buildRow(rowId,K,label,blank){
+  var tr=document.getElementById(rowId); if(!tr) return;
+  while(tr.children.length>1) tr.removeChild(tr.lastChild);
+  for(var i=1;i<=K;i++){
+    var td=document.createElement('td');
+    var isOn=(i===label);
+    if(blank){
+      td.className='blank'; td.textContent=isOn?'1':'0';
+    } else {
+      td.className=isOn?'on':'off';
+      td.textContent=isOn?'1':'0';
+    }
+    tr.appendChild(td);
+  }
+}
+
+function drawOneHot(id,K,y2,softP,showVals){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=148;
+  var padl=10,padr=10,padt=22,padb=20;
+  var pw=W-padl-padr,ph=H-padt-padb;
+  var barW=pw/(K+1)*0.6, gap=pw/(K+1);
+
+  var s='';
+  // One-hot bars (top half) — xanh
+  var topH=ph/2-8;
+  s+='<text x="'+(padl+pw/2)+'" y="14" text-anchor="middle" font-size="9" fill="#0e7490" font-weight="700">One-hot (nhãn thật, lớp '+y2+')</text>';
+  s+='<line x1="'+padl+'" y1="'+(padt+topH)+'" x2="'+(W-padr)+'" y2="'+(padt+topH)+'" stroke="#ddd" stroke-width="1"/>';
+  for(var i=1;i<=K;i++){
+    var cx=padl+(i)*gap, isOn=(i===y2);
+    var bh=isOn?topH:2;
+    var by=padt+topH-bh;
+    s+='<rect x="'+(cx-barW/2)+'" y="'+by+'" width="'+barW+'" height="'+bh+'" fill="'+(isOn?'#0e7490':'#d1d5db')+'" rx="2"/>';
+    s+='<text x="'+cx+'" y="'+(padt+topH+11)+'" text-anchor="middle" font-size="8.5" fill="#555">'+i+'</text>';
+    if(isOn&&showVals) s+='<text x="'+cx+'" y="'+(by-4)+'" text-anchor="middle" font-size="9" fill="#0e7490" font-weight="700">1</text>';
+  }
+
+  // Softmax bars (bottom half) — cam
+  var botY=padt+topH+18, botH=H-padb-botY-10;
+  var smaxMax=Math.max.apply(null,softP)*1.1;
+  s+='<text x="'+(padl+pw/2)+'" y="'+(botY-4)+'" text-anchor="middle" font-size="9" fill="#b45309" font-weight="700">Softmax dự đoán</text>';
+  s+='<line x1="'+padl+'" y1="'+(botY+botH)+'" x2="'+(W-padr)+'" y2="'+(botY+botH)+'" stroke="#ddd" stroke-width="1"/>';
+  softP.forEach(function(v,i){
+    var cx=padl+(i+1)*gap, isOn=(i+1===y2);
+    var bh2=botH*(v/smaxMax);
+    var by2=botY+botH-bh2;
+    s+='<rect x="'+(cx-barW/2)+'" y="'+by2+'" width="'+barW+'" height="'+bh2+'" fill="'+(isOn?'#b45309':'#fde68a')+'" rx="2" opacity="0.85"/>';
+    if(showVals) s+='<text x="'+cx+'" y="'+(by2-3)+'" text-anchor="middle" font-size="7.5" fill="#b45309">'+f2(v)+'</text>';
+  });
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="so sánh one-hot và softmax output">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

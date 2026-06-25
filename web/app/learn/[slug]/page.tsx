@@ -45,7 +45,7 @@ export default async function LessonViewer({
         {canView ? (
           <div className="flex-1 bg-paper">
             <iframe
-              src={`/api/learn/${lesson.slug}.html`}
+              src={`/api/learn/${lesson.course}/${lesson.slug}.html`}
               title={lesson.title}
               className="w-full h-[calc(100vh-8rem)] border-0 bg-white"
             />

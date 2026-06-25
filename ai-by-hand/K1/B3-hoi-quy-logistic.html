@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Hồi quy logistic 1 bước — Logistic Regression</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12.5px;line-height:2.0;margin-top:3px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+  .dtbl th,.dtbl td{padding:2px 6px;border:1px solid #d5c49a;text-align:center;}
+  .dtbl th{background:#f3ede0;font-size:10.5px;}
+  .lut{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Hồi quy logistic — 1 bước</h1><span class="vi">— Logistic Regression</span>
+    <span class="tag">σ(wx+b) · BCE loss · 1 bước GD</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Logistic regression = <b>lớp tuyến tính + sigmoid</b> để phân loại nhị phân — chính là
+    <b>một nơ-ron đầu ra</b> của mạng. Điểm đẹp nhất: đạo hàm của loss theo z rút gọn còn <b>(p − y)</b>, nền tảng của backprop.
+    <div class="fm">z = wx+b &nbsp;|&nbsp; p = σ(z) = 1/(1+e⁻ᶻ) &nbsp;|&nbsp; L = −[y·ln p + (1−y)·ln(1−p)] &nbsp;|&nbsp; ∂L/∂z = p − y</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mô hình "tin" lớp 1 với xác suất p. Nếu thực tế y=1 mà p thấp → sai nhiều → đẩy w,b để tăng p.
+    Lượng đẩy tỉ lệ <b>(p − y)</b>: dự đoán đúng (p≈y) thì gradient ≈ 0, sai nhiều thì sửa mạnh.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Đường cong</b> = σ(z); <b>chấm</b> = (z, p) của mẫu; ngưỡng 0.5 chia hai lớp.</div>
+      <table class="dtbl" style="margin-top:5px">
+        <tr><th>z</th><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><th>σ(z)</th><td>.12</td><td>.27</td><td>.50</td><td>.73</td><td>.88</td></tr>
+      </table>
+      <div class="lut">−ln: .12→2.12 · .27→1.31 · .50→.69 · .73→.31 · .88→.13</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN — 1 mẫu, η = 1</div>
+      <div class="expr">
+        x = <span data-q="x">1</span> &nbsp; y = <span data-q="y">1</span> (nhãn thật) &nbsp;|&nbsp;
+        w = <span data-q="w">1</span> &nbsp; b = <span data-q="b">0</span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">BƯỚC 1 — TIẾN (forward)</div>
+      <div class="expr">
+        z = w·x + b = <span data-q="w">1</span>·<span data-q="x">1</span> + <span data-q="b">0</span> = <span class="ublk" id="zB"></span><br>
+        p = σ(z) = <span class="ublk" id="pB"></span> &nbsp;(tra bảng)<br>
+        L = −ln(<span class="ublk" id="lnArgB"></span>) = <span class="ublk" id="LB"></span>
+      </div>
+
+      <div class="bandh bw" style="margin-top:6px">BƯỚC 2 — GRADIENT & CẬP NHẬT</div>
+      <div class="expr">
+        err = p − y = <span class="ublk" id="errB"></span> &nbsp;→&nbsp; ∂L/∂w = err·x = <span class="ublk" id="gwB"></span>, &nbsp; ∂L/∂b = err = <span class="ublk" id="gbB"></span><br>
+        w′ = w − η·∂L/∂w = <span class="ublk" id="wnB"></span> &nbsp;&nbsp; b′ = b − η·∂L/∂b = <span class="ublk" id="bnB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Sau cập nhật, mô hình dự đoán mẫu này chính xác hơn hay kém đi? <span class="ublk" id="qB" style="min-width:90px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Hồi quy logistic 1 bước</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Hồi quy logistic — 1 bước</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">∂L/∂z = p − y là "lỗi". Mọi backprop sau này đều bắt đầu từ tín hiệu lỗi này nhân ngược về các tham số.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">FORWARD</div>
+      <div class="expr">
+        z = <span data-q="kz">?</span> &nbsp;→&nbsp; p = σ(z) = <b><span data-q="kp">?</span></b> &nbsp;→&nbsp;
+        L = −ln(<span data-q="klnarg">?</span>) = <b><span data-q="kL">?</span></b>
+      </div>
+
+      <div class="bandh bw" style="margin-top:6px">GRADIENT & CẬP NHẬT (η = 1)</div>
+      <div class="expr">
+        err = p − y = <b><span data-q="kerr">?</span></b><br>
+        ∂L/∂w = err·x = <span data-q="kgw">?</span> &nbsp;&nbsp; ∂L/∂b = err = <span data-q="kgb">?</span><br>
+        w′ = <span data-q="w">1</span> − (<span data-q="kgw">?</span>) = <b><span data-q="kwn">?</span></b> &nbsp;&nbsp;
+        b′ = <span data-q="b">0</span> − (<span data-q="kgb">?</span>) = <b><span data-q="kbn">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li><span class="qa" id="kqQA">Chính xác hơn</span> — vì cập nhật đẩy p về phía y (err giảm độ lớn).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Một bước GD: <b>forward</b> ra p → <b>lỗi (p−y)</b> → <b>nhân ngược</b> ra gradient → trừ đi.
+        Lặp lại đến hội tụ. Nối nhiều "nơ-ron logistic" thành lớp → mạng nơ-ron (backprop, Bài 12).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Hồi quy logistic 1 bước</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+var SIG={"-2":0.12,"-1":0.27,"0":0.50,"1":0.73,"2":0.88};
+var NLN={"0.12":2.12,"0.27":1.31,"0.5":0.69,"0.73":0.31,"0.88":0.13};
+
+function generate(){
+  // chọn z nguyên trong [-2,2] qua w,x,b nhỏ
+  var w,x,b,z,tries=0;
+  do{ w=WB.pick([1,2]); x=WB.pick([1,2]); b=WB.pick([-2,-1,0,1]); z=w*x+b; tries++; }
+  while((z<-2||z>2)&&tries<50);
+  if(z<-2)z=-2; if(z>2)z=2;
+  var y=WB.pick([0,1]);
+  var p=SIG[String(z)];
+  var lnArg = (y===1)? p : Math.round((1-p)*100)/100;   // đối số của −ln
+  var L = NLN[String(lnArg)];
+  var err=Math.round((p-y)*100)/100;
+  var gw=Math.round(err*x*100)/100;
+  var gb=err;
+  var wn=Math.round((w-gw)*100)/100;
+  var bn=Math.round((b-gb)*100)/100;
+
+  WB.setAll({
+    x:String(x), y:String(y), w:String(w), b:String(b),
+    kz:String(z), kp:f2(p), klnarg:f2(lnArg), kL:f2(L),
+    kerr:f2(err), kgw:f2(gw), kgb:f2(gb), kwn:f2(wn), kbn:f2(bn)
+  });
+  ['zB','pB','lnArgB','LB','errB','gwB','gbB','wnB','bnB','qB'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';
+  });
+  drawSig('sch1',z,p,false);
+  drawSig('sch2',z,p,true);
+}
+
+function drawSig(id,z,p,showErr){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120, padl=18,padr=8,padt=8,padb=16;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var zmin=-3, zmax=3;
+  function sx(zz){return(padl+(zz-zmin)/(zmax-zmin)*pw).toFixed(1);}
+  function sy(pp){return(padt+ph-pp*ph).toFixed(1);}
+  var s='';
+  // axes
+  s+='<line x1="'+padl+'" y1="'+sy(0)+'" x2="'+(W-padr)+'" y2="'+sy(0)+'" stroke="#ddd"/>';
+  s+='<line x1="'+sx(0)+'" y1="'+(H-padb)+'" x2="'+sx(0)+'" y2="'+padt+'" stroke="#ddd"/>';
+  // 0.5 threshold
+  s+='<line x1="'+padl+'" y1="'+sy(0.5)+'" x2="'+(W-padr)+'" y2="'+sy(0.5)+'" stroke="#e6cf6a" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<text x="'+(W-padr)+'" y="'+(parseFloat(sy(0.5))-2)+'" text-anchor="end" font-size="7.5" fill="#b45309">0.5</text>';
+  // sigmoid curve
+  var d='';
+  for(var i=0;i<=60;i++){var zz=zmin+(zmax-zmin)*i/60; var pp=1/(1+Math.exp(-zz)); d+=(i?'L':'M')+sx(zz)+','+sy(pp)+' ';}
+  s+='<path d="'+d+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
+  // point (z,p)
+  if(showErr){
+    s+='<line x1="'+sx(z)+'" y1="'+sy(p)+'" x2="'+sx(z)+'" y2="'+sy(p>0.5?1:0)+'" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="2 2"/>';
+  }
+  s+='<circle cx="'+sx(z)+'" cy="'+sy(p)+'" r="3.5" fill="#b45309"/>';
+  s+='<text x="'+(parseFloat(sx(z))+5)+'" y="'+(parseFloat(sy(p))+3)+'" font-size="8" fill="#b45309" font-weight="700">p='+f2(p)+'</text>';
+  s+='<text x="'+sx(z)+'" y="'+(H-4)+'" text-anchor="middle" font-size="8" fill="#0e7490">z='+z+'</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đường cong sigmoid với điểm mẫu">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

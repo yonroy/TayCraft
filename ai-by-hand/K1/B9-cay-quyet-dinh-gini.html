@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Cây quyết định — Gini</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.95;margin-top:3px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+  .dtbl th,.dtbl td{padding:2px 6px;border:1px solid #d5c49a;text-align:center;}
+  .dtbl th{background:#f3ede0;font-size:10.5px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Cây quyết định — Gini</h1><span class="vi">— Gini Impurity</span>
+    <span class="tag">1 − Σp² · không cần log</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Gini là cách đo "độ không thuần" <b>thay cho entropy</b> mà <b>khỏi tính log</b> — nhanh hơn, nên
+    là mặc định của CART/scikit-learn và nền của Random Forest. Cùng triết lý với entropy: split tốt = các nhóm con thuần hơn.
+    <div class="fm">Gini(S) = 1 − Σ pₖ² &nbsp;|&nbsp; (nhị phân) = 2p(1−p) &nbsp;|&nbsp; Gini sau split = Σ (nᵢ/n)·Gini(conᵢ)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Gini = xác suất "đoán sai nếu rút ngẫu nhiên một nhãn rồi đoán theo phân phối". Thuần một lớp → 0 (không bao giờ sai);
+    50–50 → 0.5 (cao nhất). Chọn split làm Gini con thấp nhất.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Nút cha chia theo <b>Gió</b> → 2 con. So Gini cha với Gini-sau-split: giảm càng nhiều, split càng tốt.</div>
+      <table class="dtbl" style="margin-top:5px">
+        <tr><th>p²</th><td>(1/3)²=.11</td><td>(2/3)²=.44</td><td>(1/2)²=.25</td></tr>
+      </table>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN — 6 mẫu (+/−)</div>
+      <div class="expr">
+        Cha: <span data-q="pY">4</span>+ / <span data-q="pN">2</span>− (n=6)<br>
+        Gió nhẹ: <span data-q="aY">3</span>+ / <span data-q="aN">0</span>− &nbsp;·&nbsp; Gió mạnh: <span data-q="bY">1</span>+ / <span data-q="bN">2</span>− &nbsp;(mỗi nhóm n=3)
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">BƯỚC 1 — GINI TỪNG NÚT (1 − p₊² − p₋²)</div>
+      <div class="expr">
+        Gini(cha) = 1 − (<span data-q="pY">4</span>/6)² − (<span data-q="pN">2</span>/6)² = <span class="ublk" id="gpB"></span><br>
+        Gini(nhẹ) = <span class="ublk" id="gaB"></span> &nbsp; Gini(mạnh) = <span class="ublk" id="gbB"></span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">BƯỚC 2 — GINI SAU SPLIT & ĐỘ GIẢM</div>
+      <div class="expr">
+        Gini_split = .5·<span class="ublk" id="gaB2"></span> + .5·<span class="ublk" id="gbB2"></span> = <span class="ublk" id="gsB"></span><br>
+        Δ = Gini(cha) − Gini_split = <span class="ublk" id="dgB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Gini lớn nhất (nhị phân) đạt khi tỉ lệ là bao nhiêu? <span class="ublk" id="qB" style="min-width:70px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Gini</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Cây quyết định — Gini</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Entropy ∈ [0,1] (bit), Gini ∈ [0,0.5]. Hai thước đo gần như luôn chọn cùng split; Gini rẻ hơn vì không log.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">GINI (điền đủ)</div>
+      <div class="expr">
+        Gini(cha) = <b><span data-q="kgp">?</span></b> &nbsp; Gini(nhẹ) = <b><span data-q="kga">?</span></b> &nbsp; Gini(mạnh) = <b><span data-q="kgb">?</span></b>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">SAU SPLIT</div>
+      <div class="expr">
+        Gini_split = .5·<span data-q="kga">?</span> + .5·<span data-q="kgb">?</span> = <b><span data-q="kgs">?</span></b><br>
+        Δ = <span data-q="kgp">?</span> − <span data-q="kgs">?</span> = <b><span data-q="kdg">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Gini lớn nhất khi <span class="qa">50–50</span> (p=0.5 → Gini=0.5).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Quy trình hệt B8 nhưng đổi entropy → Gini (1−Σp²). Random Forest = nhiều cây Gini trên mẫu con +
+        đặc trưng con, rồi bỏ phiếu. Boosting (B11) thì xây cây <i>nối tiếp</i> để sửa lỗi cây trước.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Gini</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+function gini(k,n){var p=k/n,q=(n-k)/n; return 1-p*p-q*q;}
+var TREE;
+
+function generate(){
+  var aY,bY,pY,tries=0;
+  do{ aY=WB.randInt(0,3); bY=WB.randInt(0,3); pY=aY+bY; tries++; }
+  while((pY<2||pY>4)&&tries<60);
+  var aN=3-aY,bN=3-bY,pN=6-pY;
+  var gp=gini(pY,6), ga=gini(aY,3), gb=gini(bY,3);
+  var gs=0.5*ga+0.5*gb, dg=gp-gs;
+  TREE={pY:pY,pN:pN,aY:aY,aN:aN,bY:bY,bN:bN};
+
+  WB.setAll({
+    pY:String(pY),pN:String(pN),aY:String(aY),aN:String(aN),bY:String(bY),bN:String(bN),
+    kgp:f2(gp), kga:f2(ga), kgb:f2(gb), kgs:f2(gs), kdg:f2(dg)
+  });
+  ['gpB','gaB','gbB','gaB2','gbB2','gsB','dgB','qB'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';});
+
+  drawTree('sch1'); drawTree('sch2');
+}
+
+function drawTree(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120;
+  function node(x,y,w,t,col){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="22" rx="4" fill="'+col+'" stroke="#bbb"/>'
+    +'<text x="'+(x+w/2)+'" y="'+(y+15)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#333">'+t+'</text>';}
+  var s='';
+  s+=node(64,8,50,TREE.pY+'+ / '+TREE.pN+'−','#fff3b0');
+  s+='<line x1="78" y1="30" x2="36" y2="70" stroke="#0e7490" stroke-width="1.3"/>';
+  s+='<line x1="100" y1="30" x2="142" y2="70" stroke="#b45309" stroke-width="1.3"/>';
+  s+='<text x="48" y="52" font-size="8" fill="#0e7490">nhẹ</text>';
+  s+='<text x="120" y="52" font-size="8" fill="#b45309">mạnh</text>';
+  s+=node(10,70,52,TREE.aY+'+ / '+TREE.aN+'−','#d6ecf6');
+  s+=node(116,70,52,TREE.bY+'+ / '+TREE.bN+'−','#ffe6cc');
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="cây quyết định gini">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

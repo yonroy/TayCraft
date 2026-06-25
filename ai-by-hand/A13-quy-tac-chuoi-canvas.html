@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Quy tắc chuỗi — Chain Rule (canvas)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.2;margin-top:4px;}
+  .expr .lbl{color:var(--accent);font-weight:700;}
+  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .chain-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-top:5px;}
+  .chain-box{border:1px solid #d8d2c4;border-radius:6px;padding:4px 10px;background:#fcfaf4;white-space:nowrap;}
+  .chain-op{font-size:18px;color:#c9c2b2;font-weight:800;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Quy tắc chuỗi</h1><span class="vi">— Chain Rule</span>
+    <span class="tag">điền ô trắng · dz/dx = (dz/dy)·(dy/dx)</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Quy tắc chuỗi là cơ sở của <b>lan truyền ngược (backprop)</b>. Mạng nơ-ron là <i>hợp</i> của nhiều
+    hàm (lớp → activation → lớp → …). Để tính gradient loss theo trọng số lớp đầu tiên, ta nhân chuỗi đạo hàm từng bước.
+    Không có chain rule, không có deep learning.
+    <div class="fm">z = g(y), y = f(x) &nbsp;⇒&nbsp; dz/dx = (dz/dy) · (dy/dx) &nbsp;|&nbsp; dz/dx = g′(y) · f′(x)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>tỷ giá hối đoái</b>: 1 USD → a₁ VND, 1 VND → a₂ JPY → 1 USD = a₁·a₂ JPY. Tương tự, "x thay đổi 1 đơn vị
+    → y thay đổi dy/dx → z thay đổi (dz/dy)·(dy/dx)". Mỗi lớp mạng là một bước đổi tỷ giá.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Gradient chảy ngược</b> từ z → y → x: nhân lần lượt từng đạo hàm.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN · hai hàm hợp</div>
+      <div class="expr">
+        y = f(x) = <span data-q="a">2</span>x + <span data-q="bv">1</span> &nbsp;&nbsp;<span style="color:var(--dim)">(lớp tuyến tính)</span><br>
+        z = g(y) = <span data-q="c">3</span>y² &nbsp;&nbsp;<span style="color:var(--dim)">(bình phương × hệ số)</span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:7px">ĐẠO HÀM TỪNG PHẦN</div>
+      <div class="expr">
+        dy/dx = f′(x) = <span class="ublk" id="dydx"></span>
+        <span style="color:var(--dim);font-size:11px">&nbsp;[đạo hàm của ax+b]</span><br>
+        dz/dy = g′(y) = <span class="ublk" id="dzdy"></span>
+        <span style="color:var(--dim);font-size:11px">&nbsp;[đạo hàm của cy²]</span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:7px">QUY TẮC CHUỖI tại x = x₀</div>
+      <div class="expr">
+        x₀ = <span data-q="x0">2</span> &nbsp;→&nbsp;
+        y₀ = <span class="ublk" id="y0"></span> &nbsp;→&nbsp;
+        z₀ = <span class="ublk" id="z0"></span><br>
+        dz/dy tại y₀ = <span class="ublk" id="dzdyv"></span><br>
+        dz/dx tại x₀ = (dz/dy)·(dy/dx) = <span class="ublk" id="dzdx_v"></span>
+      </div>
+
+      <div class="why"><b>Vì sao:</b> tính dz/dy trước (cần y₀), rồi nhân với dy/dx. Thứ tự ngược = lan truyền ngược trong mạng!</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>y = 2x, z = y³ → dz/dx = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Nếu có 3 hàm z=h(y), y=g(u), u=f(x) thì dz/dx = ? → <span style="display:inline-block;min-width:140px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Quy tắc chuỗi — Chain Rule</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Quy tắc chuỗi</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">dz/dx = chuỗi dài bao nhiêu lớp cũng nhân được. Mạng 100 lớp = 100 lần nhân.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN</div>
+      <div class="expr">
+        y = <span data-q="a">2</span>x + <span data-q="bv">1</span> &nbsp;·&nbsp; z = <span data-q="c">3</span>y²
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">ĐẠO HÀM</div>
+      <div class="expr">
+        dy/dx = <span class="ublk" data-q="dydx_ans">2</span><br>
+        dz/dy = <span class="ublk" data-q="dzdy_ans">6y</span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">QUY TẮC CHUỖI tại x₀ = <span data-q="x0">2</span></div>
+      <div class="expr">
+        y₀ = <span class="ublk" data-q="y0_ans">5</span> &nbsp;→&nbsp;
+        z₀ = <span class="ublk" data-q="z0_ans">75</span><br>
+        dz/dy tại y₀ = <span class="ublk" data-q="dzdyv_ans">30</span><br>
+        dz/dx = <span class="ublk" data-q="dzdyv_ans">30</span> · <span class="ublk" data-q="dydx_ans">2</span> = <span class="ublk" data-q="dzdx_ans">60</span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>y=2x, z=y³ → dz/dx = <span class="qa">3y²·2 = 6y² = 6(2x)² = 24x²</span></li>
+          <li>3 hàm: dz/dx = <span class="qa">(dz/dy)·(dy/du)·(du/dx)</span> — nhân 3 đạo hàm</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Backprop (Bài 12) là chain rule áp dụng liên tiếp từ lớp output về lớp input.
+        Mỗi lớp tính <b>δ = dL/dz</b> (delta) rồi truyền ngược: δ_trước = δ_sau · (dz/dy). Gradient
+        explode/vanish xảy ra khi tích chuỗi này quá lớn hoặc quá nhỏ sau nhiều lớp. Bài kế (A14):
+        mở rộng sang <b>nhiều biến</b> — gradient vectơ ∇f.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Quy tắc chuỗi — Chain Rule</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI = WB.fmtInt;
+
+function generate(){
+  var a  = WB.pick([1,2,3]);           // f(x) = ax + b
+  var bv = WB.randInt(-2,4);
+  var c  = WB.pick([1,2,3]);           // g(y) = cy²
+  var x0 = WB.randInt(1,4);            // điểm x₀
+
+  var y0 = a*x0 + bv;                  // y₀ = f(x₀)
+  var z0 = c*y0*y0;                    // z₀ = g(y₀)
+  var dydx = a;                        // dy/dx = a
+  var dzdyv = 2*c*y0;                  // dz/dy tại y₀ = 2cy₀
+  var dzdx  = dzdyv * dydx;
+
+  // data-q
+  WB.setAll({
+    a: fI(a), bv: fI(bv), c: fI(c), x0: fI(x0),
+    dydx_ans: fI(dydx),
+    dzdy_ans: '2·'+fI(c)+'y = '+fI(2*c)+'y',
+    y0_ans:   fI(y0),
+    z0_ans:   fI(z0),
+    dzdyv_ans: fI(dzdyv),
+    dzdx_ans:  fI(dzdx)
+  });
+
+  // ĐỀ: ô trống
+  ['dydx','dzdy','y0','z0','dzdyv','dzdx_v'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';
+  });
+
+  drawChain('sch1',a,bv,c,x0,y0,z0,dydx,dzdyv,dzdx,false);
+  drawChain('sch2',a,bv,c,x0,y0,z0,dydx,dzdyv,dzdx,true);
+}
+
+function drawChain(id,a,bv,c,x0,y0,z0,dydx,dzdyv,dzdx,showAns){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=148;
+  var s='<defs>'
+    +'<marker id="mfwd'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'
+    +'<marker id="mbk'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
+    +'</defs>';
+
+  // 3 nodes: x, y, z
+  var nodes=[{x:18,y:65,lbl:'x',val:fI(x0),col:'#0e7490',bg:'#d6ecf6'},
+             {x:89,y:65,lbl:'y',val:fI(y0),col:'#7c5cff',bg:'#ece2ff'},
+             {x:160,y:65,lbl:'z',val:fI(z0),col:'#b45309',bg:'#fdecd2'}];
+
+  // vẽ node
+  nodes.forEach(function(n){
+    s+='<circle cx="'+n.x+'" cy="'+n.y+'" r="18" fill="'+n.bg+'" stroke="'+n.col+'" stroke-width="2"/>';
+    s+='<text x="'+n.x+'" y="'+(n.y-4)+'" text-anchor="middle" font-size="10" fill="'+n.col+'" font-weight="700">'+n.lbl+'</text>';
+    s+='<text x="'+n.x+'" y="'+(n.y+8)+'" text-anchor="middle" font-size="10" fill="'+n.col+'" font-weight="700">'+(showAns?n.val:'?')+'</text>';
+  });
+
+  // mũi tên xuôi: x→y (f), y→z (g)
+  s+='<line x1="36" y1="65" x2="71" y2="65" stroke="#0e7490" stroke-width="1.8" marker-end="url(#mfwd'+id+')"/>';
+  s+='<line x1="107" y1="65" x2="142" y2="65" stroke="#7c5cff" stroke-width="1.8" marker-end="url(#mfwd'+id+')"/>';
+  // nhãn hàm
+  s+='<text x="53" y="58" text-anchor="middle" font-size="9.5" fill="#0e7490" font-weight="700">f</text>';
+  s+='<text x="53" y="80" text-anchor="middle" font-size="8.5" fill="#6b7280">dy/dx='+fI(dydx)+'</text>';
+  s+='<text x="124" y="58" text-anchor="middle" font-size="9.5" fill="#7c5cff" font-weight="700">g</text>';
+  s+='<text x="124" y="80" text-anchor="middle" font-size="8.5" fill="#6b7280">dz/dy</text>';
+
+  // mũi tên ngược: z→y→x (gradient flow)
+  var gy=100;
+  s+='<line x1="142" y1="'+gy+'" x2="107" y2="'+gy+'" stroke="#b45309" stroke-width="1.8" marker-end="url(#mbk'+id+')"/>';
+  s+='<line x1="71" y1="'+gy+'" x2="36" y2="'+gy+'" stroke="#b45309" stroke-width="1.8" marker-end="url(#mbk'+id+')"/>';
+  s+='<text x="89" y="'+(gy+14)+'" text-anchor="middle" font-size="8.5" fill="#b45309">← gradient (chiều ngược)</text>';
+
+  // chain rule label
+  var chainTxt = showAns ? 'dz/dx = '+fI(dzdyv)+'·'+fI(dydx)+' = '+fI(dzdx) : 'dz/dx = (dz/dy)·(dy/dx)';
+  s+='<rect x="14" y="118" width="150" height="20" rx="5" fill="#fcf7f0" stroke="#e2dccb" stroke-width="1"/>';
+  s+='<text x="89" y="131" text-anchor="middle" font-size="10" fill="#b45309" font-weight="700">'+chainTxt+'</text>';
+
+  // tiêu đề
+  s+='<text x="18" y="15" font-size="10" fill="#0e7490" font-weight="700">x→y→z (lan truyền xuôi)</text>';
+  s+='<text x="18" y="28" font-size="9.5" fill="#b45309">z→y→x (lan truyền ngược)</text>';
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="sơ đồ chain rule: x→y→z và gradient ngược">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Chuẩn hóa dữ liệu — Data Normalization</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
+  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.hl{background:#d6ecf6;font-weight:700;}
+  .dtbl td.blank{background:#fff;color:transparent;user-select:none;border-bottom:1.5px dashed #b9b9b9;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Chuẩn hóa dữ liệu</h1><span class="vi">— Data Normalization</span>
+    <span class="tag">min-max · z-score · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mạng nơ-ron <b>học không ổn định</b> nếu các đặc trưng có thang đo khác nhau
+    (vd: tuổi 20–80 vs thu nhập 5,000,000–50,000,000). Chuẩn hóa đưa mọi đặc trưng về cùng khoảng →
+    gradient descent hội tụ nhanh hơn, tránh một chiều "áp đảo" chiều kia.
+    <div class="fm">Min-max: x′=(x−min)/(max−min) → [0,1] &nbsp;|&nbsp; Z-score: x′=(x−μ)/σ → N(0,1)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    <b>Min-max</b> như chuyển nhiệt độ °C → % từ lạnh nhất đến nóng nhất — giá trị tối thiểu thành 0, tối đa thành 1.
+    <b>Z-score</b> như hỏi "bạn cao hơn trung bình bao nhiêu lần độ lệch chuẩn?" — trung tâm về 0, đơn vị = σ.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xanh</b> = dữ liệu gốc; <b>Cam</b> = sau min-max [0,1]; <b>Tím</b> = sau z-score (~N(0,1)).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">DỮ LIỆU GỐC (5 điểm)</div>
+      <table class="dtbl">
+        <tr><th>i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>min</th><th>max</th><th>μ</th><th>σ</th></tr>
+        <tr>
+          <td><b>x</b></td>
+          <td data-q="x1" class="hl">2</td><td data-q="x2" class="hl">4</td>
+          <td data-q="x3" class="hl">6</td><td data-q="x4" class="hl">8</td>
+          <td data-q="x5" class="hl">10</td>
+          <td data-q="xmin">2</td><td data-q="xmax">10</td>
+          <td data-q="xmu">6.0</td><td data-q="xsig">2.83</td>
+        </tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">MIN-MAX: x′ = (x − min) / (max − min)</div>
+      <table class="dtbl" id="mmTable">
+        <tr><th>i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+        <tr id="mmRow"><td><b>x′</b></td></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">Z-SCORE: x′ = (x − μ) / σ &nbsp; <span style="color:var(--dim);font-size:10px">(σ = độ lệch chuẩn mẫu)</span></div>
+      <table class="dtbl" id="zsTable">
+        <tr><th>i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+        <tr id="zsRow"><td><b>x″</b></td></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Sau min-max: giá trị min → ? &nbsp; giá trị max → ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Sau z-score: μ mới = ? &nbsp; σ mới ≈ ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Chuẩn hóa dữ liệu — Data Normalization</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Chuẩn hóa dữ liệu</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Z-score tạo N(0,1): điểm trung tâm = 0, điểm ngoài rìa ±1.4σ. Min-max ép [0,1].</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">DỮ LIỆU GỐC</div>
+      <table class="dtbl">
+        <tr><th>i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>min</th><th>max</th><th>μ</th><th>σ</th></tr>
+        <tr>
+          <td><b>x</b></td>
+          <td data-q="x1" class="hl">2</td><td data-q="x2" class="hl">4</td>
+          <td data-q="x3" class="hl">6</td><td data-q="x4" class="hl">8</td>
+          <td data-q="x5" class="hl">10</td>
+          <td data-q="xmin">2</td><td data-q="xmax">10</td>
+          <td data-q="xmu">6.0</td><td data-q="xsig">2.83</td>
+        </tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ MIN-MAX</div>
+      <table class="dtbl" id="mmTable2">
+        <tr><th>i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+        <tr id="mmRow2"><td><b>x′</b></td></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ Z-SCORE</div>
+      <table class="dtbl" id="zsTable2">
+        <tr><th>i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+        <tr id="zsRow2"><td><b>x″</b></td></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Min-max: min → <span class="qa">0</span>; max → <span class="qa">1</span></li>
+          <li>Z-score: μ mới = <span class="qa">0</span>; σ mới = <span class="qa">1</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> <b>Min-max</b> phù hợp khi không có outlier (range cố định 0–1); dùng trong CNN (ảnh pixel/255).
+        <b>Z-score</b> phù hợp khi phân phối chuẩn hoặc có outlier — trung bình về 0, đơn vị σ.
+        Trong <b>batch normalization</b> (Bài 20 cũ), mạng tự học γ, β để "chuẩn hóa rồi chỉnh lại" từng lớp.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Chuẩn hóa dữ liệu — Data Normalization</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function fmt2(v){ return v.toFixed(2); }
+
+function generate(){
+  // Sinh 5 số nguyên không đều (tránh đều đặn quá)
+  var base = WB.randInt(1,6);
+  var step = WB.pick([2,3,4]);
+  var x = [base, base+step, base+2*step+WB.randInt(0,2), base+3*step+WB.randInt(0,2), base+4*step+WB.randInt(1,3)];
+  // sắp xếp tăng dần
+  x.sort(function(a,b){return a-b;});
+  var mn=x[0], mx=x[x.length-1];
+  var mu=x.reduce(function(s,v){return s+v;},0)/x.length;
+  var sig=Math.sqrt(x.reduce(function(s,v){return s+(v-mu)*(v-mu);},0)/(x.length-1));
+
+  // min-max
+  var mm=x.map(function(v){return (v-mn)/(mx-mn);});
+  // z-score
+  var zs=x.map(function(v){return (v-mu)/sig;});
+
+  WB.setAll({
+    x1:x[0],x2:x[1],x3:x[2],x4:x[3],x5:x[4],
+    xmin:mn, xmax:mx, xmu:fmt2(mu), xsig:fmt2(sig)
+  });
+
+  // ĐỀ — blank cells
+  fillRow('mmRow',mm,true);
+  fillRow('zsRow',zs,true);
+  // ĐÁP ÁN — filled
+  fillRow('mmRow2',mm,false);
+  fillRow('zsRow2',zs,false);
+
+  drawDots('sch1',x,mm,zs,false);
+  drawDots('sch2',x,mm,zs,true);
+}
+
+function fillRow(rowId, vals, blank){
+  var row=document.getElementById(rowId); if(!row) return;
+  // remove existing data cells
+  while(row.children.length>1) row.removeChild(row.lastChild);
+  vals.forEach(function(v){
+    var td=document.createElement('td');
+    if(blank){ td.className='blank'; td.textContent=fmt2(v); }
+    else { td.textContent=fmt2(v); }
+    row.appendChild(td);
+  });
+}
+
+function drawDots(id, x, mm, zs, showLabels){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=148;
+  var pad={l:16,r:14,t:18,b:16};
+  var pw=W-pad.l-pad.r;
+
+  // 3 baris: raw, mm, zs
+  var rows=[
+    {label:'raw', vals:x, color:'#0e7490', yc:38},
+    {label:'min-max', vals:mm, color:'#b45309', yc:80},
+    {label:'z-score', vals:zs, color:'#7c5cff', yc:122}
+  ];
+
+  var s='';
+  rows.forEach(function(r){
+    var mn2=Math.min.apply(null,r.vals), mx2=Math.max.apply(null,r.vals);
+    var range=mx2-mn2||1;
+    function px(v){return(pad.l+(v-mn2)/range*pw).toFixed(1);}
+
+    // axis line
+    s+='<line x1="'+pad.l+'" y1="'+r.yc+'" x2="'+(W-pad.r)+'" y2="'+r.yc+'" stroke="'+r.color+'" stroke-width="1.2" opacity="0.4"/>';
+    s+='<text x="2" y="'+(r.yc+4)+'" font-size="9" fill="'+r.color+'" font-weight="700">'+r.label+'</text>';
+
+    // dots
+    r.vals.forEach(function(v,i){
+      var cx=parseFloat(px(v));
+      s+='<circle cx="'+cx+'" cy="'+r.yc+'" r="4.5" fill="'+r.color+'" opacity="0.85"/>';
+      if(showLabels){
+        var lbl=(r.label==='raw')?String(v):fmt2(v);
+        s+='<text x="'+cx+'" y="'+(r.yc-7)+'" text-anchor="middle" font-size="7.5" fill="'+r.color+'">'+lbl+'</text>';
+      }
+    });
+
+    // min/max ticks
+    s+='<line x1="'+pad.l+'" y1="'+(r.yc-5)+'" x2="'+pad.l+'" y2="'+(r.yc+5)+'" stroke="'+r.color+'" stroke-width="1"/>';
+    s+='<line x1="'+(W-pad.r)+'" y1="'+(r.yc-5)+'" x2="'+(W-pad.r)+'" y2="'+(r.yc+5)+'" stroke="'+r.color+'" stroke-width="1"/>';
+    s+='<text x="'+pad.l+'" y="'+(r.yc+13)+'" text-anchor="middle" font-size="7.5" fill="'+r.color+'">'+mn2.toFixed(1)+'</text>';
+    s+='<text x="'+(W-pad.r)+'" y="'+(r.yc+13)+'" text-anchor="middle" font-size="7.5" fill="'+r.color+'">'+mx2.toFixed(1)+'</text>';
+  });
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="so sánh dữ liệu gốc, min-max, z-score">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -8,8 +8,11 @@
 //        → tạo ai-by-hand/A2-do-dai-chuan.html
 // Cờ:    --force ghi đè nếu file đã tồn tại.
 
-import { writeFileSync, existsSync } from "node:fs";
+import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, join } from "node:path";
+
+// Mã PHẦN (chữ đầu) → khóa/folder. Khớp PARTS trong web/lib/lessons.ts.
+const COURSE_OF_PART = { A: "K1", B: "K1", C: "K1", D: "K2", E: "K2", F: "K2", G: "K2", H: "K3", I: "K3", J: "K3", K: "K4", L: "K4", M: "K4", N: "K4" };
 
 const args = process.argv.slice(2);
 const force = args.includes("--force");
@@ -23,10 +26,17 @@ if (!code || !slug || !title || !english) {
   process.exit(2);
 }
 
-const outFile = resolve(process.cwd(), join("ai-by-hand", slug + ".html"));
-// nếu đang đứng trong ai-by-hand/ thì ghi thẳng vào cwd
-const altFile = resolve(process.cwd(), slug + ".html");
-const target = existsSync(resolve(process.cwd(), "ai-by-hand")) ? outFile : altFile;
+const course = COURSE_OF_PART[code[0].toUpperCase()];
+if (!course) {
+  console.error("✗ Không suy được khóa từ mã '" + code + "' (chữ đầu phải A–N).");
+  process.exit(2);
+}
+// Đứng ở gốc dự án → ai-by-hand/<khóa>/; đứng trong ai-by-hand/ → <khóa>/.
+const baseDir = existsSync(resolve(process.cwd(), "ai-by-hand"))
+  ? resolve(process.cwd(), "ai-by-hand")
+  : process.cwd();
+mkdirSync(join(baseDir, course), { recursive: true });
+const target = join(baseDir, course, slug + ".html");
 
 if (existsSync(target) && !force) {
   console.error("✗ Đã tồn tại: " + target + "  (thêm --force để ghi đè)");
@@ -39,7 +49,7 @@ const T = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI by Hand · Bài ${code} — ${title} (A4 in được)</title>
-<link rel="stylesheet" href="wb.css">
+<link rel="stylesheet" href="../wb.css">
 <style>
 /* siết nhẹ chiều cao (additive, không đụng wb.css) — chỉnh nếu check.mjs báo tràn */
 .page .step{margin-top:6px;}
@@ -52,7 +62,7 @@ const T = `<!DOCTYPE html>
 <body>
 
 <div class="toolbar">
-  <a href="index.html">← Mục lục</a>
+  <a href="../index.html">← Mục lục</a>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
@@ -166,7 +176,7 @@ const T = `<!DOCTYPE html>
   <div class="wb-foot"><span>AI by Hand ✍️ — Bài ${code} · ${title}</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
-<script src="wb-random.js"></script>
+<script src="../wb-random.js"></script>
 <script>
 function generate(){
   /* TODO: sinh số bằng WB.randInt/randIntNZ/pick; tính kết quả */
@@ -193,8 +203,8 @@ generate(); // BẮT BUỘC gọi 1 lần lúc tải (kẻo SVG trống / số m
 `;
 
 writeFileSync(target, T, "utf8");
-console.log("✅ Đã tạo: " + target);
+console.log("✅ Đã tạo: " + target + "  (khóa " + course + ")");
 console.log("\nBước tiếp:");
-console.log("  1. Điền toán vào các chỗ /* TODO */ (xem mẫu 01-tich-vo-huong.html + skill /phieu-giai-thich).");
-console.log("  2. Đo tràn:   node tools/check.mjs " + slug + ".html --runs 5 --shot");
-console.log("  3. Đăng ký:   bật thẻ trong index.html + đặt available:true trong web/lib/lessons.ts.");
+console.log("  1. Điền toán vào các chỗ /* TODO */ (xem mẫu ai-by-hand/K1/01-tich-vo-huong.html + skill /phieu-giai-thich).");
+console.log("  2. Đo tràn:   node ai-by-hand/tools/check.mjs " + course + "/" + slug + ".html --runs 5 --shot");
+console.log("  3. Đăng ký:   thẻ href=\"" + course + "/" + slug + ".html\" trong index.html + available:true trong web/lib/lessons.ts.");

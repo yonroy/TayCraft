@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · SVM — lề hình học</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:3px;}
+  .ublk{display:inline-block;min-width:40px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>SVM — lề hình học</h1><span class="vi">— Support Vector Machine: Margin</span>
+    <span class="tag">khoảng cách điểm → siêu phẳng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> SVM tìm siêu phẳng phân tách <b>có lề rộng nhất</b> giữa hai lớp. Lề = khoảng cách tới điểm gần
+    nhất (support vector). Khái niệm "khoảng cách có dấu tới một mặt phẳng" và "tối đa hóa lề" còn xuất hiện trong contrastive
+    learning và regularization.
+    <div class="fm">f(x) = w·x + b &nbsp;|&nbsp; khoảng cách = |w·x + b| / ‖w‖ &nbsp;|&nbsp; lề tối ưu = 2 / ‖w‖ &nbsp;|&nbsp; lớp = dấu f(x)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    w·x+b cho biết điểm nằm phía nào của ranh giới và "xa cỡ nào" (chưa chuẩn hóa); chia cho ‖w‖ để ra <b>khoảng cách thật</b>.
+    Điểm gần ranh giới nhất chính là <b>support vector</b> — chỉ chúng quyết định vị trí siêu phẳng.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Đường liền</b> = ranh giới w·x+b=0; chấm tô màu theo dấu f; <b>nét đứt</b> = khoảng cách từ support vector tới ranh giới (= lề).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN — siêu phẳng</div>
+      <div class="expr">
+        w = (<span data-q="w1">3</span>, <span data-q="w2">4</span>), b = <span data-q="b">−12</span> &nbsp;→&nbsp;
+        ‖w‖ = √(<span data-q="w1s">9</span>+<span data-q="w2s">16</span>) = <span data-q="nw">5</span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">KHOẢNG CÁCH CÓ DẤU: f(x)/‖w‖</div>
+      <table class="dtbl" id="tbl">
+        <tr><th>điểm</th><th>(x,y)</th><th>f = w·x+b</th><th>d = f/5</th><th>lớp (dấu)</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">SUPPORT VECTOR & LỀ</div>
+      <div class="expr">
+        |d| nhỏ nhất ở: <span class="ublk" id="svB" style="min-width:60px"></span> &nbsp;→&nbsp;
+        lề (1 phía) = <span class="ublk" id="marB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Điểm có |d| lớn nhất nằm xa hay gần ranh giới? <span class="ublk" id="qB" style="min-width:60px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · SVM lề</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>SVM — lề hình học</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">SVM "cứng" yêu cầu mọi điểm nằm ngoài lề (|d| ≥ lề). Tối ưu = tìm w,b cho lề 2/‖w‖ lớn nhất mà vẫn phân tách đúng.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">KHOẢNG CÁCH (điền đủ)</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>điểm</th><th>(x,y)</th><th>f = w·x+b</th><th>d = f/5</th><th>lớp</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        Support vector: <b><span data-q="ksv">?</span></b> &nbsp;(|d| nhỏ nhất = <span data-q="kmar">?</span>)<br>
+        Lề tối ưu nếu đặt giữa: 2/‖w‖ = 2/5 = <b>0.4</b> (so sánh khái niệm)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>|d| lớn → <span class="qa">xa</span> ranh giới (phân loại "tự tin" hơn).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Chỉ <b>support vector</b> (điểm sát lề) định hình ranh giới — bỏ điểm xa đi không đổi nghiệm.
+        Với dữ liệu không tách tuyến tính → <b>kernel</b> nâng chiều. Tư tưởng "lề" ↔ regularization và margin loss trong DL.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · SVM lề</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f1(v){var r=Math.round(v*100)/100; return (r<0?'−':'')+Math.abs(r).toFixed(2);}
+function sgn(v){return v>0?'+':'−';}
+var PTS,Wv,Bv,NW;
+
+function generate(){
+  Wv=WB.pick([[3,4],[4,3]]); NW=5;
+  // b sao cho có điểm 2 phía trên lưới 0..6
+  var ok=false,tries=0;
+  while(!ok && tries++<200){
+    Bv=WB.randInt(-22,-8);
+    var used={}, pts=[];
+    function pt(){var x,y,g=0; do{x=WB.randInt(0,6);y=WB.randInt(0,6);g++;}while(used[x+','+y]&&g<40); used[x+','+y]=1; return {x:x,y:y};}
+    for(var i=0;i<4;i++) pts.push(pt());
+    pts.forEach(function(p){ p.f=Wv[0]*p.x+Wv[1]*p.y+Bv; p.d=p.f/NW; p.ad=Math.abs(p.d); });
+    var pos=pts.filter(function(p){return p.f>0;}).length;
+    if(pos===0||pos===4) continue;            // cần 2 phía
+    var ads=pts.map(function(p){return p.ad;}).sort(function(a,b){return a-b;});
+    if(ads[0]===ads[1]) continue;             // support vector duy nhất
+    if(pts.some(function(p){return p.f===0;})) continue; // không nằm trên đường
+    PTS=pts; ok=true;
+  }
+  var names='A B C D'.split(' ');
+  PTS.forEach(function(p,i){p.nm=names[i];});
+  var sv=PTS.slice().sort(function(a,b){return a.ad-b.ad;})[0];
+
+  WB.setAll({
+    w1:String(Wv[0]), w2:String(Wv[1]), b:WB.fmtInt(Bv),
+    w1s:String(Wv[0]*Wv[0]), w2s:String(Wv[1]*Wv[1]), nw:String(NW),
+    ksv:sv.nm+' ('+sv.x+','+sv.y+')', kmar:f1(sv.ad)
+  });
+  buildTbl('tbl',true); buildTbl('ktbl',false);
+  ['svB','marB','qB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+
+  drawSVM('sch1',false,sv); drawSVM('sch2',true,sv);
+}
+
+function buildTbl(id,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  PTS.forEach(function(p){
+    var tr=document.createElement('tr');
+    var add=function(html,bl,txt){var td=document.createElement('td'); if(bl){td.className='blank';td.textContent=txt;} else td.innerHTML=html; tr.appendChild(td);};
+    add('<b>'+p.nm+'</b>'); add('('+p.x+','+p.y+')');
+    add('', blank, WB.fmtInt(p.f));
+    add('', blank, f1(p.d));
+    add(blank?'':('<b>'+sgn(p.f)+'</b>'), blank, sgn(p.f));
+    el.appendChild(tr);
+  });
+}
+
+function drawSVM(id,showMargin,sv){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=150,pad=16,gw=W-2*pad,gh=H-2*pad;
+  function sx(x){return(pad+x/6*gw).toFixed(1);}
+  function sy(y){return(pad+gh-y/6*gh).toFixed(1);}
+  var s='';
+  for(var g=0;g<=6;g++){
+    s+='<line x1="'+sx(g)+'" y1="'+sy(0)+'" x2="'+sx(g)+'" y2="'+sy(6)+'" stroke="#f3efe6"/>';
+    s+='<line x1="'+sx(0)+'" y1="'+sy(g)+'" x2="'+sx(6)+'" y2="'+sy(g)+'" stroke="#f3efe6"/>';
+  }
+  // ranh giới w1 x + w2 y + b = 0 → y = -(w1 x + b)/w2
+  function lineY(x){return -(Wv[0]*x+Bv)/Wv[1];}
+  var x0=-1,x1=7;
+  s+='<line x1="'+sx(x0)+'" y1="'+sy(lineY(x0))+'" x2="'+sx(x1)+'" y2="'+sy(lineY(x1))+'" stroke="#111" stroke-width="1.8"/>';
+  // điểm
+  PTS.forEach(function(p){
+    var col=p.f>0?'#0e7490':'#b45309';
+    if(p.f>0) s+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="4" fill="'+col+'"/>';
+    else s+='<rect x="'+(parseFloat(sx(p.x))-3.5)+'" y="'+(parseFloat(sy(p.y))-3.5)+'" width="7" height="7" fill="'+col+'"/>';
+    s+='<text x="'+(parseFloat(sx(p.x))+5)+'" y="'+(parseFloat(sy(p.y))-4)+'" font-size="8" fill="#555">'+p.nm+'</text>';
+  });
+  // margin: hạ vuông góc từ sv xuống đường
+  if(showMargin && sv){
+    var t=(Wv[0]*sv.x+Wv[1]*sv.y+Bv)/(NW*NW);
+    var fx=sv.x - t*Wv[0], fy=sv.y - t*Wv[1];     // chân vuông góc
+    s+='<line x1="'+sx(sv.x)+'" y1="'+sy(sv.y)+'" x2="'+sx(fx)+'" y2="'+sy(fy)+'" stroke="#7c5cff" stroke-width="1.6" stroke-dasharray="4 3"/>';
+    s+='<circle cx="'+sx(sv.x)+'" cy="'+sy(sv.y)+'" r="6" fill="none" stroke="#7c5cff" stroke-width="1.4"/>';
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="SVM ranh giới và lề">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

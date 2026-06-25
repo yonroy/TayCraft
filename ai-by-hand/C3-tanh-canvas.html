@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Tanh + Đạo hàm — Hyperbolic Tangent</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:2.2;margin-top:4px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .ctbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
+  .ctbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .ctbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .ctbl td.hl{background:#d6ecf6;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Tanh + Đạo hàm</h1><span class="vi">— Hyperbolic Tangent</span>
+    <span class="tag">tanh(z) = (eᶻ−e⁻ᶻ)/(eᶻ+e⁻ᶻ) · tanh′ = 1−tanh²</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Tanh như sigmoid nhưng cân xứng quanh 0: output ∈ (−1, +1).
+    Vì output có thể âm, gradient <b>không bị "drift"</b> một chiều → hội tụ nhanh hơn sigmoid.
+    Dùng phổ biến trong <b>LSTM/GRU</b> (cổng cell state và hidden state).
+    <div class="fm">tanh(z) = (eᶻ−e⁻ᶻ)/(eᶻ+e⁻ᶻ) = 2σ(2z)−1 &nbsp;|&nbsp; tanh′(z) = 1−tanh²(z) &nbsp;|&nbsp; max tanh′ = 1</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Tanh = sigmoid được "kéo giãn và dịch": tanh(z) = 2·σ(2z) − 1.
+    Đối xứng qua gốc tọa độ → output trung bình ≈ 0 → <b>gradient không bị lệch</b> một chiều trong lan truyền ngược.
+    Vanishing gradient vẫn xảy ra ở đuôi (|z| > 2) nhưng ít hơn sigmoid vì max tanh′ = 1 (sigmoid max = 0.25).
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xanh</b> = tanh(z) ∈ (−1,1); <b>Cam</b> = tanh′(z) = 1−tanh²(z), đỉnh = 1 tại z=0. So sánh σ (nét đứt).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG TRA tanh(z) VÀ tanh′(z)</div>
+      <table class="ctbl" id="tanhTable"></table>
+
+      <div class="bandh fw" style="margin-top:7px">TÍNH CHO z = <span data-q="z0">1</span></div>
+      <div class="expr">
+        tanh(<span data-q="z0">1</span>) = (<span data-q="ez">2.718</span> − <span data-q="emz">0.368</span>) / (<span data-q="ez">2.718</span> + <span data-q="emz">0.368</span>)
+        = <span class="ublk" id="tanhB"></span>
+      </div>
+      <div class="expr">
+        tanh′(<span data-q="z0">1</span>) = 1 − (<span class="ublk" id="tanhB2"></span>)² = <span class="ublk" id="tanhpB"></span>
+      </div>
+
+      <div class="why"><b>So sánh với sigmoid:</b> tại z=1 → σ(1)≈0.73 (output dương); tanh(1)≈0.76 (cũng dương). Nhưng tanh(−1)≈−0.76 (âm) vs σ(−1)≈0.27 (dương!) → tanh cân bằng hơn.</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>tanh(0) = ? &nbsp; tanh′(0) = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>tanh(z) = −tanh(−z)? (hàm lẻ?) → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Tanh + Đạo hàm</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Tanh + Đạo hàm</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">LSTM dùng tanh cho cell state (−1→+1) và sigmoid cho cổng (0→1). Kết hợp → kiểm soát nhớ/quên.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG TRA</div>
+      <table class="ctbl" id="ktanhTable"></table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ z = <span data-q="z0">1</span></div>
+      <div class="expr">
+        tanh(<span data-q="z0">1</span>) ≈ <b><span data-q="ktanh0">0.762</span></b>
+        &nbsp;&nbsp; tanh′(<span data-q="z0">1</span>) = 1 − (<span data-q="ktanh0b">0.762</span>)² ≈ <b><span data-q="ktanhp0">0.420</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>tanh(0) = <span class="qa">0</span>; tanh′(0) = 1 − 0² = <span class="qa">1 (cực đại)</span></li>
+          <li>Hàm lẻ: <span class="qa">Đúng — tanh(−z) = −tanh(z) vì (e⁻ᶻ−eᶻ)/(e⁻ᶻ+eᶻ) = −tanh(z)</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> tanh > sigmoid về vanishing gradient (max tanh′ = 1 vs 0.25) nhưng cả hai vẫn bão hòa ở đuôi.
+        <b>LSTM/GRU</b> vẫn dùng tanh vì đối xứng âm/dương giúp cổng hoạt động tốt hơn.
+        Mạng thuần FNN hiện đại ưu tiên <b>ReLU/GELU</b> (bài C4) để tránh vanishing hoàn toàn.
+        Bài kế C5 (một nơ-ron): dùng hàm kích hoạt bất kỳ σ(z) cho nơ-ron đơn lẻ.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Tanh + Đạo hàm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var TANH_TABLE = [
+  {z:-3, t:-0.995, tp:0.010},
+  {z:-2, t:-0.964, tp:0.071},
+  {z:-1, t:-0.762, tp:0.420},
+  {z: 0, t: 0.000, tp:1.000},
+  {z: 1, t: 0.762, tp:0.420},
+  {z: 2, t: 0.964, tp:0.071},
+  {z: 3, t: 0.995, tp:0.010}
+];
+
+function tanhFn(z){return Math.tanh(z);}
+function sigFn(z){return 1/(1+Math.exp(-z));}
+function f3(v){return (Math.round(v*1000)/1000).toFixed(3);}
+
+function buildTanhTable(id,hlZ){
+  var el=document.getElementById(id); if(!el) return;
+  var s='<tr><th>z</th>';
+  TANH_TABLE.forEach(function(r){s+='<th style="'+(r.z===hlZ?'background:#fff3b0;':'')+'">'+r.z+'</th>';});
+  s+='</tr><tr><th>tanh(z)</th>';
+  TANH_TABLE.forEach(function(r){s+='<td class="'+(r.z===hlZ?'hl':'')+'" >'+r.t.toFixed(3)+'</td>';});
+  s+='</tr><tr><th>tanh′(z)</th>';
+  TANH_TABLE.forEach(function(r){s+='<td class="'+(r.z===hlZ?'hl':'')+'" >'+r.tp.toFixed(3)+'</td>';});
+  s+='</tr>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  var z0=WB.pick([-2,-1,0,1,2]);
+  var t0=Math.tanh(z0), tp0=1-t0*t0;
+  var ez=Math.exp(z0), emz=Math.exp(-z0);
+
+  WB.setAll({
+    z0:String(z0), ez:f3(ez), emz:f3(emz),
+    ktanh0:f3(t0), ktanh0b:f3(t0), ktanhp0:f3(tp0)
+  });
+
+  ['tanhB','tanhB2','tanhpB'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';
+  });
+
+  buildTanhTable('tanhTable',z0);
+  buildTanhTable('ktanhTable',z0);
+
+  drawTanh('sch1',z0,t0,tp0,false);
+  drawTanh('sch2',z0,t0,tp0,true);
+}
+
+function drawTanh(id,z0,t0,tp0,showPts){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=148;
+  var padl=18,padr=10,padt=12,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var xmin=-4,xmax=4,ymin=-1.3,ymax=1.3;
+  function sx(x){return(padl+(x-xmin)/(xmax-xmin)*pw).toFixed(1);}
+  function sy(y){return(padt+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
+
+  var s='<defs>'
+    +'<marker id="ta'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
+    +'</defs>';
+  s+='<line x1="'+padl+'" y1="'+sy(0)+'" x2="'+(W-padr+5)+'" y2="'+sy(0)+'" stroke="#9aa3af" stroke-width="1.1" marker-end="url(#ta'+id+')"/>';
+  s+='<line x1="'+sx(0)+'" y1="'+(H-padb)+'" x2="'+sx(0)+'" y2="'+padt+'" stroke="#9aa3af" stroke-width="1.1" marker-end="url(#ta'+id+')"/>';
+
+  // y=±1 dashed
+  s+='<line x1="'+padl+'" y1="'+sy(1)+'" x2="'+(W-padr)+'" y2="'+sy(1)+'" stroke="#ddd" stroke-width="1" stroke-dasharray="4 3"/>';
+  s+='<line x1="'+padl+'" y1="'+sy(-1)+'" x2="'+(W-padr)+'" y2="'+sy(-1)+'" stroke="#ddd" stroke-width="1" stroke-dasharray="4 3"/>';
+  s+='<text x="'+padl+'" y="'+(parseFloat(sy(1))-2)+'" font-size="8" fill="#aaa">+1</text>';
+  s+='<text x="'+padl+'" y="'+(parseFloat(sy(-1))+9)+'" font-size="8" fill="#aaa">−1</text>';
+
+  // sigmoid (nét đứt xám nhạt)
+  var ptss=''; var firsts=true;
+  for(var xi=-4;xi<=4;xi+=0.2){
+    var yi=sigFn(xi)*2-1;
+    ptss+=(firsts?'M':'L')+sx(xi)+','+sy(yi);
+    firsts=false;
+  }
+  s+='<path d="'+ptss+'" fill="none" stroke="#ccc" stroke-width="1.2" stroke-dasharray="4 2"/>';
+  s+='<text x="'+(W-padr-14)+'" y="'+sy(0.7)+'" font-size="8" fill="#999">σ</text>';
+
+  // tanh(z) — xanh
+  var pts=''; var first=true;
+  for(var xi=-4;xi<=4;xi+=0.2){
+    var yi=Math.tanh(xi);
+    pts+=(first?'M':'L')+sx(xi)+','+sy(yi);
+    first=false;
+  }
+  s+='<path d="'+pts+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
+  s+='<text x="'+(W-padr-14)+'" y="'+sy(0.92)+'" font-size="9" fill="#0e7490" font-weight="700">tanh</text>';
+
+  // tanh′ — cam
+  var pts2=''; var first2=true;
+  for(var xi=-4;xi<=4;xi+=0.2){
+    var t=Math.tanh(xi);
+    pts2+=(first2?'M':'L')+sx(xi)+','+sy(1-t*t);
+    first2=false;
+  }
+  s+='<path d="'+pts2+'" fill="none" stroke="#b45309" stroke-width="1.6"/>';
+  s+='<text x="'+(parseFloat(sx(0))+4)+'" y="'+sy(1.02)+'" font-size="9" fill="#b45309">tanh′</text>';
+
+  // Point
+  s+='<circle cx="'+sx(z0)+'" cy="'+sy(t0)+'" r="3.5" fill="#0e7490"/>';
+  if(showPts){
+    s+='<circle cx="'+sx(z0)+'" cy="'+sy(tp0)+'" r="3" fill="#b45309"/>';
+    s+='<text x="'+(parseFloat(sx(z0))+4)+'" y="'+(parseFloat(sy(t0))-3)+'" font-size="8.5" fill="#0e7490">tanh('+z0+')='+f3(t0)+'</text>';
+    s+='<text x="'+(parseFloat(sx(z0))+4)+'" y="'+(parseFloat(sy(tp0))+8)+'" font-size="8.5" fill="#b45309">tanh\'='+f3(tp0)+'</text>';
+  }
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đồ thị tanh và tanh prime">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

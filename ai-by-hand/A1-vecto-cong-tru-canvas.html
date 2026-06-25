@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Vectơ: cộng, trừ, nhân — canvas giảng giải (A4 ngang)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  /* tinh chỉnh riêng bài này */
+  .schema{width:62mm;}
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .m{--cw:9.5mm;}
+  .blk .fm{font-size:9px;}
+  .res .row{gap:10px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Vectơ: cộng, trừ, nhân vô hướng</h1><span class="vi">— Vector ops</span>
+    <span class="tag">điền ô trắng · theo từng ô</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mọi thứ trong AI chạy trên <b>vectơ</b> (danh sách số). Trước khi nhân ma trận hay chạy nơ-ron,
+    phải thạo ba phép tay nhỏ nhất: cộng, trừ, và nhân với một số. Cả lan truyền xuôi lẫn cập nhật trọng số chỉ là chúng lặp lại.
+    <div class="fm">a + b = (a₁+b₁, …) &nbsp;|&nbsp; a − b = (a₁−b₁, …) &nbsp;|&nbsp; k·a = (k·a₁, …) &nbsp;|&nbsp; k·a + b = "khuôn của Wx+b"</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Xem vectơ là một <b>bước di chuyển</b> trên lưới. <b>Cộng</b> = nối hai bước đi nối đuôi nhau; <b>nhân với k</b> =
+    giữ hướng nhưng kéo dài/rút ngắn gấp k lần (k âm → quay ngược 180°). <b>Trừ</b> a − b = bước đi <i>từ b tới a</i>.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Nối đuôi:</b> đi u rồi đi v → tới đúng đầu mũi tên cam u+v.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN · hai vectơ 1×3 và một hệ số k</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">a <s>1×3</s></div><div class="m c3" id="a"></div></div>
+        <div class="blk in"><div class="nm">b <s>1×3</s></div><div class="m c3" id="b"></div></div>
+        <div class="blk w"><div class="nm">k <s>hệ số</s></div><div class="m c1" id="k"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">TÍNH THEO TỪNG Ô · điền các ô trắng</div>
+      <div class="res">
+      <div class="row">
+        <div class="blk out"><div class="nm">a + b</div><div class="m c3" id="sum"></div><div class="fm">(a₁+b₁, a₂+b₂, a₃+b₃)</div></div>
+        <div class="blk out"><div class="nm">a − b</div><div class="m c3" id="dif"></div><div class="fm">(a₁−b₁, a₂−b₂, a₃−b₃)</div></div>
+        <div class="blk out"><div class="nm">k · a</div><div class="m c3" id="sca"></div><div class="fm">(k·a₁, k·a₂, k·a₃)</div></div>
+        <div class="blk out"><div class="nm">k·a + b</div><div class="m c3" id="com"></div><div class="fm">(k·a₁+b₁, …)</div></div>
+      </div>
+      </div>
+      <div class="why"><b>Vì sao:</b> cộng/trừ là gộp/đo lệch hai "bước đi"; nhân vô hướng chỉ đổi độ dài. Khối cuối <b>k·a + b</b> chính là dạng <b>W·x + b</b> của một lớp tuyến tính (Bài 03).</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Cộng hai vectơ 1×3 ra vật thể cỡ nào? → <span style="display:inline-block;min-width:90px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Nhân vectơ với k = −1 thì hướng đổi ra sao? → <span style="display:inline-block;min-width:120px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Vectơ: cộng, trừ, nhân — Vector ops</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Vectơ: cộng, trừ, nhân vô hướng</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">u + v = cộng từng ô → cùng kết quả với quy tắc nối đuôi hình học.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">a</div><div class="m c3" id="ka"></div></div>
+        <div class="blk in"><div class="nm">b</div><div class="m c3" id="kb"></div></div>
+        <div class="blk w"><div class="nm">k</div><div class="m c1" id="kk"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">TÍNH THEO TỪNG Ô</div>
+      <div class="res">
+      <div class="row">
+        <div class="blk out"><div class="nm">a + b</div><div class="m c3" id="ksum"></div><div class="fm">(a₁+b₁, …)</div></div>
+        <div class="blk out"><div class="nm">a − b</div><div class="m c3" id="kdif"></div><div class="fm">(a₁−b₁, …)</div></div>
+        <div class="blk out"><div class="nm">k · a</div><div class="m c3" id="ksca"></div><div class="fm">(k·a₁, …)</div></div>
+        <div class="blk out"><div class="nm">k·a + b</div><div class="m c3" id="kcom"></div><div class="fm">(k·a₁+b₁, …)</div></div>
+      </div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Cộng hai vectơ 1×3 → <span class="qa">một vectơ 1×3 (cùng cỡ)</span></li>
+          <li>Nhân với k = −1 → <span class="qa">đảo ngược 180° (độ dài giữ nguyên)</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Ba phép — cộng, trừ, nhân vô hướng — là toàn bộ "số học" của vectơ. <b>k·a + b</b> là khuôn của
+        <b>lớp tuyến tính</b> (Bài 03); phép <b>trừ</b> a − b là cách đo sai số khi huấn luyện. Bài kế (A2): dùng các ô này đo
+        <b>độ dài</b> vectơ — chuẩn L1, L2.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Vectơ: cộng, trừ, nhân — Vector ops</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI = function(x){ return WB.fmtInt(x); };
+function fill(id, arr, blank){
+  var el = document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  function vec3(){ var v; do{ v=[WB.randInt(-4,5),WB.randInt(-4,5),WB.randInt(-4,5)]; }
+    while(v[0]===0&&v[1]===0&&v[2]===0); return v; }
+  var a=vec3(), b=vec3();
+  var k=WB.pick([2,3,-2,-3]);
+  var sum=[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+  var dif=[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+  var sca=[k*a[0],k*a[1],k*a[2]];
+  var com=[sca[0]+b[0],sca[1]+b[1],sca[2]+b[2]];
+
+  // ĐỀ: cho sẵn a,b,k; kết quả để trống
+  fill('a',a,false); fill('b',b,false); fill('k',[k],false);
+  fill('sum',sum,true); fill('dif',dif,true); fill('sca',sca,true); fill('com',com,true);
+  // ĐÁP ÁN: điền đủ
+  fill('ka',a,false); fill('kb',b,false); fill('kk',[k],false);
+  fill('ksum',sum,false); fill('kdif',dif,false); fill('ksca',sca,false); fill('kcom',com,false);
+
+  // sơ đồ nối đuôi 2D (thành phần dương, không song song)
+  var u,v;
+  do{ u=[WB.randInt(1,4),WB.randInt(1,4)]; v=[WB.randInt(1,4),WB.randInt(1,4)]; }
+  while(u[0]*v[1]-u[1]*v[0]===0);
+  drawAdd('sch1',u,v);
+  drawAdd('sch2',u,v);
+}
+
+// u (lam) từ O, v (tím) nối đuôi từ đầu u, u+v (cam) từ O.
+// Đặt innerHTML lên DIV cha (HTML) chứa cả <svg>…</svg> → parser nhận đúng namespace.
+function drawAdd(id,u,v){
+  var box=document.getElementById(id); if(!box) return;
+  var O={x:22,y:122}, w=[u[0]+v[0],u[1]+v[1]], m=Math.max(w[0],w[1],4), unit=96/m;
+  function X(x){ return (O.x+x*unit).toFixed(1); }
+  function Y(y){ return (O.y-y*unit).toFixed(1); }
+  var s='<defs>'
+    +'<marker id="au'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
+    +'<marker id="av'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#7c5cff"/></marker>'
+    +'<marker id="aw'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
+    +'<marker id="ax'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
+    +'</defs>';
+  for(var g=0; g<=m; g++){
+    s+='<line x1="'+X(g)+'" y1="'+Y(0)+'" x2="'+X(g)+'" y2="'+Y(m)+'" stroke="#ece7da" stroke-width="1"/>';
+    s+='<line x1="'+X(0)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'" stroke="#ece7da" stroke-width="1"/>';
+  }
+  s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+(O.x+m*unit+9).toFixed(1)+'" y2="'+Y(0)+'" stroke="#9aa3af" stroke-width="1.3" marker-end="url(#ax'+id+')"/>';
+  s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+(O.y-m*unit-9).toFixed(1)+'" stroke="#9aa3af" stroke-width="1.3" marker-end="url(#ax'+id+')"/>';
+  s+='<line x1="'+X(v[0])+'" y1="'+Y(v[1])+'" x2="'+X(w[0])+'" y2="'+Y(w[1])+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(u[0])+'" y2="'+Y(u[1])+'" stroke="#0e7490" stroke-width="2.4" marker-end="url(#au'+id+')"/>';
+  s+='<line x1="'+X(u[0])+'" y1="'+Y(u[1])+'" x2="'+X(w[0])+'" y2="'+Y(w[1])+'" stroke="#7c5cff" stroke-width="2.4" marker-end="url(#av'+id+')"/>';
+  s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(w[0])+'" y2="'+Y(w[1])+'" stroke="#b45309" stroke-width="2.8" marker-end="url(#aw'+id+')"/>';
+  s+='<text x="'+X(u[0]/2)+'" y="'+(Y(u[1]/2)+12).toFixed(1)+'" font-size="9.5" fill="#0e7490" font-weight="700">u</text>';
+  s+='<text x="'+(X(w[0])+4).toFixed(1)+'" y="'+Y(w[1])+'" font-size="9.5" fill="#b45309" font-weight="700">u+v</text>';
+  box.innerHTML='<svg viewBox="0 0 178 150" aria-label="cộng vectơ nối đuôi">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

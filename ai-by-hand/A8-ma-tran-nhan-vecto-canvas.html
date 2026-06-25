@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Ma trận × vectơ — Matrix-Vector Product (canvas)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .m{--cw:11mm;}
+  .m.col{--cw:13mm;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Ma trận × vectơ</h1><span class="vi">— Matrix-Vector Product</span>
+    <span class="tag">điền ô trắng · y = Ax &nbsp;|&nbsp; yᵢ = Σⱼ Aᵢⱼ xⱼ</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Ma trận × vectơ là trái tim của <b>lớp tuyến tính y = Wx + b</b>: nhân một ma trận trọng số W
+    với vectơ đầu vào x. Mỗi phần tử yᵢ là <b>một tích vô hướng</b> (hàng i của A dot x) — và đây là chính xác điều mà
+    mỗi nơ-ron làm: gộp đầu vào theo trọng số.
+    <div class="fm">y = A x &nbsp;|&nbsp; yᵢ = aᵢ₁x₁ + aᵢ₂x₂ + … + aᵢₙxₙ = hàng i(A) · x &nbsp;|&nbsp; cỡ (m×n)·(n×1) → (m×1)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    A như một <b>máy biến đổi</b>: đưa vectơ x từ không gian n chiều sang không gian m chiều. Mỗi hàng của A hỏi x một
+    câu hỏi khác nhau (tích vô hướng). Kết quả y là m câu trả lời khác nhau từ cùng một x.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Mỗi ô y = một dot product</b>: hàng i(A) · x → yᵢ.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN · A (2×3) và x (3×1)</div>
+      <div class="row" style="align-items:center">
+        <div class="blk w"><div class="nm">A <s>2×3</s></div><div class="m c3" id="mA"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x <s>3×1</s></div><div class="m col c1" id="vx"></div></div>
+        <div class="op">=</div>
+        <div class="blk out"><div class="nm">y <s>2×1</s></div><div class="m col c1" id="vy"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">TỪNG HÀNG · yᵢ = hàng i(A) · x</div>
+      <div style="font-family:var(--mono);font-size:13px;line-height:2.2;margin-top:4px">
+        <span style="color:var(--accent);font-weight:700">y₁</span> = A₁₁·x₁ + A₁₂·x₂ + A₁₃·x₃ =
+        <span data-q="a11">?</span>·<span data-q="x1w">?</span> + <span data-q="a12">?</span>·<span data-q="x2w">?</span> + <span data-q="a13">?</span>·<span data-q="x3w">?</span> =
+        <span id="wk1" style="display:inline-block;min-width:32px;border-bottom:1.6px dashed #b9b9b9;text-align:center"></span><br>
+        <span style="color:var(--accent);font-weight:700">y₂</span> = A₂₁·x₁ + A₂₂·x₂ + A₂₃·x₃ =
+        <span data-q="a21">?</span>·<span data-q="x1w">?</span> + <span data-q="a22">?</span>·<span data-q="x2w">?</span> + <span data-q="a23">?</span>·<span data-q="x3w">?</span> =
+        <span id="wk2" style="display:inline-block;min-width:32px;border-bottom:1.6px dashed #b9b9b9;text-align:center"></span>
+      </div>
+
+      <div class="why"><b>Vì sao:</b> y₁ là "quan điểm của nơ-ron 1 về x", y₂ là "quan điểm của nơ-ron 2". W có m hàng = m nơ-ron, mỗi cái nhìn x theo cách riêng.</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Cỡ của y khi A là (4×5) và x là (5×1)? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Nếu A là ma trận đơn vị (I) thì Ix = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Ma trận × vectơ — Matrix-Vector Product</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Ma trận × vectơ</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Hàng được highlight = hàng đang nhân. Kết quả = ô tương ứng trong y.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN</div>
+      <div class="row" style="align-items:center">
+        <div class="blk w"><div class="nm">A</div><div class="m c3" id="kmA"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x</div><div class="m col c1" id="kvx"></div></div>
+        <div class="op">=</div>
+        <div class="blk out"><div class="nm">y</div><div class="m col c1" id="kvy"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">TỪNG HÀNG</div>
+      <div style="font-family:var(--mono);font-size:13px;line-height:2.2;margin-top:4px">
+        <span style="color:var(--accent);font-weight:700">y₁</span> =
+        <span data-q="a11">?</span>·<span data-q="x1w">?</span> + <span data-q="a12">?</span>·<span data-q="x2w">?</span> + <span data-q="a13">?</span>·<span data-q="x3w">?</span> =
+        <span id="kwk1" style="font-weight:700;color:var(--accent2)"></span><br>
+        <span style="color:var(--accent);font-weight:700">y₂</span> =
+        <span data-q="a21">?</span>·<span data-q="x1w">?</span> + <span data-q="a22">?</span>·<span data-q="x2w">?</span> + <span data-q="a23">?</span>·<span data-q="x3w">?</span> =
+        <span id="kwk2" style="font-weight:700;color:var(--accent2)"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>A(4×5)·x(5×1) → y cỡ <span class="qa">(4×1)</span></li>
+          <li>Ix = <span class="qa">x (nhân với ma trận đơn vị không đổi vectơ)</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> y = Ax là nền của <b>lớp tuyến tính y = Wx + b</b> (Bài 03): thêm bias b vào y là bước cuối.
+        Mỗi hàng của W là một "bộ dò" — hỏi đầu vào x một câu hỏi, cho một con số trả lời.
+        Bài kế (C1): ghép Ax + b thành lớp hoàn chỉnh, rồi xếp nhiều lớp thành mạng.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Ma trận × vectơ — Matrix-Vector Product</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI = WB.fmtInt;
+
+function fillCol(id, arr, blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+function fillGrid(id, rows, cols, data, blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<rows;i++) for(var j=0;j<cols;j++)
+    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(data[i][j]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  var A=[[WB.randInt(-3,4),WB.randInt(-3,4),WB.randInt(-3,4)],
+         [WB.randInt(-3,4),WB.randInt(-3,4),WB.randInt(-3,4)]];
+  var x=[WB.randIntNZ(-3,4),WB.randIntNZ(-3,4),WB.randIntNZ(-3,4)];
+  var y=[A[0][0]*x[0]+A[0][1]*x[1]+A[0][2]*x[2],
+         A[1][0]*x[0]+A[1][1]*x[1]+A[1][2]*x[2]];
+
+  // ĐỀ
+  fillGrid('mA',2,3,A,false);
+  fillCol('vx',x,false);
+  fillCol('vy',y,true);
+  document.getElementById('wk1').textContent='';
+  document.getElementById('wk2').textContent='';
+  // ĐÁP ÁN
+  fillGrid('kmA',2,3,A,false);
+  fillCol('kvx',x,false);
+  fillCol('kvy',y,false);
+  var p1=[A[0][0]*x[0],A[0][1]*x[1],A[0][2]*x[2]];
+  var p2=[A[1][0]*x[0],A[1][1]*x[1],A[1][2]*x[2]];
+  document.getElementById('kwk1').textContent = WB.sumExpr(p1,fI)+' = '+fI(y[0]);
+  document.getElementById('kwk2').textContent = WB.sumExpr(p2,fI)+' = '+fI(y[1]);
+
+  // data-q để điền vào dòng worked example
+  WB.setAll({
+    a11:fI(A[0][0]), a12:fI(A[0][1]), a13:fI(A[0][2]),
+    a21:fI(A[1][0]), a22:fI(A[1][1]), a23:fI(A[1][2]),
+    x1w:WB.wrap(fI(x[0])), x2w:WB.wrap(fI(x[1])), x3w:WB.wrap(fI(x[2]))
+  });
+
+  drawMV('sch1',A,x,y,false);
+  drawMV('sch2',A,x,y,true);
+}
+
+function drawMV(id,A,x,y,showAns){
+  var box=document.getElementById(id); if(!box) return;
+  var cw=20,ch=18,ax=12,ay=22,xx=ax+3*cw+14,yx=xx+cw+14;
+  var W=178,H=148;
+  var s='<defs><marker id="marr'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a1a1a"/></marker></defs>';
+  // nhãn
+  s+='<text x="'+ax+'" y="16" font-size="9.5" fill="#2e1f6b" font-weight="700">A (2×3)</text>';
+  s+='<text x="'+xx+'" y="16" font-size="9.5" fill="#0e7490" font-weight="700">x</text>';
+  s+='<text x="'+(yx+2)+'" y="16" font-size="9.5" fill="#0c4a5e" font-weight="700">y</text>';
+
+  // A: 2×3 (tô hàng 0 sáng)
+  for(var i=0;i<2;i++) for(var j=0;j<3;j++){
+    var bx=ax+j*cw, by=ay+i*ch, hl=(i===0);
+    s+='<rect x="'+bx+'" y="'+by+'" width="'+(cw-2)+'" height="'+(ch-2)+'" fill="'+(hl?'#ffe9b0':'#ece2ff')+'" stroke="'+(hl?'#e6cf6a':'#c3b1f5')+'" stroke-width="'+(hl?'2':'1.2')+'"/>';
+    s+='<text x="'+(bx+(cw-2)/2)+'" y="'+(by+(ch-2)/2+4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#2e1f6b">'+fI(A[i][j])+'</text>';
+  }
+
+  // x: 3×1
+  for(var i=0;i<3;i++){
+    var bx=xx, by=ay+i*ch;
+    s+='<rect x="'+bx+'" y="'+by+'" width="'+(cw-2)+'" height="'+(ch-2)+'" fill="#fdecd2" stroke="#e3c489" stroke-width="1.2"/>';
+    s+='<text x="'+(bx+(cw-2)/2)+'" y="'+(by+(ch-2)/2+4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#3a2a08">'+fI(x[i])+'</text>';
+  }
+
+  // y: 2×1
+  for(var i=0;i<2;i++){
+    var bx=yx, by=ay+i*ch, hl=(i===0);
+    s+='<rect x="'+bx+'" y="'+by+'" width="'+(cw-2)+'" height="'+(ch-2)+'" fill="#d6ecf6" stroke="#a7d3e3" stroke-width="'+(hl?'2':'1.2')+'"/>';
+    s+='<text x="'+(bx+(cw-2)/2)+'" y="'+(by+(ch-2)/2+4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#0c4a5e">'+(showAns?fI(y[i]):'y₁')+'</text>';
+  }
+
+  // ký hiệu × và =
+  s+='<text x="'+(xx-8)+'" y="'+(ay+ch/2+8)+'" font-size="14" fill="#c9c2b2" font-weight="800">·</text>';
+  s+='<text x="'+(yx-8)+'" y="'+(ay+ch/2+8)+'" font-size="14" fill="#c9c2b2" font-weight="800">=</text>';
+
+  // mũi tên highlight: hàng 0 của A → ô y₁
+  var sx=ax+3*cw, sy=ay+ch/2;
+  var ex=yx, ey=ay+ch/2;
+  s+='<path d="M'+sx+','+sy+' Q'+(xx-2)+','+(sy-8)+' '+ex+','+ey+'" fill="none" stroke="#b45309" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#marr'+id+')"/>';
+
+  // ghi chú bên dưới
+  s+='<text x="'+ax+'" y="'+(ay+2*ch+16)+'" font-size="8.5" fill="#6b7280">hàng 1 highlighted → y₁</text>';
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="A nhân x cho y: hàng i gặp x cho yᵢ">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

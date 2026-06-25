@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài A4 — Cosine similarity (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.66;}
+.page .why{margin-top:5px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài A4</span><h1>Cosine similarity <small>— độ giống về hướng</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Cosine similarity đo <b>hai vectơ cùng hướng tới đâu</b>, bỏ qua độ dài. Đây là cách
+    máy so "độ giống nhau": tìm văn bản liên quan (RAG), gợi ý sản phẩm, so embedding trong LLM — tất cả là cosine.
+    <div class="formula">
+      cos θ = (a · b) / (‖a‖ ‖b‖) &nbsp;&nbsp; ∈ [−1, 1]
+    </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Tưởng tượng hai mũi tên. Cosine = +1: <b>chỉ cùng một hướng</b> (rất giống). = 0: <b>vuông góc</b> (chẳng liên quan).
+    = −1: <b>ngược hẳn</b>. Nó chỉ quan tâm <b>góc</b>, không quan tâm mũi tên dài hay ngắn — nên "to nhỏ" không ảnh hưởng.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Hai vectơ cho sẵn</h2><span class="tag">2D</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">a <s>1×2</s></div>
+        <div class="mtx c2"><div class="cell given" data-q="a1">3</div><div class="cell given" data-q="a2">4</div></div></div>
+      <div class="mwrap"><div class="mlabel">b <s>1×2</s></div>
+        <div class="mtx c2"><div class="cell given" data-q="b1">4</div><div class="cell given" data-q="b2">3</div></div></div>
+      <div class="note" style="max-width:74mm">Đã chọn để ‖a‖, ‖b‖ ra <b>số nguyên</b> — tính tay sạch. Ôn lại: tích vô hướng (Bài 01) + chuẩn L2 (Bài A2).</div>
+    </div>
+  </div>
+
+  <!-- BƯỚC 1 — tích vô hướng -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tử số: a · b</h2><span class="tag">tích vô hướng</span></div>
+    <div class="calc">
+      a · b = <span data-q="a1w">3</span>·<span data-q="b1w">4</span> + <span data-q="a2w">4</span>·<span data-q="b2w">3</span>
+      = <span class="blk"></span> + <span class="blk"></span> = <span class="blk" style="min-width:48px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> tích vô hướng đã mang sẵn cos θ bên trong (a·b = ‖a‖‖b‖cos θ); ta chỉ cần "lột" hai độ dài ra.</div>
+  </div>
+
+  <!-- BƯỚC 2 — hai chuẩn -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Mẫu số: ‖a‖ · ‖b‖</h2><span class="tag">hai chuẩn L2</span></div>
+    <div class="calc">
+      ‖a‖ = √(<span data-q="a1w">3</span>²+<span data-q="a2w">4</span>²) = √<span class="blk"></span> = <span class="blk"></span> &nbsp;
+      ‖b‖ = √(<span data-q="b1w">4</span>²+<span data-q="b2w">3</span>²) = √<span class="blk"></span> = <span class="blk"></span><br>
+      ‖a‖·‖b‖ = <span class="blk" style="min-width:48px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> chia cho hai độ dài để "tẩy" ảnh hưởng kích thước — chỉ còn lại thông tin về <i>hướng</i>.</div>
+  </div>
+
+  <!-- BƯỚC 3 — cosine -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Chia → cos θ</h2><span class="tag">và suy ra góc</span></div>
+    <div class="calc">
+      cos θ = <span class="blk"></span> / <span class="blk"></span> = <span class="blk" style="min-width:54px"></span>
+      &nbsp; → θ ≈ <span class="blk" style="min-width:40px"></span>°
+    </div>
+    <div class="hint"><b>Mẹo:</b> cos càng gần 1 → hai vectơ càng "giống hướng". Dùng bảng/máy tính để đổi cos → góc.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Nhân đôi vectơ a (thành 2a) thì cosine với b đổi không? → <span class="blk" style="min-width:90px"></span></li>
+      <li>cos θ = 0 nghĩa là hai vectơ thế nào? → <span class="blk" style="min-width:90px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài A4 · Cosine similarity</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A4</span><h1>Cosine similarity <small>— lời giải</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tử số a · b</h2></div>
+    <div class="calc ans">a · b = <span data-q="dotExpr">12 + 12</span> = <span class="blk" data-q="dot" style="min-width:44px">24</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Mẫu số ‖a‖·‖b‖</h2></div>
+    <div class="calc ans">
+      ‖a‖ = √<span data-q="na2">25</span> = <span class="blk" data-q="na">5</span> &nbsp;·&nbsp;
+      ‖b‖ = √<span data-q="nb2">25</span> = <span class="blk" data-q="nb">5</span> &nbsp;→&nbsp;
+      ‖a‖·‖b‖ = <span class="blk" data-q="nanb">25</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>cos θ &amp; góc</h2></div>
+    <div class="calc ans">
+      cos θ = <span data-q="dot">24</span>/<span data-q="nanb">25</span> = <span class="blk" data-q="cos" style="min-width:50px">0.96</span>
+      &nbsp; → θ ≈ <span class="blk" data-q="deg" style="min-width:40px">16</span>°
+    </div>
+  </div>
+
+  <!-- SƠ ĐỒ ở trang 2 cho cân chiều cao -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: góc giữa hai vectơ</h2><span class="tag">cos θ</span></div>
+    <div class="figrow">
+      <svg id="fig2" class="fig" viewBox="0 0 210 150" width="68mm" height="49mm" aria-label="hai vectơ a, b và góc θ giữa chúng"></svg>
+      <div style="flex:1">
+        <div class="note">Mũi tên <span style="color:var(--accent)">lam</span> = a, <span style="color:var(--accent2)">cam</span> = b;
+          cung là góc θ. Cosine chỉ đọc <b>góc</b> này — kéo dài mũi tên gấp đôi, góc (và cosine) <b>không đổi</b>.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Nhân đôi a → cosine với b? → <span class="qa">không đổi (cosine bỏ qua độ dài)</span></li>
+      <li>cos θ = 0 → <span class="qa">vuông góc (θ = 90°, "không liên quan")</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Cosine = tích vô hướng <b>đã chuẩn hóa</b> theo độ dài → chỉ còn đo hướng, nằm gọn trong [−1, 1].
+    Đây là "thước giống nhau" mặc định cho embedding (Bài 19) và truy hồi RAG. Phần A tiếp theo bồi thêm các viên gạch
+    ma trận (chuyển vị A6, ma trận×vectơ A8) trước khi ráp thành lớp nơ-ron.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài A4 · Cosine similarity</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function generate(){
+  // vectơ 2D có chuẩn L2 NGUYÊN (tính tay sạch); gắn dấu ngẫu nhiên cho góc đa dạng
+  var V = [[3,4],[4,3],[6,8],[8,6],[5,0],[0,5],[6,0],[0,6]];
+  function pickVec(){
+    var base = WB.pick(V);
+    return [base[0] * WB.pick([1,-1]), base[1] * WB.pick([1,-1])];
+  }
+  var a, b, dot;
+  do {
+    a = pickVec(); b = pickVec();
+    dot = a[0]*b[0] + a[1]*b[1];
+  } while ((a[0]===b[0] && a[1]===b[1]) || (a[0]===-b[0] && a[1]===-b[1])); // tránh trùng/đối hẳn
+
+  var na2 = a[0]*a[0] + a[1]*a[1], nb2 = b[0]*b[0] + b[1]*b[1];
+  var na = Math.round(Math.sqrt(na2)), nb = Math.round(Math.sqrt(nb2));
+  var nanb = na * nb;
+  var cos = dot / nanb;
+  var deg = Math.round(Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI);
+
+  WB.setAll({
+    a1: WB.fmtInt(a[0]), a2: WB.fmtInt(a[1]), b1: WB.fmtInt(b[0]), b2: WB.fmtInt(b[1]),
+    a1w: WB.wrap(WB.fmtInt(a[0])), a2w: WB.wrap(WB.fmtInt(a[1])),
+    b1w: WB.wrap(WB.fmtInt(b[0])), b2w: WB.wrap(WB.fmtInt(b[1])),
+    dotExpr: WB.sumExpr([a[0]*b[0], a[1]*b[1]], WB.fmtInt),
+    dot: WB.fmtInt(dot),
+    na2: WB.fmtInt(na2), nb2: WB.fmtInt(nb2), na: WB.fmtInt(na), nb: WB.fmtInt(nb), nanb: WB.fmtInt(nanb),
+    cos: WB.fmt2(cos), deg: WB.fmtInt(deg)
+  });
+  drawAngle('fig2', a, b);
+}
+
+// Hai vectơ a (lam), b (cam) từ gốc giữa; cung góc θ; lưới 4 góc phần tư.
+function drawAngle(id, a, b){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var O = { x: 105, y: 75 };
+  var m = Math.max(Math.abs(a[0]), Math.abs(a[1]), Math.abs(b[0]), Math.abs(b[1]), 2);
+  var unit = 58 / m;
+  function X(x){ return (O.x + x * unit).toFixed(1); }
+  function Y(y){ return (O.y - y * unit).toFixed(1); }
+  var s = '<defs>'
+    + '<marker id="aa'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
+    + '<marker id="ab'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
+    + '</defs>';
+  for (var g = -m; g <= m; g++){
+    s += '<line class="grid" x1="'+X(g)+'" y1="'+Y(-m)+'" x2="'+X(g)+'" y2="'+Y(m)+'"/>';
+    s += '<line class="grid" x1="'+X(-m)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'"/>';
+  }
+  s += '<line class="axis" x1="'+X(-m)+'" y1="'+Y(0)+'" x2="'+X(m)+'" y2="'+Y(0)+'"/>';
+  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(-m)+'" x2="'+X(0)+'" y2="'+Y(m)+'"/>';
+  // cung góc
+  var aA = Math.atan2(a[1], a[0]), aB = Math.atan2(b[1], b[0]);
+  var r = 18, pts = '', n = 18;
+  // đi theo chiều ngắn nhất từ aA tới aB
+  var d = aB - aA; while (d > Math.PI) d -= 2*Math.PI; while (d < -Math.PI) d += 2*Math.PI;
+  for (var i = 0; i <= n; i++){
+    var t = aA + d * i / n;
+    pts += (i ? ' ' : '') + (O.x + r * Math.cos(t)).toFixed(1) + ',' + (O.y - r * Math.sin(t)).toFixed(1);
+  }
+  s += '<polyline class="arc" points="' + pts + '"/>';
+  // vectơ a, b
+  s += '<line style="stroke:#0e7490;stroke-width:2.7" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(a[0])+'" y2="'+Y(a[1])+'" marker-end="url(#aa'+id+')"/>';
+  s += '<line style="stroke:#b45309;stroke-width:2.7" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(b[0])+'" y2="'+Y(b[1])+'" marker-end="url(#ab'+id+')"/>';
+  // nhãn
+  s += '<text x="'+(O.x + a[0]*unit + (a[0]<0?-12:5)).toFixed(1)+'" y="'+(O.y - a[1]*unit - 3).toFixed(1)+'" style="font-size:9px" fill="#0e7490" font-weight="700">a</text>';
+  s += '<text x="'+(O.x + b[0]*unit + (b[0]<0?-12:5)).toFixed(1)+'" y="'+(O.y - b[1]*unit - 3).toFixed(1)+'" style="font-size:9px" fill="#b45309" font-weight="700">b</text>';
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

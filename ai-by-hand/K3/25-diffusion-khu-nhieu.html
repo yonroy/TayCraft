@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 25 — Diffusion: một bước khử nhiễu (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · mô hình sinh</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 25</span><h1>Diffusion — một bước khử nhiễu <small>— từ ảnh nhiễu về ảnh sạch hơn</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
+
+  <div class="intro">
+    <b>Khử nhiễu dần dần.</b> Diffusion sinh ảnh bằng cách bắt đầu từ <b>nhiễu thuần</b> rồi gỡ nhiễu qua nhiều bước.
+    Mỗi bước: mạng <b>đoán nhiễu</b> ε có trong ảnh hiện tại x<sub>t</sub>, ta dùng nó để <b>ước lượng ảnh sạch</b> x̂₀,
+    rồi <b>trộn lại</b> với mức nhiễu <b>nhỏ hơn</b> → được x<sub>t−1</sub> ít nhiễu hơn. (Lịch nhiễu kiểu DDIM, ảnh = vectơ 2 chiều.)
+    <div class="formula">
+      x̂₀ = <span class="frac"><span class="n">x<sub>t</sub> − √(1−ᾱ<sub>t</sub>)·ε</span><span class="d">√ᾱ<sub>t</sub></span></span>
+      &nbsp;&nbsp;·&nbsp;&nbsp; x<sub>t−1</sub> = √ᾱ<sub>t−1</sub>·x̂₀ + √(1−ᾱ<sub>t−1</sub>)·ε
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: ảnh nhiễu, nhiễu đoán &amp; lịch nhiễu</h2><span class="tag">ảnh 2 chiều</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">x<sub>t</sub> <s>ảnh nhiễu</s></div>
+        <div class="mtx c2" style="--cell:18mm">
+          <div class="cell given" data-q="xt1">1.40</div><div class="cell given" data-q="xt2">0.20</div>
+        </div></div>
+      <div class="mwrap"><div class="mlabel">ε <s>nhiễu mạng đoán</s></div>
+        <div class="mtx c2" style="--cell:18mm">
+          <div class="cell given" data-q="e1">1</div><div class="cell given" data-q="e2">−1</div>
+        </div></div>
+      <div class="exptab" style="align-self:flex-end">
+        <div>√ᾱ<sub>t</sub><b>0.80</b></div>
+        <div>√(1−ᾱ<sub>t</sub>)<b>0.60</b></div>
+        <div>√ᾱ<sub>t−1</sub><b>0.96</b></div>
+        <div>√(1−ᾱ<sub>t−1</sub>)<b>0.28</b></div>
+      </div>
+    </div>
+    <div class="note">ᾱ tăng dần khi t giảm → hệ số nhiễu tụt từ <b>0.60</b> (ở t) xuống <b>0.28</b> (ở t−1). Cột 1 = trục ngang, cột 2 = trục dọc của "ảnh".</div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Ước lượng ảnh sạch x̂₀</h2><span class="tag">gỡ hết nhiễu</span></div>
+    <div class="calc">
+      x̂₀ = (x<sub>t</sub> − 0.60·ε) / 0.80<br>
+      cột 1: (<span data-q="xt1b">1.40</span> − 0.60·<span data-q="e1b">1</span>)/0.80 = <span class="blk"></span><br>
+      cột 2: (<span data-q="xt2b">0.20</span> − 0.60·<span data-q="e2b">−1</span>)/0.80 = <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> trừ đi phần nhiễu rồi chia √ᾱ<sub>t</sub> để "phóng" về thang ảnh gốc.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Trộn lại với ít nhiễu hơn → x<sub>t−1</sub></h2><span class="tag">0.96 · x̂₀ + 0.28 · ε</span></div>
+    <div class="calc">
+      x<sub>t−1</sub> = 0.96·x̂₀ + 0.28·ε<br>
+      cột 1: 0.96·<span class="blk" style="min-width:34px"></span> + 0.28·<span data-q="e1c">1</span> = <span class="blk"></span><br>
+      cột 2: 0.96·<span class="blk" style="min-width:34px"></span> + 0.28·<span data-q="e2c">−1</span> = <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mẫu:</b> dùng x̂₀ vừa tìm ở Bước 1; nhiễu thêm vào ít hơn (0.28 &lt; 0.60).</div>
+  </div>
+
+  </div><!-- /grid2 -->
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Kiểm tra: đã sạch hơn chưa?</h2><span class="tag">mức nhiễu ↓ · lặp lại để ra ảnh</span></div>
+    <div class="calc">
+      Hệ số nhiễu: từ <span class="blk" style="min-width:40px"></span> (ở x<sub>t</sub>) xuống <span class="blk" style="min-width:40px"></span> (ở x<sub>t−1</sub>) &nbsp;|&nbsp;
+      x<sub>t−1</sub> gần x̂₀ hơn x<sub>t</sub>? <span class="blk" style="min-width:60px"></span>
+    </div>
+    <div class="note">Lặp lại hàng chục–nghìn bước, mức nhiễu về 0 → ảnh hiện rõ. Chất lượng phụ thuộc hoàn toàn vào độ chính xác của <b>ε</b> mạng đoán — thứ duy nhất được huấn luyện.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: một bước tiến về ảnh sạch</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figDiff" class="fig" viewBox="0 0 270 116" width="125mm" height="54mm" aria-label="trái: mặt phẳng ảnh với x_t (nhiễu), x_{t-1} (gần hơn) và x̂₀ (sạch); phải: thước mức nhiễu tụt từ 0.6 xuống 0.28"></svg>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 25 · Diffusion (khử nhiễu)</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 25</span><h1>Diffusion — một bước khử nhiễu <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Ảnh sạch ước lượng x̂₀</h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">x̂₀</div>
+        <div class="mtx c2" style="--cell:18mm">
+          <div class="cell ans" data-q="xh1">1</div><div class="cell ans" data-q="xh2">1</div>
+        </div></div>
+      <div class="calc ans" data-q="step1ans" style="max-width:118mm">
+        cột 1: (1.40 − 0.60·1)/0.80 = 0.80/0.80 = 1 &nbsp;|&nbsp; cột 2: (0.20 + 0.60)/0.80 = 0.80/0.80 = 1.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>x<sub>t−1</sub> = 0.96·x̂₀ + 0.28·ε</h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">x<sub>t−1</sub></div>
+        <div class="mtx c2" style="--cell:18mm">
+          <div class="cell ans" data-q="xp1">1.24</div><div class="cell ans" data-q="xp2">0.68</div>
+        </div></div>
+      <div class="calc ans" data-q="step2ans" style="max-width:118mm">
+        cột 1: 0.96·1 + 0.28·1 = 1.24 &nbsp;|&nbsp; cột 2: 0.96·1 + 0.28·(−1) = 0.68.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Đã sạch hơn</h2></div>
+    <div class="calc ans">
+      Hệ số nhiễu: <span class="blk" data-q="nz1">0.60</span> → <span class="blk" data-q="nz2">0.28</span> (giảm) &nbsp;|&nbsp;
+      x<sub>t−1</sub> gần x̂₀ hơn: <span class="blk" data-q="closer">đúng ✓</span>
+    </div>
+    <div class="note" data-q="dist">Khoảng cách tới x̂₀: ‖x<sub>t</sub>−x̂₀‖ ≈ 0.85 → ‖x<sub>t−1</sub>−x̂₀‖ ≈ 0.40. Bước này kéo ảnh lại gần ảnh sạch.</div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Một bước diffusion = <b>đoán nhiễu ε → ước lượng ảnh sạch x̂₀ → trộn lại với ít nhiễu hơn</b>.
+    Lặp lại làm mức nhiễu tụt dần về 0, ảnh hiện ra từ hỗn loạn. Mạng chỉ học đúng một việc: <b>dự đoán ε</b>
+    (liên hệ Bài 09 softmax/score &amp; Bài 17 mất mát — ở đây mất mát là ‖ε − ε̂‖²). Đây là lõi của Stable Diffusion / DDPM.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 25 · Diffusion (khử nhiễu)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function generate(){
+  // x̂₀ = ảnh sạch (chọn nguyên cho gọn); ε = nhiễu mạng đoán (nguyên nhỏ)
+  var xh = [WB.randInt(0,2), WB.randInt(0,2)];
+  var eps = [WB.randInt(-1,1), WB.randInt(-1,1)];
+  if (eps[0]===0 && eps[1]===0) eps[1] = 1;          // tránh "không có nhiễu" nhàm chán
+
+  // forward: x_t = 0.8·x̂₀ + 0.6·ε  → cho sẵn làm ảnh nhiễu
+  var xt = [0.8*xh[0]+0.6*eps[0], 0.8*xh[1]+0.6*eps[1]];
+  // một bước DDIM: x_{t-1} = 0.96·x̂₀ + 0.28·ε
+  var xp = [0.96*xh[0]+0.28*eps[0], 0.96*xh[1]+0.28*eps[1]];
+
+  var dist = function(a,b){ return Math.sqrt(Math.pow(a[0]-b[0],2)+Math.pow(a[1]-b[1],2)); };
+  var dT = dist(xt,xh), dP = dist(xp,xh);
+
+  WB.setAll({
+    xt1: WB.fmt2(xt[0]), xt2: WB.fmt2(xt[1]),
+    xt1b: WB.fmt2(xt[0]), xt2b: WB.fmt2(xt[1]),
+    e1: WB.fmtInt(eps[0]), e2: WB.fmtInt(eps[1]),
+    e1b: WB.fmtInt(eps[0]), e2b: WB.fmtInt(eps[1]),
+    e1c: WB.fmtInt(eps[0]), e2c: WB.fmtInt(eps[1]),
+    xh1: WB.fmtInt(xh[0]), xh2: WB.fmtInt(xh[1]),
+    xp1: WB.fmt2(xp[0]), xp2: WB.fmt2(xp[1]),
+    nz1: '0.60', nz2: '0.28', closer: 'đúng ✓',
+    step1ans: 'cột 1: (' + WB.fmt2(xt[0]) + ' − 0.60·' + WB.fmtInt(eps[0]) + ')/0.80 = ' + WB.fmtInt(xh[0]) +
+      ' | cột 2: (' + WB.fmt2(xt[1]) + ' − 0.60·' + WB.fmtInt(eps[1]) + ')/0.80 = ' + WB.fmtInt(xh[1]) + '.',
+    step2ans: 'cột 1: 0.96·' + WB.fmtInt(xh[0]) + ' + 0.28·' + WB.fmtInt(eps[0]) + ' = ' + WB.fmt2(xp[0]) +
+      ' | cột 2: 0.96·' + WB.fmtInt(xh[1]) + ' + 0.28·' + WB.fmtInt(eps[1]) + ' = ' + WB.fmt2(xp[1]) + '.',
+    dist: 'Khoảng cách tới x̂₀: ‖x_t−x̂₀‖ ≈ ' + WB.fmt2(dT) + ' → ‖x_{t−1}−x̂₀‖ ≈ ' + WB.fmt2(dP) + '. Bước này kéo ảnh lại gần ảnh sạch.',
+    wrong: 'mờ / méo / sai chi tiết'
+  });
+  drawDiff(xt, xh, xp, eps);
+}
+
+// Trái: mặt phẳng ảnh, x_t (nhiễu) → x_{t-1} (gần hơn) → x̂₀ (sạch). Phải: thước mức nhiễu.
+function drawDiff(xt, xh, xp, eps){
+  var svg = document.getElementById('figDiff'); if (!svg) return;
+  // miền toạ độ tự co theo các điểm
+  var xs = [xt[0],xh[0],xp[0]], ys = [xt[1],xh[1],xp[1]];
+  var pad = 0.8;
+  var xmin = Math.min.apply(null,xs)-pad, xmax = Math.max.apply(null,xs)+pad;
+  var ymin = Math.min.apply(null,ys)-pad, ymax = Math.max.apply(null,ys)+pad;
+  var PX=18, PY=14, PW=150, PH=84;
+  function sx(x){ return PX + (x-xmin)/(xmax-xmin)*PW; }
+  function sy(y){ return PY+PH - (y-ymin)/(ymax-ymin)*PH; }
+  var s = '<defs><marker id="adf" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
+  // khung
+  s += '<rect x="'+PX+'" y="'+PY+'" width="'+PW+'" height="'+PH+'" fill="#fbfdfe" stroke="#e7edf2"/>';
+  // mũi tên x_t -> x_{t-1}
+  s += '<line x1="'+sx(xt[0]).toFixed(1)+'" y1="'+sy(xt[1]).toFixed(1)+'" x2="'+sx(xp[0]).toFixed(1)+'" y2="'+sy(xp[1]).toFixed(1)+'" stroke="#b45309" stroke-width="1.8" marker-end="url(#adf)"/>';
+  // đường mờ x_{t-1} -> x̂₀
+  s += '<line x1="'+sx(xp[0]).toFixed(1)+'" y1="'+sy(xp[1]).toFixed(1)+'" x2="'+sx(xh[0]).toFixed(1)+'" y2="'+sy(xh[1]).toFixed(1)+'" stroke="#9fb0c0" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  // x̂₀ ngôi sao
+  var hx=sx(xh[0]), hy=sy(xh[1]);
+  s += '<circle cx="'+hx.toFixed(1)+'" cy="'+hy.toFixed(1)+'" r="4" fill="#0e7490"/>';
+  s += '<text x="'+(hx+6).toFixed(1)+'" y="'+(hy-3).toFixed(1)+'" style="font-size:8px" fill="#0e7490" font-weight="700">x̂₀ (sạch)</text>';
+  // x_t
+  s += '<circle cx="'+sx(xt[0]).toFixed(1)+'" cy="'+sy(xt[1]).toFixed(1)+'" r="3.4" fill="#c0392b"/>';
+  s += '<text x="'+(sx(xt[0])+5).toFixed(1)+'" y="'+(sy(xt[1])+9).toFixed(1)+'" style="font-size:8px" fill="#c0392b" font-weight="700">x_t (nhiễu)</text>';
+  // x_{t-1}
+  s += '<circle cx="'+sx(xp[0]).toFixed(1)+'" cy="'+sy(xp[1]).toFixed(1)+'" r="3.4" fill="#b45309"/>';
+  s += '<text x="'+(sx(xp[0])+5).toFixed(1)+'" y="'+(sy(xp[1])-3).toFixed(1)+'" style="font-size:8px" fill="#b45309" font-weight="700">x_{t−1}</text>';
+  s += '<text x="'+(PX+PW/2)+'" y="'+(PY+PH+11)+'" text-anchor="middle" style="font-size:7.5px" fill="#5b6776">một bước kéo ảnh lại gần ảnh sạch</text>';
+
+  // --- thước mức nhiễu bên phải ---
+  var bx=212, bTop=18, bH=80;
+  s += '<text x="'+(bx+12)+'" y="14" text-anchor="middle" style="font-size:8px" fill="#5b6776">mức nhiễu</text>';
+  s += '<rect x="'+bx+'" y="'+bTop+'" width="24" height="'+bH+'" fill="#f1f5f8" stroke="#cdd6e0"/>';
+  // cột 0.60
+  var h1=bH*0.60/0.65, h2=bH*0.28/0.65;
+  s += '<rect x="'+(bx+2)+'" y="'+(bTop+bH-h1).toFixed(1)+'" width="9" height="'+h1.toFixed(1)+'" fill="#c0392b" opacity="0.8"/>';
+  s += '<text x="'+(bx+6)+'" y="'+(bTop+bH-h1-2).toFixed(1)+'" text-anchor="middle" style="font-size:7px" fill="#c0392b">.60</text>';
+  // cột 0.28
+  s += '<rect x="'+(bx+13)+'" y="'+(bTop+bH-h2).toFixed(1)+'" width="9" height="'+h2.toFixed(1)+'" fill="#b45309"/>';
+  s += '<text x="'+(bx+17)+'" y="'+(bTop+bH-h2-2).toFixed(1)+'" text-anchor="middle" style="font-size:7px" fill="#b45309">.28</text>';
+  s += '<text x="'+(bx+5)+'" y="'+(bTop+bH+10)+'" style="font-size:7px" fill="#5b6776">t</text>';
+  s += '<text x="'+(bx+13)+'" y="'+(bTop+bH+10)+'" style="font-size:7px" fill="#5b6776">t−1</text>';
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+drawDiff([1.40,0.20],[1,1],[1.24,0.68],[1,-1]);
+</script>
+</body>
+</html>

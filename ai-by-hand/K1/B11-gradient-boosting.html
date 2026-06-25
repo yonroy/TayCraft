@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Gradient Boosting — một bước</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:3px;}
+  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 4px;border:1px solid #d5c49a;text-align:center;font-size:10.5px;}
+  .dtbl td{padding:3px 4px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Gradient Boosting — một bước</h1><span class="vi">— Gradient Boosting (ý tưởng)</span>
+    <span class="tag">khớp phần dư · F₁ = F₀ + η·h</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Boosting xây mô hình mạnh bằng cách <b>cộng dồn nhiều mô hình yếu</b>: mỗi mô hình mới khớp
+    <b>phần dư</b> (lỗi còn lại) của tổng trước đó. Đây là ý tưởng của XGBoost/LightGBM — vô địch dữ liệu bảng — và là
+    "gradient descent trong không gian hàm".
+    <div class="fm">F₀ = trung bình(y) &nbsp;|&nbsp; phần dư r = y − F₀ &nbsp;|&nbsp; khớp h vào r &nbsp;|&nbsp; F₁ = F₀ + η·h</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Đoán thô bằng trung bình, rồi hỏi "ta sai ở đâu?" (phần dư) và huấn luyện mô hình bé chuyên <b>sửa chỗ sai đó</b>.
+    Cộng vào (nhân η để bước nhỏ, khỏi sửa lố). Lặp lại → sai số teo dần.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Chấm</b> = y; <b>đường nhạt</b> = F₀ (trung bình); <b>bậc thang</b> = F₁ sau khi cộng stump. F₁ bám dữ liệu hơn.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">DỮ LIỆU & DỰ ĐOÁN GỐC — F₀ = tb(y) = <span data-q="f0">6</span>, η = 0.5</div>
+      <table class="dtbl" id="tbl">
+        <tr><th>x</th><th>y</th><th>F₀</th><th>r = y−F₀</th><th>h (stump)</th><th>F₁=F₀+½h</th><th>r₁=y−F₁</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">BƯỚC 1 — STUMP KHỚP PHẦN DƯ (trung bình r mỗi nhánh)</div>
+      <div class="expr">
+        Nhánh x ≤ 2: h = tb(r) = <span class="ublk" id="hLB"></span> &nbsp;·&nbsp;
+        Nhánh x ≥ 3: h = tb(r) = <span class="ublk" id="hRB"></span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">BƯỚC 2 — SAI SỐ GIẢM?</div>
+      <div class="expr">
+        SSE₀ = Σr² = <span class="ublk" id="sse0B"></span> &nbsp;→&nbsp; SSE₁ = Σr₁² = <span class="ublk" id="sse1B"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu η = 1 thay vì 0.5, F₁ bám dữ liệu nhiều hơn hay ít hơn? <span class="ublk" id="qB" style="min-width:80px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Gradient Boosting</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Gradient Boosting — một bước</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Lặp: tính phần dư mới r₁ → khớp stump h₂ → F₂ = F₁ + η·h₂ → … Mỗi vòng SSE giảm dần. η nhỏ = học chậm mà chắc (ít overfit).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG ĐẦY ĐỦ</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>x</th><th>y</th><th>F₀</th><th>r</th><th>h</th><th>F₁</th><th>r₁</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        Stump: x≤2 → h=<b><span data-q="khl">?</span></b>, x≥3 → h=<b><span data-q="khr">?</span></b><br>
+        SSE₀ = <b><span data-q="ksse0">?</span></b> → SSE₁ = <b><span data-q="ksse1">?</span></b> (giảm)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>η=1 → cộng trọn h → F₁ <span class="qa">bám nhiều hơn</span> (nhưng dễ overfit nếu lặp nhiều).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Boosting = "gradient descent trong không gian hàm": phần dư của loss MSE chính là <b>−gradient</b>,
+        mỗi cây mới đi một bước theo hướng đó. Khác Random Forest (cây song song, độc lập) ở chỗ các cây <b>nối tiếp, sửa lỗi nhau</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Gradient Boosting</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f1(v){var r=Math.round(v*10)/10; return (r===Math.round(r))?String(r):((r<0?'−':'')+Math.abs(r).toFixed(1));}
+var ROWS,F0v,HL,HR;
+
+function generate(){
+  F0v=WB.randInt(4,8);
+  var dir=WB.pick([1,-1]);
+  var base=[-3,-1,1,3].map(function(v){return v*dir;});   // phần dư gốc, mean 0
+  var xs=[1,2,3,4];
+  var ys=base.map(function(r){return F0v+r;});
+  var r0=base.slice();
+  HL=(r0[0]+r0[1])/2;          // tb nhánh trái (x≤2)
+  HR=(r0[2]+r0[3])/2;          // tb nhánh phải
+  var h=[HL,HL,HR,HR];
+  var eta=0.5;
+  var F1=h.map(function(hi){return F0v+eta*hi;});
+  var r1=ys.map(function(y,i){return y-F1[i];});
+  var sse0=r0.reduce(function(s,v){return s+v*v;},0);
+  var sse1=r1.reduce(function(s,v){return s+v*v;},0);
+
+  ROWS=xs.map(function(x,i){return {x:x,y:ys[i],r:r0[i],h:h[i],F1:F1[i],r1:r1[i]};});
+
+  WB.setAll({
+    f0:String(F0v),
+    khl:f1(HL), khr:f1(HR), ksse0:f1(sse0), ksse1:f1(sse1)
+  });
+  buildTbl('tbl',true); buildTbl('ktbl',false);
+  ['hLB','hRB','sse0B','sse1B','qB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+
+  drawBoost('sch1',false); drawBoost('sch2',true);
+}
+
+function buildTbl(id,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  ROWS.forEach(function(rw){
+    var tr=document.createElement('tr');
+    var add=function(txt,bl){var td=document.createElement('td'); if(bl){td.className='blank';td.textContent=txt;} else td.textContent=txt; tr.appendChild(td);};
+    add(rw.x,false); add(rw.y,false); add(F0v,false);
+    add(f1(rw.r),blank); add(f1(rw.h),blank); add(f1(rw.F1),blank); add(f1(rw.r1),blank);
+    el.appendChild(tr);
+  });
+}
+
+function drawBoost(id,showF1){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=140,padl=14,padr=10,padt=12,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var ys=ROWS.map(function(r){return r.y;}).concat([F0v]);
+  var ymin=Math.min.apply(null,ys)-1, ymax=Math.max.apply(null,ys)+1;
+  function sx(x){return(padl+(x-0.5)/4*pw).toFixed(1);}
+  function sy(y){return(padt+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
+  var s='';
+  // F0 line
+  s+='<line x1="'+sx(0.5)+'" y1="'+sy(F0v)+'" x2="'+sx(4.5)+'" y2="'+sy(F0v)+'" stroke="#9aa3af" stroke-width="1.3" stroke-dasharray="3 2"/>';
+  s+='<text x="'+sx(4.5)+'" y="'+(parseFloat(sy(F0v))-3)+'" text-anchor="end" font-size="7.5" fill="#777">F₀='+F0v+'</text>';
+  // F1 step (two levels)
+  if(showF1){
+    var fl=F0v+0.5*HL, fr=F0v+0.5*HR;
+    s+='<line x1="'+sx(0.5)+'" y1="'+sy(fl)+'" x2="'+sx(2.5)+'" y2="'+sy(fl)+'" stroke="#0e7490" stroke-width="2"/>';
+    s+='<line x1="'+sx(2.5)+'" y1="'+sy(fl)+'" x2="'+sx(2.5)+'" y2="'+sy(fr)+'" stroke="#0e7490" stroke-width="2"/>';
+    s+='<line x1="'+sx(2.5)+'" y1="'+sy(fr)+'" x2="'+sx(4.5)+'" y2="'+sy(fr)+'" stroke="#0e7490" stroke-width="2"/>';
+  }
+  // points
+  ROWS.forEach(function(rw){
+    s+='<circle cx="'+sx(rw.x)+'" cy="'+sy(rw.y)+'" r="3.5" fill="#b45309"/>';
+  });
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="boosting F0 và F1 bậc thang">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

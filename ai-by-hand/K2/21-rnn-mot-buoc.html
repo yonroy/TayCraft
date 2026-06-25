@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 21 — RNN một bước (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · dữ liệu chuỗi</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 21</span><h1>RNN một bước <small>— trạng thái ẩn mang "ký ức" qua thời gian</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Cùng một bộ trọng số, lặp lại theo thời gian.</b> Mạng hồi quy (RNN) đọc chuỗi từng bước: ở mỗi thời điểm t nó
+    trộn <b>đầu vào mới xₜ</b> với <b>trạng thái ẩn cũ hₜ₋₁</b> (cái nó "nhớ" được), ép qua tanh để ra trạng thái mới hₜ.
+    hₜ vừa là ký ức chuyển sang bước sau, vừa có thể dùng để dự đoán. Ta sẽ chạy <b>đúng một bước</b> bằng số thật.
+    <div class="formula">
+      hₜ = tanh( W<sub>x</sub> xₜ + W<sub>h</sub> hₜ₋₁ + b )
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: đầu vào, trạng thái cũ, trọng số</h2><span class="tag">h có 2 chiều</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">xₜ <s>đầu vào</s></div>
+        <div class="mtx c1" style="--cell:13mm"><div class="cell given" data-q="xt">2</div></div></div>
+      <div class="mwrap"><div class="mlabel">hₜ₋₁ <s>ký ức cũ</s></div>
+        <div class="mtx c1" style="--cell:13mm">
+          <div class="cell given" data-q="h0">1</div><div class="cell given" data-q="h1">-1</div></div></div>
+      <div class="mwrap"><div class="mlabel">W<sub>x</sub> <s>2×1</s></div>
+        <div class="mtx c1" style="--cell:13mm;border-color:var(--accent2)">
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wx0">1</div>
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wx1">-1</div></div></div>
+      <div class="mwrap"><div class="mlabel">W<sub>h</sub> <s>2×2</s></div>
+        <div class="mtx c2" style="--cell:13mm;border-color:var(--accent2)">
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wh00">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wh01">0</div>
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wh10">-1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wh11">1</div></div></div>
+      <div class="mwrap"><div class="mlabel">b <s>bias</s></div>
+        <div class="mtx c1" style="--cell:13mm;border-color:var(--accent2)">
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="b0">0</div>
+          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="b1">1</div></div></div>
+    </div>
+    <div class="note" style="max-width:165mm">Bảng tra <b>tanh</b> (số nguyên):
+      <span class="exptab" style="font-size:11px">
+        <div>−3<b>−1.00</b></div><div>−2<b>−0.96</b></div><div>−1<b>−0.76</b></div><div>0<b>0.00</b></div><div>1<b>0.76</b></div><div>2<b>0.96</b></div><div>3<b>1.00</b></div>
+      </span>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Phần đầu vào: W<sub>x</sub>·xₜ</h2><span class="tag">nhân vô hướng</span></div>
+    <div class="calc">
+      = ( <span class="blk"></span>·<span data-q="xtb">2</span>, <span class="blk"></span>·<span data-q="xtc">2</span> )<br>
+      = ( <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Phần ký ức: W<sub>h</sub>·hₜ₋₁</h2><span class="tag">2 tích vô hướng</span></div>
+    <div class="calc">
+      hàng 0: <span class="blk"></span><br>
+      hàng 1: <span class="blk"></span><br>
+      = ( <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <div class="hint"><b>Mẹo:</b> đây là phần làm RNN khác MLP — đầu vào kéo theo cả quá khứ.</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tổng trước kích hoạt z</h2><span class="tag">(1)+(2)+b</span></div>
+    <div class="calc">
+      z = ( <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <div class="note">z là số nguyên (đề chọn vậy) để tra bảng tanh ở bước 4.</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Trạng thái mới hₜ = tanh(z)</h2><span class="tag">tra bảng</span></div>
+    <div class="calc">
+      hₜ = ( tanh<span class="blk"></span>, tanh<span class="blk"></span> )<br>
+      hₜ = ( <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <div class="hint"><b>tanh</b> ép mọi số về (−1, 1) → ký ức không "phình" vô hạn qua các bước.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <!-- FIGURE -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: ô RNN trải theo thời gian</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figRNN" class="fig" viewBox="0 0 270 96" width="150mm" height="53mm" aria-label="một ô RNN nhận hₜ₋₁ từ trái và xₜ từ dưới, qua tanh cho hₜ ra phải; vòng lặp cho thấy hₜ lại làm đầu vào bước kế"></svg>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 21 · RNN một bước</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 21</span><h1>RNN một bước <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="grid2">
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>W<sub>x</sub>·xₜ</h2></div>
+    <div class="calc ans">
+      = (<span data-q="a0e">1·2</span>, <span data-q="a1e">−1·2</span>) = ( <span class="blk" data-q="a0">2</span>, <span class="blk" data-q="a1">−2</span> )
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>W<sub>h</sub>·hₜ₋₁</h2></div>
+    <div class="calc ans">
+      hàng 0: <span data-q="m0e">1·1 + 0·(−1)</span> = <span data-q="m0">1</span><br>
+      hàng 1: <span data-q="m1e">−1·1 + 1·(−1)</span> = <span data-q="m1">−2</span>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>z = (1)+(2)+b</h2></div>
+    <div class="calc ans">
+      z₀ = <span data-q="z0e">2 + 1 + 0</span> = <span class="blk" data-q="z0">3</span><br>
+      z₁ = <span data-q="z1e">−2 + (−2) + 1</span> = <span class="blk" data-q="z1">−3</span>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>hₜ = tanh(z)</h2></div>
+    <div class="calc ans">
+      hₜ = ( tanh(<span data-q="z0b">3</span>), tanh(<span data-q="z1b">−3</span>) )<br>
+      hₜ = ( <span class="blk" data-q="ht0">1.00</span>, <span class="blk" data-q="ht1">−1.00</span> )
+    </div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> hₜ mới = ( <b data-q="htR">1.00, −1.00</b> ) giờ sẽ làm hₜ₋₁ cho <b>bước thời gian kế tiếp</b>, dùng
+    <b>chính bộ W<sub>x</sub>, W<sub>h</sub>, b này</b> — đó là "hồi quy". Vì mọi bước nhân lặp cùng W<sub>h</sub>, gradient
+    dễ <b>tiêu biến hoặc bùng nổ</b> với chuỗi dài → đó là động lực ra đời <b>LSTM (Bài 22)</b>, thêm cổng để giữ ký ức
+    bền hơn.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 21 · RNN một bước</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var TANH = {'-3':-1.00,'-2':-0.96,'-1':-0.76,'0':0.00,'1':0.76,'2':0.96,'3':1.00};
+
+function generate(){
+  var xt, h, Wx, Wh, b, z0, z1, guard=0;
+  do{
+    xt = WB.randIntNZ(-2,2);
+    h = [WB.randIntNZ(-2,2), WB.randIntNZ(-2,2)];
+    Wx = [WB.randIntNZ(-1,1), WB.randIntNZ(-1,1)];
+    Wh = [[WB.randInt(-1,1),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randInt(-1,1)]];
+    b = [WB.randInt(-1,1), WB.randInt(-1,1)];
+    var a = [Wx[0]*xt, Wx[1]*xt];
+    var m = [Wh[0][0]*h[0]+Wh[0][1]*h[1], Wh[1][0]*h[0]+Wh[1][1]*h[1]];
+    z0 = a[0]+m[0]+b[0]; z1 = a[1]+m[1]+b[1];
+    guard++;
+  } while ((Math.abs(z0)>3 || Math.abs(z1)>3) && guard<200);
+
+  var a = [Wx[0]*xt, Wx[1]*xt];
+  var m = [Wh[0][0]*h[0]+Wh[0][1]*h[1], Wh[1][0]*h[0]+Wh[1][1]*h[1]];
+  var ht = [TANH[String(z0)], TANH[String(z1)]];
+  function dot(w,v){ return WB.fmtInt(w[0])+'·'+WB.wrap(WB.fmtInt(v[0]))+' + '+WB.fmtInt(w[1])+'·'+WB.wrap(WB.fmtInt(v[1])); }
+
+  WB.setAll({
+    xt:WB.fmtInt(xt), xtb:WB.fmtInt(xt), xtc:WB.fmtInt(xt),
+    h0:WB.fmtInt(h[0]), h1:WB.fmtInt(h[1]),
+    wx0:WB.fmtInt(Wx[0]), wx1:WB.fmtInt(Wx[1]),
+    wh00:WB.fmtInt(Wh[0][0]), wh01:WB.fmtInt(Wh[0][1]), wh10:WB.fmtInt(Wh[1][0]), wh11:WB.fmtInt(Wh[1][1]),
+    b0:WB.fmtInt(b[0]), b1:WB.fmtInt(b[1]),
+    a0e:WB.fmtInt(Wx[0])+'·'+WB.wrap(WB.fmtInt(xt)), a1e:WB.fmtInt(Wx[1])+'·'+WB.wrap(WB.fmtInt(xt)),
+    a0:WB.fmtInt(a[0]), a1:WB.fmtInt(a[1]),
+    m0e:dot(Wh[0],h), m1e:dot(Wh[1],h), m0:WB.fmtInt(m[0]), m1:WB.fmtInt(m[1]),
+    z0e:WB.fmtInt(a[0])+WB.opTerm(m[0])+WB.opTerm(b[0]), z1e:WB.fmtInt(a[1])+WB.opTerm(m[1])+WB.opTerm(b[1]),
+    z0:WB.fmtInt(z0), z1:WB.fmtInt(z1), z0b:WB.fmtInt(z0), z1b:WB.fmtInt(z1),
+    ht0:WB.fmt2(ht[0]), ht1:WB.fmt2(ht[1]), htR:WB.fmt2(ht[0])+', '+WB.fmt2(ht[1])
+  });
+  drawRNN(h, xt, ht);
+}
+
+function drawRNN(h, xt, ht){
+  var svg = document.getElementById('figRNN'); if (!svg) return;
+  var s = '<defs><marker id="arn" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
+  var cx=135, cy=46, cw=58, chh=40;
+  // ô cell
+  s += '<rect x="'+(cx-cw/2)+'" y="'+(cy-chh/2)+'" width="'+cw+'" height="'+chh+'" rx="7" fill="#f3f0ff" stroke="#7c5cff" stroke-width="1.4"/>';
+  s += '<text x="'+cx+'" y="'+(cy-4)+'" text-anchor="middle" style="font-size:11px" fill="#5b3ed6" font-weight="700">tanh</text>';
+  s += '<text x="'+cx+'" y="'+(cy+9)+'" text-anchor="middle" style="font-size:8px" fill="#7c5cff">Wₓxₜ+Wₕhₜ₋₁+b</text>';
+  // hₜ₋₁ vào trái
+  s += '<line x1="14" y1="'+cy+'" x2="'+(cx-cw/2-1)+'" y2="'+cy+'" stroke="#0e7490" stroke-width="1.6" marker-end="url(#arn)"/>';
+  s += '<text x="34" y="'+(cy-4)+'" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">hₜ₋₁</text>';
+  s += '<text x="34" y="'+(cy+8)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">('+WB.fmtInt(h[0])+','+WB.fmtInt(h[1])+')</text>';
+  // xₜ vào dưới
+  s += '<line x1="'+cx+'" y1="90" x2="'+cx+'" y2="'+(cy+chh/2+1)+'" stroke="#0e7490" stroke-width="1.6" marker-end="url(#arn)"/>';
+  s += '<text x="'+(cx+12)+'" y="84" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">xₜ='+WB.fmtInt(xt)+'</text>';
+  // hₜ ra phải
+  s += '<line x1="'+(cx+cw/2)+'" y1="'+cy+'" x2="248" y2="'+cy+'" stroke="#b45309" stroke-width="1.8" marker-end="url(#arn)"/>';
+  s += '<text x="232" y="'+(cy-4)+'" text-anchor="middle" style="font-size:9px" fill="#b45309" font-weight="700">hₜ</text>';
+  s += '<text x="232" y="'+(cy+8)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">('+WB.fmt2(ht[0])+','+WB.fmt2(ht[1])+')</text>';
+  // vòng lặp hₜ → hₜ₋₁
+  s += '<path d="M232,'+(cy+9)+' C232,84 '+cx+',88 '+(cx-cw/2-20)+',72 C 40,64 34,60 34,'+(cy+10)+'" fill="none" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arn)"/>';
+  s += '<text x="135" y="80" text-anchor="middle" style="font-size:7.5px" fill="#b45309">hₜ thành hₜ₋₁ của bước sau</text>';
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+drawRNN([1,-1], 2, [1.00,-1.00]);
+</script>
+</body>
+</html>

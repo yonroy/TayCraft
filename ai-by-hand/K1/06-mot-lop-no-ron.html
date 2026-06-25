@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 06 — Một lớp nơ-ron (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 06</span><h1>Một lớp nơ-ron <small>— nhiều nơ-ron song song</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Từ 1 nơ-ron thành 1 lớp.</b> Đặt <b>3 nơ-ron</b> (Bài 05) cạnh nhau, cùng nhìn một đầu vào x. Mỗi nơ-ron có
+    một <b>hàng trọng số</b> riêng → cho một số. Gom 3 hàng lại chính là <b>ma trận W</b>: cả lớp = một phép
+    <b>h = f(Wx + b)</b>, áp kích hoạt theo từng phần tử.
+    <div class="formula">
+      z = W x + b &nbsp;→&nbsp; h = ReLU(z) &nbsp;
+      <s style="color:var(--dim)">W: (3×2) → 3 nơ-ron, mỗi nơ-ron nhìn 2 đầu vào</s>
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 nơ-ron · 2 đầu vào</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">W <s>3×2</s></div>
+        <div class="mtx c2">
+          <div class="cell given" data-q="w11">1</div><div class="cell given" data-q="w12">1</div>
+          <div class="cell given" data-q="w21">2</div><div class="cell given" data-q="w22">−1</div>
+          <div class="cell given" data-q="w31">−1</div><div class="cell given" data-q="w32">0</div>
+        </div></div>
+      <div class="op">·</div>
+      <div class="mwrap"><div class="mlabel">x <s>2×1</s></div>
+        <div class="mtx c1"><div class="cell given" data-q="x1">1</div><div class="cell given" data-q="x2">2</div></div></div>
+      <div class="op">+</div>
+      <div class="mwrap"><div class="mlabel">b <s>3×1</s></div>
+        <div class="mtx c1"><div class="cell given" data-q="b1">0</div><div class="cell given" data-q="b2">1</div><div class="cell given" data-q="b3">1</div></div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tổng z = Wx + b</h2><span class="tag">3 nơ-ron</span></div>
+    <div class="calc">
+      z<sub>1</sub> = (<span data-q="w11w">1</span>·<span data-q="x1w">1</span> + <span data-q="w12w">1</span>·<span data-q="x2w">2</span>)<span data-q="b1term"> + 0</span> = <span class="blk"></span><br>
+      z<sub>2</sub> = (<span data-q="w21w">2</span>·<span data-q="x1w">1</span> + <span data-q="w22w">(−1)</span>·<span data-q="x2w">2</span>)<span data-q="b2term"> + 1</span> = <span class="blk"></span><br>
+      z<sub>3</sub> = (<span data-q="w31w">(−1)</span>·<span data-q="x1w">1</span> + <span data-q="w32w">0</span>·<span data-q="x2w">2</span>)<span data-q="b3term"> + 1</span> = <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mỗi hàng W</b> là 1 nơ-ron: chấm với x rồi cộng bias tương ứng.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Kích hoạt → h</h2><span class="tag">ReLU từng ô</span></div>
+    <div class="row">
+      <div class="calc">
+        h<sub>1</sub> = ReLU(<span class="blk"></span>) = <span class="blk"></span><br>
+        h<sub>2</sub> = ReLU(<span class="blk"></span>) = <span class="blk"></span><br>
+        h<sub>3</sub> = ReLU(<span class="blk"></span>) = <span class="blk"></span>
+      </div>
+      <div class="mwrap"><div class="mlabel">h <s>3×1</s></div>
+        <div class="mtx c1" style="--cell:14mm">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Sơ đồ lớp</h2><span class="tag">2 vào → 3 ra</span></div>
+    <svg class="fig" viewBox="0 0 240 120" width="100%" height="96">
+      <circle cx="50" cy="44" r="11" fill="#fff" stroke="var(--dim)"/><text x="40" y="48">x₁</text>
+      <circle cx="50" cy="86" r="11" fill="#fff" stroke="var(--dim)"/><text x="40" y="90">x₂</text>
+      <circle cx="180" cy="28" r="13" fill="#eaf4f6" stroke="#7fb4bf"/><text x="172" y="32">h₁</text>
+      <circle cx="180" cy="65" r="13" fill="#eaf4f6" stroke="#7fb4bf"/><text x="172" y="69">h₂</text>
+      <circle cx="180" cy="102" r="13" fill="#eaf4f6" stroke="#7fb4bf"/><text x="172" y="106">h₃</text>
+      <g stroke="var(--line)">
+        <line x1="61" y1="44" x2="167" y2="28"/><line x1="61" y1="44" x2="167" y2="65"/><line x1="61" y1="44" x2="167" y2="102"/>
+        <line x1="61" y1="86" x2="167" y2="28"/><line x1="61" y1="86" x2="167" y2="65"/><line x1="61" y1="86" x2="167" y2="102"/>
+      </g>
+    </svg>
+    <div class="note" style="margin-top:2px"><b>6 mũi tên</b> = 6 trọng số = đúng 6 ô của W (3×2). Đó là "fully-connected".</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đếm & quan sát</h2><span class="tag">tham số · nơ-ron tắt</span></div>
+    <div class="calc">
+      Số trọng số = <span class="blk"></span> · số bias = <span class="blk"></span> · tổng = <span class="blk"></span><br>
+      Nơ-ron nào cho h = 0 (bị "tắt")? &nbsp; nơ-ron số <span class="blk"></span>
+    </div>
+    <div class="note">ReLU làm một số nơ-ron về 0 → lớp ẩn "thưa" (sparse), chỉ vài nơ-ron kích hoạt cho mỗi đầu vào.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 06 · Một lớp nơ-ron</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 06</span><h1>Một lớp nơ-ron <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>z = Wx + b</h2></div>
+    <div class="calc ans">
+      z<sub>1</sub> = (<span data-q="sum1">1+2</span>)<span data-q="b1term"> + 0</span> = <span class="blk" data-q="z1">3</span> &nbsp;|&nbsp;
+      z<sub>2</sub> = (<span data-q="sum2">2−2</span>)<span data-q="b2term"> + 1</span> = <span class="blk" data-q="z2">1</span> &nbsp;|&nbsp;
+      z<sub>3</sub> = (<span data-q="sum3">−1+0</span>)<span data-q="b3term"> + 1</span> = <span class="blk" data-q="z3">0</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>h = ReLU(z)</h2></div>
+    <div class="row">
+      <div class="calc ans">
+        h<sub>1</sub> = ReLU(<span data-q="z1">3</span>) = <span class="blk" data-q="h1">3</span> &nbsp;|&nbsp;
+        h<sub>2</sub> = ReLU(<span data-q="z2">1</span>) = <span class="blk" data-q="h2">1</span> &nbsp;|&nbsp;
+        h<sub>3</sub> = ReLU(<span data-q="z3">0</span>) = <span class="blk" data-q="h3">0</span>
+      </div>
+      <div class="mwrap"><div class="mlabel">h</div>
+        <div class="mtx c1" style="--cell:14mm">
+          <div class="cell ans" data-q="h1">3</div><div class="cell ans" data-q="h2">1</div><div class="cell ans" data-q="h3">0</div>
+        </div></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đếm & quan sát</h2></div>
+    <div class="calc ans">
+      trọng số = <span class="blk">6</span> · bias = <span class="blk">3</span> · tổng = <span class="blk">9</span> &nbsp;|&nbsp;
+      nơ-ron "tắt" = số <span class="blk" data-q="offNote">3 (h₃ = 0)</span>
+    </div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> h = <span data-q="hTuple">(3, 1, 0)</span>. Một lớp = nhiều nơ-ron song song = <b>một phép nhân ma trận + bias + kích hoạt</b> —
+    đúng những gì học ở Bài 02–05, nay gói gọn. Bài 07: nối <b>đầu ra lớp này thành đầu vào lớp sau</b> để được
+    mạng nhiều lớp (MLP).
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 06 · Một lớp nơ-ron</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function generate(){
+  function R(){ return WB.randInt(-3,4); }
+  var W = [[R(),R()],[R(),R()],[R(),R()]];
+  var x = [R(),R()];
+  var dot = [0,0,0], terms = [];
+  for (var i=0;i<3;i++){
+    var t = [W[i][0]*x[0], W[i][1]*x[1]];
+    terms.push(t);
+    dot[i] = t[0]+t[1];
+  }
+  var k = WB.randInt(0,2);
+  var b = [WB.randInt(-2,4), WB.randInt(-2,4), WB.randInt(-2,4)];
+  b[k] = -dot[k];
+  var z = [dot[0]+b[0], dot[1]+b[1], dot[2]+b[2]];
+  var h = z.map(function(v){ return Math.max(0,v); });
+  var offIdx = [];
+  z.forEach(function(v,i){ if (v<=0) offIdx.push(i+1); });
+  var offNote = offIdx.length
+    ? offIdx.join(', ') + ' (h' + offIdx.join(',') + ' = 0)'
+    : 'không có (mọi h đều dương)';
+
+  WB.setAll({
+    w11: WB.fmtInt(W[0][0]), w12: WB.fmtInt(W[0][1]),
+    w21: WB.fmtInt(W[1][0]), w22: WB.fmtInt(W[1][1]),
+    w31: WB.fmtInt(W[2][0]), w32: WB.fmtInt(W[2][1]),
+    x1: WB.fmtInt(x[0]), x2: WB.fmtInt(x[1]),
+    b1: WB.fmtInt(b[0]), b2: WB.fmtInt(b[1]), b3: WB.fmtInt(b[2]),
+    w11w: WB.wrap(WB.fmtInt(W[0][0])), w12w: WB.wrap(WB.fmtInt(W[0][1])),
+    w21w: WB.wrap(WB.fmtInt(W[1][0])), w22w: WB.wrap(WB.fmtInt(W[1][1])),
+    w31w: WB.wrap(WB.fmtInt(W[2][0])), w32w: WB.wrap(WB.fmtInt(W[2][1])),
+    x1w: WB.wrap(WB.fmtInt(x[0])), x2w: WB.wrap(WB.fmtInt(x[1])),
+    b1term: WB.opTerm(b[0]), b2term: WB.opTerm(b[1]), b3term: WB.opTerm(b[2]),
+    sum1: WB.sumExpr(terms[0]), sum2: WB.sumExpr(terms[1]), sum3: WB.sumExpr(terms[2]),
+    z1: WB.fmtInt(z[0]), z2: WB.fmtInt(z[1]), z3: WB.fmtInt(z[2]),
+    h1: WB.fmtInt(h[0]), h2: WB.fmtInt(h[1]), h3: WB.fmtInt(h[2]),
+    hTuple: '(' + WB.fmtInt(h[0]) + ', ' + WB.fmtInt(h[1]) + ', ' + WB.fmtInt(h[2]) + ')',
+    offNote: offNote
+  });
+}
+WB.wire(generate);
+</script>
+</body>
+</html>

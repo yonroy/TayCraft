@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài 01 — Tích vô hướng (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài 01</span><h1>Tích vô hướng <small>— Dot Product</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Tích vô hướng là <b>phép tính nền tảng nhất</b> của AI: mỗi nơ-ron, mỗi ô của phép nhân
+    ma trận, mỗi điểm tương đồng trong attention đều là một tích vô hướng. Nắm chắc ô này, cả mạng nơ-ron chỉ là
+    hàng ngàn phép như vậy lặp lại.
+    <div class="formula">
+      a · b = a<sub>1</sub>b<sub>1</sub> + a<sub>2</sub>b<sub>2</sub> + … + a<sub>n</sub>b<sub>n</sub> =
+      <span style="font-size:19px">Σ</span> a<sub>i</sub>b<sub>i</sub>
+      &nbsp;&nbsp;|&nbsp;&nbsp; a · b = |a| |b| cos θ
+    </div>
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Hai vectơ cho sẵn</h2><span class="tag">n = 3 thành phần</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">a <s>1×3</s></div>
+        <div class="mtx c3"><div class="cell given" data-q="a1">2</div><div class="cell given" data-q="a2">1</div><div class="cell given" data-q="a3">3</div></div></div>
+      <div class="mwrap"><div class="mlabel">b <s>1×3</s></div>
+        <div class="mtx c3"><div class="cell given" data-q="b1">1</div><div class="cell given" data-q="b2">4</div><div class="cell given" data-q="b3">2</div></div></div>
+      <div class="note" style="max-width:84mm">Tích vô hướng: <b>nhân từng cặp cùng vị trí, rồi cộng lại</b>. Kết quả là một <b>con số duy nhất</b> (vô hướng), không phải vectơ.</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Nhân từng cặp</h2><span class="tag">3 tích</span></div>
+    <div class="calc">
+      a<sub>1</sub>·b<sub>1</sub> = <span data-q="a1w">2</span> × <span data-q="b1w">1</span> = <span class="blk"></span><br>
+      a<sub>2</sub>·b<sub>2</sub> = <span data-q="a2w">1</span> × <span data-q="b2w">4</span> = <span class="blk"></span><br>
+      a<sub>3</sub>·b<sub>3</sub> = <span data-q="a3w">3</span> × <span data-q="b3w">2</span> = <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> giữ đúng thứ tự — phần tử thứ i của a nhân phần tử thứ i của b.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Cộng lại → a · b</h2><span class="tag">1 con số</span></div>
+    <div class="calc">
+      a · b = <span class="blk"></span> + <span class="blk"></span> + <span class="blk"></span> = <span class="blk" style="min-width:60px"></span>
+    </div>
+    <div class="note">Đây chính là giá trị một nơ-ron tính ra <i>trước</i> khi cộng bias và qua hàm kích hoạt.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Luyện thêm</h2><span class="tag">tự điền</span></div>
+    <div class="calc">
+      (1,0,0)·(0,1,0) = <span class="blk"></span> <span style="color:var(--dim)">← vuông góc?</span>
+      &nbsp;|&nbsp; (1,2)·(2,1) = <span class="blk"></span>
+      &nbsp;|&nbsp; (3,3,3)·(1,1,1) = <span class="blk"></span>
+    </div>
+    <div class="note">Tích = 0 nghĩa là hai vectơ <b>vuông góc</b> (cos θ = 0) — chúng "không liên quan" nhau.</div>
+  </div>
+
+  <!-- STEP 4 — hình học 2D, vẽ & đo được -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Góc nhìn hình học — vẽ &amp; đo</h2><span class="tag">2D · cos θ</span></div>
+    <div class="figrow">
+      <svg id="fig1" class="fig" viewBox="0 0 205 158" width="78mm" height="60mm" aria-label="hai vectơ u và v trên lưới tọa độ"></svg>
+      <div style="flex:1">
+        <div class="calc">
+          Đọc từ hình: u = (<span data-q="u1">3</span>, <span data-q="u2">1</span>) · v = (<span data-q="v1">1</span>, <span data-q="v2">2</span>)<br>
+          u · v = <span data-q="u1">3</span>·<span data-q="v1">1</span> + <span data-q="u2">1</span>·<span data-q="v2">2</span> = <span class="blk"></span><br>
+          |u| = √(<span data-q="u1">3</span>²+<span data-q="u2">1</span>²) = √<span class="blk"></span> ≈ <span class="blk"></span>
+          &nbsp; |v| = √(<span data-q="v1">1</span>²+<span data-q="v2">2</span>²) = √<span class="blk"></span> ≈ <span class="blk"></span><br>
+          cos θ = (u·v)/(|u||v|) ≈ <span class="blk"></span> → θ ≈ <span class="blk"></span>°
+        </div>
+        <div class="hint"><b>Tự tay kiểm:</b> đo góc giữa hai mũi tên bằng thước đo độ → θ<sub>đo</sub> ≈ <span class="blk" style="min-width:34px"></span>° (phải khớp θ tính ở trên).</div>
+        <div class="note">Đoạn <b>nét đứt</b> là <b>hình chiếu</b> của v lên u; vệt nền cyan là độ dài bóng đó. Nghĩa hình học: <b>u·v = |u| × (độ dài bóng)</b>.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 01 · Tích vô hướng</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài 01</span><h1>Tích vô hướng <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Nhân từng cặp</h2></div>
+    <div class="calc ans">
+      <span data-q="a1w">2</span>×<span data-q="b1w">1</span> = <span class="blk" data-q="p1">2</span> &nbsp;·&nbsp;
+      <span data-q="a2w">1</span>×<span data-q="b2w">4</span> = <span class="blk" data-q="p2">4</span> &nbsp;·&nbsp;
+      <span data-q="a3w">3</span>×<span data-q="b3w">2</span> = <span class="blk" data-q="p3">6</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Cộng lại</h2></div>
+    <div class="calc ans">
+      a · b = <span data-q="sumTerms">2 + 4 + 6</span> = <span class="blk" data-q="dot" style="min-width:54px">12</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Luyện thêm</h2></div>
+    <div class="calc ans">
+      (1,0,0)·(0,1,0) = <span class="blk">0</span> &nbsp;<span style="color:var(--dim);font-weight:400">(vuông góc ✓)</span> &nbsp;|&nbsp;
+      (1,2)·(2,1) = <span class="blk">4</span> &nbsp;|&nbsp;
+      (3,3,3)·(1,1,1) = <span class="blk">9</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hình học (2D)</h2></div>
+    <div class="figrow">
+      <svg id="fig2" class="fig" viewBox="0 0 205 158" width="70mm" height="54mm"></svg>
+      <div style="flex:1">
+        <div class="calc ans">
+          u·v = <span class="blk" data-q="udotv">5</span> &nbsp;|&nbsp;
+          |u| = √<span class="blk" data-q="normU2">10</span> ≈ <span class="blk" data-q="normU">3.16</span> &nbsp;|&nbsp;
+          |v| = √<span class="blk" data-q="normV2">5</span> ≈ <span class="blk" data-q="normV">2.24</span><br>
+          cos θ = <span data-q="udotv">5</span>/(<span data-q="normU">3.16</span>·<span data-q="normV">2.24</span>) ≈ <span class="blk" data-q="cosU">0.71</span>
+          → θ ≈ <span class="blk" data-q="degU">45</span>°
+        </div>
+        <div class="note" data-q="geoNote">θ ≈ 45°: hình chiếu của v lên u dài 1.58; nhân |u| = 3.16 ra đúng u·v = 5.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Tích vô hướng làm <b>hai việc</b>: (1) là phép cộng-nhân để một nơ-ron gộp đầu vào;
+    (2) đo <b>độ giống nhau</b> giữa hai vectơ qua cos θ. Cả hai vai trò này xuất hiện ở khắp nơi — từ lớp tuyến tính
+    (Bài 03) đến attention. Bài tiếp theo: xếp nhiều tích vô hướng lại thành <b>phép nhân ma trận</b>.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài 01 · Tích vô hướng</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function generate(){
+  function vec3(){
+    var v;
+    do { v = [WB.randInt(-4,5), WB.randInt(-4,5), WB.randInt(-4,5)]; }
+    while (v[0]===0 && v[1]===0 && v[2]===0);
+    return v;
+  }
+  var a = vec3(), b = vec3();
+  var p = [a[0]*b[0], a[1]*b[1], a[2]*b[2]];
+  var dot = p[0]+p[1]+p[2];
+
+  // --- Cặp vectơ 2D cho panel hình học (thành phần dương, không song song) ---
+  var u, v;
+  do {
+    u = [WB.randInt(1, 4), WB.randInt(1, 4)];
+    v = [WB.randInt(1, 4), WB.randInt(1, 4)];
+  } while (u[0] * v[1] - u[1] * v[0] === 0);
+  var udotv = u[0] * v[0] + u[1] * v[1];
+  var nU2 = u[0] * u[0] + u[1] * u[1], nV2 = v[0] * v[0] + v[1] * v[1];
+  var nU = Math.sqrt(nU2), nV = Math.sqrt(nV2);
+  var cosU = udotv / (nU * nV);
+  var degU = Math.round(Math.acos(Math.max(-1, Math.min(1, cosU))) * 180 / Math.PI);
+  var shadow = udotv / nU; // độ dài hình chiếu của v lên u
+
+  WB.setAll({
+    a1: WB.fmtInt(a[0]), a2: WB.fmtInt(a[1]), a3: WB.fmtInt(a[2]),
+    b1: WB.fmtInt(b[0]), b2: WB.fmtInt(b[1]), b3: WB.fmtInt(b[2]),
+    a1w: WB.wrap(WB.fmtInt(a[0])), a2w: WB.wrap(WB.fmtInt(a[1])), a3w: WB.wrap(WB.fmtInt(a[2])),
+    b1w: WB.wrap(WB.fmtInt(b[0])), b2w: WB.wrap(WB.fmtInt(b[1])), b3w: WB.wrap(WB.fmtInt(b[2])),
+    p1: WB.fmtInt(p[0]), p2: WB.fmtInt(p[1]), p3: WB.fmtInt(p[2]),
+    sumTerms: WB.sumExpr(p, WB.fmtInt),
+    dot: WB.fmtInt(dot),
+    u1: String(u[0]), u2: String(u[1]), v1: String(v[0]), v2: String(v[1]),
+    udotv: WB.fmtInt(udotv),
+    normU2: WB.fmtInt(nU2), normV2: WB.fmtInt(nV2),
+    normU: WB.fmt2(nU), normV: WB.fmt2(nV),
+    cosU: WB.fmt2(cosU), degU: String(degU)
+  });
+  var gn = document.querySelector('[data-q="geoNote"]');
+  if (gn) gn.textContent = 'θ ≈ ' + degU + '°: hình chiếu của v lên u dài ' + WB.fmt2(shadow) +
+    '; nhân |u| = ' + WB.fmt2(nU) + ' ra đúng u·v = ' + WB.fmtInt(udotv) + '.';
+  drawFig('fig1', u, v, null);
+  drawFig('fig2', u, v, degU);
+}
+
+// Vẽ hai vectơ u, v trên lưới: cung góc, hình chiếu (nét đứt) + vệt bóng trên u.
+function drawFig(id, u, v, degVal) {
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var O = { x: 26, y: 130 }, unit = 24;
+  function X(x) { return (O.x + x * unit).toFixed(1); }
+  function Y(y) { return (O.y - y * unit).toFixed(1); }
+  var m = Math.max(u[0], u[1], v[0], v[1], 4);
+  var s = '<defs>'
+    + '<marker id="ah' + id + '" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker>'
+    + '<marker id="au' + id + '" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
+    + '<marker id="av' + id + '" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
+    + '</defs>';
+  for (var g = 0; g <= m; g++) {
+    s += '<line class="grid" x1="' + X(g) + '" y1="' + Y(0) + '" x2="' + X(g) + '" y2="' + Y(m) + '"/>';
+    s += '<line class="grid" x1="' + X(0) + '" y1="' + Y(g) + '" x2="' + X(m) + '" y2="' + Y(g) + '"/>';
+  }
+  s += '<line class="axis" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + (O.x + m * unit + 9).toFixed(1) + '" y2="' + Y(0) + '" marker-end="url(#ah' + id + ')"/>';
+  s += '<line class="axis" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + (O.y - m * unit - 9).toFixed(1) + '" marker-end="url(#ah' + id + ')"/>';
+  // hình chiếu của v lên u
+  var sc = (u[0] * v[0] + u[1] * v[1]) / (u[0] * u[0] + u[1] * u[1]);
+  var fx = u[0] * sc, fy = u[1] * sc;
+  s += '<line class="base" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(fx) + '" y2="' + Y(fy) + '"/>';
+  s += '<line class="proj" x1="' + X(v[0]) + '" y1="' + Y(v[1]) + '" x2="' + X(fx) + '" y2="' + Y(fy) + '"/>';
+  // cung góc giữa u và v
+  var a1 = Math.atan2(u[1], u[0]), a2 = Math.atan2(v[1], v[0]), r = 20, pts = '', n = 16;
+  for (var i = 0; i <= n; i++) {
+    var t = a1 + (a2 - a1) * i / n;
+    pts += (i ? ' ' : '') + (O.x + r * Math.cos(t)).toFixed(1) + ',' + (O.y - r * Math.sin(t)).toFixed(1);
+  }
+  s += '<polyline class="arc" points="' + pts + '"/>';
+  // hai vectơ
+  s += '<line class="vec vU" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(u[0]) + '" y2="' + Y(u[1]) + '" marker-end="url(#au' + id + ')"/>';
+  s += '<line class="vec vV" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(v[0]) + '" y2="' + Y(v[1]) + '" marker-end="url(#av' + id + ')"/>';
+  // nhãn
+  s += '<text x="' + (O.x + u[0] * unit + 5).toFixed(1) + '" y="' + (O.y - u[1] * unit - 3).toFixed(1) + '" style="font-size:9px" fill="#0e7490" font-weight="700">u(' + u[0] + ',' + u[1] + ')</text>';
+  s += '<text x="' + (O.x + v[0] * unit + 5).toFixed(1) + '" y="' + (O.y - v[1] * unit - 3).toFixed(1) + '" style="font-size:9px" fill="#b45309" font-weight="700">v(' + v[0] + ',' + v[1] + ')</text>';
+  if (degVal != null) {
+    var mt = a1 + (a2 - a1) / 2;
+    s += '<text x="' + (O.x + 30 * Math.cos(mt)).toFixed(1) + '" y="' + (O.y - 30 * Math.sin(mt)).toFixed(1) + '" style="font-size:9px" fill="#16202e" font-weight="700">θ≈' + degVal + '°</text>';
+  }
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+// vẽ hình ban đầu khớp vectơ mặc định trong HTML (u=(3,1), v=(1,2)); chưa đổi số.
+drawFig('fig1', [3, 1], [1, 2], null);
+drawFig('fig2', [3, 1], [1, 2], 45);
+</script>
+</body>
+</html>

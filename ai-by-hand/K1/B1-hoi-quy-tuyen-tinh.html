@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Hồi quy tuyến tính 1 biến — Linear Regression</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Hồi quy tuyến tính 1 biến</h1><span class="vi">— Linear Regression</span>
+    <span class="tag">y = ax + b · tối thiểu MSE · least squares</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Hồi quy tuyến tính là <b>mô hình ML đơn giản nhất</b> nhưng nền tảng của mọi thứ:
+    loss function (MSE), gradient descent, overfitting/underfitting, và normal equation (nghiệm giải tích).
+    Neural network về bản chất là nhiều lớp hồi quy tuyến tính xen kẽ với hàm kích hoạt.
+    <div class="fm">ŷ = ax + b &nbsp;|&nbsp; MSE = (1/n)Σ(yᵢ−ŷᵢ)² &nbsp;|&nbsp; a = [nΣxy − ΣxΣy] / [nΣx² − (Σx)²] &nbsp;|&nbsp; b = ȳ − a·x̄</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Least squares tìm đường thẳng sao cho <b>tổng bình phương khoảng cách dọc</b> từ điểm đến đường nhỏ nhất.
+    Tại nghiệm tối ưu, đạo hàm MSE theo a và b = 0 — công thức closed-form là kết quả của hai phương trình đó.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Điểm</b> = dữ liệu; <b>xanh</b> = đường hồi quy ŷ=ax+b; <b>nét đỏ dọc</b> = residual (sai số). MSE = trung bình bình phương residual.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">DỮ LIỆU (n = 4 điểm)</div>
+      <table class="dtbl" id="dataTable">
+        <tr><th>i</th><th>xᵢ</th><th>yᵢ</th><th>xᵢ²</th><th>xᵢyᵢ</th></tr>
+      </table>
+      <table class="dtbl" id="sumTable" style="margin-top:3px">
+        <tr><td><b>Σ</b></td>
+          <td data-q="sx">?</td><td data-q="sy">?</td>
+          <td class="blank" id="sx2B"></td>
+          <td class="blank" id="sxyB"></td>
+        </tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">TÍNH a VÀ b (least squares)</div>
+      <div class="expr">
+        a = (n·Σxy − Σx·Σy) / (n·Σx² − (Σx)²)<br>
+        &nbsp; = (<span data-q="n">4</span>·<span class="ublk" id="sxyB2"></span> − <span data-q="sx">?</span>·<span data-q="sy">?</span>) / (<span data-q="n">4</span>·<span class="ublk" id="sx2B2"></span> − <span data-q="sx">?</span>²)<br>
+        &nbsp; = <span class="ublk" id="aB"></span>
+      </div>
+      <div class="expr">
+        b = ȳ − a·x̄ &nbsp;→&nbsp; ȳ=<span class="ublk" id="ybarB"></span>, x̄=<span class="ublk" id="xbarB"></span> &nbsp;→&nbsp; b=<span class="ublk" id="bB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Dự đoán ŷ tại x = <span data-q="xpred">3</span>: ŷ = <span class="ublk" id="ypredB"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Hồi quy tuyến tính 1 biến</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Hồi quy tuyến tính 1 biến</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Residual = yᵢ − ŷᵢ. Least squares = gradient descent đã hội tụ = nghiệm tối ưu toán học.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">DỮ LIỆU</div>
+      <table class="dtbl" id="kdataTable">
+        <tr><th>i</th><th>xᵢ</th><th>yᵢ</th><th>xᵢ²</th><th>xᵢyᵢ</th></tr>
+      </table>
+      <table class="dtbl" id="ksumTable" style="margin-top:3px">
+        <tr><td><b>Σ</b></td>
+          <td data-q="sx">?</td><td data-q="sy">?</td>
+          <td data-q="ksx2">?</td><td data-q="ksxy">?</td>
+        </tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        a = <b><span data-q="ka">1.0</span></b> &nbsp;&nbsp; b = <b><span data-q="kb">0.0</span></b>
+        &nbsp;&nbsp; → &nbsp; ŷ = <span data-q="ka">1.0</span>·x + <span data-q="kb">0.0</span>
+      </div>
+      <div class="expr">
+        Dự đoán x=<span data-q="xpred">3</span>: ŷ = <b><span data-q="kypred">3.0</span></b>
+      </div>
+      <div class="expr" id="kMSE" style="font-size:11px;color:var(--dim)"></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>ŷ(<span data-q="xpred">3</span>) = <span class="qa" id="kypredQA">3.0</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Least squares = closed-form solution. Khi dữ liệu lớn, dùng <b>gradient descent</b> thay vì công thức.
+        Hồi quy tuyến tính đa biến (B2): y = Xw + b, w = (XᵀX)⁻¹Xᵀy.
+        Khi thêm hàm kích hoạt sau lớp tuyến tính → <b>logistic regression</b> (B3) → <b>neural network</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Hồi quy tuyến tính 1 biến</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+function fI(v){return WB.fmtInt(v);}
+
+function generate(){
+  // Sinh dữ liệu theo đường y = a_true*x + b_true + noise
+  var a_true=WB.pick([1,2,3]), b_true=WB.randInt(-2,4);
+  var xs=[1,2,3,4].map(function(v){return v+WB.randInt(0,2);});
+  xs.sort(function(a,b){return a-b;});
+  // ensure unique
+  for(var i=1;i<xs.length;i++) if(xs[i]<=xs[i-1]) xs[i]=xs[i-1]+1;
+  var ys=xs.map(function(x){return a_true*x+b_true+WB.randInt(-1,2);});
+  var n=4;
+
+  var sx=xs.reduce(function(s,v){return s+v;},0);
+  var sy=ys.reduce(function(s,v){return s+v;},0);
+  var sx2=xs.reduce(function(s,v,i){return s+v*v;},0);
+  var sxy=xs.reduce(function(s,v,i){return s+v*ys[i];},0);
+  var denom=n*sx2-sx*sx;
+  var a_hat=denom!==0?(n*sxy-sx*sy)/denom:a_true;
+  var a_r=Math.round(a_hat*100)/100;
+  var xbar=sx/n, ybar=sy/n;
+  var b_hat=ybar-a_r*xbar;
+  var b_r=Math.round(b_hat*100)/100;
+
+  var xpred=WB.pick([2,3,4,5]);
+  var ypred=a_r*xpred+b_r;
+
+  // MSE
+  var mse=xs.reduce(function(s,v,i){var r=ys[i]-(a_r*v+b_r);return s+r*r;},0)/n;
+
+  WB.setAll({
+    n:String(n), sx:fI(sx), sy:fI(sy),
+    ksx2:fI(sx2), ksxy:fI(sxy),
+    ka:f2(a_r), kb:f2(b_r),
+    xpred:fI(xpred), kypred:f2(ypred)
+  });
+
+  // Build data rows
+  buildDataTable('dataTable',xs,ys,true);
+  buildDataTable('kdataTable',xs,ys,false);
+
+  // blank intermediate
+  ['sx2B','sxyB','sx2B2','sxyB2','aB','ybarB','xbarB','bB','ypredB'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='';
+  });
+  document.getElementById('kMSE').textContent='MSE = '+f2(mse)+' (kiểm: trung bình bình phương residual)';
+  document.getElementById('kypredQA').textContent=f2(ypred);
+
+  drawReg('sch1',xs,ys,a_r,b_r,false);
+  drawReg('sch2',xs,ys,a_r,b_r,true);
+}
+
+function buildDataTable(id,xs,ys,blank){
+  var el=document.getElementById(id); if(!el) return;
+  var hdr=el.querySelector('tr');
+  // remove existing data rows
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  xs.forEach(function(x,i){
+    var tr=document.createElement('tr');
+    [i+1,x,ys[i],x*x,x*ys[i]].forEach(function(v,j){
+      var td=document.createElement('td');
+      if(blank && j>=3){ td.className='blank'; td.textContent=fI(v); }
+      else td.textContent=fI(v);
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  });
+}
+
+function drawReg(id,xs,ys,a,b,showResid){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=148;
+  var padl=20,padr=10,padt=12,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var xmin=xs[0]-0.5, xmax=xs[xs.length-1]+1.5;
+  var yall=ys.concat([a*xmin+b,a*xmax+b]);
+  var ymin=Math.min.apply(null,yall)-1, ymax=Math.max.apply(null,yall)+1;
+  function sx(x){return(padl+(x-xmin)/(xmax-xmin)*pw).toFixed(1);}
+  function sy(y){return(padt+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
+
+  var s='<defs><marker id="rah'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker></defs>';
+  s+='<line x1="'+padl+'" y1="'+sy(0)+'" x2="'+(W-padr+5)+'" y2="'+sy(0)+'" stroke="#ddd" stroke-width="1" marker-end="url(#rah'+id+')"/>';
+  s+='<line x1="'+sx(0)+'" y1="'+(H-padb)+'" x2="'+sx(0)+'" y2="'+padt+'" stroke="#ddd" stroke-width="1" marker-end="url(#rah'+id+')"/>';
+
+  // regression line
+  s+='<line x1="'+sx(xmin)+'" y1="'+sy(a*xmin+b)+'" x2="'+sx(xmax)+'" y2="'+sy(a*xmax+b)+'" stroke="#0e7490" stroke-width="2"/>';
+  // equation label
+  s+='<text x="'+(W-padr-4)+'" y="'+(parseFloat(sy(a*xmax+b))-4)+'" text-anchor="end" font-size="8.5" fill="#0e7490" font-weight="700">ŷ='+f2(a)+'x+'+f2(b)+'</text>';
+
+  // data points + residuals
+  xs.forEach(function(x,i){
+    var yhat=a*x+b;
+    if(showResid){
+      s+='<line x1="'+sx(x)+'" y1="'+sy(ys[i])+'" x2="'+sx(x)+'" y2="'+sy(yhat)+'" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="3 2"/>';
+    }
+    s+='<circle cx="'+sx(x)+'" cy="'+sy(ys[i])+'" r="3.5" fill="#b45309"/>';
+    if(showResid){
+      s+='<text x="'+(parseFloat(sx(x))+4)+'" y="'+(parseFloat(sy(ys[i]))-2)+'" font-size="8" fill="#b45309">'+fI(ys[i])+'</text>';
+    }
+  });
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đồ thị hồi quy tuyến tính">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

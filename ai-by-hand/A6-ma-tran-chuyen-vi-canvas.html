@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Ma trận chuyển vị — Transpose (canvas)</title>
+<link rel="stylesheet" href="wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .m{--cw:11mm;}
+  .diag{fill:none;stroke:#b45309;stroke-width:1.8;stroke-dasharray:4 3;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Ma trận chuyển vị</h1><span class="vi">— Transpose</span>
+    <span class="tag">điền ô trắng · (Aᵀ)ᵢⱼ = Aⱼᵢ</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Chuyển vị là phép "lật" ma trận — <b>hàng thành cột, cột thành hàng</b>. Nó có mặt khắp
+    AI: <b>QKᵀ</b> trong attention là nhân ma trận với K đã chuyển vị; <b>Wᵀ</b> trong lan truyền ngược; định nghĩa
+    ma trận đối xứng <b>A = Aᵀ</b>. Cỡ thay đổi: (m×n)ᵀ → (n×m).
+    <div class="fm">(Aᵀ)ᵢⱼ = Aⱼᵢ &nbsp;|&nbsp; (A ᵀ)ᵀ = A &nbsp;|&nbsp; (AB)ᵀ = BᵀAᵀ &nbsp;|&nbsp; cỡ (m×n)ᵀ = (n×m)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Tưởng tượng <b>gấp ma trận theo đường chéo chính</b> (từ ô trên-trái xuống dưới-phải). Sau khi gấp, mỗi ô Aᵢⱼ nằm đúng vị trí Aⱼᵢ. Hàng 1 thành cột 1, hàng 2 thành cột 2, v.v.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Mũi tên</b> chỉ từng ô Aᵢⱼ → vị trí Aᵀⱼᵢ sau khi lật theo đường chéo.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN · ma trận A (2×3)</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">A <s>2×3</s></div><div class="m c3" id="mA"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">ĐIỀN KẾT QUẢ · Aᵀ (3×2) — lật từng hàng thành cột</div>
+      <div class="row">
+        <div class="blk out"><div class="nm">Aᵀ <s>3×2</s></div><div class="m c2" id="mAt"></div></div>
+      </div>
+
+      <div class="why" style="margin-top:8px"><b>Quy tắc:</b> Hàng i của A → Cột i của Aᵀ. Ô (i,j) của A → Ô (j,i) của Aᵀ. Cỡ đổi: (2×3)ᵀ = (3×2).</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Cỡ của (5×3)ᵀ = ? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>(Aᵀ)ᵀ = ? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+          <li>Ma trận đối xứng thỏa mãn A = ? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Ma trận chuyển vị — Transpose</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Ma trận chuyển vị</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Ô (1,2) = 3 → Aᵀ(2,1) = 3. Kiểm: hàng 1 của A là cột 1 của Aᵀ.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO SẴN</div>
+      <div class="row">
+        <div class="blk in"><div class="nm">A</div><div class="m c3" id="kmA"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">KẾT QUẢ · Aᵀ (3×2)</div>
+      <div class="row">
+        <div class="blk out"><div class="nm">Aᵀ</div><div class="m c2" id="kmAt"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>(5×3)ᵀ = <span class="qa">(3×5)</span></li>
+          <li>(Aᵀ)ᵀ = <span class="qa">A (chuyển vị hai lần = ma trận gốc)</span></li>
+          <li>Ma trận đối xứng: <span class="qa">A = Aᵀ (ô (i,j) = ô (j,i))</span></li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Chuyển vị gặp lại ngay trong <b>attention</b>: điểm attention = Q·Kᵀ — nhân Q với K đã chuyển vị để
+        mỗi query chấm điểm từng key. Cũng dùng trong <b>lan truyền ngược</b>: gradient đi ngược qua lớp tuyến tính theo Wᵀ.
+        Bài kế (A7): nhân ma trận — ghép nhiều tích vô hướng thành bảng C = A·B.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>AI by Hand ✍️ · Ma trận chuyển vị — Transpose</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+var fI = function(x){ return WB.fmtInt(x); };
+
+function fillGrid(id, rows, cols, data, blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<rows;i++) for(var j=0;j<cols;j++)
+    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(data[i][j]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  // A: 2×3
+  var A=[[WB.randInt(-5,6),WB.randInt(-5,6),WB.randInt(-5,6)],
+         [WB.randInt(-5,6),WB.randInt(-5,6),WB.randInt(-5,6)]];
+  // Aᵀ: 3×2
+  var At=[[A[0][0],A[1][0]],[A[0][1],A[1][1]],[A[0][2],A[1][2]]];
+
+  // ĐỀ
+  fillGrid('mA',2,3,A,false);
+  fillGrid('mAt',3,2,At,true);
+  // ĐÁP ÁN
+  fillGrid('kmA',2,3,A,false);
+  fillGrid('kmAt',3,2,At,false);
+
+  drawTranspose('sch1',A,At);
+  drawTranspose('sch2',A,At);
+}
+
+function drawTranspose(id,A,At){
+  var box=document.getElementById(id); if(!box) return;
+  // vẽ A (2×3) bên trái, Aᵀ (3×2) bên phải, mũi tên cho ô (0,1) → At(1,0)
+  var cw=20,ch=18,px0=12,py0=22,gx=90,gy=22;
+  var W=178,H=148;
+  var s='';
+  // nhãn
+  s+='<text x="'+px0+'" y="16" font-size="10" fill="#0e7490" font-weight="700">A (2×3)</text>';
+  s+='<text x="'+gx+'" y="16" font-size="10" fill="#b45309" font-weight="700">Aᵀ (3×2)</text>';
+
+  // vẽ A
+  for(var i=0;i<2;i++) for(var j=0;j<3;j++){
+    var x=px0+j*cw, y=py0+i*ch;
+    var isHL=(i===0&&j===1);
+    s+='<rect x="'+x+'" y="'+y+'" width="'+(cw-2)+'" height="'+(ch-2)+'" fill="'+(isHL?'#fff3b0':'#fdecd2')+'" stroke="#e3c489" stroke-width="'+(isHL?'2':'1.2')+'"/>';
+    s+='<text x="'+(x+(cw-2)/2)+'" y="'+(y+(ch-2)/2+4)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#3a2a08">'+fI(A[i][j])+'</text>';
+  }
+
+  // đường chéo chính (nét đứt)
+  s+='<line x1="'+(px0+0.5)+'" y1="'+(py0+0.5)+'" x2="'+(px0+2*cw-1.5)+'" y2="'+(py0+2*ch-1.5)+'" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4 3"/>';
+
+  // vẽ Aᵀ
+  for(var i=0;i<3;i++) for(var j=0;j<2;j++){
+    var x=gx+j*cw, y=gy+i*ch;
+    var isHL=(i===1&&j===0);
+    s+='<rect x="'+x+'" y="'+y+'" width="'+(cw-2)+'" height="'+(ch-2)+'" fill="'+(isHL?'#fff3b0':'#d6ecf6')+'" stroke="#a7d3e3" stroke-width="'+(isHL?'2':'1.2')+'"/>';
+    s+='<text x="'+(x+(cw-2)/2)+'" y="'+(y+(ch-2)/2+4)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#0c4a5e">'+fI(At[i][j])+'</text>';
+  }
+
+  // mũi tên ô (0,1) → At(1,0)
+  var sx=px0+1*cw+(cw-2)/2, sy=py0+0*ch+(ch-2)/2;
+  var ex=gx+0*cw+(cw-2)/2, ey=gy+1*ch+(ch-2)/2;
+  s+='<defs><marker id="mar'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
+  s+='<path d="M'+sx+','+sy+' C'+(sx+20)+','+(sy-10)+' '+(ex-15)+','+(ey-10)+' '+ex+','+ey+'" fill="none" stroke="#b45309" stroke-width="1.4" stroke-dasharray="4 2" marker-end="url(#mar'+id+')"/>';
+  s+='<text x="'+((sx+ex)/2)+'" y="'+(Math.min(sy,ey)-6)+'" text-anchor="middle" font-size="9" fill="#b45309">(0,1)→(1,0)</text>';
+
+  // chú thích chiều
+  s+='<text x="12" y="'+(py0+2*ch+10)+'" font-size="9" fill="#6b7280">← hàng</text>';
+  s+='<text x="'+gx+'" y="'+(gy+3*ch+10)+'" font-size="9" fill="#6b7280">← thành cột →</text>';
+
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="ma trận A và Aᵀ với mũi tên lật ô">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -82,6 +82,13 @@ WB.wire(generate);
 5. **Phần ỨNG DỤNG / ý nghĩa thực tế** + **"Rút ra"** ở cuối trang đáp án, nối sang bài kế tiếp.
 6. Phân biệt rạch ròi định lý / thực nghiệm / giả thuyết nếu có khẳng định.
 
+> **Muốn phiếu GIẢNG GIẢI (dạy kỹ, giải thích nhiều cho người tự học)?** Dùng skill **`/phieu-giai-thich`**.
+> Nó thêm 3 lớp dạy lên khung classic này, qua **class additive** ở cuối [wb.css](wb.css):
+> - **`.intuition`** (tím) — khối "💡 Trực giác / ví von" đặt ngay sau `.intro`, trước khi vào số.
+> - **`.why`** (lam) — dòng "Vì sao:" dưới mỗi bước `.calc`, giải *bản chất* (khác `.hint` cam = mẹo, `.note` xám = ý nghĩa).
+> - **`.quiz`** (cam nét đứt) — "✎ Tự kiểm tra" cuối trang ĐỀ; đáp án `.qa` chỉ lộ ở trang ĐÁP ÁN.
+> Ngược lại, bài kiến trúc nhìn-trọn-hệ (attention/transformer) dùng **`/phieu-canvas`** (tối giản, A4 ngang).
+
 ## 6. Thêm hình minh họa (SVG)
 Mỗi phiếu nên có một sơ đồ đúng bản chất. Mẫu tham chiếu: [01-tich-vo-huong.html](01-tich-vo-huong.html) (hàm `drawFig`).
 

@@ -115,3 +115,27 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
   .page+.page{page-break-before:always;}
   .toolbar{display:none;}
 }
+
+/* ====== KHỐI GIẢNG GIẢI (additive — dùng bởi skill /phieu-giai-thich) ====== */
+/* Không sửa class cũ; 3 khối dạy kỹ cho phiếu giàu giải thích. */
+
+/* "Trực giác / ví von" — đặt ngay sau intro, trước khi vào số. Tông tím (thành phần thứ ba). */
+.intuition{margin-top:9px;border:1px solid #d9d2ff;border-left:4px solid #7c5cff;border-radius:8px;
+  background:#f7f5ff;padding:9px 14px;font-size:13.5px;break-inside:avoid;}
+.intuition b{color:#5b3fd6;}
+.intuition .lead{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:#5b3fd6;display:inline-flex;align-items:center;gap:6px;margin-right:6px;}
+
+/* "Vì sao" — gắn dưới một bước .calc để giải nghĩa bản chất bước đó. Tông lam (chiều hiểu/xuôi). */
+.why{margin-top:6px;font-size:12.5px;color:var(--ink);border-left:3px solid var(--accent);
+  padding-left:10px;background:#f2f9fb;border-radius:0 6px 6px 0;padding-top:4px;padding-bottom:4px;}
+.why b{color:var(--accent);}
+
+/* "Tự kiểm tra" — 1–2 câu hỏi khái niệm; đáp án (.qa) chỉ lộ ở trang ĐÁP ÁN. */
+.quiz{margin-top:10px;border:1.5px dashed var(--accent2);border-radius:8px;background:#fffaf3;
+  padding:9px 14px;font-size:13px;break-inside:avoid;}
+.quiz .qh{font-family:var(--mono);font-weight:700;color:var(--accent2);font-size:11.5px;
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
+.quiz ol{margin:2px 0 0 18px;padding:0;}
+.quiz li{margin-top:4px;}
+.quiz .qa{color:#7a3d00;font-weight:700;background:#fff0dd;border-radius:4px;padding:0 5px;}

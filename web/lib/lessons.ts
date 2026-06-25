@@ -64,10 +64,10 @@ function soon(no: string, part: Part, course: Course, title: string, english: st
 
 export const LESSONS: Lesson[] = [
   // ── PHẦN A · Toán nền tảng (K1) ─────────────────────────────────────────
-  soon("A1", "A", "K1", "Vectơ: cộng, trừ, nhân vô hướng", "Vector ops", "Cộng/trừ từng ô, nhân hệ số — phép tay nền của mọi bài sau."),
-  soon("A2", "A", "K1", "Độ dài & chuẩn", "Norm (L1, L2)", "Tính √(Σx²) và Σ|x| — đo độ lớn của một vectơ."),
+  { no: "A1", slug: "A1-vecto-cong-tru", title: "Vectơ: cộng, trừ, nhân vô hướng", english: "Vector ops", blurb: "Cộng/trừ từng ô, nhân hệ số — phép tay nền của mọi bài sau.", part: "A", course: "K1", available: true, isFree: true },
+  { no: "A2", slug: "A2-do-dai-chuan", title: "Độ dài & chuẩn", english: "Norm (L1, L2)", blurb: "Tính √(Σx²) và Σ|x| — đo độ lớn của một vectơ.", part: "A", course: "K1", available: true, isFree: true },
   { no: "01", slug: "01-tich-vo-huong", title: "Tích vô hướng", english: "Dot Product", blurb: "Nhân từng cặp rồi cộng → một con số. Viên gạch của mọi phép tính AI.", part: "A", course: "K1", available: true, isFree: true },
-  soon("A4", "A", "K1", "Cosine similarity", "Cosine", "dot ÷ (‖a‖‖b‖) → độ giống nhau về hướng giữa hai vectơ."),
+  { no: "A4", slug: "A4-cosine-similarity", title: "Cosine similarity", english: "Cosine", blurb: "dot ÷ (‖a‖‖b‖) → độ giống nhau về hướng giữa hai vectơ.", part: "A", course: "K1", available: true, isFree: true },
   soon("A5", "A", "K1", "Phép chiếu vectơ", "Projection", "(a·b/‖b‖²)·b — bóng của a lên hướng b."),
   soon("A6", "A", "K1", "Ma trận chuyển vị", "Transpose", "Lật hàng ↔ cột — thao tác xuất hiện khắp attention/backprop."),
   { no: "02", slug: "02-nhan-ma-tran", title: "Nhân ma trận", english: "Matrix Multiplication", blurb: "Xếp nhiều tích vô hướng: Cᵢⱼ = hàng i · cột j.", part: "A", course: "K1", available: true, isFree: true },

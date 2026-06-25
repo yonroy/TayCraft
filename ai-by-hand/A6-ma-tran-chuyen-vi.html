@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI by Hand · Bài A6 — Ma trận chuyển vị (A4 in được)</title>
+<link rel="stylesheet" href="wb.css">
+<style>
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.66;}
+.page .why{margin-top:5px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài A6</span><h1>Ma trận chuyển vị <small>— Transpose</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Chuyển vị = <b>lật hàng ↔ cột</b>. Nó xuất hiện khắp AI: attention viết Q<b>Kᵀ</b> để
+    mỗi truy vấn "chấm" mọi khóa; lan truyền ngược nhân <b>Wᵀ</b> để đẩy tín hiệu lỗi về trước. Một thao tác nhỏ, dùng vô số lần.
+    <div class="formula">
+      (Aᵀ)<sub>ij</sub> = A<sub>ji</sub> &nbsp;&nbsp;|&nbsp;&nbsp; A cỡ m×n → Aᵀ cỡ n×m
+    </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Hãy xem ma trận là một <b>bảng số</b>. Chuyển vị là <b>lật bảng quanh đường chéo chính</b>: dòng đọc ngang giờ
+    dựng đứng thành cột. Ô nằm trên đường chéo (vị trí i,i) thì <b>đứng yên</b>, các ô khác đổi chỗ qua đường chéo.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Ma trận A cho sẵn</h2><span class="tag">2×3</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">A <s>2×3</s></div>
+        <div class="mtx c3">
+          <div class="cell given" data-q="a11">2</div><div class="cell given" data-q="a12">5</div><div class="cell given" data-q="a13">1</div>
+          <div class="cell given" data-q="a21">3</div><div class="cell given" data-q="a22">4</div><div class="cell given" data-q="a23">6</div>
+        </div></div>
+      <div class="note" style="max-width:74mm">Hàng 1 = (<span data-q="a11">2</span>, <span data-q="a12">5</span>, <span data-q="a13">1</span>),
+        hàng 2 = (<span data-q="a21">3</span>, <span data-q="a22">4</span>, <span data-q="a23">6</span>).</div>
+    </div>
+  </div>
+
+  <!-- BƯỚC 1 — dựng Aᵀ -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Viết Aᵀ — hàng thành cột</h2><span class="tag">điền 3×2</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">Aᵀ <s>3×2</s></div>
+        <div class="mtx c2">
+          <div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div>
+        </div></div>
+      <div class="why" style="max-width:78mm"><b>Vì sao:</b> <b>cột 1</b> của Aᵀ chính là <b>hàng 1</b> của A dựng đứng; cột 2 là hàng 2.
+        Cỡ đổi từ 2×3 thành 3×2.</div>
+    </div>
+  </div>
+
+  <!-- BƯỚC 2 — vectơ & tính chất -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Vectơ cũng chuyển vị</h2><span class="tag">hàng ↔ cột</span></div>
+    <div class="calc">
+      (Aᵀ)ᵀ = <span class="blk" style="min-width:30px"></span>
+      &nbsp; (chuyển vị hai lần → quay về A?)<br>
+      Một <b>vectơ hàng</b> x = (<span data-q="a11">2</span>, <span data-q="a12">5</span>, <span data-q="a13">1</span>) khi chuyển vị thành <b>vectơ cột</b>.
+    </div>
+    <div class="why"><b>Vì sao:</b> tích vô hướng chính là xᵀy — nhân một <i>hàng</i> với một <i>cột</i>. Đó là lý do attention viết QKᵀ.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>A cỡ 4×7 thì Aᵀ cỡ bao nhiêu? → <span class="blk" style="min-width:70px"></span></li>
+      <li>Những ô nào đứng yên khi chuyển vị? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài A6 · Ma trận chuyển vị</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">AI by Hand <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A6</span><h1>Ma trận chuyển vị <small>— lời giải</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Aᵀ (3×2)</h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">Aᵀ</div>
+        <div class="mtx c2">
+          <div class="cell ans" data-q="t11">2</div><div class="cell ans" data-q="t12">3</div>
+          <div class="cell ans" data-q="t21">5</div><div class="cell ans" data-q="t22">4</div>
+          <div class="cell ans" data-q="t31">1</div><div class="cell ans" data-q="t32">6</div>
+        </div></div>
+      <div class="note" style="max-width:80mm">Cột 1 = hàng 1 của A = (<span data-q="a11">2</span>,<span data-q="a12">5</span>,<span data-q="a13">1</span>);
+        cột 2 = hàng 2 = (<span data-q="a21">3</span>,<span data-q="a22">4</span>,<span data-q="a23">6</span>).</div>
+    </div>
+  </div>
+
+  <!-- SƠ ĐỒ ở trang 2 cho cân chiều cao -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: lật quanh đường chéo</h2><span class="tag">hàng → cột</span></div>
+    <div class="figrow">
+      <svg id="fig2" class="fig" viewBox="0 0 240 120" width="80mm" height="40mm" aria-label="hàng của A trở thành cột của A chuyển vị"></svg>
+      <div style="flex:1">
+        <div class="calc ans">(Aᵀ)ᵀ = <span class="blk" data-q="aat">A</span> &nbsp;(lật hai lần về chỗ cũ)</div>
+        <div class="note"><span style="color:var(--accent)">Hàng 1 (lam)</span> của A dựng thành <b>cột 1</b> của Aᵀ;
+          <span style="color:var(--accent2)">hàng 2 (cam)</span> thành cột 2.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>A cỡ 4×7 → Aᵀ cỡ? → <span class="qa">7×4 (đảo hai chiều)</span></li>
+      <li>Ô nào đứng yên? → <span class="qa">các ô trên đường chéo chính (i, i)</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Chuyển vị chỉ <b>đổi chỗ</b> chứ không đổi giá trị các số, nhưng nhờ nó mà phép nhân
+    "hàng × cột" khớp thứ nguyên: xᵀy = tích vô hướng, QKᵀ = điểm chú ý, Wᵀδ = lỗi lan ngược. Bài A8 tiếp theo dùng
+    đúng quy tắc "hàng nhân cột" để tính <b>ma trận × vectơ</b>.
+  </div>
+
+  <div class="wb-foot"><span>AI by Hand ✍️ — Bài A6 · Ma trận chuyển vị</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="wb-random.js"></script>
+<script>
+function generate(){
+  var A = [
+    [WB.randIntNZ(-3,7), WB.randIntNZ(-3,7), WB.randIntNZ(-3,7)],
+    [WB.randIntNZ(-3,7), WB.randIntNZ(-3,7), WB.randIntNZ(-3,7)]
+  ];
+  WB.setAll({
+    a11: WB.fmtInt(A[0][0]), a12: WB.fmtInt(A[0][1]), a13: WB.fmtInt(A[0][2]),
+    a21: WB.fmtInt(A[1][0]), a22: WB.fmtInt(A[1][1]), a23: WB.fmtInt(A[1][2]),
+    // Aᵀ: (Aᵀ)_ij = A_ji
+    t11: WB.fmtInt(A[0][0]), t12: WB.fmtInt(A[1][0]),
+    t21: WB.fmtInt(A[0][1]), t22: WB.fmtInt(A[1][1]),
+    t31: WB.fmtInt(A[0][2]), t32: WB.fmtInt(A[1][2]),
+    aat: "A"
+  });
+  drawT('fig2', A);
+}
+
+// Sơ đồ: A (2×3) bên trái, mũi tên, Aᵀ (3×2) bên phải; tô màu hàng→cột.
+function drawT(id, A){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var s = '<defs><marker id="ar'+id+'" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
+  var cw = 22, ch = 18;
+  // A: 2 hàng × 3 cột, gốc (8,18)
+  var ax = 8, ay = 18;
+  var rowFill = ['#dff1f5', '#fbe8d4'], rowStroke = ['#0e7490', '#b45309'];
+  for (var i = 0; i < 2; i++) for (var j = 0; j < 3; j++){
+    s += '<rect x="'+(ax+j*cw)+'" y="'+(ay+i*ch)+'" width="'+cw+'" height="'+ch+'" fill="'+rowFill[i]+'" stroke="'+rowStroke[i]+'" stroke-width="1"/>';
+    s += '<text x="'+(ax+j*cw+cw/2)+'" y="'+(ay+i*ch+ch/2+3)+'" style="font-size:8px" fill="#16202e" text-anchor="middle">'+WB.fmtInt(A[i][j])+'</text>';
+  }
+  s += '<text x="'+(ax+cw*1.5)+'" y="'+(ay-4)+'" style="font-size:9px" fill="#16202e" text-anchor="middle" font-weight="700">A (2×3)</text>';
+  // mũi tên
+  s += '<line x1="86" y1="'+(ay+ch)+'" x2="128" y2="'+(ay+ch)+'" stroke="#5b6776" stroke-width="1.4" marker-end="url(#ar'+id+')"/>';
+  s += '<text x="107" y="'+(ay+ch-5)+'" style="font-size:8px" fill="#5b6776" text-anchor="middle">ᵀ</text>';
+  // Aᵀ: 3 hàng × 2 cột, gốc (140,18); cột j tô theo hàng j của A
+  var tx = 140, ty = 18;
+  for (var r = 0; r < 3; r++) for (var c = 0; c < 2; c++){
+    s += '<rect x="'+(tx+c*cw)+'" y="'+(ty+r*ch)+'" width="'+cw+'" height="'+ch+'" fill="'+rowFill[c]+'" stroke="'+rowStroke[c]+'" stroke-width="1"/>';
+    s += '<text x="'+(tx+c*cw+cw/2)+'" y="'+(ty+r*ch+ch/2+3)+'" style="font-size:8px" fill="#16202e" text-anchor="middle">'+WB.fmtInt(A[c][r])+'</text>';
+  }
+  s += '<text x="'+(tx+cw)+'" y="'+(ty-4)+'" style="font-size:9px" fill="#16202e" text-anchor="middle" font-weight="700">Aᵀ (3×2)</text>';
+  svg.innerHTML = s;
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

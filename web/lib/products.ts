@@ -1,15 +1,14 @@
 // Nguồn chân lý cho GÓI BÁN (product) và KHÓA (course).
-// Thang giá "chim mồi" (decoy): K2 → K3 Pro → K4 Max (mồi) → K5 Full (đích).
-// K4 Max = đủ 4 khóa nội dung hiện có; K5 Full = + trọn đời/phiếu tương lai/bonus, giá gần bằng
-// → Full chi phối tuyệt đối Max. K1 miễn phí cho mọi người (xem FREE_COURSES trong lessons.ts).
+// 3 bậc gọn (Goldilocks): Cơ bản → Pro (nổi bật, phổ biến nhất) → Trọn bộ.
+// Khóa nền tảng (K1) miễn phí cho mọi người (xem FREE_COURSES trong lessons.ts).
+// Cam kết bền vững: Trọn bộ = trọn đời nội dung hiện có + cập nhật mới free 12 tháng
+// (không hứa "mọi phiếu tương lai trọn đời" để tránh gánh nặng vận hành).
 import type { Course } from "./lessons";
 
-// Giữ id "all-access" cho K5 Full để enrollment/đơn cũ vẫn được grandfather.
-export type ProductId = "co-ban" | "k3" | "k4-max" | "all-access";
+// Giữ id "all-access" cho gói Trọn bộ để enrollment/đơn cũ vẫn được grandfather.
+export type ProductId = "co-ban" | "k3" | "all-access";
 
-// Giá K5 Full early-bird = 349k (cố định để giữ tính toàn vẹn thang mồi: phải > K4 Max 329k;
-// KHÔNG đọc COURSE_PRICE_VND nữa vì env cũ = 199k sẽ làm Full rẻ hơn mồi → vỡ decoy).
-// Lộ trình giá đích khi đủ ~138 phiếu: 599k.
+// Giá gói Trọn bộ = 349k (cố định, không đọc COURSE_PRICE_VND vì env cũ = 199k sẽ phá thang giá).
 const FULL_PRICE = 349000;
 
 export interface CourseMeta {
@@ -34,55 +33,47 @@ export interface Product {
   courses: Course[] | "all";
   priceVnd: number;
   compareAtVnd?: number; // giá "mua lẻ cộng lại" để gạch ngang (neo)
-  perks?: string[]; // gạch đầu dòng quyền lợi nổi bật (✓), hoặc điểm thiếu của mồi
-  highlight?: boolean; // gói đích — làm nổi bật trên lưới
+  perks?: string[]; // gạch đầu dòng quyền lợi nổi bật
+  highlight?: boolean; // gói nổi bật ("phổ biến nhất")
+  badge?: string; // nhãn nhỏ góc thẻ (vd "Đầy đủ nhất")
   active: boolean; // đang bán hay chưa
 }
 
-// Thang cộng dồn: gói cao gồm trọn khóa của gói thấp. Xếp K2 → … → K5 Full (đích).
+// 3 bậc cộng dồn: gói cao gồm trọn khóa của gói thấp. Nổi bật ở giữa (Pro).
 export const PRODUCTS: Product[] = [
   {
     id: "co-ban",
-    label: "K2 — Cơ bản",
-    tagline: "Vào nghề: nền tảng + huấn luyện/kiến trúc",
+    label: "Cơ bản",
+    tagline: "Nền tảng vững + huấn luyện & kiến trúc",
     courses: ["K1", "K2"],
     priceVnd: 149000,
-    perks: ["Gồm Khóa 1 (miễn phí) + Khóa 2", "Học một lần, dùng trọn đời"],
+    perks: ["Học một lần, xem trọn đời"],
     active: true,
   },
   {
     id: "k3",
-    label: "K3 Pro",
+    label: "Pro",
     tagline: "Thêm Transformer & LLM — phần được hỏi nhiều nhất",
     courses: ["K1", "K2", "K3"],
     priceVnd: 249000,
     compareAtVnd: 348000,
-    perks: ["Gồm K1 + K2 + K3 (Transformer/LLM)"],
-    active: true,
-  },
-  {
-    id: "k4-max",
-    label: "K4 Max",
-    tagline: "Đủ cả 4 khóa hiện có",
-    courses: ["K1", "K2", "K3", "K4"],
-    priceVnd: 329000,
-    compareAtVnd: 497000,
-    perks: ["Trọn 4 khóa, 138 phiếu hiện có", "Không kèm phiếu ra trong tương lai", "Không kèm bonus"],
+    perks: ["Gồm trọn gói Cơ bản", "Học một lần, xem trọn đời"],
+    highlight: true,
     active: true,
   },
   {
     id: "all-access",
-    label: "K5 Full — Trọn bộ",
-    tagline: "Tất cả + mọi phiếu tương lai, trọn đời",
+    label: "Trọn bộ",
+    tagline: "Đủ mọi chủ đề, gồm chuyên sâu & dự án",
     courses: "all",
     priceVnd: FULL_PRICE,
     compareAtVnd: 497000,
     perks: [
-      "Trọn 4 khóa + mọi phiếu RA TRONG TƯƠNG LAI, trọn đời",
-      "Bonus: phiếu capstone + cộng đồng",
-      "Chỉ hơn K4 Max ~20k mà thêm trọn đời",
+      "Trọn đời nội dung hiện có",
+      "Cập nhật mới miễn phí 12 tháng",
+      "Bonus: dự án capstone + cộng đồng",
     ],
-    highlight: true,
+    badge: "Đầy đủ nhất",
     active: true,
   },
 ];

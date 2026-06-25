@@ -7,7 +7,7 @@ import { getUser, hasAccess } from "@/lib/auth";
 import { productById } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 
-const PRICE = productById("all-access")!.priceVnd; // giá K5 Full (đích)
+const PRICE = productById("all-access")!.priceVnd; // giá gói Trọn bộ
 
 export default async function LearnPage() {
   const user = await getUser();

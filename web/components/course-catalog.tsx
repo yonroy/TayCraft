@@ -53,8 +53,11 @@ export function CourseCatalog({ access = false }: { access?: boolean }) {
           <section key={courseId}>
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
               <div>
-                <h3 className="text-lg font-bold">
-                  <span className="text-accent">{courseId}</span> · {meta.name}
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  {meta.name}
+                  <span className="font-mono text-[11px] font-normal text-dim border border-line rounded px-1.5 py-0.5">
+                    {courseId}
+                  </span>
                 </h3>
                 <p className="text-sm text-dim mt-0.5">{meta.desc}</p>
               </div>

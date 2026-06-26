@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · VAE — Reparam + KL — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:13mm; --ch:8mm; }
+  .cell{font-size:13px;}
+  .big{font-family:var(--mono);font-size:14px;line-height:2;margin-top:5px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:46px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#0c4a5e}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>VAE — Reparam + KL</h1><span class="vi">— bản chi tiết</span>
+    <span class="tag">z = μ + σ⊙ε · phạt KL · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> VAE muốn không gian ẩn z "trơn" để <b>sinh</b> mẫu mới. Encoder xuất ra μ, σ; ta lấy mẫu
+    z = μ + σ·ε với ε ~ N(0,1) (mẹo <b>reparameterization</b> để gradient chảy qua được). Đồng thời phạt <b>KL</b> kéo
+    (μ,σ) về gần N(0,1) chuẩn.
+    <div class="fm">z = μ + σ·ε · KL = ½ Σ (μ² + σ² − 1 − ln σ²)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">σ</td><td>0.37</td><td>1</td><td>2.72</td></tr>
+        <tr><td class="h">σ²</td><td>0.14</td><td>1</td><td>7.39</td></tr>
+        <tr><td class="h">ln σ²</td><td>−2</td><td>0</td><td>2</td></tr></table>
+      <div class="hint">ε là "nhiễu ngoài" → z ngẫu nhiên nhưng vẫn nhận gradient qua μ, σ.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① LẤY MẪU: z = μ + σ⊙ε  (ε cho sẵn)</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">μ</span><div class="m c1" id="MU"></div></div>
+        <div class="blk w"><span class="nm">σ</span><div class="m c1" id="SG"></div></div>
+        <div class="blk in"><span class="nm">ε ~ N(0,1)</span><div class="m c1" id="EP"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">z = μ + σ·ε</span><div class="m c1" id="Z"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:6px">② PHẠT KL = ½ Σ (μ² + σ² − 1 − ln σ²)</div>
+      <div class="big">
+        chiều 1: ½(<span class="ub"></span>² + <span class="ub"></span> − 1 − <span class="ub"></span>) = <span class="ub"></span> &nbsp;·&nbsp;
+        chiều 2: = <span class="ub"></span> &nbsp;→&nbsp; KL = <span class="ub" style="min-width:56px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>(μ,σ) = (0, 1) cho KL bằng mấy? → <span class="ub" style="min-width:50px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · VAE Reparam + KL</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>VAE — Reparam + KL</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">σ</td><td>0.37</td><td>1</td><td>2.72</td></tr>
+        <tr><td class="h">σ²</td><td>0.14</td><td>1</td><td>7.39</td></tr>
+        <tr><td class="h">ln σ²</td><td>−2</td><td>0</td><td>2</td></tr></table>
+      <div class="hint">Loss VAE = lỗi dựng lại (Bài 24) + β·KL. KL giữ z không "phân mảnh".</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">z = μ + σ⊙ε</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">μ</span><div class="m c1" id="kMU"></div></div>
+        <div class="blk w"><span class="nm">σ</span><div class="m c1" id="kSG"></div></div>
+        <div class="blk in"><span class="nm">ε</span><div class="m c1" id="kEP"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">z</span><div class="m c1" id="kZ"></div></div>
+      </div>
+      <div class="big" style="margin-top:6px">
+        KL₁ = ½(μ₁²+σ₁²−1−lnσ₁²) = <b><span data-q="kl1">?</span></b> ·
+        KL₂ = <b><span data-q="kl2">?</span></b> ·
+        <b>KL = <span data-q="kl">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">KL = 0</span>: ½(0 + 1 − 1 − 0) = 0. Đúng phân phối chuẩn N(0,1) → không bị phạt.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Reparam tách phần ngẫu nhiên (ε) ra ngoài để train được; KL ép không gian ẩn về chuẩn để
+        <b>lấy mẫu sinh</b> bằng cách bốc z ~ N(0,1) rồi decode. Một họ mô hình sinh khác — đối kháng: <b>J3 GAN</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · VAE Reparam + KL</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var SIG={0.37:{s2:0.14,ln:-2},1:{s2:1,ln:0},2.72:{s2:7.39,ln:2}};
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var sigs=[0.37,1,2.72];
+  var mu=[WB.randInt(-2,2),WB.randInt(-2,2)];
+  var sg=[WB.pick(sigs),WB.pick(sigs)];
+  var ep=[WB.pick([-1,1,0.5,-0.5]),WB.pick([-1,1,0.5,-0.5])];
+  var z=[Math.round((mu[0]+sg[0]*ep[0])*100)/100, Math.round((mu[1]+sg[1]*ep[1])*100)/100];
+  function kl(m,s){return Math.round(0.5*(m*m + SIG[s].s2 - 1 - SIG[s].ln)*100)/100;}
+  var kl1=kl(mu[0],sg[0]), kl2=kl(mu[1],sg[1]);
+  var KL=Math.round((kl1+kl2)*100)/100;
+  var MU=[[mu[0]],[mu[1]]], SG=[[WB.fmtTrim(sg[0])],[WB.fmtTrim(sg[1])]], EP=[[WB.fmtTrim(ep[0])],[WB.fmtTrim(ep[1])]], Z=[[f2(z[0])],[f2(z[1])]];
+  fill('MU',MU,false); fill('SG',SG,false); fill('EP',EP,false); fill('Z',Z,true);
+  fill('kMU',MU,false); fill('kSG',SG,false); fill('kEP',EP,false); fill('kZ',Z,false);
+  WB.setAll({kl1:f2(kl1), kl2:f2(kl2), kl:f2(KL)});
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  function box(x,y,w,h,fill,txt){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1.1"/>';s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+1)+'" text-anchor="middle" font-size="9" font-weight="700">'+txt+'</text>';}
+  s+='<defs><marker id="v'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  box(8,16,28,16,'#fdecd2','μ'); box(8,44,28,16,'#ece2ff','σ');
+  box(64,16,26,16,'#fdecd2','ε');   // nhiễu ngoài
+  s+='<text x="77" y="11" text-anchor="middle" font-size="7" fill="#6b7280">N(0,1)</text>';
+  box(64,44,28,18,'#d6ecf6','z');
+  // μ -> z, σ·ε -> z
+  s+='<line x1="36" y1="24" x2="64" y2="50" stroke="#0e7490" stroke-width="1.3" marker-end="url(#v'+id+')"/>';
+  s+='<line x1="36" y1="52" x2="50" y2="52" stroke="#0e7490" stroke-width="1.3"/>';
+  s+='<line x1="77" y1="32" x2="68" y2="44" stroke="#0e7490" stroke-width="1.3"/>';
+  s+='<text x="50" y="40" font-size="8" fill="#6b7280">⊗</text>';
+  box(112,30,30,18,'#fff3b0','KL');
+  s+='<line x1="36" y1="24" x2="112" y2="36" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<line x1="36" y1="52" x2="112" y2="44" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<text x="127" y="62" text-anchor="middle" font-size="7.5" fill="#b45309">kéo về N(0,1)</text>';
+  b.innerHTML='<svg viewBox="0 0 150 76" aria-label="reparam trick và phạt KL">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

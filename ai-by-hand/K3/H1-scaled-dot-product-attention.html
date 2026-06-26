@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Scaled Dot-Product Attention — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:9mm; --ch:8mm; }
+  .cell{font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Scaled Dot-Product Attention</h1><span class="vi">— chú ý chấm-điểm có tỉ lệ</span>
+    <span class="tag">QKᵀ → /√d → softmax → ·V · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Đây là <b>phép tính lõi</b> của mọi Transformer. Mỗi token hỏi (Q) "ai giống tôi?",
+    so với các khoá (K) bằng tích vô hướng, chia <b>√d</b> để điểm không quá lớn, ép về xác suất bằng <b>softmax</b>,
+    rồi trộn các giá trị (V) theo trọng số đó.
+    <div class="fm">Attention(Q,K,V) = softmax( Q·Kᵀ / √d ) · V   (ở đây d = 4 → √d = 2)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint"><b>Lam</b> = Q (hỏi) · <b>tím</b> = K,V (khoá/giá trị) · <b>vàng</b> = trọng số chú ý A.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① ĐIỂM THÔ — S = Q·Kᵀ (2 token, d=4)</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">Q</span><div class="m c4" id="Q"></div></div>
+        <div class="blk w"><span class="nm">K</span><div class="m c4" id="K"></div></div>
+        <span class="op">→</span>
+        <div class="blk"><span class="nm">S = Q·Kᵀ</span><div class="m c2" id="S"></div>
+          <span class="fm">Sᵢⱼ = hàng i của Q · hàng j của K</span></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">② CHIA √d → ③ SOFTMAX theo hàng = A</div>
+      <div class="row">
+        <div class="blk"><span class="nm">S / √d</span><div class="m c2" id="Sd"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">A = softmax(S/√d)</span><div class="m c2" id="A"></div>
+          <span class="fm">mỗi hàng: eˣ / Σeˣ, cộng = 1</span></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">④ TRỘN GIÁ TRỊ — O = A·V</div>
+      <div class="row">
+        <div class="blk w"><span class="nm">V</span><div class="m c2" id="V"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">O = A·V</span><div class="m c2" id="O"></div>
+          <span class="fm">Oᵢ = Σⱼ Aᵢⱼ · Vⱼ</span></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Nếu bỏ bước chia √d, điểm S lớn hơn → softmax sắc hơn hay phẳng hơn? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:90px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Scaled Dot-Product Attention</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Scaled Dot-Product Attention</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint">A nhân quả token cùng "nửa" → tự chú ý mạnh vào chính mình.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① S = Q·Kᵀ → ② /√d → ③ A → ④ O</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">Q</span><div class="m c4" id="kQ"></div></div>
+        <div class="blk w"><span class="nm">K</span><div class="m c4" id="kK"></div></div>
+        <span class="op">→</span>
+        <div class="blk fw"><span class="nm">S</span><div class="m c2" id="kS"></div></div>
+        <span class="op">→</span>
+        <div class="blk fw"><span class="nm">S/√d</span><div class="m c2" id="kSd"></div></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div class="blk hot"><span class="nm">A = softmax</span><div class="m c2" id="kA"></div>
+          <span class="fm">e¹/(e¹+e⁰)=2.72/3.72=0.73</span></div>
+        <span class="op">·</span>
+        <div class="blk w"><span class="nm">V</span><div class="m c2" id="kV"></div></div>
+        <span class="op">=</span>
+        <div class="blk out"><span class="nm">O = A·V</span><div class="m c2" id="kO"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Sắc hơn</span>: điểm lớn → một ô eˣ trội hẳn → softmax dồn về 1 token (dễ bão hoà gradient). Chia √d giữ điểm vừa phải.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Toàn bộ self-attention (Bài 11), masked (Bài 14), multi-head (Bài 18) đều là phép này lặp lại.
+        √d = √(số chiều) giữ phương sai điểm ổn định khi d lớn. Tiếp theo: <b>H7</b> — mã vị trí sin/cos để token biết thứ tự.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Scaled Dot-Product Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fill(id,M,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<M.length;i++) for(var j=0;j<M[i].length;j++)
+    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';
+  el.innerHTML=s;
+}
+// các preset Q=K nhị phân: hai token trực giao → S=[[2,0],[0,2]]
+var PRE=[
+  [[1,1,0,0],[0,0,1,1]],
+  [[1,0,1,0],[0,1,0,1]],
+  [[0,1,1,0],[1,0,0,1]]
+];
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var QK=WB.pick(PRE);
+  var Q=QK, K=QK;
+  // S = Q Kᵀ  (2x2)
+  var S=[[0,0],[0,0]];
+  for(var i=0;i<2;i++)for(var j=0;j<2;j++){var t=0;for(var k=0;k<4;k++)t+=Q[i][k]*K[j][k];S[i][j]=t;}
+  var Sd=[[S[0][0]/2,S[0][1]/2],[S[1][0]/2,S[1][1]/2]];
+  // softmax theo hàng với eˣ table (giá trị 0 hoặc 1)
+  function sm(r){var e=r.map(function(x){return x===1?2.72:1;});var s=e[0]+e[1];return [Math.round(e[0]/s*100)/100,Math.round(e[1]/s*100)/100];}
+  var A=[sm(Sd[0]),sm(Sd[1])];
+  // V số nguyên nhỏ
+  var V=[[WB.randInt(0,5),WB.randInt(0,5)],[WB.randInt(0,5),WB.randInt(0,5)]];
+  var O=[[0,0],[0,0]];
+  for(var i=0;i<2;i++)for(var j=0;j<2;j++)O[i][j]=Math.round((A[i][0]*V[0][j]+A[i][1]*V[1][j])*100)/100;
+  var Af=A.map(function(r){return r.map(f2);});
+  var Of=O.map(function(r){return r.map(f2);});
+  var Sdf=Sd.map(function(r){return r.map(f2);});
+  // ĐỀ
+  fill('Q',Q,false); fill('K',K,false); fill('S',S,true); fill('Sd',Sdf,true); fill('A',Af,true); fill('V',V,false); fill('O',Of,true);
+  // ĐÁP ÁN
+  fill('kQ',Q,false); fill('kK',K,false); fill('kS',S,false); fill('kSd',Sdf,false); fill('kA',Af,false); fill('kV',V,false); fill('kO',Of,false);
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id); if(!b) return;
+  var s='';
+  function box(x,y,w,h,fill,txt,sub){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1.2"/>';s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+1)+'" text-anchor="middle" font-size="10" font-weight="700">'+txt+'</text>';if(sub)s+='<text x="'+(x+w/2)+'" y="'+(y+h+9)+'" text-anchor="middle" font-size="7.5" fill="#6b7280">'+sub+'</text>';}
+  function ar(x1,y1,x2,y2){s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#0e7490" stroke-width="1.6" marker-end="url(#a)"/>';}
+  s+='<defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#0e7490"/></marker></defs>';
+  box(14,16,42,18,'#fdecd2','Q · Kᵀ'); ar(35,34,35,46);
+  box(14,48,42,16,'#fff3b0','÷ √d'); ar(35,64,35,76);
+  box(14,78,42,16,'#fff3b0','softmax → A'); ar(35,94,35,106);
+  box(14,108,42,18,'#d6ecf6','O = A·V','trộn V theo A');
+  b.innerHTML='<svg viewBox="0 0 70 140" aria-label="luồng scaled dot-product attention">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

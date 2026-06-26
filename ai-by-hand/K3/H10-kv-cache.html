@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · KV Cache — sinh token tiếp theo — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:9mm; --ch:8mm; }
+  .cell{font-size:13px;}
+  .cell.cached{opacity:.6;}
+  .cell.fresh{box-shadow:0 0 0 2px #b45309 inset;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>KV Cache</h1><span class="vi">— sinh token tiếp theo</span>
+    <span class="tag">tái dùng K,V cũ · chỉ tính token mới · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Khi LLM sinh từng token, mỗi bước token mới phải chú ý tới <i>tất cả</i> token trước.
+    Tính lại K,V của mọi token cũ ở mỗi bước thì cực phí. <b>KV cache</b> lưu K,V đã tính; bước mới chỉ tính k,v cho
+    <b>token mới</b> rồi nối vào cache, và làm <b>một hàng</b> attention cho query mới.
+    <div class="fm">Bước t: nối kₜ,vₜ vào cache → oₜ = softmax(qₜ·Kᵀ / √d)·V  (d=4, √d=2)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint"><b>Mờ</b> = K,V đã lưu (không tính lại) · <b>viền cam</b> = token 3 vừa thêm.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① NỐI token mới vào cache (K,V có 3 hàng) — q₃ là query mới</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">q₃ (mới)</span><div class="m c4" id="q3"></div></div>
+        <div class="blk w"><span class="nm">K (cache + k₃)</span><div class="m c4" id="K"></div></div>
+        <div class="blk w"><span class="nm">V (cache + v₃)</span><div class="m c2" id="V"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:5px">② ĐIỂM s = q₃·Kᵀ /√d → ③ softmax a → ④ o₃ = a·V</div>
+      <div class="row">
+        <div class="blk"><span class="nm">s (3 khoá)</span><div class="m c1" id="S" style="--cw:11mm"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">a = softmax(s)</span><div class="m c1" id="A" style="--cw:11mm"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">o₃ = a·V</span><div class="m c2" id="O"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Không có cache, bước t phải tính lại K,V cho bao nhiêu token? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:90px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · KV Cache</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>KV Cache</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint">Cache đổi O(t²·d) → O(t·d) mỗi bước: chỉ 1 hàng attention thay vì cả ma trận.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">s → a → o₃</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">q₃</span><div class="m c4" id="kq3"></div></div>
+        <div class="blk w"><span class="nm">K</span><div class="m c4" id="kK"></div></div>
+        <span class="op">→</span>
+        <div class="blk fw"><span class="nm">s</span><div class="m c1" id="kS" style="--cw:11mm"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">a</span><div class="m c1" id="kA" style="--cw:11mm"></div></div>
+      </div>
+      <div class="row" style="margin-top:5px">
+        <div class="blk w"><span class="nm">V</span><div class="m c2" id="kV"></div></div>
+        <span class="op">·a</span>
+        <span class="op">=</span>
+        <div class="blk out"><span class="nm">o₃ = a·V</span><div class="m c2" id="kO"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Tất cả t token</span> (lãng phí). Với cache chỉ tính k,v cho 1 token mới — phần còn lại đọc từ bộ nhớ.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> KV cache là lý do chatbot trả lời mượt token-by-token mà không chậm dần bậc hai. Đổi lại tốn
+        RAM lưu cache (∝ độ dài × số lớp × d). Hết phần Attention. Tiếp theo: <b>H11 FFN</b> — nửa còn lại của khối Transformer.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · KV Cache</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fill(id,M,blank,marks){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++){var cls='cell'+(blank?' blank':'');if(marks){if(marks[i]==='c')cls+=' cached';if(marks[i]==='f')cls+=' fresh';}s+='<div class="'+cls+'">'+(blank?'':M[i][j])+'</div>';}el.innerHTML=s;}
+function f2(v){return WB.fmt2(v);}
+// hai nửa trực giao
+var HALF=[[1,1,0,0],[0,0,1,1]];
+function generate(){
+  // q₃ = nửa A; k1 = nửa A (overlap2 → score2), k2 = nửa B (overlap0), k3 = nửa A hoặc B
+  var q3=HALF[0];
+  var k3same=WB.pick([true,false]);
+  var K=[HALF[0].slice(),HALF[1].slice(),(k3same?HALF[0]:HALF[1]).slice()];
+  // V: ints nhỏ, 2 chiều
+  var V=[];for(var i=0;i<3;i++)V.push([WB.randInt(0,5),WB.randInt(0,5)]);
+  // s = q3·k /√d  (raw ∈{0,2} → /2 ∈{0,1})
+  var S=[],A=[],e=[];
+  for(var i=0;i<3;i++){var dot=0;for(var k=0;k<4;k++)dot+=q3[k]*K[i][k];var sc=dot/2;S.push([sc]);e.push(sc===1?2.72:1);}
+  var sum=e[0]+e[1]+e[2];
+  for(var i=0;i<3;i++)A.push([f2(Math.round(e[i]/sum*100)/100)]);
+  var av=Math.round(e[0]/sum*100)/100, bv=Math.round(e[1]/sum*100)/100, cv=Math.round(e[2]/sum*100)/100;
+  var O=[[f2(Math.round((av*V[0][0]+bv*V[1][0]+cv*V[2][0])*100)/100), f2(Math.round((av*V[0][1]+bv*V[1][1]+cv*V[2][1])*100)/100)]];
+  var marks=['c','c','f'];
+  fill('q3',[q3],false);
+  fill('K',K,false,marks); fill('V',V,false,marks);
+  fill('S',S,true); fill('A',A,true); fill('O',O,true);
+  fill('kq3',[q3],false);
+  fill('kK',K,false,marks); fill('kV',V,false,marks);
+  fill('kS',S,false); fill('kA',A,false); fill('kO',O,false);
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  // cache box rows 1,2 (mờ) + row 3 (cam) + query mới
+  for(var i=0;i<3;i++){var y=18+i*22;var cam=i===2;
+    s+='<rect x="60" y="'+y+'" width="60" height="18" rx="3" fill="'+(cam?'#ffe6cc':'#ece2ff')+'" stroke="'+(cam?'#b45309':'#c3b1f5')+'" stroke-width="'+(cam?1.6:1.1)+'" opacity="'+(cam?1:.55)+'"/>';
+    s+='<text x="90" y="'+(y+12)+'" text-anchor="middle" font-size="9" fill="#333">k'+(i+1)+',v'+(i+1)+'</text>';}
+  s+='<text x="90" y="12" text-anchor="middle" font-size="8" fill="#6b7280">KV cache</text>';
+  s+='<text x="90" y="92" text-anchor="middle" font-size="8" fill="#b45309">+ token 3 (mới)</text>';
+  // query mới bên trái
+  s+='<rect x="6" y="40" width="34" height="18" rx="3" fill="#fdecd2" stroke="#e3c489"/><text x="23" y="52" text-anchor="middle" font-size="9">q₃</text>';
+  s+='<defs><marker id="k'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  s+='<line x1="40" y1="49" x2="58" y2="49" stroke="#0e7490" stroke-width="1.5" marker-end="url(#k'+id+')"/>';
+  b.innerHTML='<svg viewBox="0 0 130 96" aria-label="kv cache nối token mới">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

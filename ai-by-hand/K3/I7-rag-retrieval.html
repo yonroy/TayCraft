@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · RAG Retrieval — embedding similarity — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 8px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.win{background:#d6f5d6;font-weight:700;color:#0a6;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>RAG Retrieval — Embedding Similarity</h1><span class="vi">— tìm tài liệu liên quan</span>
+    <span class="tag">cosine truy vấn × tài liệu → top · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> RAG cho LLM "tra cứu" tài liệu trước khi trả lời. Câu hỏi và mỗi tài liệu được nhúng
+    thành vectơ; ta đo <b>cosine similarity</b> (góc) giữa truy vấn và từng tài liệu, lấy tài liệu giống nhất làm
+    ngữ cảnh. Giống về <i>hướng</i> = giống về <i>nghĩa</i>.
+    <div class="fm">cos(q, d) = (q · d) / (‖q‖ · ‖d‖)  → chọn tài liệu có cos lớn nhất (mọi ‖·‖ = 5)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Cam</b> = truy vấn q · <b>lam</b> = tài liệu. Góc nhỏ nhất ↔ cosine lớn nhất ↔ liên quan nhất.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① q = <span id="qv1" style="color:var(--dim)"></span> · ‖q‖ = 5 · mọi ‖d‖ = 5 → mẫu số = 25</div>
+      <table class="dtbl" id="tbl1">
+        <tr><th>tài liệu</th><th>vectơ d</th><th>q · d</th><th>cos = (q·d)/25</th></tr>
+      </table>
+      <div class="bandh fw" style="margin-top:6px">② Tài liệu được lấy = cos lớn nhất → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:50px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Hai vectơ vuông góc (q·d = 0) có cos bằng mấy, nghĩa là gì? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · RAG Retrieval</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>RAG Retrieval — Embedding Similarity</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Thực tế: nhúng cả triệu tài liệu, tìm top-k bằng vector search (FAISS). Ý tưởng vẫn là cosine này.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">cos(q,d) = q·d / 25</div>
+      <table class="dtbl" id="tbl2">
+        <tr><th>tài liệu</th><th>d</th><th>q·d</th><th>cos</th></tr>
+      </table>
+      <div class="bandh fw" style="margin-top:6px">Lấy: <b><span data-q="winT">?</span></b> (cosine cao nhất → liên quan nhất → đưa vào ngữ cảnh)</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">cos = 0 → vuông góc → không liên quan</span>. cos gần 1 = rất liên quan; cos âm = ngược nghĩa.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Retrieval chỉ là cosine (Bài A4) ở quy mô lớn. Tài liệu lấy được ghép vào prompt → LLM trả lời
+        có dẫn chứng, ít "bịa". Quay lại sinh văn bản: chạy greedy decode trọn một câu → <b>I8</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · RAG Retrieval</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var VEC=[[3,4],[4,3],[5,0],[0,5],[-3,4],[4,-3],[-4,3],[3,-4]];
+function f2(v){return WB.fmt2(v);}
+function buildTbl(id,q,docs,winIdx,blank){
+  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
+  docs.forEach(function(d,i){
+    var dot=q[0]*d[0]+q[1]*d[1];var cos=Math.round(dot/25*100)/100;
+    var tr=document.createElement('tr');
+    var win=(i===winIdx);
+    tr.innerHTML='<td><b>d'+(i+1)+'</b></td><td>['+d[0]+', '+d[1]+']</td>'+
+      '<td'+(blank?' class="blank"':(win?' class="win"':''))+'>'+(blank?'':dot)+'</td>'+
+      '<td'+(blank?' class="blank"':(win?' class="win"':''))+'>'+(blank?'':f2(cos))+'</td>';
+    el.appendChild(tr);
+  });
+}
+function generate(){
+  var pool=VEC.slice();
+  // chọn q và 3 doc phân biệt
+  for(var i=pool.length-1;i>0;i--){var j=WB.randInt(0,i);var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  var q=pool[0]; var docs=[pool[1],pool[2],pool[3]];
+  var best=-1,bi=0;
+  docs.forEach(function(d,i){var dot=q[0]*d[0]+q[1]*d[1];if(dot>best){best=dot;bi=i;}});
+  buildTbl('tbl1',q,docs,bi,true);
+  buildTbl('tbl2',q,docs,bi,false);
+  document.getElementById('qv1').textContent='['+q[0]+', '+q[1]+']';
+  WB.setAll({winT:'d'+(bi+1)+' (cos = '+f2(best/25)+')'});
+  draw('sch1',q,docs,bi); draw('sch2',q,docs,bi);
+}
+function draw(id,q,docs,bi){
+  var b=document.getElementById(id);if(!b)return;var cx=95,cy=58,SC=5,s='';
+  s+='<line x1="'+(cx-50)+'" y1="'+cy+'" x2="'+(cx+50)+'" y2="'+cy+'" stroke="#eee"/>';
+  s+='<line x1="'+cx+'" y1="'+(cy-48)+'" x2="'+cx+'" y2="'+(cy+48)+'" stroke="#eee"/>';
+  s+='<defs><marker id="q'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#b45309"/></marker>'+
+     '<marker id="d'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  docs.forEach(function(d,i){var win=i===bi;s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+d[0]*SC)+'" y2="'+(cy-d[1]*SC)+'" stroke="'+(win?'#0a6':'#0e7490')+'" stroke-width="'+(win?2.2:1.3)+'" marker-end="url(#d'+id+')" opacity="'+(win?1:.7)+'"/>';
+    s+='<text x="'+(cx+d[0]*SC+ (d[0]>=0?6:-6))+'" y="'+(cy-d[1]*SC)+'" font-size="8" fill="'+(win?'#0a6':'#0e7490')+'">d'+(i+1)+'</text>';});
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+q[0]*SC)+'" y2="'+(cy-q[1]*SC)+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#q'+id+')"/>';
+  s+='<text x="'+(cx+q[0]*SC+(q[0]>=0?6:-10))+'" y="'+(cy-q[1]*SC-2)+'" font-size="9" font-weight="700" fill="#b45309">q</text>';
+  b.innerHTML='<svg viewBox="0 0 190 116" aria-label="truy vấn và tài liệu trong không gian embedding">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

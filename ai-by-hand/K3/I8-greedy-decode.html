@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Greedy Decode trọn chuỗi — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;}
+  .dtbl th{background:#f3ede0;padding:3px 8px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 10px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700}
+  .dtbl td.mx{background:#d6f5d6;font-weight:700;color:#0a6;}
+  .seq{font-family:var(--mono);font-size:15px;line-height:2.2}
+  .tk{display:inline-block;border:1px solid #a7d3e3;background:#d6ecf6;border-radius:5px;padding:1px 9px;margin:0 3px;font-weight:700}
+  .tk.e{background:#ffe6cc;border-color:#e3a76a}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:34px;text-align:center}
+  .key .ub{border:none}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Greedy Decode — trọn một chuỗi</h1><span class="vi">— sinh từng token đến hết</span>
+    <span class="tag">argmax mỗi bước, nối vào, lặp · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Cách sinh đơn giản nhất: mỗi bước chọn token có <b>logit lớn nhất</b> (argmax), nối vào
+    chuỗi, đưa lại làm đầu vào, lặp đến khi gặp token kết thúc <b>⟨e⟩</b>. Không bốc thăm, không nhánh — luôn ra cùng
+    một kết quả với cùng đầu vào.
+    <div class="fm">bước t: tokenₜ = argmax logit(token kế | các token trước) → dừng khi chọn ⟨e⟩</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Bảng logit "token hiện tại → token kế". Đi theo ô xanh (max) mỗi hàng cho tới ⟨e⟩.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BẢNG LOGIT token kế (hàng = token đang ở)</div>
+      <table class="dtbl" id="tbl1">
+        <tr><th>từ \ kế</th><th>A</th><th>B</th><th>C</th><th>⟨e⟩</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">GREEDY từ ⟨bos⟩: chọn argmax, đi tiếp</div>
+      <div class="seq">
+        ⟨bos⟩ → <span class="ub"></span> → <span class="ub"></span> → <span class="ub"></span> → <span class="ub"></span>
+        &nbsp;&nbsp; chuỗi sinh ra: <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Chạy lại greedy với đúng bảng này, kết quả có đổi không? → <span class="ub" style="min-width:70px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Greedy Decode</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Greedy Decode — trọn một chuỗi</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Greedy = beam search với b=1 (Bài G8). Nhanh, xác định, nhưng dễ kẹt chuỗi "an toàn nhạt".</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Đường đi argmax (ô xanh)</div>
+      <table class="dtbl" id="tbl2">
+        <tr><th>từ \ kế</th><th>A</th><th>B</th><th>C</th><th>⟨e⟩</th></tr>
+      </table>
+      <div class="seq" style="margin-top:8px">chuỗi sinh: <span id="seqOut"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Không đổi</span>: greedy hoàn toàn xác định (deterministic). Muốn đa dạng phải dùng sampling (I2) với τ &gt; 0.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Mỗi bước thực ra cũng chạy cả mô hình (attention + FFN) rồi mới có logit — KV cache (H10) giúp
+        khỏi tính lại. Muốn ép/ghìm vài token cụ thể trước khi chọn → chỉnh logit: <b>I9 repetition penalty / logit bias</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Greedy Decode</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var TOK=['A','B','C','⟨e⟩'];
+function buildTbl(id,rowsUsed,L,path,blank){
+  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
+  var rowNames=['⟨bos⟩','A','B','C'];
+  for(var r=0;r<4;r++){
+    var tr=document.createElement('tr');var html='<td class="lab">'+rowNames[r]+'</td>';
+    var mxj=L[r].indexOf(Math.max.apply(null,L[r]));
+    for(var c=0;c<4;c++){
+      var hot=(rowsUsed.indexOf(r)>=0 && c===mxj);
+      html+='<td'+(hot&&!blank?' class="mx"':'')+'>'+L[r][c]+'</td>';
+    }
+    tr.innerHTML=html;el.appendChild(tr);
+  }
+}
+function generate(){
+  // L[0]=hàng ⟨bos⟩, L[1..3] = hàng A,B,C. logit 0..9, mỗi hàng có max duy nhất
+  var L=[];
+  for(var r=0;r<4;r++){
+    var row;var ok=false;
+    while(!ok){row=[WB.randInt(0,9),WB.randInt(0,9),WB.randInt(0,9),WB.randInt(0,9)];
+      var mx=Math.max.apply(null,row);ok=row.filter(function(v){return v===mx;}).length===1;}
+    L.push(row);
+  }
+  // greedy từ ⟨bos⟩ (hàng 0); token→hàng: A→1,B→2,C→3,⟨e⟩→dừng
+  var path=[]; var rowsUsed=[0]; var cur=0; var steps=0;
+  while(steps<4){
+    var mxj=L[cur].indexOf(Math.max.apply(null,L[cur]));
+    path.push(mxj); steps++;
+    if(mxj===3) break;            // ⟨e⟩
+    cur=mxj+1;                     // A(0)→hàng1 ... C(2)→hàng3
+    rowsUsed.push(cur);
+  }
+  buildTbl('tbl1',rowsUsed,L,path,true);
+  buildTbl('tbl2',rowsUsed,L,path,false);
+  // điền chuỗi đáp án
+  var seqEl=document.getElementById('seqOut');
+  if(seqEl){seqEl.innerHTML='⟨bos⟩ '+path.map(function(j){return '<span class="tk'+(j===3?' e':'')+'">'+TOK[j]+'</span>';}).join(' ');}
+  draw('sch1',path); draw('sch2',path);
+}
+function draw(id,path){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var toks=['⟨bos⟩'].concat(path.map(function(j){return TOK[j];}));
+  var n=Math.min(toks.length,5);var bw=30,gap=8,y=44;
+  for(var i=0;i<n;i++){var x=8+i*(bw+gap);var e=toks[i]==='⟨e⟩';var bos=toks[i]==='⟨bos⟩';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="18" rx="4" fill="'+(e?'#ffe6cc':bos?'#eee':'#d6ecf6')+'" stroke="'+(e?'#e3a76a':'#a7d3e3')+'" stroke-width="1.1"/>';
+    s+='<text x="'+(x+bw/2)+'" y="'+(y+12)+'" text-anchor="middle" font-size="8.5" font-weight="700">'+toks[i]+'</text>';
+    if(i<n-1)s+='<line x1="'+(x+bw)+'" y1="'+(y+9)+'" x2="'+(x+bw+gap)+'" y2="'+(y+9)+'" stroke="#0e7490" stroke-width="1.4"/>';}
+  s+='<text x="100" y="22" text-anchor="middle" font-size="8" fill="#6b7280">sinh trái → phải, dừng ở ⟨e⟩</text>';
+  b.innerHTML='<svg viewBox="0 0 200 76" aria-label="chuỗi greedy decode">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Chat Template → Token hóa — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .vtbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .vtbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .vtbl td.h{background:#f3ede0;font-weight:700;}
+  .stream{font-family:var(--mono);font-size:12.5px;line-height:2.2;margin-top:4px}
+  .tok{display:inline-block;border-radius:4px;padding:1px 6px;margin:1px 2px;border:1px solid #ccc}
+  .tok.sp{background:#ece2ff;border-color:#c3b1f5;color:#5b3fd6;font-weight:700}
+  .tok.ro{background:#fff3b0;border-color:#e6cf6a;font-weight:700}
+  .tok.wd{background:#d6ecf6;border-color:#a7d3e3}
+  .ids{font-family:var(--mono);font-size:13px;letter-spacing:1px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:30px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Chat Template → Token hóa</h1><span class="vi">— gói hội thoại thành chuỗi token</span>
+    <span class="tag">thêm token đặc biệt · tra id · đếm · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> LLM chat không nhận "tin nhắn" mà nhận <b>một chuỗi token phẳng</b>. Chat template bọc
+    mỗi lượt bằng token đặc biệt <b>⟨s⟩ ... ⟨/s⟩</b> và nhãn vai (system / user / assistant), rồi nối lại. Cuối cùng
+    mở sẵn lượt assistant để mô hình điền tiếp.
+    <div class="fm">⟨s⟩ vai ⟨nội dung⟩ ⟨/s⟩ … nối các lượt … ⟨s⟩ assistant  → tra bảng → dãy id token</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="vtbl" id="voc1"></table>
+      <div class="hint">Token đặc biệt (tím) định khung; nhãn vai (vàng); nội dung (lam). Mỗi mảnh = 1 id.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① ÁP TEMPLATE (3 lượt) → chuỗi token</div>
+      <div class="stream" id="stream1"></div>
+
+      <div class="bandh fw" style="margin-top:6px">② TRA ID + ĐẾM</div>
+      <div class="ids">id: <span id="idq1"></span></div>
+      <div class="stream">Tổng số token = <span class="ub" style="min-width:46px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Vì sao phải thêm ⟨s⟩assistant ở cuối (chưa có nội dung)? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:130px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Chat Template</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Chat Template → Token hóa</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="vtbl" id="voc2"></table>
+      <div class="hint">Mỗi họ mô hình có template riêng (ChatML, Llama, Gemma…) nhưng ý tưởng giống nhau.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">chuỗi token + id</div>
+      <div class="stream" id="stream2"></div>
+      <div class="ids" style="margin-top:4px">id: <span id="idq2"></span></div>
+      <div class="stream">Tổng số token = <b><span data-q="cnt">?</span></b></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Mời mô hình nói</span>: ⟨s⟩assistant báo "đến lượt assistant" → mô hình sinh tiếp từ đó cho tới ⟨/s⟩. Không có nó, mô hình không biết bắt đầu trả lời.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Toàn bộ "trí nhớ hội thoại" chỉ là chuỗi token này nối dài thêm mỗi lượt — không có trạng thái
+        ẩn nào khác. Độ dài chuỗi = chi phí & giới hạn ngữ cảnh. Hết Phần I (LLM) — sang <b>Phần J: mô hình sinh</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Chat Template</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+// từ vựng cố định: mảnh → id
+var VOC={'⟨s⟩':1,'⟨/s⟩':2,'system':3,'user':4,'assistant':5,'Bạn':10,'là':11,'AI':12,'Xin':13,'chào':14,'Giúp':15,'tôi':16,'Cảm':17,'ơn':18,'2+2':19,'?':20};
+function tokClass(t){if(t==='⟨s⟩'||t==='⟨/s⟩')return 'sp';if(t==='system'||t==='user'||t==='assistant')return 'ro';return 'wd';}
+function renderStream(id,toks,blankIds){
+  var el=document.getElementById(id);if(!el)return;
+  el.innerHTML=toks.map(function(t){return '<span class="tok '+tokClass(t)+'">'+t+'</span>';}).join('');
+}
+function renderVoc(id){
+  var el=document.getElementById(id);if(!el)return;
+  var keys=['⟨s⟩','⟨/s⟩','system','user','assistant'];
+  var h='<tr><td class="h">mảnh</td>',r='<tr><td class="h">id</td>';
+  keys.forEach(function(k){h+='<td>'+k+'</td>';r+='<td>'+VOC[k]+'</td>';});
+  el.innerHTML=h+'</tr>'+r+'</tr>';
+}
+function generate(){
+  var sysBank=[['Bạn','là','AI'],['Giúp','tôi']];
+  var usrBank=[['Xin','chào'],['2+2','?'],['Cảm','ơn']];
+  var sys=WB.pick(sysBank), usr=WB.pick(usrBank);
+  // template: ⟨s⟩ system <sys> ⟨/s⟩ ⟨s⟩ user <usr> ⟨/s⟩ ⟨s⟩ assistant
+  var toks=['⟨s⟩','system'].concat(sys,['⟨/s⟩','⟨s⟩','user'],usr,['⟨/s⟩','⟨s⟩','assistant']);
+  var ids=toks.map(function(t){return VOC[t];});
+  renderStream('stream1',toks); renderStream('stream2',toks);
+  renderVoc('voc1'); renderVoc('voc2');
+  document.getElementById('idq1').textContent='';   // ĐỀ: để trống
+  document.getElementById('idq2').textContent=ids.join('  ');
+  WB.setAll({cnt:toks.length});
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var rows=[['system','#fff3b0'],['user','#fff3b0'],['assistant','#ffe6cc']];
+  for(var i=0;i<3;i++){var y=14+i*26;
+    s+='<rect x="10" y="'+y+'" width="110" height="20" rx="4" fill="'+rows[i][1]+'" stroke="#1a1a1a" stroke-width="1"/>';
+    s+='<text x="16" y="'+(y+14)+'" font-size="9" font-weight="700">'+rows[i][0]+(i<2?' …':' →')+'</text>';
+    s+='<text x="2" y="'+(y+14)+'" font-size="9" fill="#5b3fd6">⟨s⟩</text>';}
+  s+='<text x="65" y="98" text-anchor="middle" font-size="8" fill="#6b7280">3 lượt → 1 chuỗi token phẳng</text>';
+  // mũi tên gộp xuống
+  s+='<line x1="124" y1="24" x2="134" y2="50" stroke="#0e7490" stroke-width="1.2"/>';
+  s+='<line x1="124" y1="50" x2="134" y2="50" stroke="#0e7490" stroke-width="1.2"/>';
+  s+='<line x1="124" y1="76" x2="134" y2="50" stroke="#0e7490" stroke-width="1.2"/>';
+  s+='<rect x="134" y="44" width="8" height="12" fill="#d6ecf6" stroke="#a7d3e3"/>';
+  b.innerHTML='<svg viewBox="0 0 148 104" aria-label="ba lượt hội thoại gộp thành chuỗi token">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

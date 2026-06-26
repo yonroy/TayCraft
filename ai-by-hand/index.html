@@ -587,6 +587,135 @@ footer a{color:var(--accent);}
       <div class="go">Mở →</div></a>
   </div>
 
+  <div class="sec">Phần H · Attention &amp; Transformer (chi tiết)</div>
+  <div class="list">
+    <a class="card adv done" href="K3/H1-scaled-dot-product-attention.html"><div class="no">H1</div>
+      <div class="body"><h2>Scaled Dot-Product Attention</h2>
+        <p>Phép tính lõi: QKᵀ → chia √d → softmax (bảng eˣ) → ·V. Bản chi tiết từng bước của Bài 11.</p>
+        <div class="tags"><i>attention</i><i>√d · softmax</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/H7-positional-encoding.html"><div class="no">H7</div>
+      <div class="body"><h2>Positional Encoding sin/cos</h2>
+        <p>Nhiều vị trí × nhiều tần số: chiều chẵn sin, lẻ cos. Tra bảng sin/cos điền vectơ vị trí 4 chiều.</p>
+        <div class="tags"><i>vị trí</i><i>sin/cos</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/H8-rope-rotary.html"><div class="no">H8</div>
+      <div class="body"><h2>RoPE — Rotary Embedding</h2>
+        <p>Xoay một cặp chiều của Q,K theo vị trí → chú ý tương đối. Quay giữ độ dài, đổi hướng theo pos.</p>
+        <div class="tags"><i>vị trí</i><i>phép quay</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/H9-padding-mask.html"><div class="no">H9</div>
+      <div class="body"><h2>Padding Mask trong Attention</h2>
+        <p>Cộng −∞ vào cột token đệm (PAD) trước softmax → trọng số chú ý vào PAD = 0. Khác mask nhân quả.</p>
+        <div class="tags"><i>attention</i><i>−∞ · softmax</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/H10-kv-cache.html"><div class="no">H10</div>
+      <div class="body"><h2>KV Cache — sinh token tiếp theo</h2>
+        <p>Nối k,v của token mới vào cache, chỉ làm một hàng attention cho query mới. Vì sao chatbot trả lời mượt.</p>
+        <div class="tags"><i>suy luận</i><i>cache K,V</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/H11-ffn.html"><div class="no">H11</div>
+      <div class="body"><h2>FFN trong Transformer</h2>
+        <p>Linear → GELU (bảng tra) → Linear, nở chiều ẩn ×4. Nửa "suy nghĩ riêng từng token" của khối Transformer.</p>
+        <div class="tags"><i>Transformer</i><i>GELU · position-wise</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
+  <div class="sec">Phần I · Mô hình ngôn ngữ lớn (LLM)</div>
+  <div class="list">
+    <a class="card adv done" href="K3/I1-bpe-tokenization.html"><div class="no">I1</div>
+      <div class="body"><h2>Tokenization / BPE</h2>
+        <p>Đếm cặp liền kề → gộp cặp hay gặp nhất thành token mới → lặp. Cách LLM biến chữ thành token.</p>
+        <div class="tags"><i>token</i><i>gộp cặp</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I2-sampling.html"><div class="no">I2</div>
+      <div class="body"><h2>Logits → Softmax → Sampling</h2>
+        <p>Chia nhiệt độ τ, softmax, rồi cắt đuôi top-k / top-p. Núm điều khiển độ "liều" khi sinh văn bản.</p>
+        <div class="tags"><i>sinh chuỗi</i><i>τ · top-k · top-p</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I3-perplexity.html"><div class="no">I3</div>
+      <div class="body"><h2>Perplexity</h2>
+        <p>exp(trung bình −ln p): đo độ "ngạc nhiên" của mô hình. Thấp = tự tin. Thước đo chuẩn để so LLM.</p>
+        <div class="tags"><i>đánh giá</i><i>exp(−ln p)</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I5-lora.html"><div class="no">I5</div>
+      <div class="body"><h2>LoRA — cập nhật hạng thấp</h2>
+        <p>Đóng băng W, học nhánh phụ ΔW = B·A hạng nhỏ (tích ngoài). Giảm tham số fine-tune từ d·k → r(d+k).</p>
+        <div class="tags"><i>fine-tune</i><i>hạng thấp</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I6-quantization.html"><div class="no">I6</div>
+      <div class="body"><h2>Quantization int8</h2>
+        <p>scale = absmax/127 → làm tròn về số nguyên −127..127 → khử lượng tử. Nén 4×, kèm sai số làm tròn.</p>
+        <div class="tags"><i>nén</i><i>scale · round</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I7-rag-retrieval.html"><div class="no">I7</div>
+      <div class="body"><h2>RAG Retrieval — Embedding Similarity</h2>
+        <p>Cosine giữa truy vấn và từng tài liệu → lấy tài liệu giống nhất làm ngữ cảnh. Giống hướng = giống nghĩa.</p>
+        <div class="tags"><i>RAG</i><i>cosine</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I8-greedy-decode.html"><div class="no">I8</div>
+      <div class="body"><h2>Greedy Decode — trọn một chuỗi</h2>
+        <p>Mỗi bước chọn argmax logit, nối vào, lặp đến ⟨e⟩. Đi theo bảng logit "token → token kế". Xác định.</p>
+        <div class="tags"><i>sinh chuỗi</i><i>argmax</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I9-repetition-penalty.html"><div class="no">I9</div>
+      <div class="body"><h2>Repetition Penalty / Logit Bias</h2>
+        <p>Chia logit token đã xuất hiện cho θ trước softmax → giảm xác suất lặp. Logit bias = cộng thẳng vào logit.</p>
+        <div class="tags"><i>sinh chuỗi</i><i>chỉnh logit</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/I10-chat-template.html"><div class="no">I10</div>
+      <div class="body"><h2>Chat Template → Token hóa</h2>
+        <p>Bọc system/user/assistant bằng token đặc biệt ⟨s⟩…⟨/s⟩ → nối thành một chuỗi token phẳng → tra id, đếm.</p>
+        <div class="tags"><i>chat</i><i>special token</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
+  <div class="sec">Phần J · Mô hình sinh (Generative)</div>
+  <div class="list">
+    <a class="card adv done" href="K3/J2-vae-reparam-kl.html"><div class="no">J2</div>
+      <div class="body"><h2>VAE — Reparam + KL (chi tiết)</h2>
+        <p>z = μ + σ⊙ε (mẹo reparam để train được) + phạt KL = ½Σ(μ²+σ²−1−ln σ²) kéo không gian ẩn về N(0,1).</p>
+        <div class="tags"><i>sinh</i><i>reparam · KL</i><i>~16 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/J3-gan.html"><div class="no">J3</div>
+      <div class="body"><h2>GAN — một bước D và G</h2>
+        <p>D chấm thật/giả bằng σ(điểm); ℒ_D phạt D đoán sai, ℒ_G thưởng G lừa được. Hai mạng minimax kéo co.</p>
+        <div class="tags"><i>sinh</i><i>đối kháng</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/J4-diffusion-forward.html"><div class="no">J4</div>
+      <div class="body"><h2>Diffusion: Forward (thêm nhiễu)</h2>
+        <p>xₜ = √ᾱ·x₀ + √(1−ᾱ)·ε. Lịch "Pythagore" cho hệ số 0.8/0.6. ᾱ giảm → tín hiệu mờ dần thành nhiễu.</p>
+        <div class="tags"><i>sinh ảnh</i><i>thêm nhiễu</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/J6-noise-schedule.html"><div class="no">J6</div>
+      <div class="body"><h2>Noise Schedule</h2>
+        <p>β → α = 1−β → ᾱ = ∏α (nhân dồn). "Đồng hồ" ánh xạ bước t ↔ mức nhiễu, cho hệ số ở J4.</p>
+        <div class="tags"><i>sinh ảnh</i><i>β · α · ᾱ</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K3/J7-ddpm-ddim.html"><div class="no">J7</div>
+      <div class="body"><h2>Sampling: DDPM vs DDIM</h2>
+        <p>Cùng x̂₀: DDPM cộng thêm nhiễu mỗi bước (đa dạng, chậm); DDIM bỏ nhiễu → xác định, nhảy ít bước (nhanh).</p>
+        <div class="tags"><i>sinh ảnh</i><i>đi ngược lịch nhiễu</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
   <footer>
     Cảm hứng: <a href="https://www.byhand.ai" target="_blank">Làm toán AI ✍️ — Prof. Tom Yeh</a> ·
     Quay lại <a href="../index.html">Bản đồ học tập</a>. Muốn thêm phiếu nào? Cứ yêu cầu.

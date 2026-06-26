@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Tokenization / BPE — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;}
+  .dtbl th{background:#f3ede0;padding:3px 8px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:4px 10px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.win{background:#fff3b0;font-weight:700;color:#7a3d00;}
+  .seq{font-family:var(--mono);font-size:13px;line-height:2;}
+  .tk{display:inline-block;border:1px solid #c3b1f5;background:#ece2ff;border-radius:4px;padding:0 6px;margin:0 2px;}
+  .tk.new{background:#fff3b0;border-color:#e6cf6a;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Tokenization / BPE</h1><span class="vi">— gộp cặp hay gặp nhất</span>
+    <span class="tag">đếm cặp · gộp · lặp · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> LLM không đọc chữ thô mà đọc <b>token</b>. Byte-Pair Encoding bắt đầu từ ký tự rời, rồi
+    lặp lại: <b>đếm</b> mọi cặp liền nhau trong kho từ → <b>gộp</b> cặp xuất hiện nhiều nhất thành 1 token mới → lặp.
+    Cặp hay gặp (vd "th", "ing") thành token; từ hiếm vẫn ghép được từ mảnh.
+    <div class="fm">lặp: đếm tần suất các cặp liền kề → gộp cặp max → thêm token mới vào từ vựng</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Từ vựng lớn dần: ký tự → cặp → cụm. Câu dài ra ít token hơn.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① KHO TỪ (ký tự rời) + ② ĐẾM CẶP LIỀN KỀ</div>
+      <div class="row" style="gap:22px">
+        <table class="dtbl" id="corpus1"><tr><th>từ (mảnh)</th><th>số lần</th></tr></table>
+        <table class="dtbl" id="pairs1"><tr><th>cặp</th><th>tổng đếm</th></tr></table>
+      </div>
+      <div class="hint" style="margin-top:4px">aa = số lần "a a" liền nhau · ab = số lần "a b" liền nhau · bb = "b b"</div>
+
+      <div class="bandh fw" style="margin-top:6px">③ GỘP cặp max → token mới · ④ viết lại kho từ</div>
+      <div class="seq">cặp gộp = <span class="tk" style="min-width:24px" id="win1">&nbsp;&nbsp;</span> → token <b>X</b> &nbsp;|&nbsp; sau gộp: <span id="after1"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Vì sao BPE giúp xử lý từ chưa từng thấy (out-of-vocabulary)? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:130px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · BPE</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Tokenization / BPE</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">GPT dùng ~50k–100k token học sẵn bằng đúng quy trình này trên kho văn bản khổng lồ.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">ĐẾM CẶP → GỘP MAX</div>
+      <div class="row" style="gap:22px">
+        <table class="dtbl" id="corpus2"><tr><th>từ</th><th>số lần</th></tr></table>
+        <table class="dtbl" id="pairs2"><tr><th>cặp</th><th>đếm</th></tr></table>
+      </div>
+      <div class="seq" style="margin-top:6px">cặp max = <b><span data-q="winT">?</span></b> → gộp thành token <b>X</b>. &nbsp; Kho sau gộp: <span id="after2"></span></div>
+      <div class="seq">Lặp tiếp: cặp max mới = <b><span data-q="win2T">?</span></b> → token <b>Y</b> (từ vựng cứ thế lớn dần).</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Ghép từ mảnh</span>: từ lạ vẫn tách được thành các token con đã biết (ký tự / cụm), nên không bao giờ "không mã hoá được".</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> BPE biến văn bản thành chuỗi id token — đầu vào của embedding (Bài 19). Số token quyết định độ dài
+        ngữ cảnh & chi phí. Token rồi → logits → chọn token kế: <b>I2 sampling</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · BPE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function corpusTbl(id,words,blank){
+  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
+  words.forEach(function(w){var tr=document.createElement('tr');tr.innerHTML='<td>'+w.t+'</td><td'+(blank?' class="blank"':'')+'>'+(blank?'':w.c)+'</td>';el.appendChild(tr);});
+}
+function pairTbl(id,pairs,winKey,blank){
+  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
+  pairs.forEach(function(p){var tr=document.createElement('tr');var cls=blank?'blank':(p.k===winKey?'win':'');tr.innerHTML='<td>'+p.k+'</td><td'+(cls?' class="'+cls+'"':'')+'>'+(blank?'':p.c)+'</td>';el.appendChild(tr);});
+}
+function seqHtml(arr){return arr.map(function(s){return '<span class="tk'+(s==='X'||s==='Y'?' new':'')+'">'+s+'</span>';}).join('');}
+function generate(){
+  var c1=WB.randInt(1,4),c2=WB.randInt(1,4),c3=WB.randInt(1,3);
+  var words=[{t:'a a b',c:c1},{t:'a b',c:c2},{t:'a a b b',c:c3}];
+  var aa=c1+c3, ab=c1+c2+c3, bb=c3;
+  var pairs=[{k:'aa',c:aa},{k:'ab',c:ab},{k:'bb',c:bb}];
+  var win='ab'; // ab = c1+c2+c3 luôn lớn nhất
+  // sau gộp ab→X
+  var after=[ ['a','X'].concat([]), ['X'], ['a','X','b'] ]; // tương ứng 3 từ
+  // vòng 2: cặp trong (a X)×c1, (X)×c2, (a X b)×c3 → aX = c1+c3, Xb = c3 → aX max
+  var win2='aX';
+  corpusTbl('corpus1',words,true); corpusTbl('corpus2',words,false);
+  pairTbl('pairs1',pairs,win,true); pairTbl('pairs2',pairs,win,false);
+  document.getElementById('win1').textContent='';
+  document.getElementById('after1').innerHTML=after.map(function(a){return '('+seqHtml(a)+')';}).join(' &nbsp; ');
+  document.getElementById('after2').innerHTML=after.map(function(a){return '('+seqHtml(a)+')';}).join(' &nbsp; ');
+  WB.setAll({winT:'ab (đếm '+ab+')', win2T:'aX (= a + token X)'});
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  function tk(x,y,t,col){s+='<rect x="'+x+'" y="'+y+'" width="26" height="16" rx="3" fill="'+col+'" stroke="#1a1a1a" stroke-width="1"/>';s+='<text x="'+(x+13)+'" y="'+(y+12)+'" text-anchor="middle" font-size="9" font-weight="700">'+t+'</text>';}
+  tk(8,16,'a','#ece2ff'); tk(40,16,'b','#ece2ff');
+  s+='<line x1="34" y1="24" x2="40" y2="24" stroke="#999"/>';
+  s+='<line x1="34" y1="24" x2="60" y2="48" stroke="#0e7490" stroke-width="1.4"/>';
+  s+='<line x1="53" y1="24" x2="64" y2="48" stroke="#0e7490" stroke-width="1.4"/>';
+  tk(52,50,'X','#fff3b0');
+  tk(8,50,'a','#ece2ff');
+  s+='<line x1="34" y1="58" x2="52" y2="58" stroke="#999"/>';
+  s+='<line x1="21" y1="66" x2="78" y2="86" stroke="#b45309" stroke-width="1.4"/>';
+  s+='<line x1="65" y1="66" x2="84" y2="86" stroke="#b45309" stroke-width="1.4"/>';
+  tk(74,88,'Y','#fff3b0');
+  s+='<text x="92" y="60" font-size="8" fill="#6b7280">X = ab</text>';
+  s+='<text x="92" y="98" font-size="8" fill="#6b7280">Y = aX</text>';
+  b.innerHTML='<svg viewBox="0 0 130 110" aria-label="cây gộp BPE">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

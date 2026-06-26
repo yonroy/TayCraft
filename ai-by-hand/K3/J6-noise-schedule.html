@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Noise Schedule — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:6px 8px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Noise Schedule</h1><span class="vi">— lịch nhiễu của diffusion</span>
+    <span class="tag">β → α = 1−β → ᾱ = ∏α · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Lịch nhiễu quyết định ảnh bị phá nhanh hay chậm. Mỗi bước thêm một lượng nhiễu <b>βₜ</b>
+    (thường tăng dần). Từ đó: <b>αₜ = 1 − βₜ</b> (phần tín hiệu giữ lại mỗi bước) và <b>ᾱₜ = α₁·α₂···αₜ</b> (tích lũy —
+    phần tín hiệu còn lại sau t bước). Chính ᾱ cho công thức nhảy thẳng tới xₜ (J4).
+    <div class="fm">αₜ = 1 − βₜ · ᾱₜ = ᾱₜ₋₁ · αₜ · √ᾱₜ = hệ số tín hiệu, √(1−ᾱₜ) = hệ số nhiễu</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Cam</b> β tăng dần (thêm nhiễu) · <b>lam</b> ᾱ giảm dần (tín hiệu còn lại).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Điền α = 1−β rồi nhân dồn ra ᾱ</div>
+      <table class="dtbl" id="tbl1">
+        <tr><th>bước t</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+        <tr><td class="lab">βₜ (cho sẵn)</td><td id="B0"></td><td id="B1"></td><td id="B2"></td><td id="B3"></td></tr>
+        <tr><td class="lab">αₜ = 1 − βₜ</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+        <tr><td class="lab">ᾱₜ = ᾱₜ₋₁·αₜ</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>ᾱ là dãy tăng hay giảm theo t? Vì sao? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:130px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Noise Schedule</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Noise Schedule</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Lịch tốt (cosine) làm ᾱ giảm mượt → mẫu chất lượng hơn lịch tuyến tính.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">α = 1−β · ᾱ = tích dồn</div>
+      <table class="dtbl" id="tbl2">
+        <tr><th>t</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+        <tr><td class="lab">βₜ</td><td id="kB0"></td><td id="kB1"></td><td id="kB2"></td><td id="kB3"></td></tr>
+        <tr><td class="lab">αₜ</td><td id="A0"></td><td id="A1"></td><td id="A2"></td><td id="A3"></td></tr>
+        <tr><td class="lab">ᾱₜ</td><td id="C0"></td><td id="C1"></td><td id="C2"></td><td id="C3"></td></tr>
+        <tr><td class="lab">√ᾱₜ (≈ tín hiệu)</td><td id="S0"></td><td id="S1"></td><td id="S2"></td><td id="S3"></td></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Giảm dần</span>: ᾱ là tích của các αₜ &lt; 1 → nhân thêm số nhỏ hơn 1 luôn làm tích co lại → tín hiệu rơi rụng theo thời gian.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Lịch nhiễu là "đồng hồ" của diffusion: ᾱ ánh xạ bước t ↔ mức nhiễu. Khi <b>sinh</b>, ta đi ngược
+        lịch này từ nhiễu về ảnh. Cách đi ngược nhanh/chậm khác nhau: <b>J7 DDPM vs DDIM</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Noise Schedule</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+var SQRT={};
+function generate(){
+  var pres=[[0.1,0.2,0.3,0.4],[0.2,0.3,0.4,0.5],[0.1,0.3,0.5,0.6],[0.1,0.2,0.4,0.5]];
+  var B=WB.pick(pres);
+  var A=B.map(function(b){return Math.round((1-b)*100)/100;});
+  var C=[]; var prev=1;
+  for(var i=0;i<4;i++){prev=Math.round(prev*A[i]*100)/100;C.push(prev);}
+  var S=C.map(function(c){return Math.round(Math.sqrt(c)*100)/100;});
+  ['B0','B1','B2','B3'].forEach(function(id,i){setTxt(id,f2(B[i]));});
+  ['kB0','kB1','kB2','kB3'].forEach(function(id,i){setTxt(id,f2(B[i]));});
+  ['A0','A1','A2','A3'].forEach(function(id,i){setTxt(id,f2(A[i]));});
+  ['C0','C1','C2','C3'].forEach(function(id,i){setTxt(id,f2(C[i]));});
+  ['S0','S1','S2','S3'].forEach(function(id,i){setTxt(id,f2(S[i]));});
+  draw('sch1',B,C); draw('sch2',B,C);
+}
+function draw(id,B,C){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var x0=18,W=150,y0=78;
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#bbb"/>';
+  s+='<line x1="'+x0+'" y1="14" x2="'+x0+'" y2="'+y0+'" stroke="#bbb"/>';
+  function pts(arr,col){var d='';for(var i=0;i<4;i++){var x=x0+(i+0.5)*W/4;var yv=y0-arr[i]*60;d+=(i===0?'M':'L')+x+','+yv+' ';s+='<circle cx="'+x+'" cy="'+yv+'" r="2.2" fill="'+col+'"/>';}s+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.6"/>';}
+  pts(B,'#b45309'); pts(C,'#0e7490');
+  for(var i=0;i<4;i++){var x=x0+(i+0.5)*W/4;s+='<text x="'+x+'" y="'+(y0+12)+'" text-anchor="middle" font-size="8" fill="#999">'+(i+1)+'</text>';}
+  s+='<text x="'+(x0+30)+'" y="12" font-size="8" fill="#b45309">β ↑</text>';
+  s+='<text x="'+(x0+90)+'" y="12" font-size="8" fill="#0e7490">ᾱ ↓</text>';
+  b.innerHTML='<svg viewBox="0 0 180 94" aria-label="β tăng và ᾱ giảm theo bước">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

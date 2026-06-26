@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Positional Encoding sin/cos — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .ttbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .ttbl td{border:1px solid #d5c49a;padding:1px 5px;text-align:center;}
+  .ttbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:13mm; --ch:8mm; }
+  .cell{font-size:13px;}
+  .rowlab{font-family:var(--mono);font-size:11px;color:var(--dim);display:grid;align-items:center;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Positional Encoding sin/cos</h1><span class="vi">— mã vị trí (bản chi tiết)</span>
+    <span class="tag">nhiều vị trí × nhiều tần số · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Attention không biết thứ tự token. Ta cộng thêm một <b>vectơ vị trí</b> vào embedding:
+    chiều chẵn dùng <b>sin</b>, chiều lẻ dùng <b>cos</b>, mỗi cặp một <b>tần số</b> riêng. Vị trí khác nhau → vectơ khác
+    nhau, và mô hình suy ra khoảng cách bằng phép quay đều.
+    <div class="fm">PE(pos, 2i) = sin(pos·ω<sub>i</sub>) · PE(pos, 2i+1) = cos(pos·ω<sub>i</sub>)   (d=4 → i=0,1)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="ttbl" id="trig1"></table>
+      <div class="hint">Tần số thấp (ω₁) quay chậm, tần số cao (ω₀) quay nhanh → "đồng hồ nhiều kim".</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① GÓC tại mỗi vị trí: θ₀ = pos·ω₀, θ₁ = pos·ω₁ <span id="om1" style="color:var(--dim)"></span></div>
+      <div class="row" style="align-items:stretch">
+        <div class="rowlab">pos<br>0<br>1<br>2<br>3</div>
+        <div class="blk in"><span class="nm">θ₀ (độ)</span><div class="m c1" id="A0"></div></div>
+        <div class="blk in"><span class="nm">θ₁ (độ)</span><div class="m c1" id="A1"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">PE = [sinθ₀ · cosθ₀ · sinθ₁ · cosθ₁]</span><div class="m c4" id="PE"></div>
+          <span class="fm">tra bảng sin/cos bên trái, điền 4 chiều mỗi hàng</span></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>pos = 0 cho vectơ PE bằng gì? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Positional Encoding</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Positional Encoding sin/cos</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="ttbl" id="trig2"></table>
+      <div class="hint">Mỗi hàng PE là duy nhất cho một vị trí → token "biết mình đứng đâu".</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① GÓC → ② TRA BẢNG → PE <span id="om2" style="color:var(--dim)"></span></div>
+      <div class="row" style="align-items:stretch">
+        <div class="rowlab">pos<br>0<br>1<br>2<br>3</div>
+        <div class="blk fw"><span class="nm">θ₀</span><div class="m c1" id="kA0"></div></div>
+        <div class="blk fw"><span class="nm">θ₁</span><div class="m c1" id="kA1"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">PE = [sinθ₀, cosθ₀, sinθ₁, cosθ₁]</span><div class="m c4" id="kPE"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">[0, 1, 0, 1]</span>: sin0=0, cos0=1 cho mọi tần số → vị trí gốc.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Sin/cos cho mã vị trí <b>cố định</b> (không học), ngoại suy được tới chuỗi dài hơn lúc train.
+        Bài 19 cộng PE này vào embedding. Biến thể hiện đại quay trực tiếp Q,K theo vị trí → <b>H8 RoPE</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Positional Encoding</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+// bảng sin/cos theo độ (giá trị tra được)
+var TRIG={0:[0,1],30:[0.5,0.87],45:[0.71,0.71],60:[0.87,0.5],90:[1,0],120:[0.87,-0.5],135:[0.71,-0.71],150:[0.5,-0.87],180:[0,-1],270:[-1,0]};
+// cặp tần số (độ) sao cho mọi pos·ω đều có trong bảng
+var PRE=[
+  {w0:90,w1:30}, {w0:90,w1:45}, {w0:60,w1:30}
+];
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
+function fnum(v){return WB.fmtTrim(v);}
+function buildTrig(id,angles){
+  var el=document.getElementById(id);if(!el)return;
+  var h='<tr><td class="h">góc°</td>',r1='<tr><td class="h">sin</td>',r2='<tr><td class="h">cos</td>';
+  angles.forEach(function(a){h+='<td>'+a+'</td>';r1+='<td>'+fnum(TRIG[a][0])+'</td>';r2+='<td>'+fnum(TRIG[a][1])+'</td>';});
+  el.innerHTML=h+'</tr>'+r1+'</tr>'+r2+'</tr>';
+}
+function generate(){
+  var p=WB.pick(PRE);
+  var th0=[],th1=[],PE=[];
+  var used={};
+  for(var pos=0;pos<4;pos++){
+    var a0=(pos*p.w0)%360, a1=(pos*p.w1)%360;
+    th0.push([a0+'°']); th1.push([a1+'°']);
+    used[a0]=1; used[a1]=1;
+    PE.push([fnum(TRIG[a0][0]),fnum(TRIG[a0][1]),fnum(TRIG[a1][0]),fnum(TRIG[a1][1])]);
+  }
+  var angles=Object.keys(used).map(Number).sort(function(a,b){return a-b;});
+  buildTrig('trig1',angles); buildTrig('trig2',angles);
+  document.getElementById('om1').textContent='(ω₀='+p.w0+'°, ω₁='+p.w1+'°)';
+  document.getElementById('om2').textContent='(ω₀='+p.w0+'°, ω₁='+p.w1+'°)';
+  fill('A0',th0,true); fill('A1',th1,true); fill('PE',PE,true);
+  fill('kA0',th0,false); fill('kA1',th1,false); fill('kPE',PE,false);
+  draw('sch1',p); draw('sch2',p);
+}
+function draw(id,p){
+  var b=document.getElementById(id);if(!b)return;
+  var W=200,H=92,s='';
+  s+='<line x1="14" y1="46" x2="190" y2="46" stroke="#ccc" stroke-width="1"/>';
+  function wave(deg,col){var d='';for(var x=0;x<=176;x+=4){var ang=(x/176)*3*deg;var y=46-26*Math.sin(ang*Math.PI/180);d+=(x===0?'M':'L')+(14+x)+','+y+' ';}s+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.6"/>';}
+  wave(p.w0,'#0e7490'); wave(p.w1,'#7c5cff');
+  for(var pos=0;pos<4;pos++){var x=14+pos*(176/3);s+='<circle cx="'+x+'" cy="46" r="2.3" fill="#1a1a1a"/>';s+='<text x="'+x+'" y="62" text-anchor="middle" font-size="8" fill="#6b7280">'+pos+'</text>';}
+  s+='<text x="100" y="12" text-anchor="middle" font-size="8.5" fill="#0e7490">ω₀ nhanh (lam) · ω₁ chậm (tím)</text>';
+  b.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="hai sóng sin tần số khác nhau">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

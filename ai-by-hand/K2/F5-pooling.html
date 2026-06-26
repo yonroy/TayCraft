@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Pooling — Max / Average</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.9;margin-top:3px;}
+  .crow{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;}
+  .clab{font-family:var(--mono);font-size:12px;font-weight:700;}
+  .m .cell{--cw:10mm;--ch:8mm;font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Pooling</h1><span class="vi">— Max / Average</span>
+    <span class="tag">2×2, stride 2 · max hoặc trung bình mỗi cửa sổ</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Sau conv, pooling <b>thu nhỏ</b> feature map: gộp mỗi cửa sổ 2×2 thành một số. Giảm
+    kích thước → ít tính toán, đồng thời cho mạng bất biến nhẹ với dịch chuyển. <b>Max</b> giữ đặc trưng mạnh nhất;
+    <b>Average</b> lấy trung bình mượt.
+    <div class="fm">max-pool: lấy giá trị lớn nhất mỗi cửa sổ &nbsp;·&nbsp; avg-pool: lấy trung bình &nbsp;·&nbsp; 4×4 → 2×2</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi 2×2 ô gộp thành 1: max = "có đặc trưng đó ở đâu đó trong vùng?"; average = "độ mạnh trung bình của vùng".
+    Không có tham số học — chỉ là phép gộp cố định.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>4 cửa sổ màu</b> trên ảnh 4×4 → mỗi cửa sổ thành 1 ô ở bản đồ 2×2 (max hoặc avg).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">FEATURE MAP 4×4</div>
+      <div class="crow"><div class="m c4 in" id="x"></div></div>
+
+      <div class="crow" style="margin-top:8px">
+        <div><div class="clab" style="color:#b45309">MAX-POOL → 2×2</div><div class="m c2 out" id="mx"></div></div>
+        <div><div class="clab" style="color:#7c5cff">AVG-POOL → 2×2</div><div class="m c2 w" id="av"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Pooling 2×2 stride 2 trên ảnh 4×4 cho ra cỡ <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span></li>
+          <li>Pooling có tham số học không? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:50px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Pooling</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Pooling</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Backward của max-pool: gradient chỉ chảy về ô đạt max; avg-pool: chia đều cho 4 ô.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">FEATURE MAP 4×4</div>
+      <div class="crow"><div class="m c4 in" id="kx"></div></div>
+
+      <div class="crow" style="margin-top:8px">
+        <div><div class="clab" style="color:#b45309">MAX-POOL</div><div class="m c2 out" id="kmx"></div></div>
+        <div><div class="clab" style="color:#7c5cff">AVG-POOL</div><div class="m c2 w" id="kav"></div></div>
+      </div>
+
+      <div class="expr" style="margin-top:5px">
+        cửa sổ trên-trái: max = <b><span data-q="m0">?</span></b>, avg = (Σ4)/4 = <b><span data-q="a0">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>4×4, pool 2×2 stride 2 → <span class="qa">2×2</span>.</li>
+          <li>Pooling <span class="qa">không</span> có tham số học (phép gộp cố định).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Pooling = giảm cỡ không tham số. Max-pool phổ biến trong CNN cổ điển; nhiều mạng hiện đại thay
+        bằng conv stride 2 (học được). Sau vài tầng conv+pool, không gian co nhỏ rồi nối FC để phân loại.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Pooling</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fT(v){return WB.fmtTrim(v);}
+function fill(id,arr,fmt,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fmt(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function win(g,r,c){ return [g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]; }
+
+function generate(){
+  var g=[];
+  for(var i=0;i<4;i++){ var row=[]; for(var j=0;j<4;j++) row.push(WB.randInt(0,9)); g.push(row); }
+  var flat=[]; for(var a=0;a<4;a++) for(var b=0;b<4;b++) flat.push(g[a][b]);
+  var wins=[win(g,0,0),win(g,0,2),win(g,2,0),win(g,2,2)];
+  var mx=wins.map(function(w){return Math.max.apply(null,w);});
+  var av=wins.map(function(w){return w.reduce(function(s,v){return s+v;},0)/4;});
+
+  fill('x',flat,fI,false); fill('kx',flat,fI,false);
+  fill('mx',mx,fI,true); fill('av',av,fT,true);
+  fill('kmx',mx,fI,false); fill('kav',av,fT,false);
+  WB.setAll({ m0:fI(mx[0]), a0:fT(av[0]) });
+
+  drawPool('sch1',g,false); drawPool('sch2',g,true);
+}
+
+function drawPool(id,g,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, cell=20, x0=40, y0=20;
+  var winc=['#ffe6cc','#e6f0ff','#e6ffe9','#fff0d6'];
+  var s='';
+  for(var i=0;i<4;i++) for(var j=0;j<4;j++){
+    var wi=(i<2?0:2)+(j<2?0:1);
+    s+='<rect x="'+(x0+j*cell)+'" y="'+(y0+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+winc[wi]+'" stroke="#ccc"/>';
+    if(show) s+='<text x="'+(x0+j*cell+cell/2)+'" y="'+(y0+i*cell+cell/2+3)+'" text-anchor="middle" font-size="9" fill="#444">'+g[i][j]+'</text>';
+  }
+  // viền 4 cửa sổ
+  for(var k=0;k<4;k++){
+    var cx=x0+(k%2)*2*cell, cy=y0+Math.floor(k/2)*2*cell;
+    s+='<rect x="'+cx+'" y="'+cy+'" width="'+(2*cell)+'" height="'+(2*cell)+'" fill="none" stroke="#b45309" stroke-width="1.6"/>';
+  }
+  s+='<text x="'+x0+'" y="'+(y0-4)+'" font-size="8" fill="#6b7280">4×4 → 4 cửa sổ 2×2</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="ảnh 4x4 chia 4 cửa sổ pooling">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

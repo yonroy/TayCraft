@@ -339,6 +339,82 @@ footer a{color:var(--accent);}
     </a>
   </div>
 
+  <div class="sec">Phần F · Thị giác máy tính / CNN (K2)</div>
+  <div class="list">
+
+    <a class="card adv done" href="K2/F2-kich-thuoc-dau-ra.html">
+      <div class="no">F2</div>
+      <div class="body"><h2>Kích thước đầu ra Conv — Output Size</h2>
+        <p>O = (W−K+2P)/S + 1: ráp cỡ vào, kernel, padding, stride để biết feature map co lại bao nhiêu.</p>
+        <div class="tags"><i>CNN</i><i>(W−K+2P)/S+1</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F3-conv-nhieu-kenh.html">
+      <div class="no">F3</div>
+      <div class="body"><h2>Conv nhiều kênh (RGB) — Multi-channel</h2>
+        <p>Kernel có Cᵢₙ kênh; tích chập từng kênh rồi cộng dồn + bias → một giá trị. Cách conv gộp chiều sâu.</p>
+        <div class="tags"><i>CNN</i><i>Σ kênh</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F4-nhieu-bo-loc.html">
+      <div class="no">F4</div>
+      <div class="body"><h2>Nhiều bộ lọc → nhiều feature map</h2>
+        <p>Mỗi filter quét cùng đầu vào tạo một feature map. Số filter = độ sâu (số kênh) đầu ra.</p>
+        <div class="tags"><i>CNN</i><i>Cₒᵤₜ</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F5-pooling.html">
+      <div class="no">F5</div>
+      <div class="body"><h2>Pooling — Max / Average</h2>
+        <p>Gộp mỗi cửa sổ 2×2 thành một số (max hoặc trung bình): thu nhỏ feature map, không tham số học.</p>
+        <div class="tags"><i>CNN</i><i>max · avg</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F6-receptive-field.html">
+      <div class="no">F6</div>
+      <div class="body"><h2>Receptive Field — vùng ảnh hưởng</h2>
+        <p>RF = 1 + L·(K−1): chồng nhiều conv nhỏ làm tầm nhìn lớn dần mà ít tham số. Hai 3×3 = một 5×5.</p>
+        <div class="tags"><i>CNN</i><i>RF</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F7-conv-1x1.html">
+      <div class="no">F7</div>
+      <div class="body"><h2>Conv 1×1 — trộn kênh</h2>
+        <p>o = W·x + b tại mỗi pixel: một lớp tuyến tính trên trục kênh, đổi/giảm độ sâu (bottleneck) rẻ tiền.</p>
+        <div class="tags"><i>CNN</i><i>W·x kênh</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F8-transposed-conv.html">
+      <div class="no">F8</div>
+      <div class="body"><h2>Transposed Conv — upsampling</h2>
+        <p>Mỗi ô vào nhân kernel rồi đặt vào một khối ở lưới lớn hơn: 2×2 nở thành 4×4. Upsample học được.</p>
+        <div class="tags"><i>CNN</i><i>phóng to</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F9-residual.html">
+      <div class="no">F9</div>
+      <div class="body"><h2>Residual / Skip Connection — y = F(x) + x</h2>
+        <p>Cộng đường tắt: học phần dư F(x), backward luôn có "+1" dẫn gradient → chồng rất sâu không vanishing.</p>
+        <div class="tags"><i>CNN</i><i>F(x)+x</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/F10-dem-tham-so-conv.html">
+      <div class="no">F10</div>
+      <div class="body"><h2>Đếm tham số lớp Conv — Conv Params</h2>
+        <p>params = K·K·Cᵢₙ·Cₒᵤₜ + Cₒᵤₜ, không phụ thuộc cỡ ảnh (weight sharing) → CNN rẻ hơn FC nhiều.</p>
+        <div class="tags"><i>CNN</i><i>K²·Cᵢₙ·Cₒᵤₜ</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+  </div>
+
   <div class="sec">Nâng cao · kiến trúc thật</div>
   <div class="list">
     <a class="card adv done" href="K3/11-self-attention.html">

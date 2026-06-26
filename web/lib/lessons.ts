@@ -141,15 +141,15 @@ export const LESSONS: Lesson[] = [
 
   // ── PHẦN F · Thị giác máy tính / CNN (K2) ───────────────────────────────
   { no: "16", slug: "16-cnn-tich-chap", title: "CNN — một bộ lọc", english: "Convolution", blurb: "Trượt kernel 3×3 → feature map → ReLU → max-pool.", part: "F", course: "K2", available: true, isFree: false },
-  soon("F2", "F", "K2", "Kích thước đầu ra (stride, padding)", "Output size", "(W − K + 2P)/S + 1."),
-  soon("F3", "F", "K2", "Conv nhiều kênh (RGB)", "Multi-channel", "Cộng tích chập trên 3 kênh màu."),
-  soon("F4", "F", "K2", "Nhiều bộ lọc → nhiều feature map", "Filters", "Mỗi filter cho một bản đồ đặc trưng."),
-  soon("F5", "F", "K2", "Max / Average Pooling", "Pooling", "Lấy max / trung bình mỗi cửa sổ."),
-  soon("F6", "F", "K2", "Receptive field", "Receptive field", "Vùng ảnh ảnh hưởng tới một ô sâu."),
-  soon("F7", "F", "K2", "Conv 1×1", "1×1 conv", "Trộn kênh theo từng điểm ảnh."),
-  soon("F8", "F", "K2", "Transposed conv (upsampling)", "Transposed", "Trải ô ra lưới lớn hơn để phóng to."),
-  soon("F9", "F", "K2", "Kết nối tắt (Residual / skip)", "Residual", "y = F(x) + x — giúp mạng rất sâu học được."),
-  soon("F10", "F", "K2", "Đếm tham số một lớp conv", "Conv params", "K·K·Cᵢₙ·Cₒᵤₜ + bias."),
+  { no: "F2", slug: "F2-kich-thuoc-dau-ra", title: "Kích thước đầu ra (stride, padding)", english: "Output size", blurb: "(W − K + 2P)/S + 1.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F3", slug: "F3-conv-nhieu-kenh", title: "Conv nhiều kênh (RGB)", english: "Multi-channel", blurb: "Cộng tích chập trên 3 kênh màu.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F4", slug: "F4-nhieu-bo-loc", title: "Nhiều bộ lọc → nhiều feature map", english: "Filters", blurb: "Mỗi filter cho một bản đồ đặc trưng.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F5", slug: "F5-pooling", title: "Max / Average Pooling", english: "Pooling", blurb: "Lấy max / trung bình mỗi cửa sổ.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F6", slug: "F6-receptive-field", title: "Receptive field", english: "Receptive field", blurb: "Vùng ảnh ảnh hưởng tới một ô sâu.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F7", slug: "F7-conv-1x1", title: "Conv 1×1", english: "1×1 conv", blurb: "Trộn kênh theo từng điểm ảnh.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F8", slug: "F8-transposed-conv", title: "Transposed conv (upsampling)", english: "Transposed", blurb: "Trải ô ra lưới lớn hơn để phóng to.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F9", slug: "F9-residual", title: "Kết nối tắt (Residual / skip)", english: "Residual", blurb: "y = F(x) + x — giúp mạng rất sâu học được.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F10", slug: "F10-dem-tham-so-conv", title: "Đếm tham số một lớp conv", english: "Conv params", blurb: "K·K·Cᵢₙ·Cₒᵤₜ + bias.", part: "F", course: "K2", available: true, isFree: false },
 
   // ── PHẦN G · Dữ liệu chuỗi / RNN-LSTM (K2; embedding ở K3) ───────────────
   { no: "19", slug: "19-embedding-vitri", title: "Embedding & Positional", english: "Embedding", blurb: "Tra bảng token → vectơ, cộng dấu vị trí sin/cos.", part: "G", course: "K3", available: true, isFree: false },

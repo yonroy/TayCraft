@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Kích thước đầu ra Conv — Output Size</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
+  .ublk{display:inline-block;min-width:34px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Kích thước đầu ra Conv</h1><span class="vi">— Output Size</span>
+    <span class="tag">O = (W − K + 2P)/S + 1</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Khi xếp các lớp tích chập, phải biết feature map co lại bao nhiêu để thiết kế mạng và
+    đếm tham số. Công thức ráp 4 đại lượng: cỡ vào W, kernel K, padding P (đệm viền), stride S (bước trượt).
+    <div class="fm">O = ⌊(W − K + 2P)/S⌋ + 1 &nbsp;·&nbsp; padding "same" (giữ cỡ): P = (K−1)/2 khi S=1</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Kernel cần "đứng vừa" trong ảnh; mỗi bước trượt S ô cho một ô đầu ra. Padding thêm viền 0 để kernel với tới mép
+    → giữ cỡ. Stride lớn → nhảy nhanh → đầu ra nhỏ.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam</b> = ảnh vào W×W (+ viền padding) · <b>cam</b> = đầu ra O×O. Kernel trượt bước S.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO: W=<span data-q="W">5</span>, K=<span data-q="K">3</span>, P=<span data-q="P">0</span>, S=<span data-q="S">1</span></div>
+      <div class="expr">
+        O = (W − K + 2P)/S + 1<br>
+        &nbsp; = (<span data-q="W">5</span> − <span data-q="K">3</span> + 2·<span data-q="P">0</span>)/<span data-q="S">1</span> + 1
+        = <span class="ublk" id="oB"></span>/<span data-q="S">1</span> + 1 = <span class="ublk" id="o2B"></span>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">VÀI TRƯỜNG HỢP</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>W</th><th>K</th><th>P</th><th>S</th><th>O = (W−K+2P)/S + 1</th></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Muốn đầu ra <b>bằng</b> đầu vào (K=3, S=1) thì P = <span class="ublk" style="min-width:30px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Kích thước đầu ra Conv</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Kích thước đầu ra Conv</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Pooling cũng dùng đúng công thức này (thường K=2, S=2 → cỡ giảm nửa).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO: W=<span data-q="W">5</span>, K=<span data-q="K">3</span>, P=<span data-q="P">0</span>, S=<span data-q="S">1</span></div>
+      <div class="expr">
+        O = (<span data-q="W">5</span>−<span data-q="K">3</span>+2·<span data-q="P">0</span>)/<span data-q="S">1</span> + 1
+        = <span data-q="ko1">?</span>/<span data-q="S">1</span> + 1 = <b><span data-q="ko">?</span></b>
+        → feature map <b><span data-q="ko">?</span>×<span data-q="ko">?</span></b>
+      </div>
+
+      <div class="bandh fw" style="margin-top:7px">VÀI TRƯỜNG HỢP</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>W</th><th>K</th><th>P</th><th>S</th><th>O</th></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>K=3, S=1, muốn O=W → P = (K−1)/2 = <span class="qa">1</span> (padding "same").</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Công thức (W−K+2P)/S+1 quyết định hình dạng mọi feature map. Stride giảm cỡ (downsample),
+        padding giữ cỡ. Biết cỡ rồi mới đếm được tham số (F10) và xếp tầng để tăng receptive field (F6).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Kích thước đầu ra Conv</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+
+function out(W,K,P,S){ return Math.floor((W-K+2*P)/S)+1; }
+
+function generate(){
+  // chọn case chính cho O nguyên
+  var cases=[
+    {W:5,K:3,P:0,S:1}, {W:5,K:3,P:1,S:1}, {W:7,K:3,P:0,S:2}, {W:6,K:2,P:0,S:2}, {W:7,K:3,P:1,S:2}
+  ];
+  var c=WB.pick(cases);
+  var O=out(c.W,c.K,c.P,c.S);
+  var num=c.W-c.K+2*c.P;
+
+  // bảng vài trường hợp (cố định để học so sánh)
+  var rows=[{W:5,K:3,P:0,S:1},{W:5,K:3,P:1,S:1},{W:7,K:3,P:0,S:2},{W:8,K:2,P:0,S:2}];
+  buildTbl('qtbl',rows,true);
+  buildTbl('ktbl',rows,false);
+
+  ['oB','o2B'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ W:fI(c.W), K:fI(c.K), P:fI(c.P), S:fI(c.S), ko1:fI(num), ko:fI(O) });
+
+  drawConv('sch1',c.W,c.K,c.P,c.S,O,false);
+  drawConv('sch2',c.W,c.K,c.P,c.S,O,true);
+}
+
+function buildTbl(id,rows,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  rows.forEach(function(r){
+    var O=out(r.W,r.K,r.P,r.S);
+    var tr=document.createElement('tr');
+    var c=[fI(r.W),fI(r.K),fI(r.P),fI(r.S),fI(O)];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j===4) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  });
+}
+
+function drawConv(id,W,K,P,S,O,show){
+  var box=document.getElementById(id); if(!box) return;
+  var Wd=178,H=132;
+  var cell=12;
+  var inX=12, inY=18;
+  var s='';
+  // padding viền
+  if(P>0){
+    s+='<rect x="'+(inX-P*cell)+'" y="'+(inY-P*cell)+'" width="'+((W+2*P)*cell)+'" height="'+((W+2*P)*cell)+'" fill="#eef6fa" stroke="#cfe3ec"/>';
+  }
+  // ảnh vào W×W
+  for(var i=0;i<W;i++) for(var j=0;j<W;j++){
+    s+='<rect x="'+(inX+j*cell)+'" y="'+(inY+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="#d6ecf6" stroke="#a7d3e3"/>';
+  }
+  // kernel K×K góc trên-trái
+  s+='<rect x="'+(inX-0.5)+'" y="'+(inY-0.5)+'" width="'+(K*cell+1)+'" height="'+(K*cell+1)+'" fill="none" stroke="#b45309" stroke-width="2"/>';
+  // đầu ra O×O
+  var outX=inX+(W+2*P)*cell+14, outY=inY+10;
+  for(var a=0;a<O;a++) for(var b=0;b<O;b++){
+    s+='<rect x="'+(outX+b*cell)+'" y="'+(outY+a*cell)+'" width="'+cell+'" height="'+cell+'" fill="#ffe6cc" stroke="#e3a76a"/>';
+  }
+  s+='<text x="'+(inX)+'" y="'+(inY-4)+'" font-size="8" fill="#0e7490">vào '+W+'×'+W+(P>0?' +P':'')+'</text>';
+  s+='<text x="'+(outX)+'" y="'+(outY-4)+'" font-size="8" fill="#b45309">ra '+(show?O+'×'+O:'?')+'</text>';
+  box.innerHTML='<svg viewBox="0 0 '+Wd+' '+H+'" aria-label="ảnh vào, kernel, đầu ra conv">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

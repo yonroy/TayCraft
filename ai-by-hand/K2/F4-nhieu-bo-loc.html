@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Nhiều bộ lọc → nhiều feature map — Filters</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .ublk{display:inline-block;min-width:32px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.3;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;}
+  .clab{font-family:var(--mono);font-size:12px;font-weight:700;width:46px;}
+  .m .cell{--cw:9mm;--ch:7mm;font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Nhiều bộ lọc</h1><span class="vi">— nhiều feature map</span>
+    <span class="tag">mỗi filter → một kênh đầu ra</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Một filter chỉ dò <b>một</b> kiểu đặc trưng (cạnh ngang, góc, đốm…). Để bắt nhiều kiểu,
+    lớp conv dùng <b>nhiều filter</b>; mỗi filter quét cùng đầu vào và tạo <b>một feature map</b> riêng. Số filter =
+    <b>độ sâu</b> (số kênh) của đầu ra.
+    <div class="fm">oₖ = (x ⊛ wₖ) + bₖ &nbsp; với k = 1…Cₒᵤₜ filter &nbsp;→&nbsp; đầu ra có Cₒᵤₜ kênh</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Cùng một mẩu ảnh, mỗi filter "chấm điểm" theo gu riêng → một con số riêng. Xếp các con số của mọi filter lại
+    theo chiều sâu → vectơ đặc trưng tại điểm đó. Nhiều filter = nhiều "máy dò" song song.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>1 cửa sổ vào</b> ⊛ <b>3 filter</b> → <b>3 ô</b> ở 3 feature map (độ sâu = 3).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CỬA SỔ VÀO 2×2</div>
+      <div class="crow"><span class="clab">x</span><div class="m c2 in" id="x"></div></div>
+
+      <div class="bandh fw" style="margin-top:6px">3 FILTER (b₁,b₂,b₃ = <span data-q="bs">1, 0, 2</span>)</div>
+      <div class="crow"><span class="clab" style="color:#b45309">filter 1</span>
+        <div class="m c2 w" id="w1"></div><span class="op">=</span> x⊛w₁+b₁ = <span class="ublk" id="o1B"></span></div>
+      <div class="crow"><span class="clab" style="color:#b45309">filter 2</span>
+        <div class="m c2 w" id="w2"></div><span class="op">=</span> x⊛w₂+b₂ = <span class="ublk" id="o2B"></span></div>
+      <div class="crow"><span class="clab" style="color:#b45309">filter 3</span>
+        <div class="m c2 w" id="w3"></div><span class="op">=</span> x⊛w₃+b₃ = <span class="ublk" id="o3B"></span></div>
+
+      <div class="bandh fw" style="margin-top:6px">ĐẦU RA (vectơ sâu)</div>
+      <div class="expr">o = (<span class="ublk" id="ovB" style="min-width:80px"></span>) → đầu ra <b>3 kênh</b> tại điểm này</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Dùng 16 filter thì đầu ra có mấy kênh? → <span class="ublk" style="min-width:30px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Nhiều bộ lọc</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Nhiều bộ lọc</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Mỗi filter có riêng trọng số + bias. Toàn bộ feature map của 1 filter dùng chung filter đó (weight sharing).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CỬA SỔ VÀO</div>
+      <div class="crow"><span class="clab">x</span><div class="m c2 in" id="kx"></div></div>
+
+      <div class="bandh fw" style="margin-top:6px">3 FILTER (b = <span data-q="bs">1, 0, 2</span>)</div>
+      <div class="crow"><span class="clab" style="color:#b45309">filter 1</span>
+        <div class="m c2 w" id="kw1"></div><span class="op">=</span> <b><span data-q="ko1">?</span></b></div>
+      <div class="crow"><span class="clab" style="color:#b45309">filter 2</span>
+        <div class="m c2 w" id="kw2"></div><span class="op">=</span> <b><span data-q="ko2">?</span></b></div>
+      <div class="crow"><span class="clab" style="color:#b45309">filter 3</span>
+        <div class="m c2 w" id="kw3"></div><span class="op">=</span> <b><span data-q="ko3">?</span></b></div>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">o = (<b><span data-q="ko1">?</span>, <span data-q="ko2">?</span>, <span data-q="ko3">?</span></b>) → 3 kênh đầu ra</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>16 filter → <span class="qa">16 kênh</span> ra. Số filter = độ sâu (Cₒᵤₜ).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Mỗi filter một feature map; xếp lại → tensor đầu ra W×H×Cₒᵤₜ. Mạng sâu = chồng nhiều lớp conv,
+        kênh tăng dần (3 → 32 → 64…) trong khi không gian co lại (F2). Tham số một lớp: K·K·Cᵢₙ·Cₒᵤₜ + Cₒᵤₜ (F10).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Nhiều bộ lọc</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fill(id,arr,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+function dot(a,b){var s=0; for(var i=0;i<a.length;i++) s+=a[i]*b[i]; return s;}
+
+function generate(){
+  var x=[WB.randInt(1,3),WB.randInt(1,3),WB.randInt(1,3),WB.randInt(1,3)];
+  function rw(){return [WB.randIntNZ(-1,2),WB.randIntNZ(-1,2),WB.randIntNZ(-1,2),WB.randIntNZ(-1,2)];}
+  var w1=rw(),w2=rw(),w3=rw(), bs=[WB.pick([0,1,2]),WB.pick([0,1,-1]),WB.pick([0,2,1])];
+  var o1=dot(x,w1)+bs[0], o2=dot(x,w2)+bs[1], o3=dot(x,w3)+bs[2];
+
+  fill('x',x); fill('w1',w1); fill('w2',w2); fill('w3',w3);
+  fill('kx',x); fill('kw1',w1); fill('kw2',w2); fill('kw3',w3);
+  ['o1B','o2B','o3B','ovB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ bs:bs.map(fI).join(', '), ko1:fI(o1), ko2:fI(o2), ko3:fI(o3) });
+
+  drawFilters('sch1'); drawFilters('sch2');
+}
+
+function drawFilters(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132;
+  var s='';
+  // cửa sổ vào
+  for(var i=0;i<2;i++) for(var j=0;j<2;j++)
+    s+='<rect x="'+(20+j*12)+'" y="'+(54+i*12)+'" width="12" height="12" fill="#fdecd2" stroke="#e3c489"/>';
+  s+='<text x="26" y="50" font-size="8" fill="#3a2a08">x</text>';
+  // 3 filter (mũi tên) → 3 feature map xếp chéo
+  var cols=['#ffe6cc','#ffdab3','#ffcf99'];
+  for(var k=0;k<3;k++){
+    s+='<line x1="48" y1="60" x2="92" y2="'+(34+k*30)+'" stroke="#b45309" stroke-width="1.2"/>';
+    s+='<rect x="96" y="'+(26+k*30)+'" width="16" height="16" fill="'+cols[k]+'" stroke="#b45309"/>';
+    s+='<text x="116" y="'+(38+k*30)+'" font-size="8" fill="#b45309">map '+(k+1)+'</text>';
+  }
+  s+='<text x="70" y="20" font-size="8" fill="#6b7280">3 filter → độ sâu 3</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="một cửa sổ vào, ba filter, ba feature map">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

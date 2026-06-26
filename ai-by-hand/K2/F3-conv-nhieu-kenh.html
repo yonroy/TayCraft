@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Conv nhiều kênh (RGB) — Multi-channel</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .ublk{display:inline-block;min-width:32px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.3;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;}
+  .clab{font-family:var(--mono);font-size:12px;font-weight:700;width:18px;}
+  .m .cell{--cw:9mm;--ch:7mm;font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Conv nhiều kênh (RGB)</h1><span class="vi">— Multi-channel</span>
+    <span class="tag">out = Σ_kênh (vào ⊛ kernel) + bias</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Ảnh thật có nhiều kênh (R, G, B). Một bộ lọc conv có <b>cùng số kênh</b> với đầu vào;
+    nó tích chập từng kênh rồi <b>cộng dồn</b> tất cả thành <b>một</b> giá trị đầu ra. Hiểu bước này là hiểu cách conv
+    gộp thông tin màu/đặc trưng qua chiều sâu.
+    <div class="fm">out = Σ_{c} (xᶜ ⊛ wᶜ) + b &nbsp;·&nbsp; mỗi kênh: tích vô hướng của cửa sổ 2×2 với kernel 2×2</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi kênh cho một "điểm tương đồng" riêng (một tích vô hướng), ba kênh <b>cộng lại</b> thành một số duy nhất.
+    Chiều sâu (kênh) bị "ép phẳng" về 1 ở đầu ra của một filter.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>3 lớp vào</b> (R,G,B) ⊛ <b>3 lớp kernel</b> → cộng dồn → <b>1 ô</b> đầu ra (+ bias).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">3 KÊNH · cửa sổ 2×2 (b = <span data-q="b">1</span>)</div>
+      <div class="crow"><span class="clab" style="color:#c0392b">R</span>
+        <div class="m c2 in" id="xR"></div><span class="op">⊛</span><div class="m c2 w" id="wR"></div>
+        <span class="op">=</span> <span class="ublk" id="dR"></span></div>
+      <div class="crow"><span class="clab" style="color:#27ae60">G</span>
+        <div class="m c2 in" id="xG"></div><span class="op">⊛</span><div class="m c2 w" id="wG"></div>
+        <span class="op">=</span> <span class="ublk" id="dG"></span></div>
+      <div class="crow"><span class="clab" style="color:#2980b9">B</span>
+        <div class="m c2 in" id="xB"></div><span class="op">⊛</span><div class="m c2 w" id="wB"></div>
+        <span class="op">=</span> <span class="ublk" id="dB"></span></div>
+
+      <div class="bandh fw" style="margin-top:7px">CỘNG DỒN + BIAS</div>
+      <div class="expr">
+        out = dR + dG + dB + b = <span class="ublk" id="sumB"></span> + <span data-q="b">1</span> = <span class="ublk" id="outB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Một filter trên ảnh 3 kênh cho đầu ra mấy kênh? → <span class="ublk" style="min-width:28px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Conv nhiều kênh</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Conv nhiều kênh (RGB)</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Kernel có Cᵢₙ kênh = số kênh ảnh vào. Nhiều filter → nhiều kênh ra (F4).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">3 KÊNH (b = <span data-q="b">1</span>)</div>
+      <div class="crow"><span class="clab" style="color:#c0392b">R</span>
+        <div class="m c2 in" id="kxR"></div><span class="op">⊛</span><div class="m c2 w" id="kwR"></div>
+        <span class="op">=</span> <b><span data-q="kdR">?</span></b></div>
+      <div class="crow"><span class="clab" style="color:#27ae60">G</span>
+        <div class="m c2 in" id="kxG"></div><span class="op">⊛</span><div class="m c2 w" id="kwG"></div>
+        <span class="op">=</span> <b><span data-q="kdG">?</span></b></div>
+      <div class="crow"><span class="clab" style="color:#2980b9">B</span>
+        <div class="m c2 in" id="kxB"></div><span class="op">⊛</span><div class="m c2 w" id="kwB"></div>
+        <span class="op">=</span> <b><span data-q="kdB">?</span></b></div>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        out = <span data-q="kdR">?</span> + <span data-q="kdG">?</span> + <span data-q="kdB">?</span> + <span data-q="b">1</span> = <b><span data-q="kout">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Một filter → <span class="qa">1 kênh</span> ra (đã cộng dồn mọi kênh vào).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Conv đa kênh = nhiều tích vô hướng cộng lại + bias → một số. Số <b>filter</b> quyết định độ sâu
+        đầu ra (F4); kích thước không gian theo (W−K+2P)/S+1 (F2). Tham số = K·K·Cᵢₙ·Cₒᵤₜ + Cₒᵤₜ (F10).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Conv nhiều kênh</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fill(id,arr,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+function dot(a,b){var s=0; for(var i=0;i<a.length;i++) s+=a[i]*b[i]; return s;}
+
+function generate(){
+  function rnd(){return [WB.randInt(0,3),WB.randInt(0,3),WB.randInt(0,3),WB.randInt(0,3)];}
+  function rndW(){return [WB.randIntNZ(-1,2),WB.randIntNZ(-1,2),WB.randIntNZ(-1,2),WB.randIntNZ(-1,2)];}
+  var xR=rnd(),xG=rnd(),xB=rnd(), wR=rndW(),wG=rndW(),wB=rndW(), b=WB.pick([0,1,2,-1]);
+  var dR=dot(xR,wR), dG=dot(xG,wG), dB=dot(xB,wB);
+  var sum=dR+dG+dB, out=sum+b;
+
+  // ĐỀ
+  fill('xR',xR); fill('wR',wR); fill('xG',xG); fill('wG',wG); fill('xB',xB); fill('wB',wB);
+  // ĐÁP ÁN
+  fill('kxR',xR); fill('kwR',wR); fill('kxG',xG); fill('kwG',wG); fill('kxB',xB); fill('kwB',wB);
+  ['dR','dG','dB','sumB','outB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ b:fI(b), kdR:fI(dR), kdG:fI(dG), kdB:fI(dB), kout:fI(out) });
+
+  drawStack('sch1'); drawStack('sch2');
+}
+
+function drawStack(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132;
+  var cols=['#f3c9c9','#c9eccf','#cfe0f3'], strk=['#c0392b','#27ae60','#2980b9'];
+  var s='';
+  // 3 lớp vào xếp chéo
+  for(var k=2;k>=0;k--){
+    var x=22+k*10, y=24+k*12;
+    for(var i=0;i<2;i++) for(var j=0;j<2;j++)
+      s+='<rect x="'+(x+j*11)+'" y="'+(y+i*11)+'" width="11" height="11" fill="'+cols[k]+'" stroke="'+strk[k]+'"/>';
+  }
+  // mũi tên cộng
+  s+='<text x="92" y="60" font-size="13" fill="#c9c2b2">Σ→</text>';
+  // ô ra
+  s+='<rect x="120" y="48" width="20" height="20" fill="#ffe6cc" stroke="#b45309" stroke-width="1.6"/>';
+  s+='<text x="130" y="61" text-anchor="middle" font-size="11" font-weight="700" fill="#7a3d00">+b</text>';
+  s+='<text x="30" y="18" font-size="8" fill="#6b7280">3 kênh vào (R,G,B)</text>';
+  s+='<text x="130" y="44" text-anchor="middle" font-size="8" fill="#b45309">1 ô ra</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="3 kênh vào cộng dồn thành 1 ô ra">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

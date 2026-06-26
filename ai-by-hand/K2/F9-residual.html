@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Residual / Skip Connection — y = F(x) + x</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .crow{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;}
+  .clab{font-family:var(--mono);font-size:12px;font-weight:700;}
+  .m .cell{--cw:10mm;--ch:8mm;font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Residual / Skip Connection</h1><span class="vi">— y = F(x) + x</span>
+    <span class="tag">forward: cộng đường tắt · backward: +1</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mạng rất sâu khó học vì gradient tắt dần (E2). Kết nối tắt cộng thẳng đầu vào x vào đầu
+    ra: y = F(x) + x. Nhờ vậy lớp chỉ cần học <b>phần dư</b> F(x), và khi backward luôn có đường gradient "+1" chạy
+    thẳng về — không bị vanishing. Đây là ý tưởng cốt lõi của ResNet.
+    <div class="fm">forward: y = F(x) + x &nbsp;·&nbsp; backward: ∂y/∂x = F′(x) + 1 (số 1 = đường tắt luôn dẫn gradient)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Đường tắt là "lối thoát hiểm" cho gradient: dù nhánh F có học kém (F′≈0) thì gradient vẫn về tới x nguyên vẹn
+    qua số +1. Lớp dễ học "không làm gì" (F=0 → y=x) hơn là học hàm đồng nhất từ đầu.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Nhánh F</b> (qua các lớp) + <b>đường tắt</b> (x đi thẳng) → cộng tại nút ⊕ ra y.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">FORWARD: y = F(x) + x</div>
+      <div class="crow">
+        <div><div class="clab in">x</div><div class="m c1 in" id="x"></div></div>
+        <div class="op">+</div>
+        <div><div class="clab">F(x)</div><div class="m c1 w" id="Fx"></div></div>
+        <div class="op">=</div>
+        <div><div class="clab out">y</div><div class="m c1 out" id="y"></div></div>
+      </div>
+
+      <div class="bandh bw" style="margin-top:8px">BACKWARD: gradient về x</div>
+      <div class="expr">
+        Cho gradient vào y là δ = <span data-q="d">2</span>. Giả sử nhánh F "tắt" (F′ = 0):<br>
+        ∂x = δ·F′ + δ·1 = <span class="ublk" id="g1B" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:30px"></span> + <span class="ublk" id="g2B" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:30px"></span> = <span class="ublk" id="gB" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:34px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Nếu F′ = 0 (nhánh chính chết), gradient tới x còn <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span> hay = 0?</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Residual</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Residual / Skip Connection</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">y = F(x) + x cũng dùng trong Transformer (residual quanh attention & FFN — Bài 13).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">FORWARD</div>
+      <div class="crow">
+        <div><div class="clab in">x</div><div class="m c1 in" id="kx"></div></div>
+        <div class="op">+</div>
+        <div><div class="clab">F(x)</div><div class="m c1 w" id="kFx"></div></div>
+        <div class="op">=</div>
+        <div><div class="clab out">y</div><div class="m c1 out" id="ky"></div></div>
+      </div>
+
+      <div class="bandh bw" style="margin-top:8px">BACKWARD</div>
+      <div class="expr">
+        δ = <span data-q="d">2</span>, F′ = 0 → ∂x = δ·0 + δ·1 = <b><span data-q="kg">?</span></b>
+        → gradient <b>vẫn chảy</b> về x qua đường tắt (không vanishing)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>F′=0 → ∂x = δ = <span class="qa" data-q="kg2">2</span> ≠ 0 → gradient vẫn về tới x (đó là điểm mấu chốt).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Residual = "học phần dư + giữ đường gradient". Cho phép chồng hàng trăm lớp (ResNet) hay khối
+        Transformer rất sâu (Bài 13) mà vẫn huấn luyện được. Đường tắt +1 là liều thuốc cho vanishing (E2).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Residual</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fill(id,arr,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  var x=[WB.randInt(1,5),WB.randIntNZ(-3,4),WB.randInt(1,5)];
+  var Fx=[WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3)];
+  var y=x.map(function(v,i){return v+Fx[i];});
+  var d=WB.pick([1,2,3]);
+
+  fill('x',x); fill('Fx',Fx); fill('y',y,true);
+  fill('kx',x); fill('kFx',Fx); fill('ky',y);
+  ['g1B','g2B','gB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ d:fI(d), kg:fI(d), kg2:fI(d) });
+
+  drawRes('sch1'); drawRes('sch2');
+}
+
+function drawRes(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132;
+  var s='<defs><marker id="ar'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#888"/></marker></defs>';
+  // x
+  s+='<rect x="14" y="56" width="22" height="18" rx="3" fill="#fdecd2" stroke="#e3c489"/><text x="25" y="69" text-anchor="middle" font-size="11" font-weight="700">x</text>';
+  // F block
+  s+='<rect x="62" y="26" width="44" height="24" rx="4" fill="#ece2ff" stroke="#7c5cff"/><text x="84" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#5b3fd6">F(x)</text>';
+  // ⊕
+  s+='<circle cx="130" cy="65" r="9" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/><text x="130" y="69" text-anchor="middle" font-size="12" font-weight="700">+</text>';
+  // y
+  s+='<rect x="150" y="56" width="20" height="18" rx="3" fill="#d6ecf6" stroke="#0e7490"/><text x="160" y="69" text-anchor="middle" font-size="11" font-weight="700" fill="#0c4a5e">y</text>';
+  // x -> F
+  s+='<line x1="36" y1="62" x2="60" y2="40" stroke="#888" stroke-width="1.4" marker-end="url(#ar'+id+')"/>';
+  // F -> +
+  s+='<line x1="106" y1="40" x2="121" y2="60" stroke="#7c5cff" stroke-width="1.6" marker-end="url(#ar'+id+')"/>';
+  // skip x -> + (đường tắt)
+  s+='<path d="M36,68 C70,92 100,92 122,70" fill="none" stroke="#b45309" stroke-width="1.8" stroke-dasharray="4 2" marker-end="url(#ar'+id+')"/>';
+  s+='<text x="80" y="98" text-anchor="middle" font-size="8" fill="#b45309">đường tắt (x đi thẳng)</text>';
+  // + -> y
+  s+='<line x1="139" y1="65" x2="149" y2="65" stroke="#888" stroke-width="1.4" marker-end="url(#ar'+id+')"/>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="khối residual với đường tắt">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

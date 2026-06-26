@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Conv 1×1 — trộn kênh</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .ublk{display:inline-block;min-width:32px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.3;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .m .cell{--cw:10mm;--ch:8mm;font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Conv 1×1</h1><span class="vi">— trộn kênh</span>
+    <span class="tag">o = W·x + b · tại MỖI pixel</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Conv 1×1 không nhìn hàng xóm không gian — nó <b>trộn các kênh</b> tại từng pixel: lấy
+    vectơ Cᵢₙ kênh, nhân ma trận trọng số → Cₒᵤₜ kênh. Dùng để <b>giảm/đổi số kênh</b> (bottleneck) rẻ tiền, thêm
+    phi tuyến giữa các lớp (Inception, ResNet).
+    <div class="fm">tại một pixel: o = W·x + b &nbsp;·&nbsp; W cỡ Cₒᵤₜ×Cᵢₙ &nbsp;·&nbsp; chính là một lớp tuyến tính trên trục kênh</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi pixel có một "vectơ đặc trưng" dọc theo kênh; conv 1×1 là một <b>lớp fully-connected</b> áp <b>giống nhau</b>
+    cho mọi pixel. 3 kênh → 2 kênh = nén thông tin màu/đặc trưng tại chỗ.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>1 pixel</b>, 3 kênh vào → ma trận W (2×3) → 2 kênh ra. Không gian không đổi, chỉ đổi độ sâu.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">TẠI MỘT PIXEL · x (3 kênh) · b = (<span data-q="bs">1, 0</span>)</div>
+      <div class="row">
+        <div class="blk w"><div class="nm">W <s>2×3</s></div><div class="m c3" id="W"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x <s>3×1</s></div><div class="m c1" id="x"></div></div>
+        <div class="op">+b =</div>
+        <div class="blk out"><div class="nm">o <s>2×1</s></div><div class="m c1" id="o"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">TỪNG KÊNH RA</div>
+      <div class="expr">
+        o₁ = hàng 1 của W · x + b₁ = <span class="ublk" id="o1B"></span><br>
+        o₂ = hàng 2 của W · x + b₂ = <span class="ublk" id="o2B"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Conv 1×1 có nhìn pixel hàng xóm không? → <span class="ublk" style="min-width:50px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Conv 1×1</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Conv 1×1</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Cùng W được áp cho TẤT CẢ pixel (weight sharing) → đúng tinh thần convolution.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">TẠI MỘT PIXEL · b = (<span data-q="bs">1, 0</span>)</div>
+      <div class="row">
+        <div class="blk w"><div class="nm">W <s>2×3</s></div><div class="m c3" id="kW"></div></div>
+        <div class="op">·</div>
+        <div class="blk in"><div class="nm">x</div><div class="m c1" id="kx"></div></div>
+        <div class="op">+b =</div>
+        <div class="blk out"><div class="nm">o</div><div class="m c1" id="ko"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        o₁ = <b><span data-q="ko1">?</span></b> · o₂ = <b><span data-q="ko2">?</span></b>
+        → 3 kênh nén còn <b>2 kênh</b> (vẫn 1 pixel)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Conv 1×1 <span class="qa">không</span> nhìn hàng xóm — chỉ trộn kênh tại chỗ (kernel 1×1).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Conv 1×1 = lớp tuyến tính trên trục kênh, chia sẻ cho mọi pixel. Rẻ, đổi độ sâu, thêm phi tuyến
+        (kèm ReLU). Là viên gạch "bottleneck" của ResNet/Inception và "pointwise" trong MobileNet.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Conv 1×1</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fill(id,arr,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  var x=[WB.randInt(1,4),WB.randInt(1,4),WB.randInt(1,4)];
+  var W=[]; for(var i=0;i<6;i++) W.push(WB.randIntNZ(-1,2));   // 2×3 hàng-trước
+  var b=[WB.pick([0,1,2]),WB.pick([0,1,-1])];
+  var o1=W[0]*x[0]+W[1]*x[1]+W[2]*x[2]+b[0];
+  var o2=W[3]*x[0]+W[4]*x[1]+W[5]*x[2]+b[1];
+
+  fill('W',W); fill('x',x); fill('o',[o1,o2],true);
+  fill('kW',W); fill('kx',x); fill('ko',[o1,o2]);
+  ['o1B','o2B'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ bs:b.map(fI).join(', '), ko1:fI(o1), ko2:fI(o2) });
+
+  drawMix('sch1'); drawMix('sch2');
+}
+
+function drawMix(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132;
+  var s='';
+  // 3 kênh vào (chồng)
+  var ci=['#f3c9c9','#c9eccf','#cfe0f3'];
+  for(var k=0;k<3;k++){
+    s+='<rect x="'+(24)+'" y="'+(28+k*22)+'" width="16" height="16" fill="'+ci[k]+'" stroke="#999"/>';
+    s+='<text x="18" y="'+(40+k*22)+'" font-size="8" fill="#6b7280">c'+(k+1)+'</text>';
+  }
+  // W
+  s+='<rect x="66" y="40" width="30" height="40" fill="#ece2ff" stroke="#7c5cff"/><text x="81" y="64" text-anchor="middle" font-size="10" font-weight="700" fill="#5b3fd6">W</text>';
+  for(var k2=0;k2<3;k2++) s+='<line x1="42" y1="'+(36+k2*22)+'" x2="66" y2="60" stroke="#bbb" stroke-width="1"/>';
+  // 2 kênh ra
+  var co=['#d6ecf6','#bfe0ee'];
+  for(var m=0;m<2;m++){
+    s+='<rect x="124" y="'+(40+m*22)+'" width="16" height="16" fill="'+co[m]+'" stroke="#0e7490"/>';
+    s+='<line x1="96" y1="60" x2="124" y2="'+(48+m*22)+'" stroke="#bbb" stroke-width="1"/>';
+    s+='<text x="146" y="'+(52+m*22)+'" font-size="8" fill="#0e7490">o'+(m+1)+'</text>';
+  }
+  s+='<text x="80" y="20" text-anchor="middle" font-size="8" fill="#6b7280">3 kênh → 2 kênh (1 pixel)</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="conv 1x1 trộn 3 kênh thành 2 kênh">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

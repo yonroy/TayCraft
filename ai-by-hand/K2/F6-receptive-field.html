@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Receptive Field — vùng ảnh hưởng</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
+  .ublk{display:inline-block;min-width:34px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Receptive Field</h1><span class="vi">— vùng ảnh hưởng</span>
+    <span class="tag">RFₗ = RFₗ₋₁ + (Kₗ − 1)·∏S · (S=1)</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Một ô ở lớp sâu "nhìn thấy" được bao nhiêu pixel của ảnh gốc? Đó là receptive field.
+    Chồng nhiều lớp conv nhỏ (3×3) làm RF <b>lớn dần</b> mà vẫn ít tham số — bí quyết của VGG/ResNet để thấy được
+    bối cảnh rộng.
+    <div class="fm">stride 1: RFₗ = RFₗ₋₁ + (Kₗ − 1) &nbsp;·&nbsp; RF₀ = 1 &nbsp;→&nbsp; L lớp K×K: RF = 1 + L·(K−1)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi lớp 3×3 mở rộng "tầm nhìn" thêm 2 pixel mỗi phía → cộng dồn. Hai lớp 3×3 = tầm nhìn 5×5 nhưng rẻ hơn một
+    lớp 5×5. Càng sâu càng thấy rộng.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Ô vuông lồng nhau</b>: mỗi lớp nới receptive field rộng thêm (K−1). Sâu hơn = vùng phủ to hơn.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHỒNG LỚP CONV K=<span data-q="K">3</span> (stride 1)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>sau lớp</th><th>K</th><th>RF = RF_trước + (K−1)</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">CÔNG THỨC GỌN</div>
+      <div class="expr">
+        RF = 1 + L·(K−1) = 1 + <span data-q="L">3</span>·(<span data-q="K">3</span>−1) = <span class="ublk" id="rfB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Hai lớp 3×3 có cùng RF với <b>một</b> lớp <span class="ublk" style="min-width:36px"></span>×<span class="ublk" style="min-width:36px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Receptive Field</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Receptive Field</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Có stride/pooling thì RF nhân thêm tích stride các lớp trước → tăng nhanh hơn nhiều.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHỒNG LỚP CONV K=<span data-q="K">3</span></div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>sau lớp</th><th>K</th><th>RF</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        RF = 1 + <span data-q="L">3</span>·(<span data-q="K">3</span>−1) = <b><span data-q="krf">?</span></b>
+        → ô cuối "nhìn" vùng <b><span data-q="krf">?</span>×<span data-q="krf">?</span></b> của ảnh gốc
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Hai lớp 3×3 → RF = 1+2·2 = 5 → bằng một lớp <span class="qa">5×5</span> (nhưng ít tham số hơn).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Chồng nhiều conv nhỏ = tầm nhìn rộng + ít tham số + nhiều phi tuyến. Đây là lý do CNN hiện đại
+        thích 3×3 xếp sâu. Kết nối residual (F9) cho phép chồng rất sâu mà không vanishing.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Receptive Field</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+
+function generate(){
+  var K=WB.pick([3,5]);
+  var L=WB.pick([3,4]);
+  var rows=[], rf=1;
+  for(var l=1;l<=L;l++){ rf+=(K-1); rows.push({l:l, K:K, rf:rf}); }
+  var RF=1+L*(K-1);
+
+  buildTbl('qtbl',rows,true);
+  buildTbl('ktbl',rows,false);
+  var rb=document.getElementById('rfB'); if(rb) rb.textContent='';
+  WB.setAll({ K:fI(K), L:fI(L), krf:fI(RF) });
+
+  drawRF('sch1',rows,false); drawRF('sch2',rows,true);
+}
+
+function buildTbl(id,rows,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  rows.forEach(function(r){
+    var tr=document.createElement('tr');
+    var c=[String(r.l), fI(r.K), fI(r.rf)];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j===2) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  });
+}
+
+function drawRF(id,rows,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, cx=W/2, cy=H/2+4;
+  var maxRF=rows[rows.length-1].rf;
+  var unit=46/maxRF;   // px mỗi đơn vị RF
+  var s='';
+  var cols=['#0e7490','#3b9ab5','#7cc0d6','#b45309','#e3a76a'];
+  for(var i=rows.length-1;i>=0;i--){
+    var half=rows[i].rf*unit/2;
+    s+='<rect x="'+(cx-half).toFixed(1)+'" y="'+(cy-half).toFixed(1)+'" width="'+(2*half).toFixed(1)+'" height="'+(2*half).toFixed(1)+'" fill="none" stroke="'+cols[i%cols.length]+'" stroke-width="1.6"/>';
+    if(show) s+='<text x="'+(cx+half-1).toFixed(1)+'" y="'+(cy-half+9).toFixed(1)+'" text-anchor="end" font-size="7.5" fill="'+cols[i%cols.length]+'">L'+rows[i].l+':'+rows[i].rf+'</text>';
+  }
+  // ô trung tâm
+  s+='<rect x="'+(cx-2)+'" y="'+(cy-2)+'" width="4" height="4" fill="#1a1a1a"/>';
+  s+='<text x="'+cx+'" y="14" text-anchor="middle" font-size="8" fill="#6b7280">RF lồng nhau theo độ sâu</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="các vùng receptive field lồng nhau">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

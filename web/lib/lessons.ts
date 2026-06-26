@@ -154,13 +154,13 @@ export const LESSONS: Lesson[] = [
   // ── PHẦN G · Dữ liệu chuỗi / RNN-LSTM (K2; embedding ở K3) ───────────────
   { no: "19", slug: "19-embedding-vitri", title: "Embedding & Positional", english: "Embedding", blurb: "Tra bảng token → vectơ, cộng dấu vị trí sin/cos.", part: "G", course: "K3", available: true, isFree: false },
   { no: "21", slug: "21-rnn-mot-buoc", title: "RNN — một bước hồi quy", english: "Recurrent", blurb: "hₜ = tanh(Wₓxₜ + Wₕhₜ₋₁ + b): ký ức qua thời gian.", part: "G", course: "K2", available: true, isFree: false },
-  soon("G3", "G", "K2", "RNN trải nhiều bước (BPTT)", "BPTT", "Chạy 3 bước, thấy gradient nhân chuỗi qua thời gian."),
+  { no: "G3", slug: "G3-bptt", title: "RNN trải nhiều bước (BPTT)", english: "BPTT", blurb: "Chạy 3 bước, thấy gradient nhân chuỗi qua thời gian.", part: "G", course: "K2", available: true, isFree: false },
   { no: "22", slug: "22-lstm-mot-o-nho", title: "LSTM — một ô nhớ", english: "Long Short-Term Memory", blurb: "Cổng quên / vào / ra với số thật; băng chuyền ký ức.", part: "G", course: "K2", available: true, isFree: false },
-  soon("G5", "G", "K2", "GRU 1 ô", "GRU", "Cổng cập nhật / đặt lại — gọn hơn LSTM."),
-  soon("G6", "G", "K2", "Bi-directional RNN", "BiRNN", "Gộp hai chiều xuôi/ngược của chuỗi."),
-  soon("G7", "G", "K2", "Seq2seq encoder → decoder", "Seq2seq", "Nén chuỗi → vectơ ngữ cảnh → giải mã."),
-  soon("G8", "G", "K2", "Giải mã: Greedy vs Beam search", "Decoding", "Chọn token theo xác suất, giữ top-b nhánh."),
-  soon("G9", "G", "K2", "Teacher forcing", "Teacher forcing", "Dùng nhãn thật làm đầu vào bước kế khi huấn luyện."),
+  { no: "G5", slug: "G5-gru", title: "GRU 1 ô", english: "GRU", blurb: "Cổng cập nhật / đặt lại — gọn hơn LSTM.", part: "G", course: "K2", available: true, isFree: false },
+  { no: "G6", slug: "G6-birnn", title: "Bi-directional RNN", english: "BiRNN", blurb: "Gộp hai chiều xuôi/ngược của chuỗi.", part: "G", course: "K2", available: true, isFree: false },
+  { no: "G7", slug: "G7-seq2seq", title: "Seq2seq encoder → decoder", english: "Seq2seq", blurb: "Nén chuỗi → vectơ ngữ cảnh → giải mã.", part: "G", course: "K2", available: true, isFree: false },
+  { no: "G8", slug: "G8-greedy-beam", title: "Giải mã: Greedy vs Beam search", english: "Decoding", blurb: "Chọn token theo xác suất, giữ top-b nhánh.", part: "G", course: "K2", available: true, isFree: false },
+  { no: "G9", slug: "G9-teacher-forcing", title: "Teacher forcing", english: "Teacher forcing", blurb: "Dùng nhãn thật làm đầu vào bước kế khi huấn luyện.", part: "G", course: "K2", available: true, isFree: false },
 
   // ── PHẦN H · Attention & Transformer (K3) ───────────────────────────────
   soon("H1", "H", "K3", "Scaled dot-product attention", "Attention", "QKᵀ/√d → softmax → ·V (bản chi tiết từng bước)."),

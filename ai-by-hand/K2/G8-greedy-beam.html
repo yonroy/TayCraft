@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Greedy vs Beam Search — Decoding</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.9;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.best{background:#d6f5d6;font-weight:700;color:#0a6;}
+  .dtbl td.greedy{background:#ffe6cc;font-weight:700;color:#b45309;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Greedy vs Beam Search</h1><span class="vi">— Decoding</span>
+    <span class="tag">greedy: chọn max mỗi bước · beam: giữ top-b</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Sinh chuỗi = chọn token từng bước theo xác suất. <b>Greedy</b> luôn chọn token cao nhất
+    mỗi bước — nhanh nhưng có thể bỏ lỡ chuỗi tốt hơn về sau. <b>Beam search</b> giữ b nhánh tốt nhất, mở rộng song
+    song rồi chọn chuỗi có xác suất <b>tích lũy</b> cao nhất → thường tốt hơn greedy.
+    <div class="fm">xác suất chuỗi = tích xác suất từng bước · greedy = tham lam từng bước · beam (b=2) = giữ 2 nhánh</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Greedy như đi đường chỉ nhìn một bước trước mặt; có thể vào ngõ cụt. Beam giữ vài lựa chọn "để dành", nên tránh
+    được bẫy "bước đầu ngon nhưng về sau tệ".
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Cam</b> = đường greedy (max bước 1) · <b>xanh</b> = chuỗi tốt nhất beam tìm ra. Có thể khác nhau!</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">XÁC SUẤT (2 bước · token A,B)</div>
+      <div class="expr" id="probs"></div>
+
+      <div class="bandh fw" style="margin-top:6px">4 CHUỖI · xác suất tích lũy = p₁·p₂</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>chuỗi</th><th>p bước 1</th><th>p bước 2</th><th>tích</th></tr>
+      </table>
+      <div class="expr">greedy → <span class="ublk" id="gB" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:44px"></span> · beam tốt nhất → <span class="ublk" id="bB" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:44px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Greedy và beam ở đây cho cùng kết quả không? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:50px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Greedy vs Beam</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Greedy vs Beam Search</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">b càng lớn → càng gần tối ưu nhưng càng đắt. b=1 chính là greedy.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">XÁC SUẤT</div>
+      <div class="expr" id="kprobs"></div>
+
+      <div class="bandh fw" style="margin-top:6px">4 CHUỖI</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>chuỗi</th><th>p₁</th><th>p₂</th><th>tích</th></tr>
+      </table>
+      <div class="expr">
+        greedy = <b><span data-q="kg">?</span></b> (theo max bước 1) · beam tốt nhất = <b><span data-q="kb">?</span></b>
+        <span data-q="cmp">(beam cao hơn)</span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li><span class="qa" data-q="ans">Khác nhau</span>: greedy tham bước 1 nên trượt; beam giữ nhánh kia → tìm được chuỗi tốt hơn.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Greedy nhanh, dễ kẹt cục bộ; beam giữ top-b nên gần tối ưu hơn. LLM thực tế còn dùng sampling
+        (top-k, top-p, nhiệt độ τ — K3) để câu đa dạng, tự nhiên thay vì luôn chọn xác suất cao nhất.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Greedy vs Beam</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return WB.fmt2(v);}
+
+// preset đảm bảo beam > greedy
+var PRE=[
+  {s1:[0.6,0.4], s2A:[0.5,0.5], s2B:[0.1,0.9]},
+  {s1:[0.55,0.45], s2A:[0.5,0.5], s2B:[0.2,0.8]},
+  {s1:[0.6,0.4], s2A:[0.6,0.4], s2B:[0.1,0.9]}
+];
+var TOK=['A','B'];
+
+function generate(){
+  var p=WB.pick(PRE);
+  // 4 chuỗi: AA, AB, BA, BB
+  var seqs=[
+    {name:'AA', p1:p.s1[0], p2:p.s2A[0]},
+    {name:'AB', p1:p.s1[0], p2:p.s2A[1]},
+    {name:'BA', p1:p.s1[1], p2:p.s2B[0]},
+    {name:'BB', p1:p.s1[1], p2:p.s2B[1]}
+  ];
+  seqs.forEach(function(s){ s.prod=Math.round(s.p1*s.p2*100)/100; });
+  // greedy: max bước1 → A nếu s1[0]≥s1[1]; rồi max bước2 của nhánh đó
+  var firstA = p.s1[0]>=p.s1[1];
+  var s2 = firstA?p.s2A:p.s2B;
+  var secondIdx = s2[0]>=s2[1]?0:1;
+  var greedyName = (firstA?'A':'B')+TOK[secondIdx];
+  var greedyProd = seqs.filter(function(s){return s.name===greedyName;})[0].prod;
+  // beam best = max prod
+  var best=seqs[0]; seqs.forEach(function(s){ if(s.prod>best.prod) best=s; });
+  var diff = best.name!==greedyName;
+
+  document.getElementById('probs').innerHTML = probStr(p);
+  document.getElementById('kprobs').innerHTML = probStr(p);
+  buildTbl('qtbl',seqs,greedyName,best.name,true);
+  buildTbl('ktbl',seqs,greedyName,best.name,false);
+  ['gB','bB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({
+    kg:greedyName+' = '+f2(greedyProd), kb:best.name+' = '+f2(best.prod),
+    cmp: diff?'(beam cao hơn → greedy trượt)':'(trùng nhau lần này)',
+    ans: diff?'Khác nhau':'Giống nhau'
+  });
+
+  drawTree('sch1',p,greedyName,best.name,false);
+  drawTree('sch2',p,greedyName,best.name,true);
+}
+
+function probStr(p){
+  return 'bước 1: A='+f2(p.s1[0])+', B='+f2(p.s1[1])+
+    ' · bước 2|A: A='+f2(p.s2A[0])+',B='+f2(p.s2A[1])+
+    ' · bước 2|B: A='+f2(p.s2B[0])+',B='+f2(p.s2B[1]);
+}
+
+function buildTbl(id,seqs,greedyName,bestName,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  seqs.forEach(function(s){
+    var tr=document.createElement('tr');
+    var c=[s.name, f2(s.p1), f2(s.p2), f2(s.prod)];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j===3) td.className='blank';
+      else if(!blank && j===3){ if(s.name===bestName) td.className='best'; else if(s.name===greedyName) td.className='greedy'; }
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  });
+}
+
+function drawTree(id,p,greedyName,bestName,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=124;
+  var root=[24,62], n1=[[90,34],[90,90]], leaf=[[156,18],[156,50],[156,74],[156,106]];
+  var s='';
+  // root -> A,B
+  s+='<line x1="'+root[0]+'" y1="'+root[1]+'" x2="'+n1[0][0]+'" y2="'+n1[0][1]+'" stroke="#bbb" stroke-width="1.2"/>';
+  s+='<line x1="'+root[0]+'" y1="'+root[1]+'" x2="'+n1[1][0]+'" y2="'+n1[1][1]+'" stroke="#bbb" stroke-width="1.2"/>';
+  // A->AA,AB  B->BA,BB
+  s+='<line x1="'+n1[0][0]+'" y1="'+n1[0][1]+'" x2="'+leaf[0][0]+'" y2="'+leaf[0][1]+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<line x1="'+n1[0][0]+'" y1="'+n1[0][1]+'" x2="'+leaf[1][0]+'" y2="'+leaf[1][1]+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<line x1="'+n1[1][0]+'" y1="'+n1[1][1]+'" x2="'+leaf[2][0]+'" y2="'+leaf[2][1]+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<line x1="'+n1[1][0]+'" y1="'+n1[1][1]+'" x2="'+leaf[3][0]+'" y2="'+leaf[3][1]+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<circle cx="'+root[0]+'" cy="'+root[1]+'" r="7" fill="#fff" stroke="#1a1a1a"/>';
+  s+='<text x="'+n1[0][0]+'" y="'+(n1[0][1]+3)+'" text-anchor="middle" font-size="9" font-weight="700">A</text>';
+  s+='<text x="'+n1[1][0]+'" y="'+(n1[1][1]+3)+'" text-anchor="middle" font-size="9" font-weight="700">B</text>';
+  var names=['AA','AB','BA','BB'];
+  for(var i=0;i<4;i++){
+    var col = show ? (names[i]===bestName?'#0a6':(names[i]===greedyName?'#b45309':'#888')) : '#888';
+    s+='<text x="'+(leaf[i][0])+'" y="'+(leaf[i][1]+3)+'" text-anchor="end" font-size="9" font-weight="700" fill="'+col+'">'+names[i]+'</text>';
+  }
+  s+='<text x="80" y="14" text-anchor="middle" font-size="8" fill="#6b7280">cây giải mã 2 bước</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="cây giải mã greedy và beam">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -415,6 +415,58 @@ footer a{color:var(--accent);}
     </a>
   </div>
 
+  <div class="sec">Phần G · Dữ liệu chuỗi (RNN / LSTM) (K2)</div>
+  <div class="list">
+
+    <a class="card adv done" href="K2/G3-bptt.html">
+      <div class="no">G3</div>
+      <div class="body"><h2>BPTT — Backprop Through Time</h2>
+        <p>Trải RNN theo thời gian; gradient ngược nhân factor wᵏ → tắt/nổ. Gốc rễ vì sao RNN khó nhớ xa.</p>
+        <div class="tags"><i>chuỗi</i><i>wᵏ</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/G5-gru.html">
+      <div class="no">G5</div>
+      <div class="body"><h2>GRU một ô — Gated Recurrent Unit</h2>
+        <p>Cổng cập nhật z trộn h cũ ↔ ứng viên: h = (1−z)·h_cũ + z·h̃. Gọn hơn LSTM, vẫn nhớ xa.</p>
+        <div class="tags"><i>chuỗi</i><i>cổng z, r</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/G6-birnn.html">
+      <div class="no">G6</div>
+      <div class="body"><h2>Bi-directional RNN — BiRNN</h2>
+        <p>Chạy hai RNN xuôi/ngược rồi ghép [h→; h←] → mỗi token thấy cả quá khứ và tương lai.</p>
+        <div class="tags"><i>chuỗi</i><i>2 chiều</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/G7-seq2seq.html">
+      <div class="no">G7</div>
+      <div class="body"><h2>Seq2seq — Encoder → Decoder</h2>
+        <p>Encoder nén cả câu vào một vectơ ngữ cảnh c, decoder bung ra. Nút thắt c → động lực ra đời attention.</p>
+        <div class="tags"><i>chuỗi</i><i>context c</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/G8-greedy-beam.html">
+      <div class="no">G8</div>
+      <div class="body"><h2>Giải mã: Greedy vs Beam Search</h2>
+        <p>Greedy chọn max mỗi bước (có thể kẹt); beam giữ top-b nhánh theo xác suất tích lũy → thường tốt hơn.</p>
+        <div class="tags"><i>sinh chuỗi</i><i>top-b</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/G9-teacher-forcing.html">
+      <div class="no">G9</div>
+      <div class="body"><h2>Teacher Forcing — huấn luyện decoder</h2>
+        <p>Cho nhãn thật làm đầu vào bước kế (train nhanh) vs tự hồi tiếp dự đoán (lỗi sớm lan). Exposure bias.</p>
+        <div class="tags"><i>chuỗi</i><i>train ↔ test</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+  </div>
+
   <div class="sec">Nâng cao · kiến trúc thật</div>
   <div class="list">
     <a class="card adv done" href="K3/11-self-attention.html">

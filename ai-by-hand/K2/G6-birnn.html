@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bi-directional RNN — BiRNN</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.9;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Bi-directional RNN</h1><span class="vi">— BiRNN</span>
+    <span class="tag">h = [ h→ ; h← ] · gộp quá khứ + tương lai</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> RNN thường chỉ thấy <b>quá khứ</b> (đọc trái→phải). Nhưng để hiểu một từ, ngữ cảnh
+    <b>phía sau</b> cũng quan trọng. BiRNN chạy <b>hai</b> RNN: một xuôi (h→), một ngược (h←), rồi <b>ghép</b> hai
+    trạng thái tại mỗi vị trí → mỗi token "thấy" cả hai phía.
+    <div class="fm">h→ₜ = w·h→ₜ₋₁ + xₜ (xuôi) · h←ₜ = w·h←ₜ₊₁ + xₜ (ngược) · hₜ = [h→ₜ ; h←ₜ] &nbsp;(ở đây w=1)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Với w=1, h→ là <b>tổng dồn từ trái</b>, h← là <b>tổng dồn từ phải</b>. Ghép lại → tại token giữa, ta biết cả
+    "đã đọc gì trước đó" lẫn "còn gì phía sau". Dùng nhiều trong gán nhãn chuỗi (NER, POS).
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam →</b> chạy xuôi tích lũy · <b>cam ←</b> chạy ngược tích lũy · ghép tại mỗi token.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHUỖI 3 TOKEN (w=1)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>t</th><th>xₜ</th><th>h→ₜ (tổng từ trái)</th><th>h←ₜ (tổng từ phải)</th><th>hₜ = [h→ ; h←]</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">GHÉP TẠI TOKEN GIỮA (t=2)</div>
+      <div class="expr">
+        h₂ = [ h→₂ , h←₂ ] = [ <span class="ublk" id="c1B" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:30px"></span> , <span class="ublk" id="c2B" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:30px"></span> ] → thấy cả 2 phía
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>BiRNN có dùng được cho sinh chuỗi thời gian thực (online) không? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:50px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Bi-directional RNN</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Bi-directional RNN</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Cần CẢ chuỗi mới chạy được chiều ngược → BiRNN hợp bài đã có đủ câu, không hợp sinh real-time.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHUỖI 3 TOKEN</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>t</th><th>xₜ</th><th>h→ₜ</th><th>h←ₜ</th><th>hₜ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        h₂ = [ <b><span data-q="kc1">?</span></b> , <b><span data-q="kc2">?</span></b> ] — gộp ngữ cảnh trái & phải tại token giữa
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Sinh online → <span class="qa">không</span> (chiều ngược cần biết trước tương lai). Hợp gán nhãn cả câu.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> BiRNN = đọc hai chiều rồi ghép → biểu diễn giàu ngữ cảnh hai phía. Ý tưởng "mỗi token nhìn cả
+        câu" được Transformer (K3) đẩy tới cực hạn bằng self-attention, song song hơn nhiều.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Bi-directional RNN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+
+function generate(){
+  var x=[WB.randInt(1,5),WB.randInt(1,5),WB.randInt(1,5)];
+  var hf=[x[0], x[0]+x[1], x[0]+x[1]+x[2]];          // tổng từ trái (w=1)
+  var hb=[x[0]+x[1]+x[2], x[1]+x[2], x[2]];          // tổng từ phải
+
+  buildTbl('qtbl',x,hf,hb,true); buildTbl('ktbl',x,hf,hb,false);
+  ['c1B','c2B'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ kc1:fI(hf[1]), kc2:fI(hb[1]) });
+
+  drawBi('sch1',x,false); drawBi('sch2',x,true);
+}
+
+function buildTbl(id,x,hf,hb,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var t=0;t<3;t++){
+    var tr=document.createElement('tr');
+    var c=[String(t+1), fI(x[t]), fI(hf[t]), fI(hb[t]), '['+fI(hf[t])+','+fI(hb[t])+']'];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j>=2) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+}
+
+function drawBi(id,x,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120, xs=[34,89,144];
+  var s='<defs>'
+    +'<marker id="af'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#0e7490"/></marker>'
+    +'<marker id="ab'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#b45309"/></marker>'
+    +'</defs>';
+  for(var i=0;i<3;i++){
+    // token vào
+    s+='<rect x="'+(xs[i]-9)+'" y="84" width="18" height="14" rx="2" fill="#fdecd2" stroke="#e3c489"/>';
+    s+='<text x="'+xs[i]+'" y="94" text-anchor="middle" font-size="8">x'+(i+1)+(show?'='+x[i]:'')+'</text>';
+    // forward node (trên)
+    s+='<circle cx="'+xs[i]+'" cy="36" r="9" fill="#d6ecf6" stroke="#0e7490"/><text x="'+xs[i]+'" y="39" text-anchor="middle" font-size="7.5">h→</text>';
+    // backward node (giữa)
+    s+='<circle cx="'+xs[i]+'" cy="62" r="9" fill="#ffe6cc" stroke="#b45309"/><text x="'+xs[i]+'" y="65" text-anchor="middle" font-size="7.5">h←</text>';
+    // x -> nodes
+    s+='<line x1="'+xs[i]+'" y1="84" x2="'+xs[i]+'" y2="71" stroke="#bbb" stroke-width="1"/>';
+  }
+  // forward arrows
+  for(var f=0;f<2;f++) s+='<line x1="'+(xs[f]+9)+'" y1="36" x2="'+(xs[f+1]-9)+'" y2="36" stroke="#0e7490" stroke-width="1.4" marker-end="url(#af'+id+')"/>';
+  // backward arrows
+  for(var b=2;b>0;b--) s+='<line x1="'+(xs[b]-9)+'" y1="62" x2="'+(xs[b-1]+9)+'" y2="62" stroke="#b45309" stroke-width="1.4" marker-end="url(#ab'+id+')"/>';
+  s+='<text x="89" y="16" text-anchor="middle" font-size="8" fill="#6b7280">2 chiều rồi ghép</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="BiRNN chạy xuôi và ngược">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

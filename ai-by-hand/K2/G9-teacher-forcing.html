@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Teacher Forcing — huấn luyện decoder</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 4px;border:1px solid #d5c49a;text-align:center;font-size:10.5px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.ok{background:#d6f5d6;color:#0a6;font-weight:700;}
+  .dtbl td.no{background:#ffe0e0;color:#b00;font-weight:700;}
+  .lntab{font-family:var(--mono);font-size:11px;color:#0c4a5e;background:#eef6fa;border:1px solid #cfe3ec;border-radius:6px;padding:4px 7px;margin-top:5px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Teacher Forcing</h1><span class="vi">— huấn luyện decoder</span>
+    <span class="tag">input bước t = nhãn thật yₜ₋₁</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Khi huấn luyện decoder, cho nó <b>nhãn thật</b> ở bước trước làm đầu vào bước sau
+    (teacher forcing) → học nhanh, ổn định. Nếu để nó tự ăn <b>dự đoán của chính mình</b> (free-running), một lỗi sớm
+    sẽ <b>lan</b> sang các bước sau, làm chuỗi lệch hẳn.
+    <div class="fm">teacher forcing: inputₜ = yₜ₋₁ (thật) &nbsp;·&nbsp; free-running: inputₜ = ŷₜ₋₁ (tự đoán) → lỗi tích lũy</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như học sinh tập viết: teacher forcing = thầy đọc đúng câu trước cho chép tiếp; free-running = tự đọc lại chữ
+    mình vừa viết — sai một chữ là lệch cả câu. Lúc <b>test</b> không có thầy → buộc phải free-running.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam</b> = teacher forcing (input từ nhãn thật) · <b>cam</b> = free-running (input từ ŷ trước, lỗi lan).</div>
+      <div class="lntab" id="gtab1"></div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">TRACE 3 BƯỚC · mô hình g cho sẵn · start = <span data-q="st">0</span></div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>bước</th><th>nhãn yₜ</th><th>TF: input → ŷ</th><th>khớp?</th><th>Free: input → ŷ</th><th>khớp?</th></tr>
+      </table>
+      <div class="expr">số khớp — TF: <span class="ublk" id="tfB" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:28px"></span>/3 · Free: <span class="ublk" id="frB" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:28px"></span>/3</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Lúc test (suy luận) decoder dùng kiểu nào? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:80px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Teacher Forcing</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Teacher Forcing</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Lệch train↔test (exposure bias): chỉ thấy nhãn thật lúc train nhưng phải tự đoán lúc test.</div>
+      <div class="lntab" id="gtab2"></div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">TRACE 3 BƯỚC · start = <span data-q="st">0</span></div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>bước</th><th>yₜ</th><th>TF: input → ŷ</th><th>khớp?</th><th>Free: input → ŷ</th><th>khớp?</th></tr>
+      </table>
+      <div class="expr">
+        số khớp — TF: <b><span data-q="ktf">?</span></b>/3 · Free: <b><span data-q="kfr">?</span></b>/3
+        → free-running <b>lỗi lan</b> nên khớp ít hơn
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Test → <span class="qa">free-running</span> (không có nhãn thật để mớm) → cần thu hẹp lệch train/test.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Teacher forcing giúp train nhanh nhưng tạo "exposure bias" (test phải tự đoán). Cách giảm:
+        scheduled sampling (thỉnh thoảng cho tự đoán khi train). Hết Phần G — <b>Khóa K2 hoàn tất</b>! Tiếp theo: K3
+        (Attention & Transformer).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Teacher Forcing</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+// preset: g = lookup mô hình (imperfect), start, target → free-running lỗi lan
+var PRE=[
+  {g:{0:2,1:1,2:1}, st:0, y:[2,0,2]},
+  {g:{0:1,1:1,2:0}, st:0, y:[1,2,0]}
+];
+
+function generate(){
+  var p=WB.pick(PRE), g=p.g, st=p.st, y=p.y;
+  // TF run: input = nhãn thật trước
+  var tf=[]; var prevT=st;
+  for(var t=0;t<3;t++){ var inp=(t===0?st:y[t-1]); var pred=g[inp]; tf.push({inp:inp,pred:pred,ok:pred===y[t]}); }
+  // Free run: input = ŷ trước
+  var fr=[]; var prev=st;
+  for(var t2=0;t2<3;t2++){ var inp2=(t2===0?st:prev); var pred2=g[inp2]; fr.push({inp:inp2,pred:pred2,ok:pred2===y[t2]}); prev=pred2; }
+  var tfc=tf.filter(function(r){return r.ok;}).length;
+  var frc=fr.filter(function(r){return r.ok;}).length;
+
+  buildTbl('qtbl',y,tf,fr,true); buildTbl('ktbl',y,tf,fr,false);
+  renderG('gtab1',g); renderG('gtab2',g);
+  ['tfB','frB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ st:String(st), ktf:String(tfc), kfr:String(frc) });
+
+  drawTF('sch1',y,tf,fr,false); drawTF('sch2',y,tf,fr,true);
+}
+
+function buildTbl(id,y,tf,fr,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var t=0;t<3;t++){
+    var tr=document.createElement('tr');
+    var tds=[
+      {v:String(t+1)},
+      {v:String(y[t])},
+      {v:tf[t].inp+'→'+tf[t].pred, b:true},
+      {v:tf[t].ok?'✓':'✗', cls:tf[t].ok?'ok':'no', b:true},
+      {v:fr[t].inp+'→'+fr[t].pred, b:true},
+      {v:fr[t].ok?'✓':'✗', cls:fr[t].ok?'ok':'no', b:true}
+    ];
+    tds.forEach(function(o){
+      var td=document.createElement('td'); td.textContent=o.v;
+      if(blank && o.b) td.className='blank';
+      else if(!blank && o.cls) td.className=o.cls;
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+}
+
+function renderG(id,g){
+  var el=document.getElementById(id); if(!el) return;
+  el.innerHTML='Mô hình g: 0→'+g[0]+' · 1→'+g[1]+' · 2→'+g[2];
+}
+
+function drawTF(id,y,tf,fr,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120, xs=[40,90,140];
+  var s='<defs><marker id="at'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#888"/></marker></defs>';
+  // hàng TF (trên), Free (dưới)
+  for(var t=0;t<3;t++){
+    // TF
+    s+='<circle cx="'+xs[t]+'" cy="36" r="10" fill="#d6ecf6" stroke="#0e7490"/>';
+    if(show) s+='<text x="'+xs[t]+'" y="39" text-anchor="middle" font-size="8" fill="'+(tf[t].ok?'#0a6':'#b00')+'">'+tf[t].pred+'</text>';
+    // Free
+    s+='<circle cx="'+xs[t]+'" cy="84" r="10" fill="#ffe6cc" stroke="#b45309"/>';
+    if(show) s+='<text x="'+xs[t]+'" y="87" text-anchor="middle" font-size="8" fill="'+(fr[t].ok?'#0a6':'#b00')+'">'+fr[t].pred+'</text>';
+    if(t<2){
+      s+='<line x1="'+(xs[t]+10)+'" y1="36" x2="'+(xs[t+1]-10)+'" y2="36" stroke="#0e7490" stroke-width="1.2" marker-end="url(#at'+id+')"/>';
+      s+='<line x1="'+(xs[t]+10)+'" y1="84" x2="'+(xs[t+1]-10)+'" y2="84" stroke="#b45309" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#at'+id+')"/>';
+    }
+  }
+  s+='<text x="14" y="40" font-size="7.5" fill="#0e7490">TF</text>';
+  s+='<text x="8" y="88" font-size="7.5" fill="#b45309">Free</text>';
+  s+='<text x="90" y="16" text-anchor="middle" font-size="8" fill="#6b7280">cùng mô hình, khác nguồn input</text>';
+  s+='<text x="90" y="108" text-anchor="middle" font-size="7.5" fill="#b00">free: lỗi sớm → lan tiếp</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="so sánh teacher forcing và free-running">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · GRU một ô — Gated Recurrent Unit</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .crow{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;}
+  .clab{font-family:var(--mono);font-size:12px;font-weight:700;}
+  .m .cell{--cw:11mm;--ch:8mm;font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>GRU một ô</h1><span class="vi">— Gated Recurrent Unit</span>
+    <span class="tag">h = (1−z)·h_cũ + z·h̃</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> GRU là phiên bản gọn của LSTM: chỉ 2 cổng. <b>Cổng cập nhật z</b> quyết định giữ lại
+    bao nhiêu trạng thái cũ vs nhận bao nhiêu ứng viên mới; <b>cổng đặt lại r</b> quyết định ứng viên được "nhìn" quá
+    khứ bao nhiêu. Nhờ cổng, GRU giữ ký ức xa tốt hơn RNN trơn (G3).
+    <div class="fm">z, r ∈ (0,1) · h̃ = ứng viên (tanh) · h = (1 − z)·h_cũ + z·h̃ &nbsp;(trộn cũ ↔ mới theo z)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    z như "núm pha trộn": z=0 → giữ <b>nguyên</b> trạng thái cũ (nhớ); z=1 → thay <b>hẳn</b> bằng ứng viên mới (quên cũ).
+    Vì là pha trộn có trọng số, gradient không bị nhân w mãi như RNN trơn → nhớ lâu hơn.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>z</b> trộn hai đường: (1−z)·h_cũ và z·h̃. z nhỏ = nhớ; z lớn = cập nhật.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO: z = <span data-q="z">0.5</span> (cổng cập nhật) · 1−z = <span data-q="z1">0.5</span></div>
+      <div class="crow">
+        <div><div class="clab in">h_cũ</div><div class="m c1 in" id="hp"></div></div>
+        <div><div class="clab w">h̃ (ứng viên)</div><div class="m c1 w" id="ht"></div></div>
+        <div class="op">→</div>
+        <div><div class="clab out">h mới</div><div class="m c1 out" id="h"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:8px">TÍNH TỪNG Ô</div>
+      <div class="expr">
+        h₁ = (1−z)·h_cũ₁ + z·h̃₁ = <span class="ublk" id="h1B" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:46px"></span><br>
+        h₂ = (1−z)·h_cũ₂ + z·h̃₂ = <span class="ublk" id="h2B" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:46px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>z = 0 thì h mới = <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:50px"></span> (cũ/mới).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · GRU một ô</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>GRU một ô</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Cổng đặt lại r tạo ứng viên: h̃ = tanh(Wx + U(r⊙h_cũ)). r=0 → ứng viên "quên" quá khứ.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">CHO: z = <span data-q="z">0.5</span>, 1−z = <span data-q="z1">0.5</span></div>
+      <div class="crow">
+        <div><div class="clab in">h_cũ</div><div class="m c1 in" id="khp"></div></div>
+        <div><div class="clab w">h̃</div><div class="m c1 w" id="kht"></div></div>
+        <div class="op">→</div>
+        <div><div class="clab out">h mới</div><div class="m c1 out" id="kh"></div></div>
+      </div>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        h = ( <b><span data-q="kh1">?</span></b>, <b><span data-q="kh2">?</span></b> ) — pha trộn cũ và mới theo z
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>z=0 → h = (1−0)·h_cũ + 0 = <span class="qa">h_cũ</span> (giữ nguyên, nhớ hoàn toàn).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> GRU = "pha trộn có cổng" giữa trạng thái cũ và ứng viên mới → giữ ký ức xa, ít tham số hơn LSTM
+        (Bài 22). Cùng họ với LSTM trong việc giải vanishing của RNN trơn (G3). Sau RNN/LSTM/GRU, attention (K3) còn
+        bỏ hẳn tính tuần tự.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · GRU một ô</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fT(v){return WB.fmtTrim(v);}
+function fill(id,arr,fmt,blank){
+  var el=document.getElementById(id); if(!el) return; var s='';
+  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fmt(arr[i]))+'</div>';
+  el.innerHTML=s;
+}
+
+function generate(){
+  var z=WB.pick([0.5,0.25,0.75]);
+  var hp=[WB.randInt(2,8),WB.randInt(-4,6)];
+  var ht=[WB.randInt(-4,6),WB.randInt(2,8)];
+  var h=[ (1-z)*hp[0]+z*ht[0], (1-z)*hp[1]+z*ht[1] ];
+  h=h.map(function(v){return Math.round(v*100)/100;});
+
+  fill('hp',hp,fT,false); fill('ht',ht,fT,false); fill('h',h,fT,true);
+  fill('khp',hp,fT,false); fill('kht',ht,fT,false); fill('kh',h,fT,false);
+  ['h1B','h2B'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ z:fT(z), z1:fT(1-z), kh1:fT(h[0]), kh2:fT(h[1]) });
+
+  drawGRU('sch1'); drawGRU('sch2');
+}
+
+function drawGRU(id){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120;
+  var s='';
+  s+='<rect x="20" y="40" width="22" height="16" rx="3" fill="#fdecd2" stroke="#e3c489"/><text x="31" y="52" text-anchor="middle" font-size="9" font-weight="700">h_cũ</text>';
+  s+='<rect x="20" y="74" width="22" height="16" rx="3" fill="#ece2ff" stroke="#7c5cff"/><text x="31" y="86" text-anchor="middle" font-size="9" font-weight="700">h̃</text>';
+  // gate blend node
+  s+='<circle cx="92" cy="63" r="13" fill="#fff3b0" stroke="#e6cf6a" stroke-width="1.4"/><text x="92" y="60" text-anchor="middle" font-size="8">trộn</text><text x="92" y="71" text-anchor="middle" font-size="8" font-weight="700">z</text>';
+  s+='<line x1="42" y1="48" x2="79" y2="59" stroke="#b45309" stroke-width="1.3"/><text x="58" y="48" font-size="7" fill="#b45309">×(1−z)</text>';
+  s+='<line x1="42" y1="82" x2="79" y2="68" stroke="#7c5cff" stroke-width="1.3"/><text x="58" y="86" font-size="7" fill="#5b3fd6">×z</text>';
+  // h mới
+  s+='<rect x="128" y="55" width="24" height="16" rx="3" fill="#d6ecf6" stroke="#0e7490"/><text x="140" y="67" text-anchor="middle" font-size="9" font-weight="700" fill="#0c4a5e">h mới</text>';
+  s+='<line x1="105" y1="63" x2="127" y2="63" stroke="#888" stroke-width="1.3"/>';
+  s+='<text x="89" y="18" text-anchor="middle" font-size="8" fill="#6b7280">GRU: cổng z trộn cũ ↔ mới</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="ô GRU trộn h cũ và ứng viên theo cổng z">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -255,6 +255,90 @@ footer a{color:var(--accent);}
     </a>
   </div>
 
+  <div class="sec">Phần E · Huấn luyện &amp; chuẩn hóa (K2)</div>
+  <div class="list">
+
+    <a class="card adv done" href="K2/E1-khoi-tao-trong-so.html">
+      <div class="no">E1</div>
+      <div class="body"><h2>Khởi tạo trọng số — Xavier / He</h2>
+        <p>Chọn phương sai khởi tạo theo fan-in/fan-out để giữ tín hiệu ổn định qua mạng sâu. std = √(2/n).</p>
+        <div class="tags"><i>init</i><i>Var, std</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E2-vanishing-exploding.html">
+      <div class="no">E2</div>
+      <div class="body"><h2>Vanishing / Exploding Gradient</h2>
+        <p>Backprop nhân chuỗi đạo hàm: factor &lt; 1 → tích tắt về 0; &gt; 1 → nổ. Vì sao cần giữ factor ≈ 1.</p>
+        <div class="tags"><i>grad flow</i><i>∏ factor</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E3-l2-regularization.html">
+      <div class="no">E3</div>
+      <div class="body"><h2>L2 Regularization / Weight Decay</h2>
+        <p>Phạt λ·½‖w‖²; gradient λ·w → mỗi bước co mọi trọng số về 0 theo tỉ lệ (1−ηλ). Chống overfit.</p>
+        <div class="tags"><i>regularize</i><i>λ‖w‖²</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E4-l1-regularization.html">
+      <div class="no">E4</div>
+      <div class="body"><h2>L1 Regularization — trọng số thưa</h2>
+        <p>Phạt λΣ|w|; soft-threshold ép trọng số nhỏ về <b>đúng 0</b> → mô hình thưa, chọn lọc đặc trưng.</p>
+        <div class="tags"><i>sparsity</i><i>sign(w)</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E5-dropout.html">
+      <div class="no">E5</div>
+      <div class="body"><h2>Dropout — mask + scale</h2>
+        <p>Tắt ngẫu nhiên nơ-ron (mask 0/1), chia phần còn lại cho p để giữ kỳ vọng. Chống overfit, ensemble ngầm.</p>
+        <div class="tags"><i>regularize</i><i>mask / p</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E6-batchnorm.html">
+      <div class="no">E6</div>
+      <div class="body"><h2>BatchNorm — chuẩn hóa theo batch</h2>
+        <p>Chuẩn hóa mỗi đặc trưng qua batch: (x−μ)/√σ², rồi co giãn γx̂+β. Khác LayerNorm (theo hàng).</p>
+        <div class="tags"><i>chuẩn hóa</i><i>μ, σ², γ, β</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E8-learning-rate-schedule.html">
+      <div class="no">E8</div>
+      <div class="body"><h2>Learning Rate Schedule — step / cosine</h2>
+        <p>η lớn lúc đầu, nhỏ dần về cuối: step decay (bậc thang) vs cosine (mượt về 0). Kèm bảng cos.</p>
+        <div class="tags"><i>tối ưu</i><i>η theo t</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E9-gradient-clipping.html">
+      <div class="no">E9</div>
+      <div class="body"><h2>Gradient Clipping — cắt theo chuẩn</h2>
+        <p>Nếu ‖g‖ &gt; c thì thu nhỏ vectơ về đúng độ dài c, <b>giữ nguyên hướng</b>. Van an toàn chống gradient nổ.</p>
+        <div class="tags"><i>ổn định</i><i>c/‖g‖</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E10-mini-batch.html">
+      <div class="no">E10</div>
+      <div class="body"><h2>Mini-batch vs Full-batch — Batching</h2>
+        <p>Trung bình mini-batch là ước lượng không lệch của gradient thật nhưng nhiễu hơn khi batch nhỏ.</p>
+        <div class="tags"><i>batching</i><i>phương sai</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+
+    <a class="card adv done" href="K2/E11-early-stopping.html">
+      <div class="no">E11</div>
+      <div class="body"><h2>Early Stopping — chọn điểm dừng</h2>
+        <p>Train loss giảm mãi, val loss hình chữ U: dừng ở đáy val (argmin) để lấy mô hình tổng quát tốt nhất.</p>
+        <div class="tags"><i>regularize</i><i>argmin val</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div>
+    </a>
+  </div>
+
   <div class="sec">Nâng cao · kiến trúc thật</div>
   <div class="list">
     <a class="card adv done" href="K3/11-self-attention.html">

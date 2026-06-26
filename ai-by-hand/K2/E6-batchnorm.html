@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · BatchNorm — chuẩn hóa theo batch</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .ublk{display:inline-block;min-width:34px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.3;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 4px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl tr.sumr td{background:#eef6fa;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>BatchNorm</h1><span class="vi">— chuẩn hóa theo batch</span>
+    <span class="tag">x̂ = (x−μ)/√σ² · y = γx̂ + β</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Phân phối đầu vào mỗi lớp trôi liên tục khi huấn luyện (internal covariate shift),
+    làm việc học chậm. BatchNorm chuẩn hóa <b>mỗi đặc trưng qua cả batch</b> về trung bình 0, độ lệch 1, rồi cho
+    mạng tự co giãn lại bằng γ, β học được. Kết quả: huấn luyện nhanh và ổn định hơn.
+    <div class="fm">μ = (1/m)Σxᵢ &nbsp;·&nbsp; σ² = (1/m)Σ(xᵢ−μ)² &nbsp;·&nbsp; x̂ᵢ = (xᵢ−μ)/√σ² &nbsp;·&nbsp; yᵢ = γ·x̂ᵢ + β</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Trừ trung bình → "kéo về tâm 0"; chia độ lệch chuẩn → "ép cùng thang". γ, β để mạng phục hồi độ co giãn nếu
+    cần. <b>Khác LayerNorm</b> (Bài 20): BatchNorm chuẩn hóa <b>theo cột</b> (1 đặc trưng qua nhiều mẫu).
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Tím</b> = x gốc (lệch tâm) · <b>cam</b> = x̂ sau chuẩn hóa (quanh 0). γ,β co giãn lại.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BATCH (m=4) cho MỘT đặc trưng · γ=<span data-q="g">2</span>, β=<span data-q="b">1</span></div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>i</th><th>xᵢ</th><th>xᵢ−μ</th><th>(xᵢ−μ)²</th><th>x̂ᵢ=(xᵢ−μ)/√σ²</th><th>yᵢ=γx̂ᵢ+β</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">THỐNG KÊ BATCH</div>
+      <div class="expr">
+        μ = Σx/4 = <span class="ublk" id="muB"></span> &nbsp;·&nbsp;
+        σ² = Σ(x−μ)²/4 = <span class="ublk" id="vB"></span> &nbsp;·&nbsp;
+        √σ² = <span class="ublk" id="sdB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Sau chuẩn hóa (trước γ,β), trung bình của x̂ = <span class="ublk" style="min-width:30px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · BatchNorm</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>BatchNorm</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Khi test: dùng μ, σ² trung bình động (chạy) đã gom lúc train, không tính trên batch test.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">BATCH · γ=<span data-q="g">2</span>, β=<span data-q="b">1</span></div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>i</th><th>xᵢ</th><th>xᵢ−μ</th><th>(xᵢ−μ)²</th><th>x̂ᵢ</th><th>yᵢ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        μ = <b><span data-q="kmu">?</span></b> · σ² = <b><span data-q="kv">?</span></b> · √σ² = <b><span data-q="ksd">?</span></b>
+        &nbsp;→&nbsp; x̂ có mean 0, độ lệch 1; y = γx̂+β
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>x̂ luôn có trung bình = <span class="qa">0</span> (vì đã trừ μ) và phương sai 1.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> BatchNorm = chuẩn hóa từng đặc trưng qua batch + co giãn học được (γ,β). Phụ thuộc cỡ batch
+        nên kém ổn với batch nhỏ → Transformer dùng <b>LayerNorm</b> (Bài 20, chuẩn hóa theo hàng, không phụ thuộc batch).
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · BatchNorm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fT(v){return WB.fmtTrim(v);}
+
+function generate(){
+  // độ lệch cố định {−7,−1,1,7} → σ²=25, √=5, x̂ sạch (±1.4, ±0.2)
+  var devs=WB.pickDistinct([-7,-1,1,7],4);
+  var mu=WB.pick([8,10,12]);
+  var g=WB.pick([1,2]), b=WB.pick([0,1,2]);
+  var x=devs.map(function(d){return mu+d;});
+  var sq=devs.map(function(d){return d*d;});
+  var sd=5, v=25;
+  var xh=devs.map(function(d){return d/sd;});
+  var y=xh.map(function(h){return g*h+b;});
+
+  buildTbl('qtbl',x,devs,sq,xh,y,true);
+  buildTbl('ktbl',x,devs,sq,xh,y,false);
+  ['muB','vB','sdB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ g:fI(g), b:fI(b), kmu:fI(mu), kv:fI(v), ksd:fI(sd) });
+
+  drawBars('sch1',x,xh,mu,false);
+  drawBars('sch2',x,xh,mu,true);
+}
+
+function buildTbl(id,x,devs,sq,xh,y,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var i=0;i<x.length;i++){
+    var tr=document.createElement('tr');
+    var c=[String(i+1), fI(x[i]), fI(devs[i]), fI(sq[i]), fT(xh[i]), fT(y[i])];
+    c.forEach(function(val,j){
+      var td=document.createElement('td'); td.textContent=val;
+      if(blank && j>=2) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+  var ssq=sq.reduce(function(s,v){return s+v;},0);
+  var tr2=document.createElement('tr'); tr2.className='sumr';
+  ['Σ','',fI(devs.reduce(function(s,v){return s+v;},0)),fI(ssq),'',''].forEach(function(v,j){
+    var td=document.createElement('td');
+    if(j===0) td.innerHTML='<b>Σ</b>';
+    else if(j===2||j===3){ if(blank) td.className='blank'; else td.textContent=v; }
+    else td.textContent='';
+    tr2.appendChild(td);
+  });
+  el.appendChild(tr2);
+}
+
+function drawBars(id,x,xh,mu,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, padl=14,padr=8,padt=12,padb=16;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var n=x.length;
+  // hai dải: trên = x (quanh μ), dưới = x̂ (quanh 0)
+  var rowT=padt+ph*0.28, rowB=padt+ph*0.78;
+  var gw=pw/n;
+  var sX=14/Math.max.apply(null,x.map(function(v){return Math.abs(v-mu);})); // thang lệch
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+rowT.toFixed(1)+'" x2="'+(W-padr)+'" y2="'+rowT.toFixed(1)+'" stroke="#ccc" stroke-width="1" stroke-dasharray="2 2"/>';
+  s+='<text x="'+(W-padr)+'" y="'+(rowT-3).toFixed(1)+'" text-anchor="end" font-size="7.5" fill="#7c5cff">x quanh μ='+mu+'</text>';
+  s+='<line x1="'+padl+'" y1="'+rowB.toFixed(1)+'" x2="'+(W-padr)+'" y2="'+rowB.toFixed(1)+'" stroke="#ccc" stroke-width="1" stroke-dasharray="2 2"/>';
+  s+='<text x="'+(W-padr)+'" y="'+(rowB-3).toFixed(1)+'" text-anchor="end" font-size="7.5" fill="#b45309">x̂ quanh 0</text>';
+  for(var i=0;i<n;i++){
+    var cx=padl+(i+0.5)*gw;
+    var dT=(x[i]-mu)*sX;
+    var dB=xh[i]*10;
+    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+(rowT-dT).toFixed(1)+'" r="3.2" fill="#c3b1f5" stroke="#7c5cff"/>';
+    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+(rowB-dB).toFixed(1)+'" r="3.2" fill="#e3a76a" stroke="#b45309"/>';
+    if(show){
+      s+='<text x="'+(cx+5).toFixed(1)+'" y="'+(rowT-dT).toFixed(1)+'" font-size="7" fill="#5b3fd6">'+fI(x[i])+'</text>';
+      s+='<text x="'+(cx+5).toFixed(1)+'" y="'+(rowB-dB).toFixed(1)+'" font-size="7" fill="#b45309">'+fT(xh[i])+'</text>';
+    }
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="x gốc quanh μ và x̂ quanh 0">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

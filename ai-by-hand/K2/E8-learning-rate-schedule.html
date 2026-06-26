@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Learning Rate Schedule — step / cosine</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 4px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .lntab{font-family:var(--mono);font-size:11px;color:#0c4a5e;background:#eef6fa;border:1px solid #cfe3ec;
+    border-radius:6px;padding:4px 7px;margin-top:5px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Learning Rate Schedule</h1><span class="vi">— step / cosine</span>
+    <span class="tag">step: η₀·γ^⌊t/s⌋ · cosine: ½η₀(1+cos π t/T)</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> η lớn lúc đầu để đi nhanh, nhỏ dần về cuối để "hạ cánh" êm vào cực tiểu. Hai lịch phổ
+    biến: <b>step decay</b> (giảm η theo bậc thang sau mỗi s bước) và <b>cosine</b> (η lượn mượt từ η₀ về 0). Lịch tốt
+    giúp hội tụ nhanh và sâu hơn η cố định.
+    <div class="fm">step: ηₜ = η₀·γ^⌊t/s⌋ &nbsp;·&nbsp; cosine: ηₜ = ½·η₀·(1 + cos(π·t/T)) &nbsp;|&nbsp; η₀=1, γ=0.5, s=2, T=4</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Step decay = "thỉnh thoảng hạ nửa bước"; cosine = "phanh từ từ đều đặn". Cả hai cùng ý: <b>η giảm dần</b> theo
+    thời gian huấn luyện để tinh chỉnh ở giai đoạn cuối.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam</b> = step (bậc thang) · <b>cam</b> = cosine (mượt). Cả hai đi từ η₀=1 về ~0.</div>
+      <div class="lntab">Bảng cos: 0→1 · π/4→0.71 · π/2→0 · 3π/4→−0.71 · π→−1</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">η THEO BƯỚC t (η₀=<span data-q="e0">1</span>)</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>t</th><th>⌊t/2⌋</th><th>step η=γ^⌊t/2⌋</th><th>góc π·t/4</th><th>cos</th><th>cosine η=½(1+cos)</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">SO SÁNH ĐIỂM CUỐI</div>
+      <div class="expr">
+        Tại t=4: step η = <span class="ublk" id="seB" style="display:inline-block;min-width:40px;border-bottom:1.6px dashed #b9b9b9"></span>
+        &nbsp;·&nbsp; cosine η = <span class="ublk" id="ceB" style="display:inline-block;min-width:40px;border-bottom:1.6px dashed #b9b9b9"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Cosine tại t=T (góc π) cho η = <span class="ublk" style="min-width:34px"></span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Learning Rate Schedule</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Learning Rate Schedule</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Thực tế hay thêm "warmup": η tăng tuyến tính vài bước đầu rồi mới theo cosine (ổn định lúc khởi động).</div>
+      <div class="lntab">Bảng cos: 0→1 · π/4→0.71 · π/2→0 · 3π/4→−0.71 · π→−1</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">η THEO BƯỚC t</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>t</th><th>⌊t/2⌋</th><th>step η</th><th>π·t/4</th><th>cos</th><th>cosine η</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
+      <div class="expr">
+        step: <span data-q="ks0">1</span> → <span data-q="ks1">1</span> → <span data-q="ks2">?</span> → <span data-q="ks3">?</span> → <b><span data-q="kse">?</span></b> (bậc thang)<br>
+        cosine: <span data-q="kc0">1</span> → <span data-q="kc1">?</span> → <span data-q="kc2">?</span> → <span data-q="kc3">?</span> → <b><span data-q="kce">0</span></b> (mượt về 0)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Góc π → cos = −1 → η = ½(1−1) = <span class="qa">0</span>.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Lịch η = "đi nhanh rồi phanh dần". Cosine (có warmup) là mặc định huấn luyện Transformer/LLM.
+        Kết hợp với optimizer thích nghi (Adam/AdamW, Phần D) cho hội tụ nhanh và ổn định.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Learning Rate Schedule</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return WB.fmt2(v);}
+function fT(v){return WB.fmtTrim(v);}
+
+var ANG=['0','π/4','π/2','3π/4','π'];
+var COS=[1,0.71,0,-0.71,-1];
+
+function generate(){
+  var eta0=WB.pick([1,2]), gamma=0.5, s=2, T=4;
+  var rows=[];
+  for(var t=0;t<=4;t++){
+    var k=Math.floor(t/s);
+    var stepEta=eta0*Math.pow(gamma,k);
+    var cosv=COS[t];
+    var cosEta=Math.round(0.5*eta0*(1+cosv)*100)/100;
+    rows.push({t:t, k:k, step:stepEta, ang:ANG[t], cos:cosv, cos_eta:cosEta});
+  }
+
+  buildTbl('qtbl',rows,true);
+  buildTbl('ktbl',rows,false);
+  ['seB','ceB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({
+    e0:fT(eta0),
+    ks0:fT(rows[0].step), ks1:fT(rows[1].step), ks2:fT(rows[2].step), ks3:fT(rows[3].step), kse:fT(rows[4].step),
+    kc0:fT(rows[0].cos_eta), kc1:fT(rows[1].cos_eta), kc2:fT(rows[2].cos_eta), kc3:fT(rows[3].cos_eta), kce:fT(rows[4].cos_eta)
+  });
+
+  drawCurves('sch1',rows,eta0,false);
+  drawCurves('sch2',rows,eta0,true);
+}
+
+function buildTbl(id,rows,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  rows.forEach(function(r){
+    var tr=document.createElement('tr');
+    var c=[String(r.t), String(r.k), fT(r.step), r.ang, fT(r.cos), fT(r.cos_eta)];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      // ĐỀ: cho t, ⌊t/2⌋, góc; để trống step η(j=2), cos(j=4), cosine η(j=5)
+      if(blank && (j===2 || j===4 || j===5)) td.className='blank';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  });
+}
+
+function drawCurves(id,rows,eta0,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=120, padl=18,padr=8,padt=10,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  function px(t){return (padl+t/4*pw).toFixed(1);}
+  function py(e){return (padt+ph-(e/eta0)*ph).toFixed(1);}   // chuẩn hóa theo η₀
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<line x1="'+padl+'" y1="'+padt+'" x2="'+padl+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  s+='<text x="'+(padl-2)+'" y="'+(padt+4)+'" text-anchor="end" font-size="7.5" fill="#6b7280">η₀</text>';
+  // step (bậc thang) lam
+  var ds='M'+px(0)+','+py(rows[0].step);
+  for(var t=1;t<=4;t++){ ds+=' L'+px(t)+','+py(rows[t-1].step)+' L'+px(t)+','+py(rows[t].step); }
+  s+='<path d="'+ds+'" fill="none" stroke="#0e7490" stroke-width="1.7"/>';
+  // cosine cam
+  var dc='M'+px(0)+','+py(rows[0].cos_eta);
+  for(var t2=1;t2<=4;t2++){ dc+=' L'+px(t2)+','+py(rows[t2].cos_eta); }
+  s+='<path d="'+dc+'" fill="none" stroke="#b45309" stroke-width="1.7"/>';
+  for(var k=0;k<=4;k++){
+    s+='<circle cx="'+px(k)+'" cy="'+py(rows[k].cos_eta)+'" r="2.2" fill="#b45309"/>';
+    s+='<text x="'+px(k)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="7.5" fill="#6b7280">'+k+'</text>';
+  }
+  s+='<text x="'+(W-padr)+'" y="'+(padt+6)+'" text-anchor="end" font-size="7.5" fill="#6b7280">lam step · cam cosine</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="η theo bước: step và cosine">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

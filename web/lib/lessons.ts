@@ -127,17 +127,17 @@ export const LESSONS: Lesson[] = [
   { no: "D14", slug: "D14-adamw", title: "AdamW (weight decay)", english: "AdamW", blurb: "Tách phạt trọng số ra khỏi gradient của Adam.", part: "D", course: "K2", available: true, isFree: false },
 
   // ── PHẦN E · Huấn luyện & chuẩn hóa (K2) ────────────────────────────────
-  soon("E1", "E", "K2", "Khởi tạo trọng số (Xavier / He)", "Init", "Tính phương sai khởi tạo theo fan-in."),
-  soon("E2", "E", "K2", "Vanishing / Exploding gradient", "Grad flow", "Nhân chuỗi đạo hàm < 1 hoặc > 1 → tắt/nổ."),
-  soon("E3", "E", "K2", "L2 regularization / weight decay", "L2 reg", "Thêm λ‖w‖² vào loss & gradient."),
-  soon("E4", "E", "K2", "L1 regularization", "L1 reg", "λΣ|w| — đẩy trọng số nhỏ về 0 (thưa)."),
-  soon("E5", "E", "K2", "Dropout (mask + scale)", "Dropout", "Nhân mask 0/1 rồi chia (1−p) khi huấn luyện."),
-  soon("E6", "E", "K2", "BatchNorm — chuẩn hóa theo batch", "BatchNorm", "μ, σ trên batch rồi γ, β."),
+  { no: "E1", slug: "E1-khoi-tao-trong-so", title: "Khởi tạo trọng số (Xavier / He)", english: "Init", blurb: "Tính phương sai khởi tạo theo fan-in.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E2", slug: "E2-vanishing-exploding", title: "Vanishing / Exploding gradient", english: "Grad flow", blurb: "Nhân chuỗi đạo hàm < 1 hoặc > 1 → tắt/nổ.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E3", slug: "E3-l2-regularization", title: "L2 regularization / weight decay", english: "L2 reg", blurb: "Thêm λ‖w‖² vào loss & gradient.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E4", slug: "E4-l1-regularization", title: "L1 regularization", english: "L1 reg", blurb: "λΣ|w| — đẩy trọng số nhỏ về 0 (thưa).", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E5", slug: "E5-dropout", title: "Dropout (mask + scale)", english: "Dropout", blurb: "Nhân mask 0/1 rồi chia (1−p) khi huấn luyện.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E6", slug: "E6-batchnorm", title: "BatchNorm — chuẩn hóa theo batch", english: "BatchNorm", blurb: "μ, σ trên batch rồi γ, β.", part: "E", course: "K2", available: true, isFree: false },
   { no: "20", slug: "20-layernorm", title: "LayerNorm / RMSNorm", english: "Normalization", blurb: "Chuẩn hóa theo hàng: μ, σ, γ, β; RMSNorm rẻ hơn.", part: "E", course: "K2", available: true, isFree: false },
-  soon("E8", "E", "K2", "Learning rate schedule (step / cosine)", "LR schedule", "Tính η tại bước t theo lịch."),
-  soon("E9", "E", "K2", "Gradient clipping", "Clip", "Cắt gradient theo chuẩn ‖g‖ để tránh nổ."),
-  soon("E10", "E", "K2", "Mini-batch vs full-batch", "Batching", "Trung bình gradient theo cỡ batch khác nhau."),
-  soon("E11", "E", "K2", "Early stopping", "Early stop", "Đọc đường train/val, chọn điểm dừng."),
+  { no: "E8", slug: "E8-learning-rate-schedule", title: "Learning rate schedule (step / cosine)", english: "LR schedule", blurb: "Tính η tại bước t theo lịch.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E9", slug: "E9-gradient-clipping", title: "Gradient clipping", english: "Clip", blurb: "Cắt gradient theo chuẩn ‖g‖ để tránh nổ.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E10", slug: "E10-mini-batch", title: "Mini-batch vs full-batch", english: "Batching", blurb: "Trung bình gradient theo cỡ batch khác nhau.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E11", slug: "E11-early-stopping", title: "Early stopping", english: "Early stop", blurb: "Đọc đường train/val, chọn điểm dừng.", part: "E", course: "K2", available: true, isFree: false },
 
   // ── PHẦN F · Thị giác máy tính / CNN (K2) ───────────────────────────────
   { no: "16", slug: "16-cnn-tich-chap", title: "CNN — một bộ lọc", english: "Convolution", blurb: "Trượt kernel 3×3 → feature map → ReLU → max-pool.", part: "F", course: "K2", available: true, isFree: false },

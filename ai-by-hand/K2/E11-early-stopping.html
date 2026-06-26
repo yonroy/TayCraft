@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Early Stopping — chọn điểm dừng</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
+  .ublk{display:inline-block;min-width:36px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.best{background:#d6f5d6;font-weight:700;color:#0a6;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Early Stopping</h1><span class="vi">— chọn điểm dừng</span>
+    <span class="tag">dừng tại epoch có val loss nhỏ nhất</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Train loss luôn giảm khi học thêm, nhưng đến lúc nào đó mô hình bắt đầu <b>học thuộc</b>
+    nhiễu của tập train → <b>val loss tăng lại</b> (overfit). Early stopping theo dõi val loss và <b>dừng ở đáy</b> của
+    nó — lấy mô hình tổng quát tốt nhất, khỏi huấn luyện thừa.
+    <div class="fm">điểm dừng = argmin&nbsp;ₜ val_loss(t) &nbsp;·&nbsp; sau đó: train↓ nhưng val↑ → khoảng cách (gap) nới rộng</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Train loss đi xuống mãi; val loss hình chữ <b>U</b>. Đáy chữ U là lúc mô hình "vừa khít" — học thêm chỉ làm
+    overfit. Khoảng cách val − train (generalization gap) <b>phình ra</b> sau điểm đó.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Lam</b> = train (giảm mãi) · <b>cam</b> = val (chữ U) · <b>vạch xanh</b> = điểm dừng (đáy val).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">ĐƯỜNG HỌC THEO EPOCH</div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>epoch</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+        <tr id="rTrain"><th>train</th></tr>
+        <tr id="rVal"><th>val</th></tr>
+        <tr id="rGapQ"><th>gap=val−train</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">CHỌN ĐIỂM DỪNG</div>
+      <div class="expr">
+        val nhỏ nhất tại epoch <span class="ublk" id="epB"></span> → dừng ở đó · val = <span class="ublk" id="vmB"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Sau điểm dừng, train loss vẫn giảm nhưng val loss <span class="ublk" style="min-width:46px"></span> (tăng/giảm).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Early Stopping</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Early Stopping</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Thực hành: "patience" = chờ vài epoch không cải thiện rồi mới dừng (tránh dừng nhầm do nhiễu).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">ĐƯỜNG HỌC THEO EPOCH</div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>epoch</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+        <tr id="kTrain"><th>train</th></tr>
+        <tr id="kVal"><th>val</th></tr>
+        <tr id="kGap"><th>gap</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        điểm dừng = epoch <b><span data-q="kep">?</span></b> (val nhỏ nhất = <b><span data-q="kvm">?</span></b>);
+        gap nhỏ nhất ở đó, rồi <b>phình ra</b> → overfit.
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Sau điểm dừng: val loss <span class="qa">tăng</span> (overfit) dù train vẫn giảm → nên dừng sớm.</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Early stopping = regularization "miễn phí": lấy mô hình ở đáy val loss, bỏ phần huấn luyện
+        thừa gây overfit. Đi cùng L2 (E3), dropout (E5). Hết Phần E (chuẩn hóa & huấn luyện); Phần F sang CNN.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Early Stopping</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fT(v){return WB.fmtTrim(v);}
+
+var PRE=[
+  {train:[5,3.5,2.5,2,1.6,1.3,1.1], val:[5.5,3.8,2.8,2.4,2.6,3.2,4.2]},   // min epoch 4
+  {train:[5,3.6,2.7,2.1,1.7,1.4,1.2], val:[5.6,3.9,3,2.5,2.3,2.7,3.6]},   // min epoch 5
+  {train:[4.8,3.2,2.3,1.8,1.5,1.3,1.1], val:[5.2,3.4,2.5,2.7,3.2,3.9,4.8]} // min epoch 3
+];
+
+function generate(){
+  var p=WB.pick(PRE);
+  var train=p.train, val=p.val;
+  var gap=val.map(function(v,i){return Math.round((v-train[i])*10)/10;});
+  // điểm dừng = argmin val
+  var ep=0, vm=val[0];
+  for(var i=1;i<val.length;i++){ if(val[i]<vm){vm=val[i]; ep=i;} }
+
+  fillRow('rTrain',train,false,-1); fillRow('rVal',val,false,-1); fillRow('rGapQ',gap,true,-1);
+  fillRow('kTrain',train,false,-1); fillRow('kVal',val,false,ep); fillRow('kGap',gap,false,ep);
+
+  ['epB','vmB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ kep:String(ep+1), kvm:fT(vm) });
+
+  drawCurves('sch1',train,val,ep,false);
+  drawCurves('sch2',train,val,ep,true);
+}
+
+function fillRow(id,arr,blank,best){
+  var tr=document.getElementById(id); if(!tr) return;
+  while(tr.children.length>1) tr.removeChild(tr.lastChild);
+  arr.forEach(function(v,i){
+    var td=document.createElement('td'); td.textContent=fT(v);
+    if(blank) td.className='blank';
+    else if(best===i) td.className='best';
+    tr.appendChild(td);
+  });
+}
+
+function drawCurves(id,train,val,ep,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=128, padl=16,padr=8,padt=10,padb=18;
+  var pw=W-padl-padr, ph=H-padt-padb;
+  var n=train.length;
+  var mx=Math.max.apply(null,val)+0.3, mn=Math.min.apply(null,train)-0.3;
+  function px(i){return (padl+i/(n-1)*pw).toFixed(1);}
+  function py(v){return (padt+ph-(v-mn)/(mx-mn)*ph).toFixed(1);}
+  var s='';
+  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
+  // vạch điểm dừng
+  s+='<line x1="'+px(ep)+'" y1="'+padt+'" x2="'+px(ep)+'" y2="'+(H-padb)+'" stroke="#0a6" stroke-width="1.2" stroke-dasharray="3 2"/>';
+  // train (lam)
+  var dt='M'+px(0)+','+py(train[0]); for(var i=1;i<n;i++) dt+=' L'+px(i)+','+py(train[i]);
+  s+='<path d="'+dt+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
+  // val (cam)
+  var dv='M'+px(0)+','+py(val[0]); for(var j=1;j<n;j++) dv+=' L'+px(j)+','+py(val[j]);
+  s+='<path d="'+dv+'" fill="none" stroke="#b45309" stroke-width="1.8"/>';
+  for(var k=0;k<n;k++){
+    s+='<text x="'+px(k)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="7" fill="#6b7280">'+(k+1)+'</text>';
+  }
+  // chấm đáy val
+  s+='<circle cx="'+px(ep)+'" cy="'+py(val[ep])+'" r="3.2" fill="#0a6"/>';
+  if(show) s+='<text x="'+px(ep)+'" y="'+(parseFloat(py(val[ep]))-4)+'" text-anchor="middle" font-size="7.5" fill="#0a6">dừng</text>';
+  s+='<text x="'+(W-padr)+'" y="'+(padt+6)+'" text-anchor="end" font-size="7.5" fill="#6b7280">lam train · cam val</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đường train và val theo epoch, điểm dừng">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

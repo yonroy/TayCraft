@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Dropout — mask + scale</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
+  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
+  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
+  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.off{background:#eee;color:#999;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Dropout</h1><span class="vi">— mask + scale</span>
+    <span class="tag">a' = a · mask / p · (inverted dropout)</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Dropout "tắt" ngẫu nhiên một phần nơ-ron mỗi lượt huấn luyện → mạng không ỷ lại
+    vào vài nơ-ron, học biểu diễn bền hơn (chống overfit). Để kỳ vọng đầu ra <b>không đổi</b>, ta chia phần còn lại
+    cho xác suất giữ p (inverted dropout). Khi suy luận (test) thì <b>tắt</b> dropout.
+    <div class="fm">huấn luyện: a'ᵢ = aᵢ · maskᵢ / p &nbsp;(maskᵢ ∈ {0,1}, P(giữ)=p) &nbsp;·&nbsp; test: dùng a nguyên</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Giữ ~p phần nơ-ron, mỗi cái <b>phóng đại 1/p</b> để bù phần bị tắt → tổng kỳ vọng giữ nguyên. Với p=0.5: nửa
+    số nơ-ron tắt, nửa còn lại <b>nhân đôi</b>.
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Xám gạch chéo</b> = nơ-ron bị tắt (mask 0) · <b>cam</b> = nơ-ron giữ, phóng đại ×1/p.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">KÍCH HOẠT · p = <span data-q="p">0.5</span> → 1/p = <span data-q="ip">2</span></div>
+      <table class="dtbl" id="qtbl">
+        <tr><th>i</th><th>aᵢ</th><th>maskᵢ</th><th>aᵢ·maskᵢ</th><th>a'ᵢ = (aᵢ·maskᵢ)/p</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:8px">KIỂM KỲ VỌNG</div>
+      <div class="expr">
+        Σaᵢ (gốc) = <span class="ublk" id="saB"></span> &nbsp;·&nbsp; Σa'ᵢ (lượt này) = <span class="ublk" id="sdB"></span>
+        &nbsp;(dao động quanh Σaᵢ; <b>kỳ vọng</b> = Σaᵢ)
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol>
+          <li>Khi test (suy luận), dropout được <span class="ublk" style="min-width:50px"></span> (bật/tắt).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Dropout</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Dropout</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Mỗi lượt một mask khác → như huấn luyện vô số mạng con chia sẻ trọng số (ensemble ngầm).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">KÍCH HOẠT · 1/p = <span data-q="ip">2</span></div>
+      <table class="dtbl" id="ktbl">
+        <tr><th>i</th><th>aᵢ</th><th>maskᵢ</th><th>aᵢ·maskᵢ</th><th>a'ᵢ</th></tr>
+      </table>
+
+      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
+      <div class="expr">
+        Σaᵢ = <span data-q="ksa">?</span> &nbsp;·&nbsp; Σa'ᵢ = <b><span data-q="ksd">?</span></b>
+        &nbsp;·&nbsp; E[a'ᵢ] = p·(aᵢ/p) = <b>aᵢ</b> → kỳ vọng giữ nguyên
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol>
+          <li>Test: dropout <span class="qa">tắt</span> (dùng cả mạng, không mask, không scale).</li>
+        </ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Dropout = "ensemble ngầm" + bù tỉ lệ 1/p để giữ kỳ vọng. Là cách chống overfit rẻ, nhất là
+        cho lớp fully-connected to. Với CNN/Transformer thường thay bằng BatchNorm/LayerNorm + dropout nhẹ.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Dropout</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fI(v){return WB.fmtInt(v);}
+function fT(v){return WB.fmtTrim(v);}
+
+function generate(){
+  var p=0.5, ip=2, n=6;
+  var a=[], mask=[];
+  for(var i=0;i<n;i++){ a.push(WB.randInt(1,5)); mask.push(WB.pick([0,1])); }
+  // đảm bảo không phải toàn 0 hay toàn 1 (cho có cả tắt lẫn giữ)
+  if(mask.every(function(m){return m===1;})) mask[WB.randInt(0,n-1)]=0;
+  if(mask.every(function(m){return m===0;})) mask[WB.randInt(0,n-1)]=1;
+  var am=a.map(function(v,i){return v*mask[i];});
+  var ad=am.map(function(v){return v*ip;});
+  var sa=a.reduce(function(s,v){return s+v;},0);
+  var sd=ad.reduce(function(s,v){return s+v;},0);
+
+  buildTbl('qtbl',a,mask,am,ad,true);
+  buildTbl('ktbl',a,mask,am,ad,false);
+  ['saB','sdB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  WB.setAll({ p:fT(p), ip:String(ip), ksa:fI(sa), ksd:fI(sd) });
+
+  drawNeurons('sch1',a,mask,false);
+  drawNeurons('sch2',a,mask,true);
+}
+
+function buildTbl(id,a,mask,am,ad,blank){
+  var el=document.getElementById(id); if(!el) return;
+  while(el.children.length>1) el.removeChild(el.lastChild);
+  for(var i=0;i<a.length;i++){
+    var tr=document.createElement('tr');
+    var c=[String(i+1), fI(a[i]), String(mask[i]), fI(am[i]), fI(ad[i])];
+    c.forEach(function(v,j){
+      var td=document.createElement('td'); td.textContent=v;
+      if(blank && j>=3) td.className='blank';
+      else if(!blank && mask[i]===0 && j>=3) td.className='off';
+      tr.appendChild(td);
+    });
+    el.appendChild(tr);
+  }
+}
+
+function drawNeurons(id,a,mask,show){
+  var box=document.getElementById(id); if(!box) return;
+  var W=178,H=132, n=a.length;
+  var cols=n, x0=18, gap=(W-36)/(n-1);
+  var cy=60;
+  var s='';
+  for(var i=0;i<n;i++){
+    var x=x0+i*gap;
+    if(mask[i]===0){
+      s+='<circle cx="'+x.toFixed(1)+'" cy="'+cy+'" r="9" fill="#eee" stroke="#bbb" stroke-width="1.2"/>';
+      s+='<line x1="'+(x-6).toFixed(1)+'" y1="'+(cy-6)+'" x2="'+(x+6).toFixed(1)+'" y2="'+(cy+6)+'" stroke="#999" stroke-width="1.4"/>';
+      s+='<line x1="'+(x-6).toFixed(1)+'" y1="'+(cy+6)+'" x2="'+(x+6).toFixed(1)+'" y2="'+(cy-6)+'" stroke="#999" stroke-width="1.4"/>';
+    } else {
+      s+='<circle cx="'+x.toFixed(1)+'" cy="'+cy+'" r="10" fill="#ffe6cc" stroke="#b45309" stroke-width="1.6"/>';
+      if(show) s+='<text x="'+x.toFixed(1)+'" y="'+(cy+3.5)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#7a3d00">'+(a[i]*2)+'</text>';
+    }
+    s+='<text x="'+x.toFixed(1)+'" y="'+(cy+24)+'" text-anchor="middle" font-size="7.5" fill="#6b7280">a'+(i+1)+'='+a[i]+'</text>';
+  }
+  s+='<text x="89" y="18" text-anchor="middle" font-size="8.5" fill="#6b7280">giữ ×2 · tắt = 0</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="các nơ-ron, một số bị dropout">'+s+'</svg>';
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

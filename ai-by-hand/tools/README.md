@@ -1,4 +1,4 @@
-# Bộ tool làm phiếu "AI by Hand" (chỉ cho tác giả)
+# Bộ tool làm phiếu "Làm toán AI" (chỉ cho tác giả)
 
 > Tool **chạy lúc soạn phiếu**, KHÔNG phải một phần của site tĩnh giao cho người học.
 > Không cần `npm install` — thuần Node (≥18) + Edge headless (đã có sẵn trên máy). Không đụng `wb.css`/`wb-random.js`.

@@ -1,4 +1,4 @@
-# AI by Hand ✍️ — MỤC LỤC ĐẦY ĐỦ (bản tham vọng)
+# Làm toán AI ✍️ — MỤC LỤC ĐẦY ĐỦ (bản tham vọng)
 
 > Bộ phiếu **tính tay** trọn vẹn dạy AI/Deep Learning từ con số đến mô hình sinh, theo tinh thần Prof. Tom Yeh.
 > Mỗi phiếu = 1 file HTML = 2 trang (ĐỀ + ĐÁP ÁN), in A4/A3, giải bằng bút chì.

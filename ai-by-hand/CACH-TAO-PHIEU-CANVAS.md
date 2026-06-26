@@ -1,4 +1,4 @@
-# Cách tạo một phiếu "AI by Hand" kiểu CANVAS TOÀN CẢNH
+# Cách tạo một phiếu "Làm toán AI" kiểu CANVAS TOÀN CẢNH
 
 > Tài liệu **chính** cho phong cách **CANVAS** (A4 ngang) — house style hiện tại của bộ phiếu.
 > Mổ xẻ xuyên suốt một bài mẫu sạch & đầy đủ: [`01-tich-vo-huong-canvas.html`](01-tich-vo-huong-canvas.html).
@@ -35,7 +35,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI by Hand · <Tên> — canvas toàn cảnh (A4 ngang)</title>
+<title>Làm toán AI · <Tên> — canvas toàn cảnh (A4 ngang)</title>
 <link rel="stylesheet" href="wb-canvas.css">
 <style>
   /* tinh chỉnh riêng cho bài này (KHÔNG đụng wb-canvas.css) */

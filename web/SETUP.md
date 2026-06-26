@@ -1,6 +1,6 @@
-# Hướng dẫn cài đặt — TayCraft (web bán "AI by Hand")
+# Hướng dẫn cài đặt — TayCraft (web bán "Làm toán AI")
 
-Website bán trọn bộ phiếu "AI by Hand". Stack: **Next.js 16 + Supabase + Drizzle + Tailwind v4**, thanh toán **VietQR + SePay**. Host miễn phí trên **Vercel + Supabase**.
+Website bán trọn bộ phiếu "Làm toán AI". Stack: **Next.js 16 + Supabase + Drizzle + Tailwind v4**, thanh toán **VietQR + SePay**. Host miễn phí trên **Vercel + Supabase**.
 
 > Sản phẩm (các phiếu HTML) nằm ở `../ai-by-hand` (nguồn gốc). Script `pnpm sync:content` tự copy sang `web/content/ai-by-hand` mỗi lần dev/build. **Không sửa file trong `web/content`** — sửa ở `../ai-by-hand`.
 

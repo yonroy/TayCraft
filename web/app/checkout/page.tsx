@@ -32,7 +32,7 @@ export default async function CheckoutPage({
       />
       <SiteHeader />
       <main className="mx-auto w-full max-w-md px-5 py-12 flex-1">
-        <h1 className="text-2xl font-bold text-center mb-2">Mua {meta?.label ?? "AI by Hand"}</h1>
+        <h1 className="text-2xl font-bold text-center mb-2">Mua {meta?.label ?? "Làm toán AI"}</h1>
         {flash.enabled && (
           <div className="flex justify-center mb-6">
             <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang thanh toán" />

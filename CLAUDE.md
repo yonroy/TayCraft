@@ -1,4 +1,4 @@
-# TayCraft AI — "AI by Hand ✍️"
+# TayCraft AI — "Làm toán AI ✍️"
 
 ## Second Brain
 Đọc các file sau trước khi làm bất cứ gì:

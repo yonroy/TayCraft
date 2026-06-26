@@ -1,9 +1,9 @@
 ---
 name: phieu-giai-thich
-description: Dựng/đổi một phiếu "AI by Hand" theo phong cách GIẢNG GIẢI — A4 dọc, dạy kỹ từng bước cho người tự học. Mỗi bước có "Vì sao", mở bằng khối "Trực giác/ví von", đóng bằng "Tự kiểm tra" + "Rút ra". Dùng khi muốn phiếu giải thích NHIỀU cho người học (đối lập với /phieu-canvas tối giản). Bám CACH-TAO-PHIEU.md.
+description: Dựng/đổi một phiếu "Làm toán AI" theo phong cách GIẢNG GIẢI — A4 dọc, dạy kỹ từng bước cho người tự học. Mỗi bước có "Vì sao", mở bằng khối "Trực giác/ví von", đóng bằng "Tự kiểm tra" + "Rút ra". Dùng khi muốn phiếu giải thích NHIỀU cho người học (đối lập với /phieu-canvas tối giản). Bám CACH-TAO-PHIEU.md.
 ---
 
-# Phiếu GIẢNG GIẢI ("AI by Hand" — dạy kỹ cho người tự học)
+# Phiếu GIẢNG GIẢI ("Làm toán AI" — dạy kỹ cho người tự học)
 
 Mục tiêu: người **tự học không có thầy** vẫn hiểu *vì sao*, không chỉ *làm gì*. Mỗi phiếu là một bài giảng nhỏ: trực giác → công thức → tính tay từng bước (kèm lý do) → tự kiểm tra → rút ra. **Đối lập với `/phieu-canvas`** (tối giản Tom Yeh, chỉ điền ô). Nền tảng kỹ thuật giống nhau, chỉ khác **mật độ giải thích**.
 
@@ -23,14 +23,6 @@ Xếp theo thứ tự trên trang ĐỀ. Lớp ➍ ➎ là cái khiến phiếu 
 
 ➊ **intro — "Vì sao quan trọng"** (`.intro` + `.formula`): 2–3 câu nối khái niệm tới bức tranh AI lớn, rồi khung công thức gốc. (Đã có sẵn, bắt buộc.)
 
-➋ **"Trực giác / ví von"** (`.intuition`) — *MỚI*: ngay sau intro, **trước khi vào số**. Một phép so sánh đời thường giúp "thấy" ý tưởng.
-```html
-<div class="intuition">
-  <span class="lead">💡 Trực giác</span>
-  Tích vô hướng giống <b>chấm điểm độ hợp nhau</b>: hai vectơ "cùng hướng" cho điểm dương lớn,
-  "ngược hướng" cho điểm âm, "chẳng liên quan" (vuông góc) cho 0.
-</div>
-```
 
 ➌ **Bước 0 — dữ liệu cho sẵn** (`.step` + `.mtx/.cell.given`): ma trận/vectơ/logit đầu vào.
 
@@ -72,7 +64,7 @@ Xếp theo thứ tự trên trang ĐỀ. Lớp ➍ ➎ là cái khiến phiếu 
 ```html
 <!DOCTYPE html><html lang="vi"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI by Hand · Bài NN — Tên (A4 in được)</title>
+<title>Làm toán AI · Bài NN — Tên (A4 in được)</title>
 <link rel="stylesheet" href="wb.css">
 </head><body>
 <div class="toolbar">
@@ -94,7 +86,7 @@ Xếp theo thứ tự trên trang ĐỀ. Lớp ➍ ➎ là cái khiến phiếu 
   </div>
   …(thêm bước / hình SVG)…
   <div class="quiz">…Tự kiểm tra (ô trống)…</div>
-  <div class="wb-foot"><span>AI by Hand ✍️ — Bài NN · Tên</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài NN · Tên</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <section class="page key">           <!-- TRANG 2 — ĐÁP ÁN -->

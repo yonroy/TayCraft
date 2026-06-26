@@ -1,4 +1,4 @@
-// Copy phiếu HTML "AI by Hand" từ ../ai-by-hand (source of truth) sang ./content/ai-by-hand
+// Copy phiếu HTML "Làm toán AI" từ ../ai-by-hand (source of truth) sang ./content/ai-by-hand
 // (artifact, gitignored). Chạy tự động trước dev/build (predev/prebuild).
 import { cp, rm, mkdir, access } from "node:fs/promises";
 import { dirname, join } from "node:path";

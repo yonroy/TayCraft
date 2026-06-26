@@ -1,4 +1,4 @@
-# Cách tạo một phiếu "AI by Hand" mới — How to make an example
+# Cách tạo một phiếu "Làm toán AI" mới — How to make an example
 
 Tài liệu này mô tả **công thức dựng một phiếu tính tay** (1 chủ đề = 1 file HTML, 2 trang A4: ĐỀ + ĐÁP ÁN) trong `d:\MakeSomeThing\TayCraft AI\ai-by-hand`. Dùng scaffold `node tools/new.mjs` để tạo khung (xem mục 2), hoặc copy bài có sẵn (vd [K1/01-tich-vo-huong.html](K1/01-tich-vo-huong.html)) rồi sửa theo các mục dưới đây.
 

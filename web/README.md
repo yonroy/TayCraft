@@ -1,6 +1,6 @@
-# TayCraft Web — bán khóa học "AI by Hand ✍️"
+# TayCraft Web — bán khóa học "Làm toán AI ✍️"
 
-Website bán trọn bộ phiếu tính tay "AI by Hand" cho người Việt. Sản phẩm số (HTML/PDF), thanh toán QR chuyển khoản + SePay, host miễn phí trên Vercel + Supabase.
+Website bán trọn bộ phiếu tính tay "Làm toán AI" cho người Việt. Sản phẩm số (HTML/PDF), thanh toán QR chuyển khoản + SePay, host miễn phí trên Vercel + Supabase.
 
 ## Stack
 - **Next.js 16** (App Router) + TypeScript + **Tailwind v4**

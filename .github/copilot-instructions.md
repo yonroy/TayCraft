@@ -1,5 +1,5 @@
 ## Về dự án này
-Bộ **phiếu tính tay "AI by Hand ✍️"** dạy nền tảng AI/Deep Learning theo tinh thần Prof. Tom Yeh: không code — người học tự điền ma trận, nhân–cộng từng ô, chạy softmax/backprop/attention bằng số thật. Mỗi chủ đề = 1 file HTML = 2 trang A4/A3 (ĐỀ + ĐÁP ÁN), in ra giải bằng bút chì hoặc lưu PDF. Toàn bộ tiếng Việt, học theo thứ tự.
+Bộ **phiếu tính tay "Làm toán AI ✍️"** dạy nền tảng AI/Deep Learning theo tinh thần Prof. Tom Yeh: không code — người học tự điền ma trận, nhân–cộng từng ô, chạy softmax/backprop/attention bằng số thật. Mỗi chủ đề = 1 file HTML = 2 trang A4/A3 (ĐỀ + ĐÁP ÁN), in ra giải bằng bút chì hoặc lưu PDF. Toàn bộ tiếng Việt, học theo thứ tự.
 
 Context đầy đủ tại: `d:\SecondBrain\_projects\TayCraft AI\MEMORY\CONTEXT.md`
 Xem lịch sử quyết định: `d:\SecondBrain\_projects\TayCraft AI\MEMORY\DECISIONS.md`

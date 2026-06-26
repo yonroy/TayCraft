@@ -17,21 +17,21 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tay-craft.vercel.a
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "AI by Hand ✍️ — Học AI bằng tay | TayCraft",
+  title: "Làm toán AI ✍️ — Học AI bằng tay | TayCraft",
   description:
     "Bộ phiếu tính tay dạy nền tảng AI/Deep Learning bằng số thật: dot product, softmax, attention, backprop. In A4, giải bằng bút chì. Tiếng Việt.",
   openGraph: {
-    title: "AI by Hand ✍️ — Học AI bằng tay",
+    title: "Làm toán AI ✍️ — Học AI bằng tay",
     description:
       "Tự điền ma trận, chạy softmax/attention/backprop bằng số thật trên giấy. Trọn bộ phiếu tính tay, tiếng Việt.",
     url: SITE_URL,
-    siteName: "TayCraft — AI by Hand",
+    siteName: "TayCraft — Làm toán AI",
     locale: "vi_VN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI by Hand ✍️ — Học AI bằng tay",
+    title: "Làm toán AI ✍️ — Học AI bằng tay",
     description: "Trọn bộ phiếu tính tay dạy AI bằng số thật. Tiếng Việt.",
   },
 };

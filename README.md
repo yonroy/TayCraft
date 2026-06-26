@@ -1,4 +1,4 @@
-# TayCraft — AI by Hand ✍️
+# TayCraft — Làm toán AI ✍️
 
 Học nền tảng AI/Deep Learning **bằng tay**: tự điền ma trận, chạy softmax / attention / backprop bằng số thật trên giấy. Theo tinh thần Prof. Tom Yeh — "AI by Hand". Toàn bộ tiếng Việt.
 

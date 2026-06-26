@@ -1,4 +1,4 @@
-// Manifest phiếu "AI by Hand" — lộ trình đầy đủ (~138 phiếu) theo ai-by-hand/MUC-LUC-DAY-DU.md.
+// Manifest phiếu "Làm toán AI" — lộ trình đầy đủ (~138 phiếu) theo ai-by-hand/MUC-LUC-DAY-DU.md.
 // Xếp theo thứ tự PHẦN A→N. available=true: đã có file trong content/ai-by-hand (badge số 01–26).
 // available=false: placeholder "sắp ra" (badge mã PHẦN, slug=null). isFree=true: xem thử không cần mua.
 

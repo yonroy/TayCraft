@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Return & Discount — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 8px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .big{font-family:var(--mono);font-size:15px;margin-top:6px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:50px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#0c4a5e}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Return &amp; Discount</h1><span class="vi">— phần thưởng có chiết khấu</span>
+    <span class="tag">G = Σ γᵏ rₖ · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Trong học tăng cường, tác nhân muốn tối đa <b>tổng thưởng tương lai</b>. Nhưng thưởng xa
+    đáng giá ít hơn thưởng gần → nhân hệ số chiết khấu <b>γ ∈ (0,1)</b> lũy thừa theo thời gian. γ nhỏ = "thiển cận",
+    γ gần 1 = "nhìn xa".
+    <div class="fm">G₀ = r₀ + γr₁ + γ²r₂ + γ³r₃ = Σₖ γᵏ rₖ</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Cột thưởng ×  trọng số γᵏ (giảm dần) → cộng lại = return. Thưởng xa "teo" đi.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">γ = <span id="g1" style="color:var(--accent)"></span> · dùng bảng γᵏ cho sẵn</div>
+      <table class="dtbl" id="tbl1">
+        <tr><td class="lab">bước k</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td class="lab">thưởng rₖ</td><td id="R0"></td><td id="R1"></td><td id="R2"></td><td id="R3"></td></tr>
+        <tr><td class="lab">γᵏ (cho sẵn)</td><td id="G0"></td><td id="G1"></td><td id="G2"></td><td id="G3"></td></tr>
+        <tr><td class="lab">γᵏ·rₖ</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+      </table>
+      <div class="big">G = tổng hàng cuối = <span class="ub" style="min-width:64px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>γ = 0 thì G bằng gì? Ý nghĩa? → <span class="ub" style="min-width:110px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Return &amp; Discount</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Return &amp; Discount</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">γ chiết khấu khiến chuỗi vô hạn vẫn hội tụ; cũng định "tầm nhìn" của tác nhân.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">γᵏ·rₖ rồi cộng dồn</div>
+      <table class="dtbl" id="tbl2">
+        <tr><td class="lab">k</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td class="lab">rₖ</td><td id="kR0"></td><td id="kR1"></td><td id="kR2"></td><td id="kR3"></td></tr>
+        <tr><td class="lab">γᵏ</td><td id="kG0"></td><td id="kG1"></td><td id="kG2"></td><td id="kG3"></td></tr>
+        <tr><td class="lab">γᵏ·rₖ</td><td id="P0"></td><td id="P1"></td><td id="P2"></td><td id="P3"></td></tr>
+      </table>
+      <div class="big">G = <span data-q="sumE">?</span> = <b><span data-q="G">?</span></b></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">G = r₀</span>: γ=0 xóa mọi thưởng tương lai → chỉ quan tâm thưởng tức thì ("tham lam, thiển cận").</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Return G là thứ tác nhân tối đa hóa. Thay vì tính tay cả chuỗi mỗi lần, ta học hàm giá trị thỏa
+        công thức đệ quy: V(s) = r + γV(s′) → <b>K2 phương trình Bellman</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Return &amp; Discount</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var g=WB.pick([0.5,0.9,0.8]);
+  var pw=[1, g, Math.round(g*g*100)/100, Math.round(g*g*g*100)/100];
+  var r=[WB.randIntNZ(-3,5),WB.randIntNZ(-3,5),WB.randIntNZ(-3,5),WB.randIntNZ(-3,5)];
+  var prod=r.map(function(v,i){return Math.round(v*pw[i]*100)/100;});
+  var G=Math.round((prod[0]+prod[1]+prod[2]+prod[3])*100)/100;
+  ['R0','R1','R2','R3'].forEach(function(id,i){setTxt(id,r[i]);});
+  ['kR0','kR1','kR2','kR3'].forEach(function(id,i){setTxt(id,r[i]);});
+  ['G0','G1','G2','G3'].forEach(function(id,i){setTxt(id,f2(pw[i]));});
+  ['kG0','kG1','kG2','kG3'].forEach(function(id,i){setTxt(id,f2(pw[i]));});
+  ['P0','P1','P2','P3'].forEach(function(id,i){setTxt(id,f2(prod[i]));});
+  setTxt('g1',WB.fmtTrim(g));
+  WB.setAll({sumE:prod.map(f2).join(' + ').replace(/\+ −/g,'− '), G:f2(G)});
+  draw('sch1',r,pw); draw('sch2',r,pw);
+}
+function draw(id,r,pw){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  for(var i=0;i<4;i++){var x=18+i*44;
+    var hw=Math.round(pw[i]*44);
+    s+='<rect x="'+x+'" y="'+(60-hw)+'" width="30" height="'+hw+'" rx="2" fill="#d6ecf6" stroke="#a7d3e3"/>';
+    s+='<text x="'+(x+15)+'" y="'+(56-hw)+'" text-anchor="middle" font-size="8" fill="#0c4a5e">γ'+(i?('^'+i):'⁰')+'='+WB.fmt2(pw[i])+'</text>';
+    s+='<text x="'+(x+15)+'" y="74" text-anchor="middle" font-size="9" font-weight="700">r'+i+'='+r[i]+'</text>';
+    if(i<3)s+='<text x="'+(x+38)+'" y="40" font-size="11" fill="#b45309">+</text>';}
+  s+='<line x1="12" y1="60" x2="184" y2="60" stroke="#bbb"/>';
+  s+='<text x="96" y="12" text-anchor="middle" font-size="8" fill="#6b7280">trọng số γᵏ giảm dần theo thời gian</text>';
+  b.innerHTML='<svg viewBox="0 0 196 80" aria-label="thưởng nhân trọng số chiết khấu">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

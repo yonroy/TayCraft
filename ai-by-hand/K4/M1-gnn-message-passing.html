@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · GNN — Message Passing — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .m{ --cw:11mm; --ch:8mm; }
+  .cell{font-size:13.5px;}
+  .rowlab{font-family:var(--mono);font-size:11px;color:var(--dim);display:grid;align-items:center}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>GNN — Message Passing</h1><span class="vi">— một bước truyền tin trên đồ thị</span>
+    <span class="tag">gộp tin từ hàng xóm · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mạng nơ-ron đồ thị (GNN) học trên dữ liệu có quan hệ (mạng xã hội, phân tử). Mỗi vòng,
+    một nút <b>nhận tin</b> (đặc trưng) từ các <b>hàng xóm</b>, <b>gộp</b> lại (cộng/trung bình), rồi <b>cập nhật</b>
+    đặc trưng của mình. Sau k vòng, mỗi nút "biết" thông tin trong bán kính k.
+    <div class="fm">hᵥ′ = hᵥ + Σ₍ᵤ∈N(v)₎ hᵤ   (gộp = tổng đặc trưng hàng xóm, rồi cộng chính mình)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Mũi tên = tin nhắn từ hàng xóm tới nút đích. Nút gộp mọi tin đến rồi tự cập nhật.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Đặc trưng nút (2 chiều) · cạnh: <span id="edg1" style="color:var(--dim)"></span></div>
+      <div class="row" style="align-items:flex-start">
+        <div class="rowlab">nút<br>A<br>B<br>C<br>D</div>
+        <div class="blk in"><span class="nm">h (vào)</span><div class="m c2" id="H"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">Σ hàng xóm</span><div class="m c2" id="AGG"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">h′ = h + Σ</span><div class="m c2" id="HP"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Nút cô lập (không hàng xóm) có h′ bằng gì? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:90px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · GNN Message Passing</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>GNN — Message Passing</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">GCN dùng trung bình có chuẩn hóa; GraphSAGE/GAT đổi cách gộp (max, attention). Ý tưởng giống nhau.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Σ hàng xóm → h′ = h + Σ</div>
+      <div class="row" style="align-items:flex-start">
+        <div class="rowlab">nút<br>A<br>B<br>C<br>D</div>
+        <div class="blk in"><span class="nm">h</span><div class="m c2" id="kH"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">Σ hàng xóm</span><div class="m c2" id="kAGG"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">h′</span><div class="m c2" id="kHP"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">h′ = h</span>: không có tin nhắn nào (Σ = 0) → đặc trưng giữ nguyên. Thông tin chỉ lan qua cạnh.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Message passing = "trộn theo cấu trúc đồ thị" (giống attention trộn theo độ liên quan). Một
+        nhánh học biểu diễn khác: kéo cặp giống lại, đẩy cặp khác ra → <b>M2 Contrastive (InfoNCE)</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · GNN Message Passing</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':WB.fmtInt(M[i][j]))+'</div>';el.innerHTML=s;}
+// đồ thị cố định: A-B, A-C, B-D, C-D (vòng 4 nút)
+var NB={0:[1,2],1:[0,3],2:[0,3],3:[1,2]};
+function generate(){
+  var H=[]; for(var i=0;i<4;i++)H.push([WB.randIntNZ(-3,4),WB.randIntNZ(-3,4)]);
+  var AGG=[],HP=[];
+  for(var i=0;i<4;i++){var a=[0,0];NB[i].forEach(function(u){a[0]+=H[u][0];a[1]+=H[u][1];});AGG.push(a);HP.push([H[i][0]+a[0],H[i][1]+a[1]]);}
+  fill('H',H,false); fill('AGG',AGG,true); fill('HP',HP,true);
+  fill('kH',H,false); fill('kAGG',AGG,false); fill('kHP',HP,false);
+  document.getElementById('edg1').textContent='A–B, A–C, B–D, C–D';
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var pos={0:[30,24],1:[100,24],2:[30,86],3:[100,86]};
+  var edges=[[0,1],[0,2],[1,3],[2,3]];
+  edges.forEach(function(e){s+='<line x1="'+pos[e[0]][0]+'" y1="'+pos[e[0]][1]+'" x2="'+pos[e[1]][0]+'" y2="'+pos[e[1]][1]+'" stroke="#0e7490" stroke-width="1.3"/>';});
+  var nm=['A','B','C','D'];
+  for(var i=0;i<4;i++){s+='<circle cx="'+pos[i][0]+'" cy="'+pos[i][1]+'" r="13" fill="#fdecd2" stroke="#1a1a1a" stroke-width="1.2"/>';s+='<text x="'+pos[i][0]+'" y="'+(pos[i][1]+4)+'" text-anchor="middle" font-size="11" font-weight="700">'+nm[i]+'</text>';}
+  s+='<text x="65" y="14" text-anchor="middle" font-size="8" fill="#6b7280">đồ thị 4 nút</text>';
+  b.innerHTML='<svg viewBox="0 0 130 104" aria-label="đồ thị 4 nút truyền tin">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

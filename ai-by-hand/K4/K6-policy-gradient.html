@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Policy Gradient REINFORCE — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 7px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .dtbl td.act{background:#fff3b0;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Policy Gradient — REINFORCE</h1><span class="vi">— học thẳng chính sách</span>
+    <span class="tag">∇logπ·G → đẩy logit · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Thay vì học giá trị rồi suy hành động, REINFORCE học <b>trực tiếp</b> xác suất hành động
+    π = softmax(θ). Sau một lượt thu return G: nếu G &gt; 0 thì <b>tăng</b> logit hành động đã đi, giảm các hành động
+    khác (và ngược lại). Gradient của log π theo logit có dạng gọn: <b>(onehot − π)</b>.
+    <div class="fm">θ ← θ + α·G·(onehot(a) − π)   ·   π = softmax(θ)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint"><b>Vàng</b> = hành động đã đi. G&gt;0 → kéo logit của nó lên, đẩy các hành động khác xuống.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Đã đi a = <b id="a1"></b>, return G = <b id="G1"></b>, α = <span id="al1"></span></div>
+      <table class="dtbl" id="tbl1">
+        <tr><td class="lab">hành động</td><td>a₀</td><td>a₁</td><td>a₂</td></tr>
+        <tr><td class="lab">logit θ</td><td id="T0"></td><td id="T1"></td><td id="T2"></td></tr>
+        <tr><td class="lab">π = softmax</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+        <tr><td class="lab">grad = onehot−π</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+        <tr><td class="lab">θ mới = θ+α·G·grad</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Return G âm (lượt tệ) thì logit hành động đã đi bị kéo lên hay xuống? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:70px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · REINFORCE</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Policy Gradient — REINFORCE</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint">"Hành động dẫn tới thưởng cao → làm nhiều hơn." G càng lớn, bước đẩy càng mạnh.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">π → grad=(onehot−π) → θ+α·G·grad</div>
+      <table class="dtbl" id="tbl2">
+        <tr><td class="lab">a</td><td>a₀</td><td>a₁</td><td>a₂</td></tr>
+        <tr><td class="lab">θ</td><td id="kT0"></td><td id="kT1"></td><td id="kT2"></td></tr>
+        <tr><td class="lab">π</td><td id="P0"></td><td id="P1"></td><td id="P2"></td></tr>
+        <tr><td class="lab">grad</td><td id="G0"></td><td id="G1c"></td><td id="G2"></td></tr>
+        <tr><td class="lab">θ mới</td><td id="N0"></td><td id="N1"></td><td id="N2"></td></tr>
+      </table>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Kéo xuống</span>: G&lt;0 đảo dấu cập nhật → giảm xác suất hành động dẫn tới kết quả tệ. Đó là "học từ hậu quả".</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> REINFORCE đơn giản nhưng phương sai cao (G dao động mạnh). Trừ đi một mốc baseline để bớt nhiễu
+        → dùng <b>advantage</b>: <b>K7</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · REINFORCE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var EXP={0:1,1:2.72,2:7.39};
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function setCell(id,v,cls){var el=document.getElementById(id);if(!el)return;el.textContent=v;if(cls)el.className=cls;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var al=0.5;
+  var T=[WB.pick([0,1,2]),WB.pick([0,1,2]),WB.pick([0,1,2])];
+  var e=T.map(function(v){return EXP[v];}); var sum=e[0]+e[1]+e[2];
+  var P=e.map(function(v){return Math.round(v/sum*100)/100;});
+  var a=WB.randInt(0,2); var G=WB.pick([-2,-1,1,2,3]);
+  var grad=[0,1,2].map(function(i){return Math.round(((i===a?1:0)-P[i])*100)/100;});
+  var N=[0,1,2].map(function(i){return Math.round((T[i]+al*G*grad[i])*100)/100;});
+  ['T0','T1','T2'].forEach(function(id,i){setTxt(id,T[i]);});
+  ['kT0','kT1','kT2'].forEach(function(id,i){setTxt(id,T[i]);});
+  ['P0','P1','P2'].forEach(function(id,i){setCell(id,f2(P[i]),i===a?'act':'');});
+  ['G0','G1c','G2'].forEach(function(id,i){setCell(id,f2(grad[i]),i===a?'act':'');});
+  ['N0','N1','N2'].forEach(function(id,i){setCell(id,f2(N[i]),i===a?'act':'');});
+  setTxt('a1','a'+a); setTxt('G1',G); setTxt('al1',WB.fmtTrim(al));
+  draw('sch1',P,a,G); draw('sch2',P,a,G);
+}
+function draw(id,P,a,G){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  for(var i=0;i<3;i++){var x=24+i*52;var h=Math.round(P[i]*60);
+    s+='<rect x="'+x+'" y="'+(70-h)+'" width="34" height="'+h+'" rx="2" fill="'+(i===a?'#fff3b0':'#e9eef2')+'" stroke="'+(i===a?'#e6cf6a':'#bbb')+'"/>';
+    s+='<text x="'+(x+17)+'" y="82" text-anchor="middle" font-size="9" font-weight="700">a'+i+'</text>';
+    if(i===a){var up=G>0;s+='<text x="'+(x+17)+'" y="'+(64-h)+'" text-anchor="middle" font-size="12" fill="'+(up?'#0a6':'#c00')+'">'+(up?'↑':'↓')+'</text>';}}
+  s+='<line x1="16" y1="70" x2="180" y2="70" stroke="#bbb"/>';
+  s+='<text x="98" y="12" text-anchor="middle" font-size="8" fill="#6b7280">G'+(G>0?'>0 → tăng':'<0 → giảm')+' xác suất a đã đi</text>';
+  b.innerHTML='<svg viewBox="0 0 190 88" aria-label="đẩy xác suất hành động theo return">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

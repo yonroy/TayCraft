@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Calibration — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 7px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .big{font-family:var(--mono);font-size:14px;margin-top:6px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:48px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Calibration</h1><span class="vi">— độ tin cậy có thật không</span>
+    <span class="tag">|tự tin − thực tế| · ECE · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Mô hình nói "90% chắc" thì đúng có thật 90% lần không? <b>Calibration</b> nhóm các dự
+    đoán theo mức tự tin, so <b>độ tự tin trung bình</b> với <b>tỉ lệ đúng thực tế</b> trong nhóm. Chênh lệch =
+    "lệch hiệu chỉnh". <b>ECE</b> = trung bình có trọng số của các chênh lệch đó.
+    <div class="fm">gap mỗi nhóm = |tự tin − tỉ lệ đúng| · ECE = Σ (nₖ/N)·gapₖ</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Cột <b>tự tin</b> vs <b>tỉ lệ đúng</b>. Khoảng hở giữa hai cột = lệch hiệu chỉnh nhóm đó.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">3 nhóm theo mức tự tin · tổng N = <span id="n1"></span></div>
+      <table class="dtbl" id="tbl1">
+        <tr><th>nhóm</th><th>số mẫu n</th><th>tự tin TB</th><th>tỉ lệ đúng</th><th>gap = |hiệu|</th></tr>
+      </table>
+      <div class="big">ECE = Σ (n/N)·gap = <span class="ub" style="min-width:64px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Tự tin 0.9 nhưng chỉ đúng 0.6 → mô hình "tự tin thái quá" hay "khiêm tốn"? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:100px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Calibration</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Calibration</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Hiệu chỉnh hoàn hảo: cột tự tin = cột đúng (mọi gap = 0, ECE = 0). LLM/mạng sâu thường tự tin thái quá.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">gap mỗi nhóm → ECE</div>
+      <table class="dtbl" id="tbl2">
+        <tr><th>nhóm</th><th>n</th><th>tự tin</th><th>đúng</th><th>gap</th></tr>
+      </table>
+      <div class="big">ECE = <span data-q="eceE">?</span> = <b><span data-q="ece">?</span></b></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Tự tin thái quá</span>: tự tin (0.9) &gt; thực tế (0.6). Cần "làm nguội" (temperature scaling) để hạ độ tự tin về đúng.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Độ chính xác cao chưa đủ — xác suất phải <i>đáng tin</i> khi ra quyết định (y tế, tài chính).
+        Hết phần "chất lượng"; sang đo <b>chi phí tính toán</b>: <b>L7 FLOPs</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Calibration</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return WB.fmt2(v);}
+function buildTbl(id,rows,N,blank){
+  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
+  rows.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="lab">'+(i+1)+'</td><td>'+r.n+'</td><td>'+f2(r.conf)+'</td><td>'+f2(r.acc)+'</td>'+
+      '<td'+(blank?' class="blank"':'')+'>'+(blank?'':f2(r.gap))+'</td>';
+    el.appendChild(tr);
+  });
+}
+function generate(){
+  var confs=[0.7,0.8,0.9];
+  var rows=confs.map(function(c){
+    var acc=Math.round((c-WB.pick([0,0.1,0.2,0.3]))*100)/100;
+    if(acc<0)acc=0;
+    var n=WB.pick([10,20,20,30]);
+    return {n:n, conf:c, acc:acc, gap:Math.round(Math.abs(c-acc)*100)/100};
+  });
+  var N=rows[0].n+rows[1].n+rows[2].n;
+  var ece=0; rows.forEach(function(r){ece+=r.n/N*r.gap;}); ece=Math.round(ece*100)/100;
+  document.getElementById('n1').textContent=N;
+  buildTbl('tbl1',rows,N,true); buildTbl('tbl2',rows,N,false);
+  var eceE=rows.map(function(r){return '('+r.n+'/'+N+')·'+f2(r.gap);}).join(' + ');
+  WB.setAll({eceE:eceE, ece:f2(ece)});
+  draw('sch1',rows); draw('sch2',rows);
+}
+function draw(id,rows){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  for(var i=0;i<3;i++){var x=24+i*52;var hc=Math.round(rows[i].conf*60),ha=Math.round(rows[i].acc*60);
+    s+='<rect x="'+x+'" y="'+(72-hc)+'" width="16" height="'+hc+'" rx="2" fill="#ece2ff" stroke="#c3b1f5"/>';
+    s+='<rect x="'+(x+18)+'" y="'+(72-ha)+'" width="16" height="'+ha+'" rx="2" fill="#d6f5d6" stroke="#9ad8a0"/>';
+    s+='<text x="'+(x+17)+'" y="84" text-anchor="middle" font-size="8" font-weight="700">N'+(i+1)+'</text>';}
+  s+='<line x1="16" y1="72" x2="180" y2="72" stroke="#bbb"/>';
+  s+='<text x="40" y="12" font-size="8" fill="#5b3fd6">■ tự tin</text>';
+  s+='<text x="110" y="12" font-size="8" fill="#0a6">■ đúng</text>';
+  b.innerHTML='<svg viewBox="0 0 190 90" aria-label="biểu đồ độ tin cậy: tự tin vs đúng">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

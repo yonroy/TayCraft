@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Mini-CNN nhận chữ số — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:8mm; --ch:7.5mm; }
+  .cell{font-size:12.5px;}
+  .big{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:5px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:40px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Mini-CNN nhận chữ số</h1><span class="vi">— conv → pool → softmax</span>
+    <span class="tag">2 bộ lọc · 2 lớp · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Ráp CNN thành một bộ phân loại tí hon: ảnh 4×4 → hai bộ lọc 3×3 dò nét → hai feature
+    map 2×2 → ReLU → max-pool lấy phản hồi mạnh nhất mỗi map → hai điểm số → softmax → đoán lớp (0 hay 1). Cả pipeline
+    thị giác trên một trang.
+    <div class="fm">map = conv(ảnh, kernel) · ReLU · pool = max · logit = pool · softmax → lớp</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td><td>20.1</td></tr></table>
+      <div class="hint">Mỗi bộ lọc = một "máy dò nét". Pool giữ phản hồi mạnh nhất → điểm số của lớp đó.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Ảnh 4×4 (nhị phân) + 2 bộ lọc 3×3</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">ảnh</span><div class="m c4" id="IMG"></div></div>
+        <div class="blk w"><span class="nm">K₀ (lớp 0)</span><div class="m c3" id="K0"></div></div>
+        <div class="blk w"><span class="nm">K₁ (lớp 1)</span><div class="m c3" id="K1"></div></div>
+      </div>
+      <div class="bandh fw">conv (valid) → map 2×2 → ReLU → max-pool</div>
+      <div class="row">
+        <div class="blk fw"><span class="nm">map₀ (ReLU)</span><div class="m c2" id="M0"></div></div>
+        <div class="blk fw"><span class="nm">map₁ (ReLU)</span><div class="m c2" id="M1"></div></div>
+        <div class="blk hot"><span class="nm">logit=[max₀,max₁]</span><div class="m c2" id="LOG" style="--cw:11mm"></div></div>
+      </div>
+      <div class="big">softmax([logit₀, logit₁]) = <span class="ub" style="min-width:90px"></span> → đoán lớp <span class="ub" style="min-width:30px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Mỗi bộ lọc đảm nhiệm việc gì trong bộ phân loại này? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:110px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Mini-CNN</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Mini-CNN nhận chữ số</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td><td>20.1</td></tr></table>
+      <div class="hint">CNN thật chỉ là cái này nhân lên: nhiều lọc, nhiều lớp, ảnh lớn. Cơ chế y hệt.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">map₀, map₁ (ReLU) → pool → softmax</div>
+      <div class="row">
+        <div class="blk fw"><span class="nm">map₀</span><div class="m c2" id="kM0"></div></div>
+        <div class="blk fw"><span class="nm">map₁</span><div class="m c2" id="kM1"></div></div>
+        <div class="blk hot"><span class="nm">logit</span><div class="m c2" id="kLOG" style="--cw:11mm"></div></div>
+      </div>
+      <div class="big">
+        max₀ = <span data-q="m0">?</span> · max₁ = <span data-q="m1">?</span><br>
+        softmax = [<b><span data-q="p0">?</span></b>, <b><span data-q="p1">?</span></b>] → đoán lớp <b><span data-q="cls">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Mỗi lọc dò nét của một lớp</span>: K₀ dò đặc trưng của "0", K₁ của "1". Lọc nào phản hồi mạnh hơn → lớp đó thắng.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Thị giác xong. Phần ngôn ngữ: ráp embedding + attention + FFN thành bộ sinh token → <b>N3
+        Mini-GPT</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Mini-CNN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var EXP={0:1,1:2.72,2:7.39,3:20.1};
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
+function f2(v){return WB.fmt2(v);}
+function conv(img,K){ // 4x4 * 3x3 valid -> 2x2
+  var out=[];for(var r=0;r<2;r++){var row=[];for(var c=0;c<2;c++){var sum=0;for(var i=0;i<3;i++)for(var j=0;j<3;j++)sum+=img[r+i][c+j]*K[i][j];row.push(Math.max(0,sum));}out.push(row);}return out;
+}
+function generate(){
+  var img,K0,K1,m0,m1,max0,max1,ok=false,guard=0;
+  while(!ok && guard++<800){
+    img=[];for(var i=0;i<4;i++){var r=[];for(var j=0;j<4;j++)r.push(WB.pick([0,1]));img.push(r);}
+    K0=sparseK(); K1=sparseK();
+    m0=conv(img,K0); m1=conv(img,K1);
+    max0=Math.max(m0[0][0],m0[0][1],m0[1][0],m0[1][1]);
+    max1=Math.max(m1[0][0],m1[0][1],m1[1][0],m1[1][1]);
+    if(max0<=3&&max1<=3&&(max0!==max1)){ok=true;}
+  }
+  var e0=EXP[max0], e1=EXP[max1]; var sum=e0+e1;
+  var p0=Math.round(e0/sum*100)/100, p1=Math.round(e1/sum*100)/100;
+  var cls=max0>max1?0:1;
+  fill('IMG',img,false); fill('K0',K0,false); fill('K1',K1,false);
+  fill('M0',m0,true); fill('M1',m1,true); fill('LOG',[[max0,max1]],true);
+  fill('kM0',m0,false); fill('kM1',m1,false); fill('kLOG',[[max0,max1]],false);
+  WB.setAll({m0:max0, m1:max1, p0:f2(p0), p1:f2(p1), cls:cls});
+  draw('sch1'); draw('sch2');
+}
+function sparseK(){
+  var K=[[0,0,0],[0,0,0],[0,0,0]];
+  var n=WB.randInt(2,3);
+  for(var t=0;t<n;t++){var i=WB.randInt(0,2),j=WB.randInt(0,2);K[i][j]=WB.pick([1,1,-1]);}
+  return K;
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  function box(x,y,w,h,fill,txt){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1"/>';s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="8" font-weight="700">'+txt+'</text>';}
+  function ar(x1,y1,x2,y2){s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#0e7490" stroke-width="1.3" marker-end="url(#cn'+id+')"/>';}
+  s+='<defs><marker id="cn'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  box(8,38,26,26,'#fdecd2','ảnh'); ar(34,51,46,40); ar(34,51,46,62);
+  box(48,22,26,18,'#d6ecf6','map₀'); box(48,62,26,18,'#d6ecf6','map₁');
+  ar(74,31,86,38); ar(74,71,86,54);
+  box(88,38,24,18,'#fff3b0','pool');
+  ar(112,47,124,47);
+  box(126,38,26,18,'#ece2ff','soft');
+  s+='<text x="80" y="12" text-anchor="middle" font-size="8" fill="#6b7280">conv → ReLU → pool → softmax</text>';
+  b.innerHTML='<svg viewBox="0 0 158 92" aria-label="pipeline mini-CNN">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Mini-GPT — sinh 1 token — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:9mm; --ch:7.5mm; }
+  .cell{font-size:12.5px;}
+  .big{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:5px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:40px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Mini-GPT — sinh 1 token</h1><span class="vi">— embedding → attention → logits</span>
+    <span class="tag">2 token vào, đoán token kế · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Cả một GPT thu nhỏ trên một trang: 2 token đã nhúng (kèm vị trí), token cuối <b>chú ý</b>
+    về cả hai để gom ngữ cảnh, qua phép chiếu ra <b>logit</b> trên từ vựng 3 từ, chọn từ điểm cao nhất = token sinh ra.
+    Đây là cách ChatGPT đẻ ra từng chữ.
+    <div class="fm">điểm = q·kᵀ → softmax → ngữ cảnh = Σ a·v → logit = W·ngữ cảnh → argmax = token kế</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint">Token cuối (query) hỏi cả 2 token, trộn giá trị theo trọng số chú ý → ngữ cảnh.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① X = embedding + vị trí (2 token, d=2) · ② chú ý của token cuối</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">X (t₁;t₂)</span><div class="m c2" id="X"></div></div>
+        <div class="blk"><span class="nm">điểm s=x₂·xᵢ</span><div class="m c1" id="S" style="--cw:11mm"></div></div>
+        <span class="op">→</span>
+        <div class="blk hot"><span class="nm">a=softmax(s)</span><div class="m c1" id="A" style="--cw:11mm"></div></div>
+        <span class="op">→</span>
+        <div class="blk fw"><span class="nm">ngữ cảnh c=Σa·x</span><div class="m c2" id="C"></div></div>
+      </div>
+      <div class="bandh fw">③ logit = W·c (từ vựng 3 từ) → ④ chọn max</div>
+      <div class="row">
+        <div class="blk w"><span class="nm">W <s>3×2</s></span><div class="m c2" id="W"></div></div>
+        <span class="op">·c=</span>
+        <div class="blk out"><span class="nm">logit (w₀,w₁,w₂)</span><div class="m c1" id="LOG" style="--cw:12mm"></div></div>
+      </div>
+      <div class="big">token sinh ra = argmax(logit) = <span class="ub" style="min-width:50px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Để sinh token thứ 2, ta làm gì với token vừa sinh? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Mini-GPT</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Mini-GPT — sinh 1 token</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td></tr></table>
+      <div class="hint">GPT thật = cái này × nhiều lớp, nhiều đầu, vị trí dài, từ vựng vạn từ + KV cache (H10).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">s → a → c → logit → argmax</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">X</span><div class="m c2" id="kX"></div></div>
+        <div class="blk fw"><span class="nm">s</span><div class="m c1" id="kS" style="--cw:11mm"></div></div>
+        <div class="blk hot"><span class="nm">a</span><div class="m c1" id="kA" style="--cw:11mm"></div></div>
+        <div class="blk fw"><span class="nm">c</span><div class="m c2" id="kC"></div></div>
+        <div class="blk out"><span class="nm">logit</span><div class="m c1" id="kLOG" style="--cw:12mm"></div></div>
+      </div>
+      <div class="big">a = [<span data-q="a0">?</span>, <span data-q="a1">?</span>] · c = [<span data-q="c0">?</span>, <span data-q="c1">?</span>] · token sinh = <b><span data-q="tok">?</span></b> (logit cao nhất)</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Nối nó vào chuỗi rồi chạy lại</span>: giờ có 3 token, token mới làm query, lặp attention→logit→argmax (dùng KV cache để khỏi tính lại t₁,t₂).</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Bạn vừa chạy tay một bước sinh của GPT! Ghép nốt vòng huấn luyện kinh điển — hồi quy logistic
+        hội tụ qua vài bước → <b>N4</b>, phiếu cuối của trọn bộ.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Mini-GPT</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var EXP={0:1,1:2.72,2:7.39};
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var X,s0,s1,ok=false,guard=0;
+  while(!ok && guard++<600){
+    X=[[WB.randInt(0,2),WB.randInt(0,2)],[WB.randInt(0,2),WB.randInt(0,2)]];
+    s0=X[1][0]*X[0][0]+X[1][1]*X[0][1];   // x2·x1
+    s1=X[1][0]*X[1][0]+X[1][1]*X[1][1];   // x2·x2
+    if(s0<=2&&s1<=2&&(s0+s1>0)){ok=true;}
+  }
+  var e0=EXP[s0], e1=EXP[s1]; var sum=e0+e1;
+  var a0=Math.round(e0/sum*100)/100, a1=Math.round(e1/sum*100)/100;
+  var c=[Math.round((a0*X[0][0]+a1*X[1][0])*100)/100, Math.round((a0*X[0][1]+a1*X[1][1])*100)/100];
+  var W=[[WB.randInt(-1,2),WB.randInt(-1,2)],[WB.randInt(-1,2),WB.randInt(-1,2)],[WB.randInt(-1,2),WB.randInt(-1,2)]];
+  var logit=W.map(function(r){return Math.round((r[0]*c[0]+r[1]*c[1])*100)/100;});
+  var tok=logit.indexOf(Math.max(logit[0],logit[1],logit[2]));
+  var words=['w₀','w₁','w₂'];
+  fill('X',X,false); fill('S',[[s0],[s1]],true); fill('A',[[f2(a0)],[f2(a1)]],true); fill('C',[[f2(c[0]),f2(c[1])]],true);
+  fill('W',W,false); fill('LOG',[[f2(logit[0])],[f2(logit[1])],[f2(logit[2])]],true);
+  fill('kX',X,false); fill('kS',[[s0],[s1]],false); fill('kA',[[f2(a0)],[f2(a1)]],false); fill('kC',[[f2(c[0]),f2(c[1])]],false);
+  fill('kLOG',[[f2(logit[0])],[f2(logit[1])],[f2(logit[2])]],false);
+  WB.setAll({a0:f2(a0), a1:f2(a1), c0:f2(c[0]), c1:f2(c[1]), tok:words[tok]});
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  function box(x,y,w,h,fill,txt){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1"/>';s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="8" font-weight="700">'+txt+'</text>';}
+  function ar(x1,y1,x2,y2){s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#0e7490" stroke-width="1.3" marker-end="url(#mg'+id+')"/>';}
+  s+='<defs><marker id="mg'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  box(6,38,26,18,'#fdecd2','2 tok'); ar(32,47,44,47);
+  box(46,38,30,18,'#fff3b0','attention'); ar(76,47,88,47);
+  box(90,38,24,18,'#d6ecf6','c'); ar(114,47,126,47);
+  box(128,38,26,18,'#ece2ff','logit');
+  s+='<text x="141" y="32" text-anchor="middle" font-size="7.5" fill="#5b3fd6">argmax → token</text>';
+  s+='<text x="80" y="14" text-anchor="middle" font-size="8" fill="#6b7280">embedding → chú ý → chiếu → chọn</text>';
+  b.innerHTML='<svg viewBox="0 0 160 90" aria-label="pipeline mini-GPT">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

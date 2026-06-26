@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · ROC & AUC — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .rank{font-family:var(--mono);font-size:15px;letter-spacing:3px;margin:4px 0}
+  .rank .p{color:#0a6;font-weight:700} .rank .n{color:#c00;font-weight:700}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 8px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .big{font-family:var(--mono);font-size:14px;margin-top:5px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:48px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>ROC &amp; AUC</h1><span class="vi">— đường cong & diện tích</span>
+    <span class="tag">đếm cặp xếp đúng / (P·N) · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> ROC vẽ TPR theo FPR khi quét ngưỡng. <b>AUC</b> = diện tích dưới đường ROC = xác suất mô
+    hình chấm một mẫu dương <i>cao hơn</i> một mẫu âm. AUC = 1 hoàn hảo, 0.5 = đoán mò. Mẹo tính tay: AUC = (số cặp
+    (dương, âm) được xếp đúng thứ tự) / (P·N).
+    <div class="fm">AUC = (1/(P·N)) · Σ (mỗi mẫu dương: đếm mẫu âm có điểm thấp hơn nó)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Đi theo thứ tự điểm giảm dần: <b style="color:#0a6">P</b> → bước lên, <b style="color:#c00">N</b> → bước sang phải. AUC = diện tích dưới bậc thang.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Xếp theo điểm GIẢM DẦN (P=3 dương, N=3 âm)</div>
+      <div class="rank" id="rank1"></div>
+      <table class="dtbl" id="tbl1">
+        <tr><th>mẫu dương (theo hạng)</th><th>P₁</th><th>P₂</th><th>P₃</th></tr>
+        <tr><td class="lab">số âm xếp DƯỚI nó</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
+      </table>
+      <div class="big">Σ = <span class="ub"></span> · AUC = Σ/(P·N) = Σ/9 = <span class="ub" style="min-width:58px"></span></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Nếu mọi dương đều xếp trên mọi âm, AUC bằng mấy? → <span class="ub" style="min-width:40px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · ROC &amp; AUC</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>ROC &amp; AUC</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Đường chéo (AUC=0.5) = đoán mò. Càng phình lên góc trái-trên càng tốt.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Thứ tự điểm giảm dần</div>
+      <div class="rank" id="rank2"></div>
+      <table class="dtbl" id="tbl2">
+        <tr><th>dương</th><th>P₁</th><th>P₂</th><th>P₃</th></tr>
+        <tr><td class="lab">#âm dưới</td><td id="C0"></td><td id="C1"></td><td id="C2"></td></tr>
+      </table>
+      <div class="big">Σ = <span data-q="sumE">?</span> = <b><span data-q="sum">?</span></b> · AUC = <span data-q="sum2">?</span>/9 = <b><span data-q="auc">?</span></b></div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">AUC = 1</span>: mỗi dương "vượt" cả 3 âm → Σ = 9 → 9/9 = 1. Phân tách hoàn hảo.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> AUC đo khả năng <b>xếp hạng</b>, không phụ thuộc ngưỡng — bổ sung cho P/R (L1). Một thước đo khác
+        không cần nhãn lớp: độ giống nhau giữa hai vectơ → <b>L3 Cosine similarity</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · ROC &amp; AUC</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+function rankHtml(seq){return seq.map(function(c){return '<span class="'+(c==='P'?'p':'n')+'">'+c+'</span>';}).join(' ');}
+function generate(){
+  // hoán vị 3P,3N; đảm bảo không phải toàn P trước (để AUC<1 thú vị) — nhưng cho phép
+  var seq=['P','P','P','N','N','N'];
+  for(var i=seq.length-1;i>0;i--){var j=WB.randInt(0,i);var t=seq[i];seq[i]=seq[j];seq[j]=t;}
+  // với mỗi P, đếm số N xếp dưới (sau nó trong seq)
+  var counts=[]; for(var i=0;i<seq.length;i++){ if(seq[i]==='P'){var c=0;for(var k=i+1;k<seq.length;k++)if(seq[k]==='N')c++;counts.push(c);} }
+  var sum=counts[0]+counts[1]+counts[2];
+  var auc=Math.round(sum/9*100)/100;
+  document.getElementById('rank1').innerHTML=rankHtml(seq);
+  document.getElementById('rank2').innerHTML=rankHtml(seq);
+  ['C0','C1','C2'].forEach(function(id,i){setTxt(id,counts[i]);});
+  WB.setAll({sumE:counts.join(' + '), sum:sum, sum2:sum, auc:f2(auc)});
+  draw('sch1',seq); draw('sch2',seq);
+}
+function draw(id,seq){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var x0=24,y0=84,step=18;
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+3*step)+'" y2="'+y0+'" stroke="#bbb"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+(y0-3*step)+'" stroke="#bbb"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+3*step)+'" y2="'+(y0-3*step)+'" stroke="#ddd" stroke-dasharray="3 2"/>';
+  var cx=x0, cy=y0, d='M'+cx+','+cy+' ';
+  seq.forEach(function(c){ if(c==='P'){cy-=step;} else {cx+=step;} d+='L'+cx+','+cy+' '; });
+  s+='<path d="'+d+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
+  s+='<text x="'+(x0+1.5*step)+'" y="'+(y0+14)+'" text-anchor="middle" font-size="8" fill="#777">FPR →</text>';
+  s+='<text x="'+(x0-8)+'" y="'+(y0-1.5*step)+'" text-anchor="middle" font-size="8" fill="#777" transform="rotate(-90 '+(x0-8)+' '+(y0-1.5*step)+')">TPR →</text>';
+  s+='<text x="'+(x0+1.5*step)+'" y="12" text-anchor="middle" font-size="8" fill="#0e7490">đường ROC (bậc thang)</text>';
+  b.innerHTML='<svg viewBox="0 0 110 96" aria-label="đường ROC dạng bậc thang">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

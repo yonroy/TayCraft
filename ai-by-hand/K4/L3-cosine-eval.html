@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Cosine Similarity (đo embedding) — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .m{ --cw:12mm; --ch:9mm; }
+  .cell{font-size:14px;}
+  .big{font-family:var(--mono);font-size:14px;line-height:2.1;margin-top:6px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:54px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#0c4a5e}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Cosine Similarity — đo embedding</h1><span class="vi">— độ giống hai biểu diễn</span>
+    <span class="tag">dot/(‖a‖‖b‖) · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Để đánh giá embedding (câu, ảnh, tài liệu), ta so hai vectơ bằng <b>cosine</b>: chỉ quan
+    tâm <i>hướng</i>, không quan tâm độ dài. Cosine ≈ 1 → rất giống nghĩa; ≈ 0 → không liên quan; &lt; 0 → ngược.
+    Là lõi của semantic search, dedup, đánh giá độ tương đồng.
+    <div class="fm">cos(a,b) = (a·b) / (‖a‖·‖b‖)   (ở đây ‖a‖ = ‖b‖ = 3 → mẫu = 9)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Góc nhỏ giữa hai vectơ ↔ cosine lớn ↔ hai embedding "gần nghĩa".</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Hai embedding 3 chiều, đã chuẩn hóa ‖·‖ = 3</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">a</span><div class="m c1" id="A"></div></div>
+        <div class="blk in"><span class="nm">b</span><div class="m c1" id="B"></div></div>
+        <div class="blk" style="margin-left:8px"><span class="nm">a·b (từng cặp ×, cộng)</span>
+          <div class="big" style="margin-top:2px">= <span class="ub"></span></div></div>
+      </div>
+      <div class="big">cos(a,b) = (a·b)/9 = <span class="ub" style="min-width:60px"></span> → <span class="ub" style="min-width:80px"></span> (giống / không?)</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Nhân đôi mọi thành phần của b (‖b‖ gấp đôi) thì cosine đổi không? → <span class="ub" style="min-width:60px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Cosine eval</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Cosine Similarity — đo embedding</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Vì chỉ phụ thuộc hướng, cosine bền với độ dài vectơ — hợp để so embedding chuẩn hóa.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">a·b rồi chia 9</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">a</span><div class="m c1" id="kA"></div></div>
+        <div class="blk in"><span class="nm">b</span><div class="m c1" id="kB"></div></div>
+        <span class="op">→</span>
+        <div class="blk out"><span class="nm">cos</span><div class="m c1" id="COS" style="--cw:18mm"></div></div>
+      </div>
+      <div class="big">a·b = <span data-q="dotE">?</span> = <b><span data-q="dot">?</span></b> · cos = <span data-q="dot2">?</span>/9 = <b><span data-q="cos">?</span></b> (<span data-q="verdict">?</span>)</div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Không đổi</span>: ‖b‖ nhân đôi thì a·b cũng nhân đôi → tỉ số giữ nguyên. Cosine chỉ đo góc.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Cosine là thước đo tương đồng phổ quát (đã gặp ở A4, I7-RAG). Với sinh văn bản, đo trùng khớp
+        n-gram lại cần cách khác → <b>L4 BLEU</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Cosine eval</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var V3=[[1,2,2],[2,2,1],[2,1,2],[2,-1,2],[-1,2,2],[2,2,-1],[1,-2,2],[-2,2,1],[2,-2,1]];
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var pool=V3.slice();
+  for(var i=pool.length-1;i>0;i--){var j=WB.randInt(0,i);var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  var a=pool[0], b=pool[1];
+  var dot=a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  var cos=Math.round(dot/9*100)/100;
+  var verdict=cos>=0.7?'rất giống':(cos>=0.3?'hơi giống':(cos>-0.3?'không liên quan':'ngược nghĩa'));
+  fill('A',a.map(function(v){return [v];}),false);
+  fill('B',b.map(function(v){return [v];}),false);
+  fill('kA',a.map(function(v){return [v];}),false);
+  fill('kB',b.map(function(v){return [v];}),false);
+  fill('COS',[[f2(cos)]],true);
+  WB.setAll({dotE:a.map(function(x,i){return x+'·'+b[i];}).join(' + ').replace(/\+ −/g,'− '), dot:dot, dot2:dot, cos:f2(cos), verdict:verdict});
+  draw('sch1',a,b); draw('sch2',a,b);
+}
+function draw(id,a,b){
+  var b2=document.getElementById(id);if(!b2)return;var cx=60,cy=54,SC=11,s='';
+  // chiếu 3D thô: dùng (x + 0.4z, y + 0.4z) cho cảm giác không gian
+  function proj(v){return [cx+(v[0]+0.4*v[2])*SC, cy-(v[1]+0.4*v[2])*SC];}
+  s+='<line x1="'+(cx-46)+'" y1="'+cy+'" x2="'+(cx+46)+'" y2="'+cy+'" stroke="#eee"/>';
+  s+='<line x1="'+cx+'" y1="'+(cy-42)+'" x2="'+cx+'" y2="'+(cy+42)+'" stroke="#eee"/>';
+  s+='<defs><marker id="ce'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  var pa=proj(a), pb=proj(b);
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+pa[0]+'" y2="'+pa[1]+'" stroke="#0e7490" stroke-width="2" marker-end="url(#ce'+id+')"/>';
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+pb[0]+'" y2="'+pb[1]+'" stroke="#7c5cff" stroke-width="2" marker-end="url(#ce'+id+')"/>';
+  s+='<text x="'+pa[0]+'" y="'+(pa[1]-3)+'" font-size="9" font-weight="700" fill="#0e7490">a</text>';
+  s+='<text x="'+pb[0]+'" y="'+(pb[1]-3)+'" font-size="9" font-weight="700" fill="#7c5cff">b</text>';
+  s+='<text x="60" y="12" text-anchor="middle" font-size="8" fill="#6b7280">góc giữa a, b → cosine</text>';
+  b2.innerHTML='<svg viewBox="0 0 120 108" aria-label="hai vectơ embedding và góc giữa chúng">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

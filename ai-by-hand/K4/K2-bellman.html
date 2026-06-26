@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Phương trình Bellman — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 8px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
+  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+  .big{font-family:var(--mono);font-size:13.5px;line-height:2;margin-top:6px}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Phương trình Bellman</h1><span class="vi">— giá trị trạng thái</span>
+    <span class="tag">V(s) = r + γ·V(s′) · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Thay vì cộng cả chuỗi thưởng (K1), Bellman nói: giá trị một trạng thái = thưởng tức thì
+    <b>cộng</b> giá trị (đã chiết khấu) của trạng thái kế. Một công thức đệ quy → tính giá trị cả chuỗi bằng cách
+    <b>lùi từ cuối</b> (trạng thái cuối V = 0).
+    <div class="fm">V(s) = r + γ · V(s′) · trạng thái kết thúc: V = 0</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Tính ngược: V(s₃)=0 → V(s₂) → V(s₁) → V(s₀). Giá trị "chảy ngược" từ đích.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Chuỗi s₀→s₁→s₂→s₃(đích) · γ = <span id="g1" style="color:var(--accent)"></span></div>
+      <table class="dtbl" id="tbl1">
+        <tr><td class="lab">trạng thái</td><td>s₀</td><td>s₁</td><td>s₂</td><td>s₃ (đích)</td></tr>
+        <tr><td class="lab">thưởng r khi rời</td><td id="R0"></td><td id="R1"></td><td id="R2"></td><td>—</td></tr>
+        <tr><td class="lab">V(s) = r + γ·V(kế)</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td>0</td></tr>
+      </table>
+      <div class="big">
+        V(s₂) = r₂ + γ·0 = <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span> ·
+        V(s₁) = r₁ + γ·V(s₂) = <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span> ·
+        V(s₀) = <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Trạng thái càng xa đích, giá trị thường lớn hay nhỏ hơn (thưởng dương)? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:100px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Bellman</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Phương trình Bellman</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Đây là V theo một chính sách cố định. Tối ưu hóa thêm "chọn hành động tốt nhất" → Q-learning (K3).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Lùi từ đích: V(s₃)=0</div>
+      <table class="dtbl" id="tbl2">
+        <tr><td class="lab">s</td><td>s₀</td><td>s₁</td><td>s₂</td><td>s₃</td></tr>
+        <tr><td class="lab">r</td><td id="kR0"></td><td id="kR1"></td><td id="kR2"></td><td>—</td></tr>
+        <tr><td class="lab">V(s)</td><td id="V0"></td><td id="V1"></td><td id="V2"></td><td>0</td></tr>
+      </table>
+      <div class="big">
+        V(s₂) = <span data-q="v2e">?</span> · V(s₁) = <span data-q="v1e">?</span> · V(s₀) = <span data-q="v0e">?</span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Lớn hơn</span>: trạng thái xa tích lũy được nhiều thưởng trên đường tới đích hơn (với thưởng dương) — dù bị chiết khấu.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Bellman là "trái tim" của RL: mọi thuật toán (giá trị, Q, actor-critic) đều dựa trên dạng đệ quy
+        này. Khi không biết mô hình môi trường, ta học từ trải nghiệm bằng cập nhật từng bước → <b>K3 Q-learning</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Bellman</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var g=WB.pick([0.5,0.9]);
+  var r=[WB.randIntNZ(-2,5),WB.randIntNZ(-2,5),WB.randIntNZ(-2,5)];
+  var v2=Math.round(r[2]*100)/100;
+  var v1=Math.round((r[1]+g*v2)*100)/100;
+  var v0=Math.round((r[0]+g*v1)*100)/100;
+  ['R0','R1','R2'].forEach(function(id,i){setTxt(id,r[i]);});
+  ['kR0','kR1','kR2'].forEach(function(id,i){setTxt(id,r[i]);});
+  setTxt('V0',f2(v0)); setTxt('V1',f2(v1)); setTxt('V2',f2(v2));
+  setTxt('g1',WB.fmtTrim(g));
+  WB.setAll({
+    v2e:r[2]+' + '+WB.fmtTrim(g)+'·0 = '+f2(v2),
+    v1e:r[1]+' + '+WB.fmtTrim(g)+'·'+f2(v2)+' = '+f2(v1),
+    v0e:r[0]+' + '+WB.fmtTrim(g)+'·'+f2(v1)+' = '+f2(v0)
+  });
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var labs=['s₀','s₁','s₂','s₃'], cols=['#d6ecf6','#d6ecf6','#d6ecf6','#ffe6cc'];
+  for(var i=0;i<4;i++){var x=8+i*44;
+    s+='<circle cx="'+(x+14)+'" cy="34" r="13" fill="'+cols[i]+'" stroke="#1a1a1a" stroke-width="1.2"/>';
+    s+='<text x="'+(x+14)+'" y="38" text-anchor="middle" font-size="10" font-weight="700">'+labs[i]+'</text>';
+    if(i<3)s+='<line x1="'+(x+27)+'" y1="34" x2="'+(x+44)+'" y2="34" stroke="#0e7490" stroke-width="1.4" marker-end="url(#bm'+id+')"/>';}
+  s+='<defs><marker id="bm'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  // mũi tên giá trị chảy ngược (cam)
+  s+='<path d="M180,52 Q96,68 22,52" fill="none" stroke="#b45309" stroke-width="1.3" marker-end="url(#bb'+id+')" stroke-dasharray="3 2"/>';
+  s+='<defs><marker id="bb'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#b45309"/></marker></defs>';
+  s+='<text x="96" y="14" text-anchor="middle" font-size="8" fill="#6b7280">đi xuôi → · giá trị chảy ngược ←</text>';
+  s+='<text x="180" y="74" text-anchor="end" font-size="7.5" fill="#b45309">V(s₃)=0</text>';
+  b.innerHTML='<svg viewBox="0 0 196 80" aria-label="chuỗi trạng thái và giá trị chảy ngược">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

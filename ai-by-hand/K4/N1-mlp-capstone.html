@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · MLP Capstone — đủ một vòng — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
+  .etbl td{border:1px solid #d5c49a;padding:1px 5px;text-align:center;}
+  .etbl td.h{background:#f3ede0;font-weight:700;}
+  .m{ --cw:9mm; --ch:7.5mm; }
+  .cell{font-size:12.5px;}
+  .big{font-family:var(--mono);font-size:12.5px;line-height:1.85;margin-top:4px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:40px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+  .bandh{margin-top:5px}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>MLP Capstone — đủ một vòng</h1><span class="vi">— forward → loss → backward → update</span>
+    <span class="tag">2→2→1 · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Đây là <b>tất cả</b> ghép lại: một điểm 2D đi qua MLP nhỏ (2→2→1), ra xác suất, tính
+    mất mát BCE, lan ngược ra mọi gradient, rồi cập nhật trọng số — đúng một bước huấn luyện. Lặp vòng này = học.
+    <div class="fm">h=ReLU(W₁x+b₁) · o=σ(w₂h+b₂) · ℒ=BCE · δ₂=o−y · cập nhật W ← W − η·∇</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <table class="etbl"><tr><td class="h">z</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">σ(z)</td><td>.12</td><td>.27</td><td>.5</td><td>.73</td><td>.88</td></tr></table>
+      <div class="hint">Vòng kín: xuôi (lam) ra ℒ, ngược (cam) ra gradient, rồi sửa W.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">① XUÔI: z₁=W₁x+b₁ → h=ReLU(z₁) → z₂=w₂h+b₂ → o=σ(z₂)</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">x</span><div class="m c1" id="X"></div></div>
+        <div class="blk w"><span class="nm">W₁</span><div class="m c2" id="W1"></div></div>
+        <div class="blk"><span class="nm">z₁</span><div class="m c1" id="Z1"></div></div>
+        <div class="blk fw"><span class="nm">h=ReLU</span><div class="m c1" id="H"></div></div>
+        <div class="blk"><span class="nm">z₂</span><div class="m c1" id="Z2" style="--cw:12mm"></div></div>
+        <div class="blk out"><span class="nm">o=σ(z₂)</span><div class="m c1" id="O" style="--cw:12mm"></div></div>
+      </div>
+      <div class="big">y = <b id="y1"></b> · ℒ = −[y ln o+(1−y)ln(1−o)] (không cần tính số) · <b>δ₂ = o − y = <span class="ub"></span></b></div>
+
+      <div class="bandh bw">② NGƯỢC + ③ CẬP NHẬT (η=<span id="eta1"></span>): dw₂=δ₂·hᵀ · w₂ ← w₂ − η·dw₂</div>
+      <div class="row">
+        <div class="blk w"><span class="nm">w₂ cũ</span><div class="m c2" id="W2"></div></div>
+        <div class="blk bw"><span class="nm">dw₂=δ₂·hᵀ</span><div class="m c2" id="DW2"></div></div>
+        <span class="op">→</span>
+        <div class="blk up"><span class="nm">w₂ mới</span><div class="m c2" id="W2N"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Vì sao δ₂ = o − y gọn vậy (không cần đạo hàm σ và ln riêng)? → <span class="ub" style="min-width:90px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · MLP Capstone</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>MLP Capstone — đủ một vòng</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <table class="etbl"><tr><td class="h">z</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td></tr>
+        <tr><td class="h">σ(z)</td><td>.12</td><td>.27</td><td>.5</td><td>.73</td><td>.88</td></tr></table>
+      <div class="hint">Lặp vòng này nhiều điểm dữ liệu → ranh giới phân loại dần đúng (xem N4 hội tụ).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">XUÔI</div>
+      <div class="row">
+        <div class="blk in"><span class="nm">x</span><div class="m c1" id="kX"></div></div>
+        <div class="blk w"><span class="nm">W₁</span><div class="m c2" id="kW1"></div></div>
+        <div class="blk fw"><span class="nm">z₁</span><div class="m c1" id="kZ1"></div></div>
+        <div class="blk fw"><span class="nm">h</span><div class="m c1" id="kH"></div></div>
+        <div class="blk out"><span class="nm">z₂ → o</span><div class="m c1" id="kO" style="--cw:13mm"></div></div>
+      </div>
+      <div class="big">δ₂ = o − y = <b><span data-q="d2">?</span></b> · dw₂ = δ₂·[h₁ h₂] = <b><span data-q="dw2">?</span></b></div>
+      <div class="bandh bw">CẬP NHẬT</div>
+      <div class="row">
+        <div class="blk w"><span class="nm">w₂</span><div class="m c2" id="kW2"></div></div>
+        <span class="op">−η·dw₂=</span>
+        <div class="blk up"><span class="nm">w₂ mới</span><div class="m c2" id="kW2N"></div></div>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">σ và BCE triệt tiêu nhau</span>: đạo hàm BCE theo z₂ rút gọn đẹp thành o − y (như Bài D9 softmax+CE). Đó là lý do ghép σ với BCE.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Bạn vừa chạy trọn một bước SGD trên mạng thật! Mọi phiếu trước (lớp tuyến tính, ReLU, σ, BCE,
+        backprop, SGD) hội tụ ở đây. Tiếp: ráp cho ảnh → <b>N2 Mini-CNN</b>, cho ngôn ngữ → <b>N3 Mini-GPT</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · MLP Capstone</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var SIG={'-2':0.12,'-1':0.27,'0':0.5,'1':0.73,'2':0.88};
+function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var eta=0.5, x,W1,b1,z1,h,w2,b2,z2,ok=false,guard=0;
+  while(!ok && guard++<500){
+    x=[WB.randInt(0,2),WB.randInt(0,2)];
+    W1=[[WB.randInt(-1,1),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randInt(-1,1)]];
+    b1=[WB.randInt(-1,1),WB.randInt(-1,1)];
+    z1=[W1[0][0]*x[0]+W1[0][1]*x[1]+b1[0], W1[1][0]*x[0]+W1[1][1]*x[1]+b1[1]];
+    h=[Math.max(0,z1[0]),Math.max(0,z1[1])];
+    w2=[WB.randInt(-1,1),WB.randInt(-1,1)]; b2=WB.randInt(-1,1);
+    z2=w2[0]*h[0]+w2[1]*h[1]+b2;
+    if(z2>=-2&&z2<=2 && (h[0]+h[1])>0){ok=true;}   // cần h dương để cập nhật có ý nghĩa
+  }
+  var o=SIG[String(z2)];
+  var y=WB.pick([0,1]);
+  var d2=Math.round((o-y)*100)/100;
+  var dw2=[Math.round(d2*h[0]*100)/100, Math.round(d2*h[1]*100)/100];
+  var w2n=[Math.round((w2[0]-eta*dw2[0])*100)/100, Math.round((w2[1]-eta*dw2[1])*100)/100];
+  // fill ĐỀ
+  fill('X',[[x[0]],[x[1]]],false); fill('W1',W1,false);
+  fill('Z1',[[z1[0]],[z1[1]]],true); fill('H',[[h[0]],[h[1]]],true);
+  fill('Z2',[[z2]],true); fill('O',[[f2(o)]],true);
+  fill('W2',[[w2[0],w2[1]]],false); fill('DW2',[[f2(dw2[0]),f2(dw2[1])]],true); fill('W2N',[[f2(w2n[0]),f2(w2n[1])]],true);
+  setTxt('y1',y); setTxt('eta1',WB.fmtTrim(eta));
+  // fill ĐÁP ÁN
+  fill('kX',[[x[0]],[x[1]]],false); fill('kW1',W1,false);
+  fill('kZ1',[[z1[0]],[z1[1]]],false); fill('kH',[[h[0]],[h[1]]],false);
+  fill('kO',[['σ('+WB.fmtInt(z2)+')='+f2(o)]],false);
+  fill('kW2',[[w2[0],w2[1]]],false); fill('kW2N',[[f2(w2n[0]),f2(w2n[1])]],false);
+  WB.setAll({d2:f2(o)+' − '+y+' = '+f2(d2), dw2:'['+f2(dw2[0])+', '+f2(dw2[1])+']'});
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  function node(x,y,c){s+='<circle cx="'+x+'" cy="'+y+'" r="9" fill="'+c+'" stroke="#1a1a1a"/>';}
+  for(var i=0;i<2;i++)node(18,26+i*40,'#fdecd2');
+  for(var i=0;i<2;i++)node(70,26+i*40,'#d6ecf6');
+  node(122,46,'#fff3b0');
+  for(var i=0;i<2;i++)for(var j=0;j<2;j++)s+='<line x1="27" y1="'+(26+i*40)+'" x2="61" y2="'+(26+j*40)+'" stroke="#0e7490" stroke-width="0.8"/>';
+  for(var j=0;j<2;j++)s+='<line x1="79" y1="'+(26+j*40)+'" x2="113" y2="46" stroke="#0e7490" stroke-width="0.8"/>';
+  s+='<text x="18" y="12" text-anchor="middle" font-size="8" fill="#6b7280">x</text>';
+  s+='<text x="70" y="12" text-anchor="middle" font-size="8" fill="#6b7280">h (ReLU)</text>';
+  s+='<text x="122" y="30" text-anchor="middle" font-size="8" fill="#6b7280">o=σ</text>';
+  // mũi tên ngược
+  s+='<path d="M122,58 Q70,84 18,72" fill="none" stroke="#b45309" stroke-width="1.2" stroke-dasharray="3 2"/>';
+  s+='<text x="70" y="90" text-anchor="middle" font-size="7.5" fill="#b45309">gradient ngược → cập nhật W</text>';
+  b.innerHTML='<svg viewBox="0 0 140 96" aria-label="MLP 2-2-1 với vòng forward và backward">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

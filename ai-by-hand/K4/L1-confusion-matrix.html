@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Ma trận nhầm lẫn → Acc/P/R/F1 — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .big{font-family:var(--mono);font-size:13.5px;line-height:2.2;margin-top:4px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:50px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+  .cm{border-collapse:collapse;font-family:var(--mono);font-size:14px}
+  .cm td{border:1px solid #d5c49a;padding:8px 12px;text-align:center;font-weight:700}
+  .cm td.h{background:#f3ede0;font-size:11px;font-weight:700}
+  .cm td.tp{background:#d6f5d6} .cm td.tn{background:#d6ecf6}
+  .cm td.fp{background:#ffe0e0} .cm td.fn{background:#ffe6cc}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Ma trận nhầm lẫn → Acc/P/R/F1</h1><span class="vi">— đo chất lượng phân loại</span>
+    <span class="tag">đếm TP/FP/FN/TN · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Chỉ nhìn "độ chính xác" dễ lừa khi dữ liệu lệch. Ma trận nhầm lẫn tách 4 ô:
+    <b>TP</b> (đoán dương đúng), <b>FP</b> (báo động giả), <b>FN</b> (bỏ sót), <b>TN</b> (đoán âm đúng). Từ đó tính
+    Precision (đoán dương có chuẩn không), Recall (bắt hết dương không), F1 (cân bằng cả hai).
+    <div class="fm">Acc=(TP+TN)/N · P=TP/(TP+FP) · R=TP/(TP+FN) · F1=2PR/(P+R)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint">Cột = dự đoán, hàng = thực tế. Đường chéo (TP, TN) = đúng; ngoài chéo = sai.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Ma trận nhầm lẫn (N = <span id="n1"></span> mẫu)</div>
+      <table class="cm">
+        <tr><td class="h"></td><td class="h">đoán +</td><td class="h">đoán −</td></tr>
+        <tr><td class="h">thực +</td><td class="tp">TP=<b id="tp1"></b></td><td class="fn">FN=<b id="fn1"></b></td></tr>
+        <tr><td class="h">thực −</td><td class="fp">FP=<b id="fp1"></b></td><td class="tn">TN=<b id="tn1"></b></td></tr>
+      </table>
+      <div class="big">
+        Acc = (TP+TN)/N = <span class="ub"></span> · P = TP/(TP+FP) = <span class="ub"></span><br>
+        R = TP/(TP+FN) = <span class="ub"></span> · F1 = 2PR/(P+R) = <span class="ub" style="min-width:56px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Mô hình luôn báo "âm" trên dữ liệu 95% âm: Acc cao nhưng Recall bằng mấy? → <span class="ub" style="min-width:40px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Confusion Matrix</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Ma trận nhầm lẫn → Acc/P/R/F1</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Recall quan trọng khi bỏ sót đắt (ung thư); Precision khi báo giả đắt (spam chặn nhầm).</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">TP=<span data-q="tp">?</span> FP=<span data-q="fp">?</span> FN=<span data-q="fn">?</span> TN=<span data-q="tn">?</span></div>
+      <div class="big">
+        Acc = (<span data-q="accE">?</span>)/<span data-q="nE">?</span> = <b><span data-q="acc">?</span></b><br>
+        P = <span data-q="pE">?</span> = <b><span data-q="p">?</span></b> · R = <span data-q="rE">?</span> = <b><span data-q="r">?</span></b><br>
+        F1 = 2·P·R/(P+R) = <b><span data-q="f1">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Recall = 0</span>: không bắt được mẫu dương nào (TP=0). Acc 95% nhưng vô dụng → vì sao cần P/R/F1, không chỉ Acc.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Bốn ô đếm tay ra mọi chỉ số. Thay đổi <b>ngưỡng</b> quyết định → P/R đổi → vẽ đường cong:
+        <b>L2 ROC &amp; AUC</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Confusion Matrix</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var TP=WB.randInt(4,12), FP=WB.randInt(1,6), FN=WB.randInt(1,6), TN=WB.randInt(4,12);
+  var N=TP+FP+FN+TN;
+  var acc=Math.round((TP+TN)/N*100)/100;
+  var P=Math.round(TP/(TP+FP)*100)/100;
+  var R=Math.round(TP/(TP+FN)*100)/100;
+  var F1=Math.round(2*P*R/(P+R)*100)/100;
+  setTxt('tp1',TP); setTxt('fp1',FP); setTxt('fn1',FN); setTxt('tn1',TN); setTxt('n1',N);
+  WB.setAll({
+    tp:TP, fp:FP, fn:FN, tn:TN, nE:N, accE:TP+'+'+TN,
+    acc:f2(acc), pE:'TP/(TP+FP)='+TP+'/'+(TP+FP), p:f2(P),
+    rE:'TP/(TP+FN)='+TP+'/'+(TP+FN), r:f2(R), f1:f2(F1)
+  });
+  draw('sch1',TP,FP,FN,TN); draw('sch2',TP,FP,FN,TN);
+}
+function draw(id,TP,FP,FN,TN){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var cells=[[TP,'#d6f5d6','TP'],[FN,'#ffe6cc','FN'],[FP,'#ffe0e0','FP'],[TN,'#d6ecf6','TN']];
+  for(var i=0;i<4;i++){var c=i%2, r=Math.floor(i/2);var x=44+c*54, y=24+r*40;
+    s+='<rect x="'+x+'" y="'+y+'" width="50" height="36" fill="'+cells[i][1]+'" stroke="#1a1a1a" stroke-width="1"/>';
+    s+='<text x="'+(x+25)+'" y="'+(y+16)+'" text-anchor="middle" font-size="9" font-weight="700">'+cells[i][2]+'</text>';
+    s+='<text x="'+(x+25)+'" y="'+(y+29)+'" text-anchor="middle" font-size="11" font-weight="700">'+cells[i][0]+'</text>';}
+  s+='<text x="69" y="18" text-anchor="middle" font-size="8" fill="#777">đoán +</text>';
+  s+='<text x="123" y="18" text-anchor="middle" font-size="8" fill="#777">đoán −</text>';
+  s+='<text x="38" y="46" text-anchor="end" font-size="8" fill="#777">thực +</text>';
+  s+='<text x="38" y="86" text-anchor="end" font-size="8" fill="#777">thực −</text>';
+  b.innerHTML='<svg viewBox="0 0 156 108" aria-label="ma trận nhầm lẫn 2x2">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -716,6 +716,168 @@ footer a{color:var(--accent);}
       <div class="go">Mở →</div></a>
   </div>
 
+  <div class="sec">Phần K · Học tăng cường (RL)</div>
+  <div class="list">
+    <a class="card adv done" href="K4/K1-return-discount.html"><div class="no">K1</div>
+      <div class="body"><h2>Return &amp; Discount</h2>
+        <p>G = Σ γᵏ rₖ: cộng thưởng tương lai có chiết khấu. Bảng γᵏ cho sẵn, thưởng xa "teo" dần.</p>
+        <div class="tags"><i>RL</i><i>chiết khấu γ</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K2-bellman.html"><div class="no">K2</div>
+      <div class="body"><h2>Phương trình Bellman</h2>
+        <p>V(s) = r + γ·V(s′): giá trị "chảy ngược" từ đích. Tính lùi cả chuỗi trạng thái bằng tay.</p>
+        <div class="tags"><i>RL</i><i>giá trị đệ quy</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K3-q-learning.html"><div class="no">K3</div>
+      <div class="body"><h2>Q-learning — một cập nhật</h2>
+        <p>Q ← Q + α[r + γ·max Q′ − Q]: học bảng Q từ trải nghiệm. Off-policy dùng max của trạng thái kế.</p>
+        <div class="tags"><i>RL</i><i>TD · off-policy</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K4-sarsa.html"><div class="no">K4</div>
+      <div class="body"><h2>SARSA</h2>
+        <p>Giống Q-learning nhưng dùng hành động a′ thực sự đi (on-policy). (S,A,R,S′,A′) đúng tên gọi.</p>
+        <div class="tags"><i>RL</i><i>on-policy</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K5-epsilon-greedy.html"><div class="no">K5</div>
+      <div class="body"><h2>Chính sách ε-greedy</h2>
+        <p>P(greedy)=1−ε+ε/n, còn lại ε/n: cân khám phá vs khai thác. Tính xác suất chọn mỗi hành động.</p>
+        <div class="tags"><i>RL</i><i>khám phá</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K6-policy-gradient.html"><div class="no">K6</div>
+      <div class="body"><h2>Policy Gradient — REINFORCE</h2>
+        <p>θ ← θ + α·G·(onehot − π): đẩy logit hành động đã đi theo return. Học thẳng chính sách.</p>
+        <div class="tags"><i>RL</i><i>∇logπ·G</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K7-advantage.html"><div class="no">K7</div>
+      <div class="body"><h2>Advantage / Baseline</h2>
+        <p>A = G − V: "hơn trung bình bao nhiêu". Trừ baseline giảm phương sai, học ổn định hơn REINFORCE.</p>
+        <div class="tags"><i>RL</i><i>giảm phương sai</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/K8-ppo-clip.html"><div class="no">K8</div>
+      <div class="body"><h2>PPO — ý tưởng cắt (clip)</h2>
+        <p>Kẹp tỉ lệ r=π_mới/π_cũ về [1−ε,1+ε], lấy min → bước an toàn. Nền của RLHF (ChatGPT).</p>
+        <div class="tags"><i>RL</i><i>clip · RLHF</i><i>~15 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
+  <div class="sec">Phần L · Đánh giá &amp; đo lường</div>
+  <div class="list">
+    <a class="card adv done" href="K4/L1-confusion-matrix.html"><div class="no">L1</div>
+      <div class="body"><h2>Ma trận nhầm lẫn → Acc/P/R/F1</h2>
+        <p>Đếm TP/FP/FN/TN → Accuracy, Precision, Recall, F1. Vì sao "độ chính xác" một mình dễ lừa.</p>
+        <div class="tags"><i>đánh giá</i><i>P · R · F1</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L2-roc-auc.html"><div class="no">L2</div>
+      <div class="body"><h2>ROC &amp; AUC</h2>
+        <p>AUC = (số cặp dương-âm xếp đúng)/(P·N) = diện tích dưới đường ROC bậc thang. Đo khả năng xếp hạng.</p>
+        <div class="tags"><i>đánh giá</i><i>ROC · AUC</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L3-cosine-eval.html"><div class="no">L3</div>
+      <div class="body"><h2>Cosine Similarity (đo embedding)</h2>
+        <p>cos = dot/(‖a‖‖b‖): chỉ đo hướng, bền với độ dài. Lõi của semantic search & so embedding.</p>
+        <div class="tags"><i>đánh giá</i><i>cosine</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L4-bleu.html"><div class="no">L4</div>
+      <div class="body"><h2>BLEU — n-gram</h2>
+        <p>Tỉ lệ n-gram trùng với tham chiếu + brevity penalty. Chấm điểm dịch máy / sinh văn bản.</p>
+        <div class="tags"><i>đánh giá</i><i>n-gram</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L5-topk-accuracy.html"><div class="no">L5</div>
+      <div class="body"><h2>Top-k Accuracy</h2>
+        <p>Đúng nếu nhãn nằm trong k hạng đầu. Top-1 ≤ top-2 ≤ top-3. Hữu ích khi nhiều lớp na ná.</p>
+        <div class="tags"><i>đánh giá</i><i>top-k</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L6-calibration.html"><div class="no">L6</div>
+      <div class="body"><h2>Calibration</h2>
+        <p>|tự tin − tỉ lệ đúng thực tế| theo nhóm → ECE. Mạng sâu thường "tự tin thái quá".</p>
+        <div class="tags"><i>đánh giá</i><i>ECE</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L7-flops.html"><div class="no">L7</div>
+      <div class="body"><h2>FLOPs — đếm phép tính</h2>
+        <p>matmul (m×k)·(k×n) = 2·m·n·k FLOP; conv = 2·Hₒ·Wₒ·Cₒ·K·K·Cᵢ. Ước "độ nặng" một lớp.</p>
+        <div class="tags"><i>chi phí</i><i>2mnk</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/L8-latency-throughput.html"><div class="no">L8</div>
+      <div class="body"><h2>Latency &amp; Throughput</h2>
+        <p>latency = FLOPs/tốc độ; throughput = 1/latency. Hai số vận hành nghịch đảo nhau.</p>
+        <div class="tags"><i>chi phí</i><i>độ trễ</i><i>~12 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
+  <div class="sec">Phần M · Nâng cao / tùy chọn</div>
+  <div class="list">
+    <a class="card adv done" href="K4/M1-gnn-message-passing.html"><div class="no">M1</div>
+      <div class="body"><h2>GNN — Message Passing</h2>
+        <p>hᵥ′ = hᵥ + Σ hàng xóm: nút gộp tin từ láng giềng trên đồ thị. Thông tin lan qua cạnh.</p>
+        <div class="tags"><i>đồ thị</i><i>gộp tin</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/M2-contrastive-infonce.html"><div class="no">M2</div>
+      <div class="body"><h2>Contrastive — InfoNCE</h2>
+        <p>ℒ = ln(Σeˢ) − s⁺: softmax "đoán đâu là dương" theo độ giống. Kéo dương gần, đẩy âm xa.</p>
+        <div class="tags"><i>biểu diễn</i><i>InfoNCE</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/M3-triplet-loss.html"><div class="no">M3</div>
+      <div class="body"><h2>Triplet Loss</h2>
+        <p>max(0, d(a,p) − d(a,n) + margin): dương gần hơn âm ít nhất một margin. Nhận diện khuôn mặt.</p>
+        <div class="tags"><i>biểu diễn</i><i>margin</i><i>~13 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/M4-clip.html"><div class="no">M4</div>
+      <div class="body"><h2>Multi-modal — CLIP</h2>
+        <p>Cosine ảnh × chữ → softmax hàng → cặp đúng (đường chéo) thắng. Phân loại zero-shot.</p>
+        <div class="tags"><i>đa phương thức</i><i>ảnh×chữ</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/M5-knowledge-distillation.html"><div class="no">M5</div>
+      <div class="body"><h2>Knowledge Distillation</h2>
+        <p>Trò khớp nhãn mềm pₜ = softmax(z_thầy/τ): "tri thức tối" lộ quan hệ giữa các lớp sai.</p>
+        <div class="tags"><i>nén mô hình</i><i>nhãn mềm</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
+  <div class="sec">Phần N · Dự án tổng kết (Capstone)</div>
+  <div class="list">
+    <a class="card adv done" href="K4/N1-mlp-capstone.html"><div class="no">N1</div>
+      <div class="body"><h2>MLP Capstone — đủ một vòng</h2>
+        <p>2→2→1: forward → BCE → backward (δ₂=o−y) → cập nhật. Trọn một bước SGD trên mạng thật.</p>
+        <div class="tags"><i>capstone</i><i>vòng huấn luyện</i><i>~18 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/N2-mini-cnn.html"><div class="no">N2</div>
+      <div class="body"><h2>Mini-CNN nhận chữ số</h2>
+        <p>Ảnh 4×4 → 2 bộ lọc → map 2×2 → ReLU → pool → softmax → đoán lớp. Cả pipeline thị giác.</p>
+        <div class="tags"><i>capstone</i><i>conv→pool→softmax</i><i>~18 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/N3-mini-gpt.html"><div class="no">N3</div>
+      <div class="body"><h2>Mini-GPT — sinh 1 token</h2>
+        <p>2 token → attention → ngữ cảnh → logit → argmax = token kế. Một bước đẻ chữ của GPT.</p>
+        <div class="tags"><i>capstone</i><i>embedding→attn→logit</i><i>~18 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+
+    <a class="card adv done" href="K4/N4-logistic-convergence.html"><div class="no">N4</div>
+      <div class="body"><h2>Logistic Regression hội tụ</h2>
+        <p>Lặp 3 vòng gradient descent, thấy loss giảm dần → "máy đang học". Phiếu khép trọn bộ 🎉</p>
+        <div class="tags"><i>capstone</i><i>loss ↓</i><i>~14 phút</i></div></div>
+      <div class="go">Mở →</div></a>
+  </div>
+
   <footer>
     Cảm hứng: <a href="https://www.byhand.ai" target="_blank">Làm toán AI ✍️ — Prof. Tom Yeh</a> ·
     Quay lại <a href="../index.html">Bản đồ học tập</a>. Muốn thêm phiếu nào? Cứ yêu cầu.

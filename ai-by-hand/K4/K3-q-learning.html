@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Q-learning — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .m{ --cw:12mm; --ch:9mm; }
+  .cell{font-size:14px;}
+  .big{font-family:var(--mono);font-size:13.5px;line-height:2.1;margin-top:6px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:46px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Q-learning — một cập nhật</h1><span class="vi">— học giá trị hành động</span>
+    <span class="tag">Q ← Q + α[r + γ·max Q′ − Q] · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Q(s,a) = "đi nước a ở ô s tốt cỡ nào". Q-learning học bảng Q từ trải nghiệm: sau khi
+    đi (s,a) nhận thưởng r tới s′, ta sửa Q(s,a) một bước về phía <b>mục tiêu TD</b> = r + γ·(giá trị tốt nhất ở s′).
+    Không cần biết trước mô hình môi trường.
+    <div class="fm">Q(s,a) ← Q(s,a) + α·[ r + γ·maxₐ′ Q(s′,a′) − Q(s,a) ]</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b>Vàng</b> = ô Q(s,a) đang cập nhật · <b>lam</b> = hàng Q(s′,·) để lấy max.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">Bảng Q hiện tại (2 trạng thái × 2 hành động) · α=<span id="al1"></span>, γ=<span id="ga1"></span></div>
+      <div class="row">
+        <div class="blk"><span class="nm">Q (s↓ × a→)</span><div class="m c2" id="Q"></div>
+          <span class="fm">hàng trên = s · hàng dưới = s′</span></div>
+        <div class="blk in" style="margin-left:14px"><span class="nm">trải nghiệm</span>
+          <div class="big" style="margin-top:0">đi (s, a₀)<br>thưởng r = <b id="r1"></b><br>tới s′</div></div>
+      </div>
+      <div class="big">
+        max Q(s′,·) = <span class="ub"></span> · mục tiêu = r + γ·max = <span class="ub"></span> ·
+        TD = mục tiêu − Q(s,a₀) = <span class="ub"></span><br>
+        Q(s,a₀) mới = Q + α·TD = <span class="ub" style="min-width:60px"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>α = 0 thì Q có đổi không? → <span class="ub" style="min-width:70px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Q-learning</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Q-learning — một cập nhật</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">Q-learning là <i>off-policy</i>: target dùng max (hành động tốt nhất), dù thực tế đi nước khác.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">target = r + γ·max Q(s′,·) → TD → cập nhật</div>
+      <div class="row">
+        <div class="blk"><span class="nm">Q</span><div class="m c2" id="kQ"></div></div>
+        <span class="op">→</span>
+        <div class="blk up"><span class="nm">Q sau cập nhật</span><div class="m c2" id="kQn"></div></div>
+      </div>
+      <div class="big">
+        max Q(s′,·) = <b><span data-q="mx">?</span></b> · target = <span data-q="tg">?</span> = <b><span data-q="tgv">?</span></b><br>
+        TD = <span data-q="td">?</span> · Q(s,a₀) ← <span data-q="old">?</span> + <span data-q="ate">?</span> = <b><span data-q="newq">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Không đổi</span>: α=0 nghĩa "không học" — bỏ qua hoàn toàn trải nghiệm mới. α lớn = học nhanh nhưng dao động.</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Lặp cập nhật này qua nhiều trải nghiệm → Q hội tụ về giá trị tối ưu. Nếu thay max bằng Q của
+        <i>hành động thực sự đi</i> → thuật toán on-policy <b>K4 SARSA</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Q-learning</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function fill(id,M,blank,markIdx){var el=document.getElementById(id);if(!el)return;var s='';var k=0;for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++){var mark=(markIdx&&markIdx[0]===i&&markIdx[1]===j)?' mark':'';s+='<div class="cell'+(blank?' blank':'')+mark+'">'+(blank?'':M[i][j])+'</div>';}el.innerHTML=s;}
+function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function f2(v){return WB.fmt2(v);}
+function generate(){
+  var al=0.5, ga=WB.pick([0.5,0.9,1]);
+  var Q=[[WB.randInt(0,6),WB.randInt(0,6)],[WB.randInt(0,6),WB.randInt(0,6)]];
+  var r=WB.randIntNZ(-2,4);
+  var mx=Math.max(Q[1][0],Q[1][1]);
+  var target=Math.round((r+ga*mx)*100)/100;
+  var td=Math.round((target-Q[0][0])*100)/100;
+  var newq=Math.round((Q[0][0]+al*td)*100)/100;
+  var Qn=[[newq,Q[0][1]],[Q[1][0],Q[1][1]]];
+  fill('Q',Q,false,[0,0]); fill('kQ',Q,false,[0,0]);
+  fill('kQn',[[f2(Qn[0][0]),Qn[0][1]],[Qn[1][0],Qn[1][1]]],false,[0,0]);
+  setTxt('al1',WB.fmtTrim(al)); setTxt('ga1',WB.fmtTrim(ga)); setTxt('r1',r);
+  WB.setAll({
+    mx:mx, tg:r+' + '+WB.fmtTrim(ga)+'·'+mx, tgv:f2(target),
+    td:f2(target)+' − '+Q[0][0]+' = '+f2(td), old:Q[0][0], ate:WB.fmtTrim(al)+'·('+f2(td)+')', newq:f2(newq)
+  });
+  draw('sch1'); draw('sch2');
+}
+function draw(id){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  // grid world 2 ô + mũi tên
+  s+='<rect x="14" y="24" width="40" height="36" rx="4" fill="#fff3b0" stroke="#1a1a1a"/><text x="34" y="46" text-anchor="middle" font-size="11" font-weight="700">s</text>';
+  s+='<rect x="104" y="24" width="40" height="36" rx="4" fill="#d6ecf6" stroke="#1a1a1a"/><text x="124" y="46" text-anchor="middle" font-size="11" font-weight="700">s′</text>';
+  s+='<defs><marker id="qa'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
+  s+='<line x1="54" y1="42" x2="104" y2="42" stroke="#0e7490" stroke-width="1.6" marker-end="url(#qa'+id+')"/>';
+  s+='<text x="79" y="36" text-anchor="middle" font-size="8" fill="#0e7490">a₀, r</text>';
+  s+='<text x="124" y="74" text-anchor="middle" font-size="7.5" fill="#6b7280">max Q(s′,·)</text>';
+  s+='<text x="79" y="16" text-anchor="middle" font-size="8" fill="#b45309">cập nhật Q(s,a₀)</text>';
+  b.innerHTML='<svg viewBox="0 0 158 80" aria-label="chuyển trạng thái và cập nhật Q">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

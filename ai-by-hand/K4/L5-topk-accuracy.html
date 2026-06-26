@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Top-k Accuracy — canvas (A4 ngang)</title>
+<link rel="stylesheet" href="../wb-canvas.css">
+<style>
+  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
+  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
+  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
+  .dtbl td{padding:5px 7px;border:1px solid #e2d5b5;text-align:center;}
+  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
+  .dtbl td.t1{background:#d6f5d6;font-weight:700;color:#0a6}
+  .dtbl td.t3{background:#fff3b0}
+  .dtbl td.miss{background:#ffe0e0;color:#c00}
+  .big{font-family:var(--mono);font-size:14px;line-height:2;margin-top:6px}
+  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:50px;text-align:center}
+  .key .ub{border:none;font-weight:700;color:#7a3d00}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ ============ -->
+<section class="sheet">
+  <div class="ttl"><h1>Top-k Accuracy</h1><span class="vi">— đúng nếu nhãn nằm trong top-k</span>
+    <span class="tag">đếm hạng nhãn đúng · điền ô trắng</span></div>
+
+  <div class="scaf">
+    <b>Vì sao quan trọng.</b> Với bài nhiều lớp (1000 lớp ImageNet), bắt mô hình đoán đúng <i>ngay</i> hạng 1 là khắt
+    khe. <b>Top-k accuracy</b> tính là đúng nếu nhãn thật nằm trong <b>k</b> dự đoán cao nhất. Top-5 thường được báo
+    cáo. Top-1 ≤ top-2 ≤ top-3 (nới càng rộng càng dễ).
+    <div class="fm">top-k acc = (số mẫu có nhãn đúng trong k hạng đầu) / (tổng số mẫu)</div>
+  </div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch1"></div>
+      <div class="hint"><b style="color:#0a6">Xanh</b> nhãn ở hạng 1 · <b>vàng</b> ở hạng 2–3 · <b style="color:#c00">đỏ</b> ngoài top-3.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">5 mẫu — hạng của nhãn đúng trong danh sách dự đoán</div>
+      <table class="dtbl" id="tbl1">
+        <tr><th>mẫu</th><th>#1</th><th>#2</th><th>#3</th><th>#4</th><th>#5</th><th>hạng nhãn đúng</th></tr>
+      </table>
+      <div class="big">
+        top-1 = <span class="ub" style="min-width:30px"></span>/5 = <span class="ub"></span> ·
+        top-3 = <span class="ub" style="min-width:30px"></span>/5 = <span class="ub"></span>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra</div>
+        <ol><li>Top-k luôn ≥ top-1. Đúng/Sai? Vì sao? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Top-k Accuracy</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="sheet key">
+  <div class="ttl"><h1>Top-k Accuracy</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+
+  <div class="canvas">
+    <div class="schema">
+      <div id="sch2"></div>
+      <div class="hint">top-1 < top-3 (đường đi lên): nới k làm dễ "đúng" hơn nhưng cũng dễ dãi hơn.</div>
+    </div>
+
+    <div class="work">
+      <div class="bandh fw">đếm hạng ≤ k</div>
+      <table class="dtbl" id="tbl2">
+        <tr><th>mẫu</th><th colspan="5">hạng nhãn đúng (✓ = ô đúng)</th><th>hạng</th></tr>
+      </table>
+      <div class="big">
+        top-1: <span data-q="c1">?</span>/5 = <b><span data-q="a1">?</span></b> ·
+        top-2: <span data-q="c2">?</span>/5 = <b><span data-q="a2">?</span></b> ·
+        top-3: <span data-q="c3">?</span>/5 = <b><span data-q="a3">?</span></b>
+      </div>
+
+      <div class="quiz">
+        <div class="qh">✎ Tự kiểm tra — đáp án</div>
+        <ol><li><span class="qa">Đúng</span>: tập "đúng ở hạng 1" là con của "đúng trong k hạng đầu" → top-k ≥ top-1 luôn (đơn điệu tăng theo k).</li></ol>
+      </div>
+
+      <div class="rutra">
+        <b>Rút ra.</b> Top-k đo "có gần đúng không", hữu ích khi nhiều lớp na ná. Nhưng điểm tự tin của mô hình có
+        khớp với thực tế không? → <b>L6 Calibration</b>.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · Top-k Accuracy</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+function f2(v){return WB.fmt2(v);}
+function buildTbl(id,ranks,blank){
+  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
+  ranks.forEach(function(r,i){
+    var tr=document.createElement('tr');var html='<td class="lab">'+(i+1)+'</td>';
+    for(var c=1;c<=5;c++){
+      var hit=(c===r);
+      var cls=hit?(r===1?'t1':(r<=3?'t3':'miss')):'';
+      html+='<td'+(cls?' class="'+cls+'"':'')+'>'+(hit?'✓':'·')+'</td>';
+    }
+    html+='<td'+(blank?' class="t1" style="background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent"':'')+'>'+(blank?'':(r<=5?r:'>5'))+'</td>';
+    tr.innerHTML=html;el.appendChild(tr);
+  });
+}
+function generate(){
+  // hạng nhãn đúng mỗi mẫu ∈ {1,2,3,4,5}; thiên về nhỏ
+  var ranks=[]; for(var i=0;i<5;i++)ranks.push(WB.pick([1,1,2,2,3,4,5]));
+  var c1=ranks.filter(function(r){return r<=1;}).length;
+  var c2=ranks.filter(function(r){return r<=2;}).length;
+  var c3=ranks.filter(function(r){return r<=3;}).length;
+  buildTbl('tbl1',ranks,true); buildTbl('tbl2',ranks,false);
+  WB.setAll({
+    c1:c1, a1:f2(c1/5), c2:c2, a2:f2(c2/5), c3:c3, a3:f2(c3/5)
+  });
+  draw('sch1',c1/5,c2/5,c3/5); draw('sch2',c1/5,c2/5,c3/5);
+}
+function draw(id,a1,a2,a3){
+  var b=document.getElementById(id);if(!b)return;var s='';
+  var vals=[a1,a2,a3],labs=['top-1','top-2','top-3'];
+  for(var i=0;i<3;i++){var x=30+i*50;var h=Math.round(vals[i]*60);
+    s+='<rect x="'+x+'" y="'+(72-h)+'" width="32" height="'+h+'" rx="2" fill="#d6ecf6" stroke="#a7d3e3"/>';
+    s+='<text x="'+(x+16)+'" y="'+(68-h)+'" text-anchor="middle" font-size="8" fill="#0c4a5e">'+WB.fmt2(vals[i])+'</text>';
+    s+='<text x="'+(x+16)+'" y="84" text-anchor="middle" font-size="8" font-weight="700">'+labs[i]+'</text>';}
+  s+='<line x1="20" y1="72" x2="180" y2="72" stroke="#bbb"/>';
+  s+='<text x="98" y="12" text-anchor="middle" font-size="8" fill="#6b7280">độ chính xác tăng theo k</text>';
+  b.innerHTML='<svg viewBox="0 0 190 90" aria-label="top-1 đến top-3 accuracy">'+s+'</svg>';
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

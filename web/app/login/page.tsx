@@ -7,9 +7,9 @@ import { getUser } from "@/lib/auth";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; reason?: string }>;
 }) {
-  const { next, error } = await searchParams;
+  const { next, error, reason } = await searchParams;
   const safeNext = next && next.startsWith("/") ? next : "/learn";
 
   const user = await getUser();
@@ -24,9 +24,10 @@ export default async function LoginPage({
           Để vào học và mở khóa bài đã mua.
         </p>
         {error && (
-          <p className="mb-4 text-center text-sm text-accent-2 bg-accent-2/10 rounded-lg py-2 px-3">
-            Đăng nhập chưa hoàn tất. Bạn thử lại bằng nút bên dưới nhé.
-          </p>
+          <div className="mb-4 text-center text-sm text-accent-2 bg-accent-2/10 rounded-lg py-2 px-3">
+            <p>Đăng nhập chưa hoàn tất. Bạn thử lại bằng nút bên dưới nhé.</p>
+            {reason && <p className="mt-1 font-mono text-[11px] break-all opacity-80">{reason}</p>}
+          </div>
         )}
         <LoginForm next={safeNext} />
       </main>

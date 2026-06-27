@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
       }
       return NextResponse.redirect(`${origin}${safeNext}`);
     }
+    // Lộ lý do thật ra URL để chẩn đoán (vd "both auth code and code verifier should be non-empty").
+    return NextResponse.redirect(
+      `${origin}/login?error=auth&reason=${encodeURIComponent(error?.message ?? "unknown")}`,
+    );
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  return NextResponse.redirect(`${origin}/login?error=auth&reason=no_code`);
 }

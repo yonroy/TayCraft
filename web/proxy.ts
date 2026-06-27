@@ -27,6 +27,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Loại /auth/callback: middleware refresh phiên KHÔNG được đụng vào bước đổi code↔phiên (PKCE),
+    // và không 308 redirect callback sang host khác (sẽ mất code_verifier).
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

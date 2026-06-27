@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 20 — LayerNorm / RMSNorm (A4 in được)</title>
+<title>Làm toán AI · Bài E7 — LayerNorm / RMSNorm (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 </head>
 <body>
@@ -21,14 +21,14 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · ổn định huấn luyện</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 20</span><h1>LayerNorm / RMSNorm <small>— chuẩn hóa một vectơ theo hàng</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— chuẩn hóa một vectơ theo hàng</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
   <div class="intro">
     <b>Giữ con số "không quá to, không quá nhỏ".</b> Sau mỗi lớp, giá trị có thể trôi đi rất xa khiến mạng khó học.
     LayerNorm <b>kéo từng hàng về cùng thang đo</b>: trừ trung bình μ, chia độ lệch chuẩn σ (giờ mean 0, std 1),
     rồi cho mạng tự co giãn lại bằng <b>γ</b> và dịch bằng <b>β</b> (hai tham số học được). Đây là chất keo của khối
-    Transformer (Bài 13).
+    Transformer (Bài H6).
     <div class="formula">
       x̂ = <span class="frac"><span class="n">x − μ</span><span class="d">σ</span></span>
       &nbsp;,&nbsp; y = γ ⊙ x̂ + β
@@ -112,7 +112,7 @@
     </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 20 · LayerNorm</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -121,7 +121,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 20</span><h1>LayerNorm / RMSNorm <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
   <div class="step">
@@ -165,11 +165,11 @@
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Chuẩn hóa = <b>dời tâm về 0</b> rồi <b>co thang về 1</b>, sau đó trả quyền điều chỉnh lại cho
     mạng qua γ, β. Nhờ vậy gradient không bị "nổ" hay "tắt" khi xếp chồng nhiều lớp — chính là lý do
-    <b>Khối Transformer (Bài 13)</b> kẹp LayerNorm quanh Attention và FFN. RMSNorm là phiên bản tiết kiệm dùng trong
+    <b>Khối Transformer (Bài H6)</b> kẹp LayerNorm quanh Attention và FFN. RMSNorm là phiên bản tiết kiệm dùng trong
     các LLM hiện đại (LLaMA, Mistral).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 20 · LayerNorm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

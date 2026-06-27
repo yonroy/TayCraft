@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 23 — Adam một bước (A4 in được)</title>
+<title>Làm toán AI · Bài D13 — Adam một bước (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 </head>
 <body>
@@ -21,11 +21,11 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: huấn luyện · tối ưu thích nghi</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 23</span><h1>Adam một bước <small>— bộ tối ưu "tự chỉnh tốc độ"</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D13</span><h1>Adam một bước <small>— bộ tối ưu "tự chỉnh tốc độ"</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
   <div class="intro">
-    <b>SGD (Bài 10) đi bước tỉ lệ với gradient — Adam thì không.</b> Adam giữ hai trung bình động: <b>m</b> (hướng đi,
+    <b>SGD (Bài D5) đi bước tỉ lệ với gradient — Adam thì không.</b> Adam giữ hai trung bình động: <b>m</b> (hướng đi,
     làm mượt gradient) và <b>v</b> (độ lớn gradient bình phương). Vì khởi đầu m, v = 0 nên chúng bị lệch về 0 →
     phải <b>hiệu chỉnh bias</b>. Cuối cùng bước đi được chia cho √v̂: chiều nào gradient hay lớn thì bước nhỏ lại, chiều
     nào gradient bé thì bước to lên — <b>mỗi tham số một tốc độ riêng</b>. Ta chạy <b>bước đầu tiên (t = 1)</b> cho 2 tham số.
@@ -100,7 +100,7 @@
     <svg id="figAdam" class="fig" viewBox="0 0 270 100" width="150mm" height="56mm" aria-label="trái: hai cột độ lớn gradient rất chênh lệch; phải: SGD cho bước tỉ lệ gradient nên chênh lệch, còn Adam cho hai bước bằng nhau bằng η"></svg>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 23 · Adam một bước</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D13 · Adam một bước</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -109,7 +109,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 23</span><h1>Adam một bước <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D13</span><h1>Adam một bước <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
   <div class="step">
@@ -141,7 +141,7 @@
   </div><!-- /grid2 -->
 
   <div class="step">
-    <div class="step-h"><div class="b" style="background:#7c5cff">≠</div><h2>So với SGD (Bài 10)</h2></div>
+    <div class="step-h"><div class="b" style="background:#7c5cff">≠</div><h2>So với SGD (Bài D5)</h2></div>
     <div class="calc ans">
       bước SGD = −η·g = −0.1·(<span data-q="g1c">8</span>, <span data-q="g2c">1</span>) = ( <span data-q="sgd1">−0.80</span>, <span data-q="sgd2">−0.10</span> )
       &nbsp;→ chênh nhau <b data-q="ratioTxt">8×</b>; Adam: <b>bằng nhau</b>.
@@ -151,11 +151,11 @@
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Phép chia cho √v̂ khiến Adam <b>chuẩn hóa</b> bước theo từng tham số: tham số có gradient lớn không
     "nhảy quá đà", tham số gradient bé vẫn tiến đều. Đó là lý do Adam ít phải dò η và hội tụ nhanh trên đa số mạng sâu —
-    bộ tối ưu mặc định để huấn luyện <b>Transformer (Bài 13)</b>. (Ở các bước sau t&gt;1, m và v tích lũy lịch sử nên
+    bộ tối ưu mặc định để huấn luyện <b>Transformer (Bài H6)</b>. (Ở các bước sau t&gt;1, m và v tích lũy lịch sử nên
     m̂/√v̂ không còn đúng ±1, nhưng cơ chế "mỗi chiều một tốc độ" vẫn giữ nguyên.)
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 23 · Adam một bước</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D13 · Adam một bước</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

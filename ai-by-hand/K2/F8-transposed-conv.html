@@ -94,7 +94,7 @@
       </div>
 
       <div class="rutra">
-        <b>Rút ra.</b> Transposed conv = upsample học được, dùng trong decoder (autoencoder Bài 24, U-Net, GAN).
+        <b>Rút ra.</b> Transposed conv = upsample học được, dùng trong decoder (autoencoder Bài J1, U-Net, GAN).
         Để tránh checkerboard, nhiều mạng dùng "upsample + conv thường" thay cho transposed conv.
       </div>
     </div>
@@ -115,7 +115,7 @@ function generate(){
   var x=[WB.randInt(1,3),WB.randInt(1,3),WB.randInt(1,3),WB.randInt(1,3)];   // 2×2: x11,x12,x21,x22
   var k=[WB.randIntNZ(-1,2),WB.pick([1,2]),WB.pick([0,1]),WB.pick([1,2])];   // 2×2 kernel
   // out 4×4: khối (I,J) = x[I,J] * k
-  var out=new Array(16);
+  var out=new Array(F1);
   function setBlock(bi,bj,val){
     for(var a=0;a<2;a++) for(var b=0;b<2;b++){
       var r=bi*2+a, c=bj*2+b;

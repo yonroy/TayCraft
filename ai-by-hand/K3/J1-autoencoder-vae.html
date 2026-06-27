@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 24 — Autoencoder / VAE (A4 in được)</title>
+<title>Làm toán AI · Bài J1 — Autoencoder / VAE (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 <style>
   /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
@@ -30,7 +30,7 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: huấn luyện · học biểu diễn</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 24</span><h1>Autoencoder / VAE <small>— nén lại rồi dựng lại để sinh mẫu mới</small></h1></div>
+  <div class="wb-title"><span class="no">Bài J1</span><h1>Autoencoder / VAE <small>— nén lại rồi dựng lại để sinh mẫu mới</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~18 phút</span></div>
 
   <div class="intro">
@@ -112,7 +112,7 @@
     <svg id="figAE" class="fig" viewBox="0 0 270 104" width="150mm" height="58mm" aria-label="bốn nút đầu vào x thu về hai nút cổ chai z rồi mở lại bốn nút x mũ; cổ chai được tô đậm thể hiện nơi nén thông tin"></svg>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 24 · Autoencoder / VAE</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder / VAE</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -121,7 +121,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 24</span><h1>Autoencoder / VAE <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài J1</span><h1>Autoencoder / VAE <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
   <div class="step">
@@ -155,11 +155,11 @@
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Autoencoder học <b>nén</b> không cần nhãn (tự giám sát): mã z chính là biểu diễn dùng lại cho tìm kiếm,
     khử nhiễu, phát hiện bất thường. VAE biến cổ chai thành một <b>phân phối</b> và dùng <b>reparam</b> z = μ + σ⊙ε để vẫn
-    lan truyền ngược qua phần ngẫu nhiên (Bài 12); thêm phạt KL kéo (μ,σ) về N(0,1) để có thể <b>lấy mẫu</b> z rồi giải mã
-    ra mẫu mới. Cũng "đoán rồi dựng lại" như <b>Diffusion (Bài 25)</b> — chỉ khác cách thêm/khử nhiễu.
+    lan truyền ngược qua phần ngẫu nhiên (Bài D7); thêm phạt KL kéo (μ,σ) về N(0,1) để có thể <b>lấy mẫu</b> z rồi giải mã
+    ra mẫu mới. Cũng "đoán rồi dựng lại" như <b>Diffusion (Bài J5)</b> — chỉ khác cách thêm/khử nhiễu.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 24 · Autoencoder / VAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder / VAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

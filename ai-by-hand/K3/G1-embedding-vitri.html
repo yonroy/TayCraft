@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 19 — Embedding &amp; Positional Encoding (A4 in được)</title>
+<title>Làm toán AI · Bài G1 — Embedding &amp; Positional Encoding (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 <style>
   /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
@@ -30,12 +30,12 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · cửa vào Transformer</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 19</span><h1>Embedding &amp; Vị trí <small>— biến chữ thành vectơ có thứ tự</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G1</span><h1>Embedding &amp; Vị trí <small>— biến chữ thành vectơ có thứ tự</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
   <div class="intro">
     <b>Transformer không đọc chữ — chỉ đọc số.</b> Mỗi <b>token</b> được tra trong <b>bảng nhúng E</b> ra một vectơ. Vì
-    chú ý (Bài 11) không phân biệt thứ tự, ta cộng thêm <b>dấu vị trí</b> sin/cos cố định → cùng một từ ở vị trí khác nhau
+    chú ý (Bài H2) không phân biệt thứ tự, ta cộng thêm <b>dấu vị trí</b> sin/cos cố định → cùng một từ ở vị trí khác nhau
     sẽ có vectơ khác nhau. Kết quả là đầu vào <b>X</b> cho Transformer.
     <div class="formula">
       X<sub>pos</sub> = E[token<sub>pos</sub>] <s style="color:var(--accent2)">+ PE[pos]</s>
@@ -99,7 +99,7 @@
           <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
           <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
         </div></div>
-      <div class="note" style="align-self:center;max-width:95mm">Mỗi hàng = 1 token đã "biết mình đứng ở đâu" — đầu vào thật của <b>Bài 11/13</b>.</div>
+      <div class="note" style="align-self:center;max-width:95mm">Mỗi hàng = 1 token đã "biết mình đứng ở đâu" — đầu vào thật của <b>Bài H2/13</b>.</div>
     </div>
   </div>
 
@@ -109,7 +109,7 @@
     <svg id="figEmb" class="fig" viewBox="0 0 270 104" width="100mm" height="38mm" aria-label="trái: bảng nhúng E với hai hàng được chọn tô đậm, mũi tên kéo ra hai vectơ token; phải: hai sóng sin và cos, chấm lấy mẫu tại vị trí 0 và 1 minh họa dấu vị trí cộng thêm"></svg>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 19 · Embedding &amp; Positional</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Positional</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -118,7 +118,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 19</span><h1>Embedding &amp; Vị trí <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G1</span><h1>Embedding &amp; Vị trí <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Tra bảng (chép hàng của E)</h2></div>
@@ -150,10 +150,10 @@
     <b style="color:var(--accent2)">Rút ra.</b> "Hiểu chữ" của AI bắt đầu từ hai phép cực đơn giản: <b>tra bảng</b> (E, học được khi train)
     và <b>cộng một dấu vị trí cố định</b> (PE, không học). Sóng sin/cos có tần số giảm dần nên mỗi vị trí mang một
     "vân tay" riêng mà mô hình có thể suy ra khoảng cách giữa các token. Ma trận X này chính là đầu vào cho
-    <b>Self-Attention (Bài 11)</b> và <b>Khối Transformer (Bài 13)</b> — cửa đã mở, phần còn lại là các bài đã học.
+    <b>Self-Attention (Bài H2)</b> và <b>Khối Transformer (Bài H6)</b> — cửa đã mở, phần còn lại là các bài đã học.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 19 · Embedding &amp; Positional</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Positional</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

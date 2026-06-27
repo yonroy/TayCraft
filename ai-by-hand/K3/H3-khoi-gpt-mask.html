@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 14 — Khối GPT / Masked Self-Attention (A3 · 4 trang)</title>
+<title>Làm toán AI · Bài H3 — Khối GPT / Masked Self-Attention (A3 · 4 trang)</title>
 <style>
 @page{ size:A3 portrait; margin:0; }
 :root{
@@ -99,10 +99,10 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A3 · 4 trang<br>Mức: nâng cao</div>
   </div>
-  <div class="wb-title"><span class="no">Bài 14</span><h1>Khối GPT (Decoder-only) <small>— điều khác biệt: Masked Self-Attention</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H3</span><h1>Khối GPT (Decoder-only) <small>— điều khác biệt: Masked Self-Attention</small></h1></div>
 
   <div class="intro">
-    <b>Ý chính.</b> Khối <b>GPT</b> giống hệt khối <b>encoder</b> (Bài 13): Self-Attention → Add&amp;Norm → FFN → Add&amp;Norm.
+    <b>Ý chính.</b> Khối <b>GPT</b> giống hệt khối <b>encoder</b> (Bài H6): Self-Attention → Add&amp;Norm → FFN → Add&amp;Norm.
     Chỉ khác <b>một chỗ</b>: self-attention <b>có MASK nhân quả</b> — mỗi token chỉ được "nhìn" chính nó và các token <b>phía trước</b>,
     không nhìn tương lai. Nhờ đó model sinh chữ tuần tự mà không gian lận nhìn đáp án sau. Trang này là toàn cảnh; tính tay ở trang 3.
     <div class="formula">
@@ -123,7 +123,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div class="step">
       <div class="step-h"><div class="b" style="background:var(--ink)">≟</div><h2>Encoder vs Decoder-only</h2></div>
       <table class="cmp">
-        <tr><th>Thành phần</th><th>Encoder (Bài 13)</th><th>Decoder-only (GPT)</th></tr>
+        <tr><th>Thành phần</th><th>Encoder (Bài H6)</th><th>Decoder-only (GPT)</th></tr>
         <tr><td>Self-Attention</td><td>hai chiều (no mask)</td><td><b>có mask nhân quả</b></td></tr>
         <tr><td>Cross-Attention</td><td>✗</td><td>✗</td></tr>
         <tr><td>FFN</td><td>✓</td><td>✓</td></tr>
@@ -134,16 +134,16 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 1/4 · TOÀN CẢNH</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT (mask)</span><span>Trang 1/4 · TOÀN CẢNH</span></div>
 </section>
 
 <!-- ============ TRANG 2/4 — DỮ LIỆU ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta crumb">Bài 14 · Khối GPT<br>3 token · d = 4</div>
+    <div class="meta crumb">Bài H3 · Khối GPT<br>3 token · d = 4</div>
   </div>
-  <div class="wb-title"><span class="no">Bài 14</span><h1>Dữ liệu &amp; cơ chế mask <small>— dùng lại ví dụ Bài 11</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H3</span><h1>Dữ liệu &amp; cơ chế mask <small>— dùng lại ví dụ Bài H2</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~22 phút</span></div>
 
   <div class="step">
@@ -190,23 +190,23 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--v)">∑</div><h2>Phần còn lại của khối: y như Bài 13</h2></div>
+    <div class="step-h"><div class="b" style="background:var(--v)">∑</div><h2>Phần còn lại của khối: y như Bài H6</h2></div>
     <div class="lnbox">
       Sau khi có <b>O</b> (đầu ra masked attention): &nbsp; Z = LayerNorm(X + O) &nbsp;→&nbsp; Y = LayerNorm(Z + FFN(Z)).<br>
-      Hai lớp Add &amp; Norm và FFN <b>giống hệt Bài 13</b> — phiếu này tập trung vào phần <b>mask</b> mới. Tính tay phần wrapper: xem Bài 13.
+      Hai lớp Add &amp; Norm và FFN <b>giống hệt Bài H6</b> — phiếu này tập trung vào phần <b>mask</b> mới. Tính tay phần wrapper: xem Bài H6.
     </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 2/4 · ĐỀ — dữ liệu</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT (mask)</span><span>Trang 2/4 · ĐỀ — dữ liệu</span></div>
 </section>
 
 <!-- ============ TRANG 3/4 — ĐỀ tính tay ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta crumb">Bài 14 · Masked Self-Attention<br>4 bước · điền bằng bút chì</div>
+    <div class="meta crumb">Bài H3 · Masked Self-Attention<br>4 bước · điền bằng bút chì</div>
   </div>
-  <div class="wb-title"><span class="no">Bài 14</span><h1>Tính tay masked attention <small>— điền các ô trống</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H3</span><h1>Tính tay masked attention <small>— điền các ô trống</small></h1></div>
 
   <div class="grid2">
     <div class="step">
@@ -259,7 +259,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div style="border:1.4px dashed var(--line);border-radius:10px;height:70mm;background:repeating-linear-gradient(transparent,transparent 13mm,#eef2f6 13mm,#eef2f6 13.4mm)"></div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 3/4 · ĐỀ — tính tay</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT (mask)</span><span>Trang 3/4 · ĐỀ — tính tay</span></div>
 </section>
 
 <!-- ============ TRANG 4/4 — ĐÁP ÁN ============ -->
@@ -268,7 +268,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 14</span><h1>Lời giải <small>— masked self-attention</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H3</span><h1>Lời giải <small>— masked self-attention</small></h1></div>
 
   <div class="grid2">
     <div class="step">
@@ -279,7 +279,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
           <div class="cell ans">0</div><div class="cell ans">4</div><div class="cell ans">2</div>
           <div class="cell ans">2</div><div class="cell ans">2</div><div class="cell ans">2</div>
         </div></div>
-      <div class="note">Giống Bài 11 (chưa mask). Hàng 3: Q₃·K₁=2, Q₃·K₂=2, Q₃·K₃=2.</div>
+      <div class="note">Giống Bài H2 (chưa mask). Hàng 3: Q₃·K₁=2, Q₃·K₂=2, Q₃·K₃=2.</div>
     </div>
 
     <div class="step">
@@ -317,7 +317,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">⇄</div><h2>So sánh: KHÔNG mask (Bài 11) vs CÓ mask (GPT)</h2><span class="tag">cùng điểm số, khác kết quả</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">⇄</div><h2>So sánh: KHÔNG mask (Bài H2) vs CÓ mask (GPT)</h2><span class="tag">cùng điểm số, khác kết quả</span></div>
     <div class="row" style="gap:34px;align-items:flex-start">
       <svg id="figNoMask" viewBox="0 0 280 168" width="106mm" height="64mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap không mask"></svg>
       <svg id="figMask" viewBox="0 0 280 168" width="106mm" height="64mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="heatmap có mask tam giác"></svg>
@@ -327,10 +327,10 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Mask chỉ là <b>đặt −∞ ở nửa tam giác trên trước softmax</b> → ma trận chú ý thành <b>tam giác dưới</b>:
     token 1 chỉ thấy chính nó, token 2 thấy {1,2}, token 3 thấy tất cả. Đó là toàn bộ khác biệt biến một khối encoder thành khối <b>GPT</b>.
-    Phần Add &amp; Norm + FFN bọc quanh thì y hệt Bài 13.
+    Phần Add &amp; Norm + FFN bọc quanh thì y hệt Bài H6.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 14 · Khối GPT (mask)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT (mask)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -408,7 +408,7 @@ var A_mask  =[[1.00,0,0],[0.12,0.88,0],[0.33,0.33,0.33]];
 WB.wire(generate);
 drawBlock();
 heat('figHero',A_mask,true,'token chỉ nhìn về TRƯỚC · tổng mỗi hàng = 1');
-heat('figNoMask',A_nomask,false,'KHÔNG mask — nhìn mọi token (Bài 11)');
+heat('figNoMask',A_nomask,false,'KHÔNG mask — nhìn mọi token (Bài H2)');
 heat('figMask',A_mask,true,'CÓ mask — tam giác dưới (GPT)');
 </script>
 </body>

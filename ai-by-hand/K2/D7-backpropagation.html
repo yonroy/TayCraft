@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 12 — Backpropagation (A4 in được)</title>
+<title>Làm toán AI · Bài D7 — Backpropagation (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 </head>
 <body>
@@ -21,11 +21,11 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: trung cấp</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 12</span><h1>Backpropagation <small>— Lan truyền ngược · quy tắc chuỗi</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D7</span><h1>Backpropagation <small>— Lan truyền ngược · quy tắc chuỗi</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~22 phút</span></div>
 
   <div class="intro">
-    <b>Tìm gradient của cả mạng.</b> Bài 10 cho công thức cập nhật θ ← θ − η∇ℒ, nhưng ∇ℒ lấy từ đâu? <b>Backprop</b>
+    <b>Tìm gradient của cả mạng.</b> Bài D5 cho công thức cập nhật θ ← θ − η∇ℒ, nhưng ∇ℒ lấy từ đâu? <b>Backprop</b>
     chạy ngược từ mất mát về từng trọng số bằng <b>quy tắc chuỗi</b>: nhân dồn đạo hàm dọc đường. Ta dùng mạng 2 lớp
     1 nơ-ron (vô hướng) cho dễ theo dõi, mất mát ℒ = ½(y − t)².
     <div class="formula">
@@ -95,7 +95,7 @@
     <svg id="figBP" class="fig" viewBox="0 0 340 104" width="150mm" height="46mm" aria-label="đồ thị tính toán backprop: chuyền xuôi ra mất mát, chuyền ngược ra gradient"></svg>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 12 · Backpropagation</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -104,7 +104,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 12</span><h1>Backpropagation <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D7</span><h1>Backpropagation <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Forward</h2></div>
@@ -140,11 +140,11 @@
 
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Backprop = <b>quy tắc chuỗi chạy ngược</b>: tín hiệu lỗi ∂ℒ/∂y nhân dồn ngược qua từng lớp
-    (×w₂, ×ReLU′, ×x) để ra gradient mọi trọng số — tất cả chỉ bằng phép nhân & cộng đã học ở Bài 01.
+    (×w₂, ×ReLU′, ×x) để ra gradient mọi trọng số — tất cả chỉ bằng phép nhân & cộng đã học ở Bài A3.
     Lặp forward→backward→update hàng triệu lần chính là toàn bộ "huấn luyện" deep learning.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 12 · Backpropagation</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

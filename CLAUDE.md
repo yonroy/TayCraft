@@ -49,7 +49,8 @@ TayCraft AI/
 ### Luôn phải làm
 - ✅ Khi ra phiếu mới: **bật thẻ trong `index.html`** từ `class="card todo"` → `card done` (hoặc `card adv done`), sửa `href`, đổi `○` → `Mở →`
 - ✅ Mỗi phiếu phải có **đủ 2 trang** (ĐỀ + ĐÁP ÁN), footer ghi đúng `Bài NN` và `Trang 1/2 · ĐỀ` / `2/2 · ĐÁP ÁN`
-- ✅ **Kiểm tràn lề BẰNG SỐ** trước khi giao (`.page` có `overflow:hidden` → tràn bị cắt âm thầm) — xem checklist mục 8 trong `CACH-TAO-PHIEU.md`
+- ✅ **Kiểm tràn lề BẰNG SỐ** trước khi giao (`.page` có `overflow:hidden` → tràn bị cắt âm thầm): `node tools/check.mjs <file> --runs 5`
+- ✅ **Soát lệch ĐỀ↔ĐÁP ÁN trước khi giao** (chống lỗi B7): `node tools/check-de-key.mjs <file>` → phải 0 phiếu LỆCH. **Mọi bước/hình ở ĐÁP ÁN phải có câu hỏi (ô trống) tương ứng ở ĐỀ**; bước hình → "hình-để-điền" (vẽ dữ liệu cho-sẵn, giấu kết quả, `drawXBlank('figQ')`). Đề có thêm bước thì **tách trang** chứ không nhồi. Chi tiết: `_specs/README.md` mục A.6 + H.
 - ✅ Mỗi phiếu nên có **ít nhất một sơ đồ SVG** đúng bản chất; tuân **quy ước màu** in được (lam = vào/xuôi/Q, cam = trọng số/đáp án/ngược/K, tím = thành phần thứ ba/V)
 - ✅ **Sau khi hoàn thành task, nhắc người dùng commit và push code**
 
@@ -83,7 +84,6 @@ WB.wire(generate);                          // gắn nút 🎲
 ### A4 ngang (landscape)
 Phiếu canvas dùng `wb-canvas.css` (đã nhúng `@page{size:A4 landscape}` sẵn trong CSS).
 Phiếu GIẢNG GIẢI muốn ngang: thêm `<body class="landscape">` + `<style>@page{size:A4 landscape;}</style>`.
-**Không dùng A3** — xem quy tắc mục 7 của `CACH-TAO-PHIEU.md`.
 
 ---
 

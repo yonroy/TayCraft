@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 15 — Encoder–Decoder / Cross-Attention (A3 · 4 trang)</title>
+<title>Làm toán AI · Bài H5 — Encoder–Decoder / Cross-Attention (A3 · 4 trang)</title>
 <style>
 @page{ size:A3 portrait; margin:0; }
 :root{
@@ -101,7 +101,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A3 · 4 trang<br>Mức: nâng cao</div>
   </div>
-  <div class="wb-title"><span class="no">Bài 15</span><h1>Khối Encoder–Decoder <small>— Cross-Attention nối hai bên</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H5</span><h1>Khối Encoder–Decoder <small>— Cross-Attention nối hai bên</small></h1></div>
 
   <div class="intro">
     <b>Ý chính.</b> Kiến trúc <b>ghép cả hai</b>: <span style="color:var(--enc);font-weight:700">ENCODER</span> đọc câu nguồn → tạo "bộ nhớ"
@@ -124,22 +124,22 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div class="step-h"><div class="b" style="background:var(--ink)">≟</div><h2>Ba kiểu khối Transformer — bức tranh đầy đủ</h2></div>
     <table class="cmp">
       <tr><th>Kiểu</th><th>Self-Attn</th><th>Cross-Attn</th><th>Số lớp con</th><th>Tiêu biểu</th><th>Dùng để</th></tr>
-      <tr><td>Encoder-only (Bài 13)</td><td>hai chiều</td><td>✗</td><td>2</td><td>BERT</td><td>hiểu / phân loại</td></tr>
-      <tr><td>Decoder-only (Bài 14)</td><td><b>có mask</b></td><td>✗</td><td>2</td><td>GPT, LLaMA</td><td>sinh văn bản</td></tr>
-      <tr><td><b>Encoder–Decoder (Bài 15)</b></td><td>có mask (ở decoder)</td><td><b>✓</b></td><td><b>3</b></td><td>T5, dịch máy</td><td>chuỗi → chuỗi</td></tr>
+      <tr><td>Encoder-only (Bài H6)</td><td>hai chiều</td><td>✗</td><td>2</td><td>BERT</td><td>hiểu / phân loại</td></tr>
+      <tr><td>Decoder-only (Bài H3)</td><td><b>có mask</b></td><td>✗</td><td>2</td><td>GPT, LLaMA</td><td>sinh văn bản</td></tr>
+      <tr><td><b>Encoder–Decoder (Bài H5)</b></td><td>có mask (ở decoder)</td><td><b>✓</b></td><td><b>3</b></td><td>T5, dịch máy</td><td>chuỗi → chuỗi</td></tr>
     </table>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 15 · Cross-Attention</span><span>Trang 1/4 · TOÀN CẢNH</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 1/4 · TOÀN CẢNH</span></div>
 </section>
 
 <!-- ============ TRANG 2/4 — DỮ LIỆU ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta crumb">Bài 15 · Cross-Attention<br>2 token đích · 3 token nguồn · d=4</div>
+    <div class="meta crumb">Bài H5 · Cross-Attention<br>2 token đích · 3 token nguồn · d=4</div>
   </div>
-  <div class="wb-title"><span class="no">Bài 15</span><h1>Dữ liệu &amp; cơ chế cross-attention</h1></div>
+  <div class="wb-title"><span class="no">Bài H5</span><h1>Dữ liệu &amp; cơ chế cross-attention</h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~22 phút</span></div>
 
   <div class="step">
@@ -180,21 +180,21 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
   <div class="step">
     <div class="step-h"><div class="b" style="background:var(--v)">∑</div><h2>Vị trí trong khối decoder</h2></div>
     <div class="kvbox" style="border-left-color:var(--v);background:#fbf7ff">
-      Khối decoder đầy đủ có <b>3 lớp con</b>: ① masked self-attn (Bài 14) → ② <b style="color:var(--dec)">cross-attention</b> (phiếu này) → ③ FFN (Bài 13),
+      Khối decoder đầy đủ có <b>3 lớp con</b>: ① masked self-attn (Bài H3) → ② <b style="color:var(--dec)">cross-attention</b> (phiếu này) → ③ FFN (Bài H6),
       mỗi lớp con kèm Add &amp; Norm. Phiếu này tính tay riêng lớp con ②.
     </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 15 · Cross-Attention</span><span>Trang 2/4 · ĐỀ — dữ liệu</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 2/4 · ĐỀ — dữ liệu</span></div>
 </section>
 
 <!-- ============ TRANG 3/4 — ĐỀ tính tay ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta crumb">Bài 15 · Cross-Attention<br>4 bước · điền bằng bút chì</div>
+    <div class="meta crumb">Bài H5 · Cross-Attention<br>4 bước · điền bằng bút chì</div>
   </div>
-  <div class="wb-title"><span class="no">Bài 15</span><h1>Tính tay cross-attention <small>— điền các ô trống</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H5</span><h1>Tính tay cross-attention <small>— điền các ô trống</small></h1></div>
 
   <div class="grid2">
     <div class="step">
@@ -243,7 +243,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div style="border:1.4px dashed var(--line);border-radius:10px;height:78mm;background:repeating-linear-gradient(transparent,transparent 13mm,#eef2f6 13mm,#eef2f6 13.4mm)"></div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 15 · Cross-Attention</span><span>Trang 3/4 · ĐỀ — tính tay</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 3/4 · ĐỀ — tính tay</span></div>
 </section>
 
 <!-- ============ TRANG 4/4 — ĐÁP ÁN ============ -->
@@ -252,7 +252,7 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 15</span><h1>Lời giải <small>— cross-attention</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H5</span><h1>Lời giải <small>— cross-attention</small></h1></div>
 
   <div class="grid2">
     <div class="step">
@@ -302,11 +302,11 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
 
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Cross-attention = self-attention với <b>Q của decoder, K&amp;V của encoder</b>. Đó là chỗ câu đích "đọc" câu nguồn.
-    Ghép lại: <b>Encoder (Bài 13)</b> + <b>Decoder = masked self-attn (Bài 14) + cross-attn (Bài 15) + FFN</b> = Transformer encoder–decoder đầy đủ.
+    Ghép lại: <b>Encoder (Bài H6)</b> + <b>Decoder = masked self-attn (Bài H3) + cross-attn (Bài H5) + FFN</b> = Transformer encoder–decoder đầy đủ.
     Bộ 3 kiểu khối đến đây là trọn vẹn.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 15 · Cross-Attention</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -333,7 +333,7 @@ function drawArch(){
   s+='<rect x="44" y="78" width="150" height="120" rx="9" fill="#eef7f8" stroke="#0e7490" stroke-width="2"/>';
   s+='<text x="119" y="104" text-anchor="middle" style="font-size:13px" font-weight="800" fill="#0e7490">ENCODER ×N</text>';
   s+='<text x="119" y="124" text-anchor="middle" style="font-size:9.5px" fill="#5b6776">self-attn 2 chiều</text>';
-  s+='<text x="119" y="139" text-anchor="middle" style="font-size:9.5px" fill="#5b6776">+ FFN (Bài 13)</text>';
+  s+='<text x="119" y="139" text-anchor="middle" style="font-size:9.5px" fill="#5b6776">+ FFN (Bài H6)</text>';
   s+='<rect x="64" y="152" width="110" height="30" rx="6" fill="#fff" stroke="#7fb4bf" stroke-width="1.2"/>';
   s+='<text x="119" y="171" text-anchor="middle" style="font-size:10px" font-weight="700" fill="#0e7490">memory: K, V</text>';
   s+='<line x1="119" y1="240" x2="119" y2="200" stroke="#5b6776" stroke-width="1.6" marker-end="url(#ah)"/>';

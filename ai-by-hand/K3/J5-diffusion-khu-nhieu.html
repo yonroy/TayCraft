@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 25 — Diffusion: một bước khử nhiễu (A4 in được)</title>
+<title>Làm toán AI · Bài J5 — Diffusion: một bước khử nhiễu (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 </head>
 <body>
@@ -21,7 +21,7 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · mô hình sinh</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 25</span><h1>Diffusion — một bước khử nhiễu <small>— từ ảnh nhiễu về ảnh sạch hơn</small></h1></div>
+  <div class="wb-title"><span class="no">Bài J5</span><h1>Diffusion — một bước khử nhiễu <small>— từ ảnh nhiễu về ảnh sạch hơn</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
   <div class="intro">
@@ -96,7 +96,7 @@
     <svg id="figDiff" class="fig" viewBox="0 0 270 116" width="125mm" height="54mm" aria-label="trái: mặt phẳng ảnh với x_t (nhiễu), x_{t-1} (gần hơn) và x̂₀ (sạch); phải: thước mức nhiễu tụt từ 0.6 xuống 0.28"></svg>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 25 · Diffusion (khử nhiễu)</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion (khử nhiễu)</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -105,7 +105,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 25</span><h1>Diffusion — một bước khử nhiễu <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài J5</span><h1>Diffusion — một bước khử nhiễu <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Ảnh sạch ước lượng x̂₀</h2></div>
@@ -145,10 +145,10 @@
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Một bước diffusion = <b>đoán nhiễu ε → ước lượng ảnh sạch x̂₀ → trộn lại với ít nhiễu hơn</b>.
     Lặp lại làm mức nhiễu tụt dần về 0, ảnh hiện ra từ hỗn loạn. Mạng chỉ học đúng một việc: <b>dự đoán ε</b>
-    (liên hệ Bài 09 softmax/score &amp; Bài 17 mất mát — ở đây mất mát là ‖ε − ε̂‖²). Đây là lõi của Stable Diffusion / DDPM.
+    (liên hệ Bài C10 softmax/score &amp; Bài D3 mất mát — ở đây mất mát là ‖ε − ε̂‖²). Đây là lõi của Stable Diffusion / DDPM.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 25 · Diffusion (khử nhiễu)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion (khử nhiễu)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

@@ -44,7 +44,7 @@ export interface Lesson {
   isFree: boolean;
 }
 
-export const FREE_SLUGS = ["01-tich-vo-huong", "02-nhan-ma-tran", "03-lop-tuyen-tinh"];
+export const FREE_SLUGS = ["A3-tich-vo-huong", "A7-nhan-ma-tran-bien-doi-2d", "C1-lop-tuyen-tinh"];
 
 // Khóa mở miễn phí cho MỌI người (lead magnet của phễu). K1 = Nền tảng AI.
 export const FREE_COURSES: Course[] = ["K1"];
@@ -61,11 +61,11 @@ export const LESSONS: Lesson[] = [
   // ── PHẦN A · Toán nền tảng (K1) ─────────────────────────────────────────
   { no: "A1", slug: "A1-vecto-cong-tru", title: "Vectơ: cộng, trừ, nhân vô hướng", english: "Vector ops", blurb: "Cộng/trừ từng ô, nhân hệ số — phép tay nền của mọi bài sau.", part: "A", course: "K1", available: true, isFree: true },
   { no: "A2", slug: "A2-do-dai-chuan", title: "Độ dài & chuẩn", english: "Norm (L1, L2)", blurb: "Tính √(Σx²) và Σ|x| — đo độ lớn của một vectơ.", part: "A", course: "K1", available: true, isFree: true },
-  { no: "01", slug: "01-tich-vo-huong", title: "Tích vô hướng", english: "Dot Product", blurb: "Nhân từng cặp rồi cộng → một con số. Viên gạch của mọi phép tính AI.", part: "A", course: "K1", available: true, isFree: true },
+  { no: "A3", slug: "A3-tich-vo-huong", title: "Tích vô hướng", english: "Dot Product", blurb: "Nhân từng cặp rồi cộng → một con số. Viên gạch của mọi phép tính AI.", part: "A", course: "K1", available: true, isFree: true },
   { no: "A4", slug: "A4-cosine-similarity", title: "Cosine similarity", english: "Cosine", blurb: "dot ÷ (‖a‖‖b‖) → độ giống nhau về hướng giữa hai vectơ.", part: "A", course: "K1", available: true, isFree: true },
   { no: "A5", slug: "A5-phep-chieu", title: "Phép chiếu vectơ", english: "Projection", blurb: "(a·b/‖b‖²)·b — bóng của a lên hướng b.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A6", slug: "A6-ma-tran-chuyen-vi", title: "Ma trận chuyển vị", english: "Transpose", blurb: "Lật hàng ↔ cột — thao tác xuất hiện khắp attention/backprop.", part: "A", course: "K1", available: true, isFree: false },
-  { no: "02", slug: "02-nhan-ma-tran", title: "Nhân ma trận", english: "Matrix Multiplication", blurb: "Xếp nhiều tích vô hướng: Cᵢⱼ = hàng i · cột j.", part: "A", course: "K1", available: true, isFree: true },
+  { no: "A7", slug: "A7-nhan-ma-tran-bien-doi-2d", title: "Nhân ma trận", english: "Matrix Multiplication", blurb: "Xếp nhiều tích vô hướng: Cᵢⱼ = hàng i · cột j.", part: "A", course: "K1", available: true, isFree: true },
   { no: "A8", slug: "A8-ma-tran-nhan-vecto", title: "Ma trận × vectơ", english: "Matvec", blurb: "Mỗi hàng một tích vô hướng → vectơ kết quả.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A9", slug: "A9-dinh-thuc-nghich-dao", title: "Định thức & nghịch đảo 2×2", english: "Determinant", blurb: "ad − bc, rồi công thức nghịch đảo ma trận 2×2.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A10", slug: "A10-he-phuong-trinh", title: "Hệ phương trình tuyến tính nhỏ", english: "Linear system", blurb: "Khử Gauss cho hệ 2×2 bằng tay.", part: "A", course: "K1", available: true, isFree: false },
@@ -94,31 +94,31 @@ export const LESSONS: Lesson[] = [
   { no: "B11", slug: "B11-gradient-boosting", title: "Gradient Boosting — ý tưởng", english: "Boosting", blurb: "Khớp phần dư của mô hình trước, một bước.", part: "B", course: "K1", available: true, isFree: false },
 
   // ── PHẦN C · Nơ-ron & MLP (K1) ──────────────────────────────────────────
-  { no: "03", slug: "03-lop-tuyen-tinh", title: "Lớp tuyến tính", english: "y = Wx + b", blurb: "Khối Lego của deep learning: W trộn đầu vào, b dịch chuyển.", part: "C", course: "K1", available: true, isFree: true },
+  { no: "C1", slug: "C1-lop-tuyen-tinh", title: "Lớp tuyến tính", english: "y = Wx + b", blurb: "Khối Lego của deep learning: W trộn đầu vào, b dịch chuyển.", part: "C", course: "K1", available: true, isFree: true },
   { no: "C2", slug: "C2-sigmoid", title: "Sigmoid chi tiết + đạo hàm", english: "Sigmoid", blurb: "σ(z) và σ'(z) = σ(1−σ).", part: "C", course: "K1", available: true, isFree: false },
   { no: "C3", slug: "C3-tanh", title: "Tanh + đạo hàm", english: "Tanh", blurb: "tanh(z) và đạo hàm 1 − tanh².", part: "C", course: "K1", available: true, isFree: false },
-  { no: "04", slug: "04-ham-kich-hoat", title: "Hàm kích hoạt", english: "Activation", blurb: "ReLU = max(0,z), sigmoid ép về (0,1). Vì sao cần phi tuyến.", part: "C", course: "K1", available: true, isFree: false },
-  { no: "05", slug: "05-mot-no-ron", title: "Một nơ-ron", english: "Neuron", blurb: "z = w·x + b → a = f(z). Tế bào của mạng.", part: "C", course: "K1", available: true, isFree: false },
-  { no: "06", slug: "06-mot-lop-no-ron", title: "Một lớp nơ-ron", english: "A Layer", blurb: "Nhiều nơ-ron song song → vectơ h = ReLU(Wx + b).", part: "C", course: "K1", available: true, isFree: false },
-  { no: "07", slug: "07-lop-an", title: "Lớp ẩn — MLP nhỏ", english: "Hidden Layer", blurb: "2 → 2(ẩn) → 1. Lan truyền xuôi qua hai lớp.", part: "C", course: "K1", available: true, isFree: false },
-  { no: "08", slug: "08-sau-rong", title: "Mạng sâu / rộng", english: "Deep vs Wide", blurb: "So hai kiến trúc cùng số tham số, hình dáng khác hẳn.", part: "C", course: "K1", available: true, isFree: false },
+  { no: "C4", slug: "C4-ham-kich-hoat", title: "Hàm kích hoạt", english: "Activation", blurb: "ReLU = max(0,z), sigmoid ép về (0,1). Vì sao cần phi tuyến.", part: "C", course: "K1", available: true, isFree: false },
+  { no: "C5", slug: "C5-mot-no-ron", title: "Một nơ-ron", english: "Neuron", blurb: "z = w·x + b → a = f(z). Tế bào của mạng.", part: "C", course: "K1", available: true, isFree: false },
+  { no: "C6", slug: "C6-mot-lop-no-ron", title: "Một lớp nơ-ron", english: "A Layer", blurb: "Nhiều nơ-ron song song → vectơ h = ReLU(Wx + b).", part: "C", course: "K1", available: true, isFree: false },
+  { no: "C7", slug: "C7-lop-an", title: "Lớp ẩn — MLP nhỏ", english: "Hidden Layer", blurb: "2 → 2(ẩn) → 1. Lan truyền xuôi qua hai lớp.", part: "C", course: "K1", available: true, isFree: false },
+  { no: "C8", slug: "C8-sau-rong", title: "Mạng sâu / rộng", english: "Deep vs Wide", blurb: "So hai kiến trúc cùng số tham số, hình dáng khác hẳn.", part: "C", course: "K1", available: true, isFree: false },
   { no: "C9", slug: "C9-dem-tham-so", title: "Đếm tham số mạng", english: "Param count", blurb: "Σ(W + b) từng lớp → tổng tham số.", part: "C", course: "K1", available: true, isFree: false },
-  { no: "09", slug: "09-softmax", title: "Softmax đầu ra", english: "Softmax", blurb: "Logit → eˣ → chuẩn hóa thành xác suất cộng = 1.", part: "C", course: "K1", available: true, isFree: false },
+  { no: "C10", slug: "C10-softmax", title: "Softmax đầu ra", english: "Softmax", blurb: "Logit → eˣ → chuẩn hóa thành xác suất cộng = 1.", part: "C", course: "K1", available: true, isFree: false },
 
   // ── PHẦN D · Mất mát, gradient & tối ưu (K2) ────────────────────────────
   { no: "D1", slug: "D1-mse-mae", title: "MSE / MAE", english: "Regression loss", blurb: "Trung bình bình phương / tuyệt đối của sai số.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D2", slug: "D2-binary-cross-entropy", title: "Binary Cross-Entropy", english: "BCE", blurb: "−[y ln p + (1−y) ln(1−p)] cho bài nhị phân.", part: "D", course: "K2", available: true, isFree: false },
-  { no: "17", slug: "17-cross-entropy", title: "Cross-Entropy", english: "Loss", blurb: "ℒ = −ln p(đúng); gradient gọn g = p − y.", part: "D", course: "K2", available: true, isFree: false },
+  { no: "D3", slug: "D3-cross-entropy", title: "Cross-Entropy", english: "Loss", blurb: "ℒ = −ln p(đúng); gradient gọn g = p − y.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D4", slug: "D4-kl-divergence", title: "KL Divergence", english: "KL", blurb: "Σ p ln(p/q) — khoảng cách giữa hai phân phối.", part: "D", course: "K2", available: true, isFree: false },
-  { no: "10", slug: "10-gradient", title: "Gradient — một bước học", english: "Gradient", blurb: "θ ← θ − η∇: bi lăn xuống đáy parabol. Vai trò của η.", part: "D", course: "K2", available: true, isFree: false },
+  { no: "D5", slug: "D5-gradient", title: "Gradient — một bước học", english: "Gradient", blurb: "θ ← θ − η∇: bi lăn xuống đáy parabol. Vai trò của η.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D6", slug: "D6-gradient-descent-2-bien", title: "Gradient descent 2 biến", english: "GD 2D", blurb: "Đi theo ∇ trên mặt đường đồng mức.", part: "D", course: "K2", available: true, isFree: false },
-  { no: "12", slug: "12-backpropagation", title: "Backpropagation", english: "Lan truyền ngược", blurb: "Forward ra ℒ, backward bằng quy tắc chuỗi ra mọi gradient.", part: "D", course: "K2", available: true, isFree: false },
+  { no: "D7", slug: "D7-backpropagation", title: "Backpropagation", english: "Lan truyền ngược", blurb: "Forward ra ℒ, backward bằng quy tắc chuỗi ra mọi gradient.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D8", slug: "D8-backprop-mlp", title: "Backprop qua MLP nhiều lớp", english: "Backprop MLP", blurb: "δ lan ngược qua từng lớp ẩn.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D9", slug: "D9-backprop-softmax-ce", title: "Backprop qua Softmax + CE", english: "Softmax grad", blurb: "Rút gọn đẹp: g = p − y.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D10", slug: "D10-sgd", title: "SGD vanilla (1 mini-batch)", english: "SGD", blurb: "Trung bình gradient cả batch → một bước cập nhật.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D11", slug: "D11-momentum", title: "Momentum", english: "Momentum", blurb: "v ← βv + ∇; θ ← θ − ηv — quán tính giúp đi nhanh.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D12", slug: "D12-rmsprop", title: "RMSProp", english: "RMSProp", blurb: "Chia bước theo √(trung bình ∇²) từng tham số.", part: "D", course: "K2", available: true, isFree: false },
-  { no: "23", slug: "23-adam-mot-buoc", title: "Adam — một bước cập nhật", english: "Adam", blurb: "m, v, hiệu chỉnh bias, bước thích nghi θ ← θ − η·m̂/√v̂.", part: "D", course: "K2", available: true, isFree: false },
+  { no: "D13", slug: "D13-adam-mot-buoc", title: "Adam — một bước cập nhật", english: "Adam", blurb: "m, v, hiệu chỉnh bias, bước thích nghi θ ← θ − η·m̂/√v̂.", part: "D", course: "K2", available: true, isFree: false },
   { no: "D14", slug: "D14-adamw", title: "AdamW (weight decay)", english: "AdamW", blurb: "Tách phạt trọng số ra khỏi gradient của Adam.", part: "D", course: "K2", available: true, isFree: false },
 
   // ── PHẦN E · Huấn luyện & chuẩn hóa (K2) ────────────────────────────────
@@ -128,14 +128,14 @@ export const LESSONS: Lesson[] = [
   { no: "E4", slug: "E4-l1-regularization", title: "L1 regularization", english: "L1 reg", blurb: "λΣ|w| — đẩy trọng số nhỏ về 0 (thưa).", part: "E", course: "K2", available: true, isFree: false },
   { no: "E5", slug: "E5-dropout", title: "Dropout (mask + scale)", english: "Dropout", blurb: "Nhân mask 0/1 rồi chia (1−p) khi huấn luyện.", part: "E", course: "K2", available: true, isFree: false },
   { no: "E6", slug: "E6-batchnorm", title: "BatchNorm — chuẩn hóa theo batch", english: "BatchNorm", blurb: "μ, σ trên batch rồi γ, β.", part: "E", course: "K2", available: true, isFree: false },
-  { no: "20", slug: "20-layernorm", title: "LayerNorm / RMSNorm", english: "Normalization", blurb: "Chuẩn hóa theo hàng: μ, σ, γ, β; RMSNorm rẻ hơn.", part: "E", course: "K2", available: true, isFree: false },
+  { no: "E7", slug: "E7-layernorm", title: "LayerNorm / RMSNorm", english: "Normalization", blurb: "Chuẩn hóa theo hàng: μ, σ, γ, β; RMSNorm rẻ hơn.", part: "E", course: "K2", available: true, isFree: false },
   { no: "E8", slug: "E8-learning-rate-schedule", title: "Learning rate schedule (step / cosine)", english: "LR schedule", blurb: "Tính η tại bước t theo lịch.", part: "E", course: "K2", available: true, isFree: false },
   { no: "E9", slug: "E9-gradient-clipping", title: "Gradient clipping", english: "Clip", blurb: "Cắt gradient theo chuẩn ‖g‖ để tránh nổ.", part: "E", course: "K2", available: true, isFree: false },
   { no: "E10", slug: "E10-mini-batch", title: "Mini-batch vs full-batch", english: "Batching", blurb: "Trung bình gradient theo cỡ batch khác nhau.", part: "E", course: "K2", available: true, isFree: false },
   { no: "E11", slug: "E11-early-stopping", title: "Early stopping", english: "Early stop", blurb: "Đọc đường train/val, chọn điểm dừng.", part: "E", course: "K2", available: true, isFree: false },
 
   // ── PHẦN F · Thị giác máy tính / CNN (K2) ───────────────────────────────
-  { no: "16", slug: "16-cnn-tich-chap", title: "CNN — một bộ lọc", english: "Convolution", blurb: "Trượt kernel 3×3 → feature map → ReLU → max-pool.", part: "F", course: "K2", available: true, isFree: false },
+  { no: "F1", slug: "F1-cnn-tich-chap", title: "CNN — một bộ lọc", english: "Convolution", blurb: "Trượt kernel 3×3 → feature map → ReLU → max-pool.", part: "F", course: "K2", available: true, isFree: false },
   { no: "F2", slug: "F2-kich-thuoc-dau-ra", title: "Kích thước đầu ra (stride, padding)", english: "Output size", blurb: "(W − K + 2P)/S + 1.", part: "F", course: "K2", available: true, isFree: false },
   { no: "F3", slug: "F3-conv-nhieu-kenh", title: "Conv nhiều kênh (RGB)", english: "Multi-channel", blurb: "Cộng tích chập trên 3 kênh màu.", part: "F", course: "K2", available: true, isFree: false },
   { no: "F4", slug: "F4-nhieu-bo-loc", title: "Nhiều bộ lọc → nhiều feature map", english: "Filters", blurb: "Mỗi filter cho một bản đồ đặc trưng.", part: "F", course: "K2", available: true, isFree: false },
@@ -147,10 +147,10 @@ export const LESSONS: Lesson[] = [
   { no: "F10", slug: "F10-dem-tham-so-conv", title: "Đếm tham số một lớp conv", english: "Conv params", blurb: "K·K·Cᵢₙ·Cₒᵤₜ + bias.", part: "F", course: "K2", available: true, isFree: false },
 
   // ── PHẦN G · Dữ liệu chuỗi / RNN-LSTM (K2; embedding ở K3) ───────────────
-  { no: "19", slug: "19-embedding-vitri", title: "Embedding & Positional", english: "Embedding", blurb: "Tra bảng token → vectơ, cộng dấu vị trí sin/cos.", part: "G", course: "K3", available: true, isFree: false },
-  { no: "21", slug: "21-rnn-mot-buoc", title: "RNN — một bước hồi quy", english: "Recurrent", blurb: "hₜ = tanh(Wₓxₜ + Wₕhₜ₋₁ + b): ký ức qua thời gian.", part: "G", course: "K2", available: true, isFree: false },
+  { no: "G1", slug: "G1-embedding-vitri", title: "Embedding & Positional", english: "Embedding", blurb: "Tra bảng token → vectơ, cộng dấu vị trí sin/cos.", part: "G", course: "K3", available: true, isFree: false },
+  { no: "G2", slug: "G2-rnn-mot-buoc", title: "RNN — một bước hồi quy", english: "Recurrent", blurb: "hₜ = tanh(Wₓxₜ + Wₕhₜ₋₁ + b): ký ức qua thời gian.", part: "G", course: "K2", available: true, isFree: false },
   { no: "G3", slug: "G3-bptt", title: "RNN trải nhiều bước (BPTT)", english: "BPTT", blurb: "Chạy 3 bước, thấy gradient nhân chuỗi qua thời gian.", part: "G", course: "K2", available: true, isFree: false },
-  { no: "22", slug: "22-lstm-mot-o-nho", title: "LSTM — một ô nhớ", english: "Long Short-Term Memory", blurb: "Cổng quên / vào / ra với số thật; băng chuyền ký ức.", part: "G", course: "K2", available: true, isFree: false },
+  { no: "G4", slug: "G4-lstm-mot-o-nho", title: "LSTM — một ô nhớ", english: "Long Short-Term Memory", blurb: "Cổng quên / vào / ra với số thật; băng chuyền ký ức.", part: "G", course: "K2", available: true, isFree: false },
   { no: "G5", slug: "G5-gru", title: "GRU 1 ô", english: "GRU", blurb: "Cổng cập nhật / đặt lại — gọn hơn LSTM.", part: "G", course: "K2", available: true, isFree: false },
   { no: "G6", slug: "G6-birnn", title: "Bi-directional RNN", english: "BiRNN", blurb: "Gộp hai chiều xuôi/ngược của chuỗi.", part: "G", course: "K2", available: true, isFree: false },
   { no: "G7", slug: "G7-seq2seq", title: "Seq2seq encoder → decoder", english: "Seq2seq", blurb: "Nén chuỗi → vectơ ngữ cảnh → giải mã.", part: "G", course: "K2", available: true, isFree: false },
@@ -159,11 +159,11 @@ export const LESSONS: Lesson[] = [
 
   // ── PHẦN H · Attention & Transformer (K3) ───────────────────────────────
   { no: "H1", slug: "H1-scaled-dot-product-attention", title: "Scaled dot-product attention", english: "Attention", blurb: "QKᵀ/√d → softmax → ·V (bản chi tiết từng bước).", part: "H", course: "K3", available: true, isFree: false },
-  { no: "11", slug: "11-self-attention", title: "Self-Attention", english: "Tự chú ý", blurb: "Q, K, V → S = QKᵀ → √d → softmax → O = A·V.", part: "H", course: "K3", available: true, isFree: false },
-  { no: "14", slug: "14-khoi-gpt-mask", title: "Khối GPT — Masked Attention", english: "Decoder-only", blurb: "Thêm mask nhân quả → ma trận chú ý tam giác dưới.", part: "H", course: "K3", available: true, isFree: false },
-  { no: "18", slug: "18-multi-head-attention", title: "Multi-Head Attention", english: "Nhiều đầu chú ý", blurb: "Chạy nhiều đầu song song, Concat rồi trộn bằng Wᴼ.", part: "H", course: "K3", available: true, isFree: false },
-  { no: "15", slug: "15-cross-attention", title: "Cross-Attention", english: "Encoder–Decoder", blurb: "Decoder lấy Q hỏi sang bộ nhớ K,V của encoder.", part: "H", course: "K3", available: true, isFree: false },
-  { no: "13", slug: "13-khoi-transformer", title: "Khối Transformer", english: "Encoder block", blurb: "Z=LN(X+Attn), Y=LN(Z+FFN(Z)). Viên gạch của GPT/BERT.", part: "H", course: "K3", available: true, isFree: false },
+  { no: "H2", slug: "H2-self-attention", title: "Self-Attention", english: "Tự chú ý", blurb: "Q, K, V → S = QKᵀ → √d → softmax → O = A·V.", part: "H", course: "K3", available: true, isFree: false },
+  { no: "H3", slug: "H3-khoi-gpt-mask", title: "Khối GPT — Masked Attention", english: "Decoder-only", blurb: "Thêm mask nhân quả → ma trận chú ý tam giác dưới.", part: "H", course: "K3", available: true, isFree: false },
+  { no: "H4", slug: "H4-multi-head-attention", title: "Multi-Head Attention", english: "Nhiều đầu chú ý", blurb: "Chạy nhiều đầu song song, Concat rồi trộn bằng Wᴼ.", part: "H", course: "K3", available: true, isFree: false },
+  { no: "H5", slug: "H5-cross-attention", title: "Cross-Attention", english: "Encoder–Decoder", blurb: "Decoder lấy Q hỏi sang bộ nhớ K,V của encoder.", part: "H", course: "K3", available: true, isFree: false },
+  { no: "H6", slug: "H6-khoi-transformer", title: "Khối Transformer", english: "Encoder block", blurb: "Z=LN(X+Attn), Y=LN(Z+FFN(Z)). Viên gạch của GPT/BERT.", part: "H", course: "K3", available: true, isFree: false },
   { no: "H7", slug: "H7-positional-encoding", title: "Positional Encoding sin/cos (chi tiết)", english: "Positional", blurb: "Tính nhiều vị trí × nhiều tần số.", part: "H", course: "K3", available: true, isFree: false },
   { no: "H8", slug: "H8-rope-rotary", title: "RoPE — Rotary embedding", english: "RoPE", blurb: "Xoay một cặp chiều theo vị trí token.", part: "H", course: "K3", available: true, isFree: false },
   { no: "H9", slug: "H9-padding-mask", title: "Padding mask trong attention", english: "Padding mask", blurb: "Che các token đệm khỏi điểm chú ý.", part: "H", course: "K3", available: true, isFree: false },
@@ -174,7 +174,7 @@ export const LESSONS: Lesson[] = [
   { no: "I1", slug: "I1-bpe-tokenization", title: "Tokenization / BPE", english: "BPE", blurb: "Gộp cặp ký tự hay gặp nhất, từng bước.", part: "I", course: "K3", available: true, isFree: false },
   { no: "I2", slug: "I2-sampling", title: "Logits → softmax → sampling", english: "Sampling", blurb: "top-k, top-p và nhiệt độ τ.", part: "I", course: "K3", available: true, isFree: false },
   { no: "I3", slug: "I3-perplexity", title: "Perplexity", english: "Perplexity", blurb: "exp(trung bình −ln p) — đo độ 'ngạc nhiên'.", part: "I", course: "K3", available: true, isFree: false },
-  { no: "26", slug: "26-mixture-of-experts", title: "Mixture of Experts", english: "MoE", blurb: "Router softmax chọn top-k chuyên gia cho mỗi token.", part: "I", course: "K3", available: true, isFree: false },
+  { no: "I4", slug: "I4-mixture-of-experts", title: "Mixture of Experts", english: "MoE", blurb: "Router softmax chọn top-k chuyên gia cho mỗi token.", part: "I", course: "K3", available: true, isFree: false },
   { no: "I5", slug: "I5-lora", title: "LoRA — cập nhật hạng thấp", english: "LoRA", blurb: "ΔW = B·A với hạng nhỏ, tiết kiệm tham số.", part: "I", course: "K3", available: true, isFree: false },
   { no: "I6", slug: "I6-quantization", title: "Quantization int8", english: "Quantization", blurb: "scale + làm tròn trọng số về số nguyên.", part: "I", course: "K3", available: true, isFree: false },
   { no: "I7", slug: "I7-rag-retrieval", title: "Embedding similarity / RAG retrieval", english: "RAG", blurb: "Cosine giữa truy vấn & tài liệu → chọn top.", part: "I", course: "K3", available: true, isFree: false },
@@ -183,11 +183,11 @@ export const LESSONS: Lesson[] = [
   { no: "I10", slug: "I10-chat-template", title: "Chat template → token hóa", english: "Chat template", blurb: "Gói system/user/assistant thành chuỗi token.", part: "I", course: "K3", available: true, isFree: false },
 
   // ── PHẦN J · Mô hình sinh / Generative (K3) ─────────────────────────────
-  { no: "24", slug: "24-autoencoder-vae", title: "Autoencoder / VAE", english: "Autoencoder", blurb: "Nén x → z → dựng lại; reparam z = μ + σ⊙ε để sinh mẫu.", part: "J", course: "K3", available: true, isFree: false },
+  { no: "J1", slug: "J1-autoencoder-vae", title: "Autoencoder / VAE", english: "Autoencoder", blurb: "Nén x → z → dựng lại; reparam z = μ + σ⊙ε để sinh mẫu.", part: "J", course: "K3", available: true, isFree: false },
   { no: "J2", slug: "J2-vae-reparam-kl", title: "VAE — reparam + KL (chi tiết)", english: "VAE", blurb: "z = μ + σ⊙ε; phạt KL kéo về N(0,1).", part: "J", course: "K3", available: true, isFree: false },
   { no: "J3", slug: "J3-gan", title: "GAN — một bước D và G", english: "GAN", blurb: "Discriminator chấm thật/giả, generator học lừa.", part: "J", course: "K3", available: true, isFree: false },
   { no: "J4", slug: "J4-diffusion-forward", title: "Diffusion: forward (thêm nhiễu)", english: "Forward diffusion", blurb: "xₜ = √ᾱ x₀ + √(1−ᾱ) ε.", part: "J", course: "K3", available: true, isFree: false },
-  { no: "25", slug: "25-diffusion-khu-nhieu", title: "Diffusion — một bước khử nhiễu", english: "Denoising", blurb: "Đoán nhiễu ε → ước lượng x̂₀ → trộn lại ít nhiễu hơn.", part: "J", course: "K3", available: true, isFree: false },
+  { no: "J5", slug: "J5-diffusion-khu-nhieu", title: "Diffusion — một bước khử nhiễu", english: "Denoising", blurb: "Đoán nhiễu ε → ước lượng x̂₀ → trộn lại ít nhiễu hơn.", part: "J", course: "K3", available: true, isFree: false },
   { no: "J6", slug: "J6-noise-schedule", title: "Noise schedule", english: "Noise schedule", blurb: "Tính β, α, ᾱ theo từng bước thời gian.", part: "J", course: "K3", available: true, isFree: false },
   { no: "J7", slug: "J7-ddpm-ddim", title: "Sampling DDPM vs DDIM", english: "DDPM/DDIM", blurb: "So hai cách lấy mẫu khi sinh ảnh.", part: "J", course: "K3", available: true, isFree: false },
 

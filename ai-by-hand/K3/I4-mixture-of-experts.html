@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài 26 — Mixture of Experts (A4 in được)</title>
+<title>Làm toán AI · Bài I4 — Mixture of Experts (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 <style>
   /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
@@ -30,7 +30,7 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: huấn luyện · scale mô hình</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài 26</span><h1>Mixture of Experts <small>— bộ định tuyến chọn top-k chuyên gia</small></h1></div>
+  <div class="wb-title"><span class="no">Bài I4</span><h1>Mixture of Experts <small>— bộ định tuyến chọn top-k chuyên gia</small></h1></div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
   <div class="intro">
@@ -116,7 +116,7 @@
     <svg id="figMoE" class="fig" viewBox="0 0 270 104" width="126mm" height="48mm" aria-label="token vào router, router tỏa sang ba chuyên gia; hai chuyên gia điểm cao được tô đậm và nối tới ô tổng có trọng số, chuyên gia bị loại mờ đi"></svg>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 26 · Mixture of Experts</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -125,7 +125,7 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài 26</span><h1>Mixture of Experts <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài I4</span><h1>Mixture of Experts <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
   <div class="step">
@@ -163,10 +163,10 @@
     <b style="color:var(--accent2)">Rút ra.</b> MoE tách rời <b>dung lượng</b> (tổng số tham số, rất lớn) khỏi <b>chi phí tính</b> (chỉ k chuyên gia
     chạy mỗi token). Router học cách phân công — token khác nhau đi tới nhóm chuyên gia khác nhau, nên cần thêm
     "cân tải" để không dồn hết vào một cái. Đây là cách phổ biến để scale LLM lên hàng trăm tỉ tham số mà vẫn suy luận
-    nổi. Mỗi chuyên gia bên trong chính là <b>lớp FFN (Bài 13)</b>; router chỉ là một <b>softmax (Bài 09)</b> nhỏ.
+    nổi. Mỗi chuyên gia bên trong chính là <b>lớp FFN (Bài H6)</b>; router chỉ là một <b>softmax (Bài C10)</b> nhỏ.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài 26 · Mixture of Experts</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>

@@ -6,7 +6,9 @@ import { AdminConfirmButton } from "@/components/admin-order-actions";
 import { AdminFlashSale } from "@/components/admin-flash-sale";
 import { getUser, isAdmin } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
-import { productById } from "@/lib/products";
+import { productById, effectivePriceVnd } from "@/lib/products";
+import { countFreeK1Claims } from "@/lib/orders";
+import { PROMO_FREE_LIMIT } from "@/lib/promo";
 import { db } from "@/lib/db";
 import { orders, profiles } from "@/lib/db/schema";
 import { formatVnd } from "@/lib/utils";
@@ -42,6 +44,7 @@ export default async function AdminPage() {
 
   const pending = rows.filter((r) => r.status === "pending").length;
   const paid = rows.filter((r) => r.status === "paid").length;
+  const freeK1 = await countFreeK1Claims();
   const flash = await getFlashSale();
 
   return (
@@ -50,7 +53,8 @@ export default async function AdminPage() {
       <main className="mx-auto w-full max-w-5xl px-5 py-10 flex-1">
         <h1 className="text-2xl font-bold">Quản trị đơn hàng</h1>
         <p className="text-dim mt-1">
-          {rows.length} đơn · {pending} chờ thanh toán · {paid} đã trả
+          {rows.length} đơn · {pending} chờ thanh toán · {paid} đã trả ·{" "}
+          <b className="text-ink">K1 free đã phát: {freeK1}/{PROMO_FREE_LIMIT}</b>
         </p>
 
         <div className="mt-6">
@@ -80,7 +84,7 @@ export default async function AdminPage() {
               ) : (
                 rows.map((r) => {
                   const prod = productById(r.product);
-                  const priceMismatch = prod != null && r.amountVnd !== prod.priceVnd;
+                  const priceMismatch = prod != null && r.amountVnd !== effectivePriceVnd(prod);
                   return (
                   <tr key={r.id} className="border-t border-line">
                     <td className="px-4 py-3 font-mono font-bold">{r.transferCode}</td>
@@ -91,7 +95,7 @@ export default async function AdminPage() {
                       {priceMismatch && (
                         <span
                           className="ml-1 text-accent-2"
-                          title={`Lệch giá gói ${prod.label} (${formatVnd(prod.priceVnd)})`}
+                          title={`Lệch giá gói ${prod.label} (${formatVnd(effectivePriceVnd(prod))})`}
                         >
                           ⚠️
                         </span>

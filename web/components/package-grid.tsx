@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PRODUCTS, COURSES, coursesOfProduct, type Product } from "@/lib/products";
+import { PRODUCTS, COURSES, coursesOfProduct, effectivePriceVnd, type Product } from "@/lib/products";
 import { formatVnd } from "@/lib/utils";
 
 const courseName = (id: string) => COURSES.find((c) => c.id === id)?.name ?? id;
 
 function PackageCard({ p }: { p: Product }) {
   const courses = coursesOfProduct(p);
+  const price = effectivePriceVnd(p);
   return (
     <div
       className={`relative flex flex-col rounded-2xl border p-5 ${
@@ -29,23 +30,20 @@ function PackageCard({ p }: { p: Product }) {
       {p.tagline && <p className="mt-1 text-xs text-dim">{p.tagline}</p>}
 
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl font-extrabold text-accent">{formatVnd(p.priceVnd)}</span>
-        {p.compareAtVnd && (
+        <span className="text-2xl font-extrabold text-accent">{formatVnd(price)}</span>
+        {p.compareAtVnd && p.compareAtVnd > price && (
           <span className="text-sm text-dim line-through">{formatVnd(p.compareAtVnd)}</span>
         )}
       </div>
-      {p.compareAtVnd && p.compareAtVnd > p.priceVnd && (
+      {p.compareAtVnd && p.compareAtVnd > price && (
         <p className="text-xs text-accent-2 font-semibold mt-0.5">
-          Tiết kiệm {formatVnd(p.compareAtVnd - p.priceVnd)}
+          Tiết kiệm {formatVnd(p.compareAtVnd - price)}
         </p>
       )}
 
       <ul className="mt-3 space-y-1 text-sm text-dim">
         {courses.map((c) => (
-          <li key={c}>
-            {courseName(c)}
-            {c === "K1" && <span className="text-accent-2 font-semibold"> (miễn phí)</span>}
-          </li>
+          <li key={c}>{courseName(c)}</li>
         ))}
       </ul>
 
@@ -81,9 +79,9 @@ export function PackageGrid() {
   return (
     <div>
       <div className="mb-4 rounded-xl border border-accent-2/40 bg-accent-2/5 px-4 py-3 text-sm">
-        <span className="font-mono font-bold text-accent-2">FREE</span>{" "}
+        <span className="font-mono font-bold text-accent-2">🎉 KHAI TRƯƠNG</span>{" "}
         <span className="text-dim">
-          Khóa nền tảng học miễn phí cho mọi người. Nâng cấp khi bạn muốn đi sâu hơn.
+          Tặng 100 suất Khóa 1 miễn phí · sau đó chỉ 49.000đ. Xem thử 3 phiếu đầu không cần mua.
         </span>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">

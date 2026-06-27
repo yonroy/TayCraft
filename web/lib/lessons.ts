@@ -44,10 +44,11 @@ export interface Lesson {
   isFree: boolean;
 }
 
-export const FREE_SLUGS = ["A3-tich-vo-huong", "A7-nhan-ma-tran-bien-doi-2d", "C1-lop-tuyen-tinh"];
+// Xem thử miễn phí: 3 phiếu đầu của K1 (A1, A2, A4) — preview của phễu. Phải khớp isFree trong LESSONS.
+export const FREE_SLUGS = ["A1-vecto-cong-tru", "A2-do-dai-chuan", "A4-cosine-similarity"];
 
-// Khóa mở miễn phí cho MỌI người (lead magnet của phễu). K1 = Nền tảng AI.
-export const FREE_COURSES: Course[] = ["K1"];
+// Khóa mở miễn phí cho MỌI người. Sau khai trương K1 chuyển sang bán → không còn khóa free nào.
+export const FREE_COURSES: Course[] = [];
 
 // Bài này có miễn phí không (free slug riêng lẻ HOẶC thuộc khóa free).
 export function isFreeLesson(l: Lesson): boolean {
@@ -61,11 +62,11 @@ export const LESSONS: Lesson[] = [
   // ── PHẦN A · Toán nền tảng (K1) ─────────────────────────────────────────
   { no: "A1", slug: "A1-vecto-cong-tru", title: "Vectơ: cộng, trừ, nhân vô hướng", english: "Vector ops", blurb: "Cộng/trừ từng ô, nhân hệ số — phép tay nền của mọi bài sau.", part: "A", course: "K1", available: true, isFree: true },
   { no: "A2", slug: "A2-do-dai-chuan", title: "Độ dài & chuẩn", english: "Norm (L1, L2)", blurb: "Tính √(Σx²) và Σ|x| — đo độ lớn của một vectơ.", part: "A", course: "K1", available: true, isFree: true },
-  { no: "A3", slug: "A3-tich-vo-huong", title: "Tích vô hướng", english: "Dot Product", blurb: "Nhân từng cặp rồi cộng → một con số. Viên gạch của mọi phép tính AI.", part: "A", course: "K1", available: true, isFree: true },
+  { no: "A3", slug: "A3-tich-vo-huong", title: "Tích vô hướng", english: "Dot Product", blurb: "Nhân từng cặp rồi cộng → một con số. Viên gạch của mọi phép tính AI.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A4", slug: "A4-cosine-similarity", title: "Cosine similarity", english: "Cosine", blurb: "dot ÷ (‖a‖‖b‖) → độ giống nhau về hướng giữa hai vectơ.", part: "A", course: "K1", available: true, isFree: true },
   { no: "A5", slug: "A5-phep-chieu", title: "Phép chiếu vectơ", english: "Projection", blurb: "(a·b/‖b‖²)·b — bóng của a lên hướng b.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A6", slug: "A6-ma-tran-chuyen-vi", title: "Ma trận chuyển vị", english: "Transpose", blurb: "Lật hàng ↔ cột — thao tác xuất hiện khắp attention/backprop.", part: "A", course: "K1", available: true, isFree: false },
-  { no: "A7", slug: "A7-nhan-ma-tran-bien-doi-2d", title: "Nhân ma trận", english: "Matrix Multiplication", blurb: "Xếp nhiều tích vô hướng: Cᵢⱼ = hàng i · cột j.", part: "A", course: "K1", available: true, isFree: true },
+  { no: "A7", slug: "A7-nhan-ma-tran-bien-doi-2d", title: "Nhân ma trận", english: "Matrix Multiplication", blurb: "Xếp nhiều tích vô hướng: Cᵢⱼ = hàng i · cột j.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A8", slug: "A8-ma-tran-nhan-vecto", title: "Ma trận × vectơ", english: "Matvec", blurb: "Mỗi hàng một tích vô hướng → vectơ kết quả.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A9", slug: "A9-dinh-thuc-nghich-dao", title: "Định thức & nghịch đảo 2×2", english: "Determinant", blurb: "ad − bc, rồi công thức nghịch đảo ma trận 2×2.", part: "A", course: "K1", available: true, isFree: false },
   { no: "A10", slug: "A10-he-phuong-trinh", title: "Hệ phương trình tuyến tính nhỏ", english: "Linear system", blurb: "Khử Gauss cho hệ 2×2 bằng tay.", part: "A", course: "K1", available: true, isFree: false },
@@ -94,7 +95,7 @@ export const LESSONS: Lesson[] = [
   { no: "B11", slug: "B11-gradient-boosting", title: "Gradient Boosting — ý tưởng", english: "Boosting", blurb: "Khớp phần dư của mô hình trước, một bước.", part: "B", course: "K1", available: true, isFree: false },
 
   // ── PHẦN C · Nơ-ron & MLP (K1) ──────────────────────────────────────────
-  { no: "C1", slug: "C1-lop-tuyen-tinh", title: "Lớp tuyến tính", english: "y = Wx + b", blurb: "Khối Lego của deep learning: W trộn đầu vào, b dịch chuyển.", part: "C", course: "K1", available: true, isFree: true },
+  { no: "C1", slug: "C1-lop-tuyen-tinh", title: "Lớp tuyến tính", english: "y = Wx + b", blurb: "Khối Lego của deep learning: W trộn đầu vào, b dịch chuyển.", part: "C", course: "K1", available: true, isFree: false },
   { no: "C2", slug: "C2-sigmoid", title: "Sigmoid chi tiết + đạo hàm", english: "Sigmoid", blurb: "σ(z) và σ'(z) = σ(1−σ).", part: "C", course: "K1", available: true, isFree: false },
   { no: "C3", slug: "C3-tanh", title: "Tanh + đạo hàm", english: "Tanh", blurb: "tanh(z) và đạo hàm 1 − tanh².", part: "C", course: "K1", available: true, isFree: false },
   { no: "C4", slug: "C4-ham-kich-hoat", title: "Hàm kích hoạt", english: "Activation", blurb: "ReLU = max(0,z), sigmoid ép về (0,1). Vì sao cần phi tuyến.", part: "C", course: "K1", available: true, isFree: false },

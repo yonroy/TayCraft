@@ -4,7 +4,7 @@ import { getUser, ownsProduct } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { generateTransferCode, vietqrImageUrl, bankInfo, paymentContent } from "@/lib/vietqr";
-import { DEFAULT_PRODUCT, productById, isActiveProduct } from "@/lib/products";
+import { DEFAULT_PRODUCT, productById, isActiveProduct, effectivePriceVnd } from "@/lib/products";
 
 function orderResponse(o: { id: string; amountVnd: number; transferCode: string }) {
   const content = paymentContent(o.transferCode); // vd "SEVQR TCABC123" cho VietinBank
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     try {
       const [created] = await db
         .insert(orders)
-        .values({ userId: user.id, product: productId, amountVnd: product.priceVnd, transferCode })
+        .values({ userId: user.id, product: productId, amountVnd: effectivePriceVnd(product), transferCode })
         .returning();
       return orderResponse(created);
     } catch {

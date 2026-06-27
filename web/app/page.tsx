@@ -7,6 +7,7 @@ import { PackageGrid } from "@/components/package-grid";
 import { Reviews } from "@/components/reviews";
 import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
+import { LaunchPopup } from "@/components/launch-popup";
 import { TOTAL_AVAILABLE } from "@/lib/lessons";
 import { productById } from "@/lib/products";
 import { getFlashSale } from "@/lib/settings";
@@ -31,6 +32,7 @@ export default async function Home() {
         countdownMinutes={flash.countdownMinutes}
       />
       <SiteHeader />
+      <LaunchPopup />
 
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-5 pt-16 pb-12 text-center">
@@ -49,13 +51,15 @@ export default async function Home() {
           <Link href="/checkout">
             <Button size="lg">Mua trọn bộ · {formatVnd(PRICE)}</Button>
           </Link>
-          <Link href="/learn/01-tich-vo-huong">
+          <Link href="/learn/A1-vecto-cong-tru">
             <Button size="lg" variant="outline">
               Xem thử miễn phí →
             </Button>
           </Link>
         </div>
-        <p className="mt-3 text-sm text-dim">Khóa 1 học miễn phí · thanh toán QR chuyển khoản</p>
+        <p className="mt-3 text-sm text-dim">
+          🎉 Khai trương: tặng 100 suất Khóa 1 · sau đó chỉ 49.000đ · thanh toán QR chuyển khoản
+        </p>
       </section>
 
       {/* Features */}
@@ -77,7 +81,7 @@ export default async function Home() {
           )}
         </div>
         <p className="text-dim mt-1">
-          Khóa nền tảng học miễn phí. Nâng cấp khi bạn muốn đi sâu hơn — trả một lần, không thuê bao.
+          Xem thử 3 phiếu đầu miễn phí. Khai trương: Khóa 1 chỉ 49.000đ — trả một lần, không thuê bao.
         </p>
         <p className="text-sm text-dim mt-2">
           <b className="text-ink">Phiếu là gì?</b> Mỗi phiếu là một bài tập in A4: bạn tự điền số bằng

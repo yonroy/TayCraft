@@ -1,3 +1,12 @@
+// VietinBank + SePay: chỉ ghi nhận biến động khi nội dung CK BẮT ĐẦU bằng từ khóa SEVQR.
+// Đặt TRANSFER_PREFIX="" nếu ngân hàng nhận không cần tiền tố (vd MB/ACB/OCB).
+const TRANSFER_PREFIX = (process.env.TRANSFER_PREFIX ?? "SEVQR").trim();
+
+// Nội dung CK hiển thị + encode vào QR = [prefix] + mã đơn. Mã TCxxxxxx vẫn nằm trong đó để webhook khớp.
+export function paymentContent(transferCode: string): string {
+  return TRANSFER_PREFIX ? `${TRANSFER_PREFIX} ${transferCode}` : transferCode;
+}
+
 // Sinh link ảnh QR chuyển khoản qua dịch vụ ảnh miễn phí của VietQR (không cần API key).
 // Tài liệu: https://www.vietqr.io/danh-sach-api/link-tao-ma-nhanh/
 export function vietqrImageUrl(opts: {

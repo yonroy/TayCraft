@@ -3,15 +3,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getUser, hasAccess } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { generateTransferCode, vietqrImageUrl, bankInfo } from "@/lib/vietqr";
+import { generateTransferCode, vietqrImageUrl, bankInfo, paymentContent } from "@/lib/vietqr";
 import { DEFAULT_PRODUCT, productById, isActiveProduct } from "@/lib/products";
 
 function orderResponse(o: { id: string; amountVnd: number; transferCode: string }) {
+  const content = paymentContent(o.transferCode); // vd "SEVQR TCABC123" cho VietinBank
   return NextResponse.json({
     id: o.id,
     amountVnd: o.amountVnd,
     transferCode: o.transferCode,
-    qrUrl: vietqrImageUrl({ amount: o.amountVnd, addInfo: o.transferCode }),
+    transferContent: content,
+    qrUrl: vietqrImageUrl({ amount: o.amountVnd, addInfo: content }),
     bank: bankInfo(),
   });
 }

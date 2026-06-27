@@ -20,6 +20,7 @@ interface OrderData {
   id: string;
   amountVnd: number;
   transferCode: string;
+  transferContent: string; // nội dung CK đầy đủ hiển thị (có tiền tố SEVQR nếu VietinBank)
   qrUrl: string;
   bank: { bank: string; account: string; accountName: string };
 }
@@ -146,15 +147,15 @@ export function QrCheckout({ product }: { product?: string }) {
         />
         <Row
           label="Nội dung CK"
-          value={order.transferCode}
+          value={order.transferContent}
           highlight
-          onCopy={() => copy(order.transferCode, "code")}
+          onCopy={() => copy(order.transferContent, "code")}
           copied={copied === "code"}
         />
       </dl>
 
       <p className="mt-5 text-xs text-dim text-center">
-        ⚠️ Nhập đúng <b>nội dung chuyển khoản</b> để hệ thống nhận diện đơn của bạn.
+        ⚠️ Giữ <b>nguyên nội dung chuyển khoản</b> (cả từ khóa đầu) để hệ thống nhận diện đơn của bạn.
       </p>
 
       <div className="mt-4 flex items-center justify-center gap-2 text-dim text-sm">

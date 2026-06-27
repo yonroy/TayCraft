@@ -1,22 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · k-means — một vòng lặp</title>
-<link rel="stylesheet" href="../wb-canvas.css">
-<style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:3px;}
-  .ublk{display:inline-block;min-width:40px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .c1{color:#0e7490;font-weight:700;} .c2{color:#b45309;font-weight:700;}
-</style>
+<title>Làm toán AI · Bài B5 — k-means 1 vòng (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 </head>
 <body>
 
@@ -26,186 +14,260 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>k-means — một vòng lặp</h1><span class="vi">— k-means clustering</span>
-    <span class="tag">gán cụm → cập nhật tâm · k=2</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> k-means là thuật toán <b>gom cụm không giám sát</b> kinh điển: lặp hai bước —
-    (1) gán mỗi điểm vào tâm gần nhất, (2) dời tâm về trung bình cụm — đến khi ổn định. Đây là ví dụ rõ nhất của
-    <b>EM (Expectation–Maximization)</b> và ý tưởng "vector hóa rồi gom nhóm" dùng khắp AI.
-    <div class="fm">Gán: cụm(xᵢ) = argminⱼ ‖xᵢ − cⱼ‖² &nbsp;|&nbsp; Cập nhật: cⱼ = trung bình các điểm thuộc cụm j</div>
+  <div class="wb-title"><span class="no">Bài B5</span><h1>k-means 1 vòng <small>— k-means clustering</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Nhiều khi ta có dữ liệu nhưng <b>không có nhãn</b>. k-means tự tìm cấu trúc nhóm — nền của
+    phân khúc khách hàng, nén màu ảnh, khởi tạo cho nhiều thuật toán khác.
+    <div class="formula">
+      Gán: cụm(xᵢ) = argminⱼ ‖xᵢ − μⱼ‖ &nbsp;&nbsp;|&nbsp;&nbsp; Cập nhật: μⱼ = trung bình các điểm thuộc cụm j
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Mỗi tâm "kéo" các điểm gần mình về phía nó, rồi tự dời tới giữa nhóm vừa nhận. Lặp lại → các tâm trượt
-    dần vào "lõi" của từng đám điểm. Dùng <b>d²</b> để gán (không cần khai căn).
+    Hai vòng xen kẽ: (1) mỗi điểm <b>chọn tâm gần nhất</b> làm nhà; (2) mỗi tâm <b>dời về giữa</b> đám con của mình.
+    Lặp tới khi không ai đổi nhà → cụm ổn định.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><span class="c1">✕ tâm c₁</span>, <span class="c2">✕ tâm c₂</span> (ban đầu).
-      Điểm tô màu theo tâm gần hơn. Mũi tên = tâm dời về trung bình cụm.</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">CHO SẴN — tâm ban đầu</div>
-      <div class="expr">c₁ = (<span data-q="c1x">1</span>, <span data-q="c1y">1</span>) &nbsp;·&nbsp;
-        c₂ = (<span data-q="c2x">5</span>, <span data-q="c2y">5</span>)</div>
-
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 1 — GÁN (d² nhỏ hơn)</div>
-      <table class="dtbl" id="tbl">
-        <tr><th>điểm</th><th>(x,y)</th><th>d² → c₁</th><th>d² → c₂</th><th>cụm</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:6px">BƯỚC 2 — CẬP NHẬT TÂM (trung bình)</div>
-      <div class="expr">
-        c₁′ = tb(cụm 1) = <span class="ublk" id="n1B" style="min-width:110px"></span><br>
-        c₂′ = tb(cụm 2) = <span class="ublk" id="n2B" style="min-width:110px"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Cụm 1 có mấy điểm? <span class="ublk" id="cntB" style="min-width:40px"></span></li>
-        </ol>
+  <!-- BƯỚC 0 — cho sẵn -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn &amp; tâm khởi tạo</h2><span class="tag">4 điểm, k=2</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">điểm (x, y)</div>
+        <div class="mtx c2" style="--cell:16mm">
+          <div class="cell given" data-q="x1">1</div><div class="cell given" data-q="y1">1</div>
+          <div class="cell given" data-q="x2">2</div><div class="cell given" data-q="y2">1</div>
+          <div class="cell given" data-q="x3">5</div><div class="cell given" data-q="y3">4</div>
+          <div class="cell given" data-q="x4">6</div><div class="cell given" data-q="y4">5</div>
+        </div></div>
+      <div class="calc" style="flex:1">
+        P₁(<span data-q="x1">1</span>,<span data-q="y1">1</span>) · P₂(<span data-q="x2">2</span>,<span data-q="y2">1</span>) ·
+        P₃(<span data-q="x3">5</span>,<span data-q="y3">4</span>) · P₄(<span data-q="x4">6</span>,<span data-q="y4">5</span>)<br>
+        Tâm đầu: μ₁ = (<span data-q="x1">1</span>,<span data-q="y1">1</span>) &nbsp; μ₂ = (<span data-q="x4">6</span>,<span data-q="y4">5</span>)
+        <div class="why" style="margin-top:5px"><b>Vì sao:</b> dùng <b>d²</b> (bình phương khoảng cách) để so — đỡ phải khai căn, kết quả so sánh vẫn đúng.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · k-means</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="grid2">
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Gán theo tâm gần nhất</h2><span class="tag">so d²</span></div>
+    <div class="calc">
+      P₂→μ₁: d² = <span class="blk"></span> &nbsp;|&nbsp; →μ₂: <span class="blk"></span> → cụm <span class="blk" style="min-width:24px"></span><br>
+      P₃→μ₁: d² = <span class="blk"></span> &nbsp;|&nbsp; →μ₂: <span class="blk"></span> → cụm <span class="blk" style="min-width:24px"></span><br>
+      Cụm 1 = <span class="blk" style="min-width:70px"></span> &nbsp; Cụm 2 = <span class="blk" style="min-width:70px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> mỗi điểm về tâm gần hơn để giảm tổng khoảng cách <i>nội cụm</i> (within-cluster).</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Dời tâm về trung bình</h2><span class="tag">mean cụm</span></div>
+    <div class="calc">
+      μ₁ = ((<span data-q="x1">1</span>+<span data-q="x2">2</span>)/2, (<span data-q="y1">1</span>+<span data-q="y2">1</span>)/2) = (<span class="blk"></span>, <span class="blk"></span>)<br>
+      μ₂ = ((<span data-q="x3">5</span>+<span data-q="x4">6</span>)/2, (<span data-q="y3">4</span>+<span data-q="y4">5</span>)/2) = (<span class="blk"></span>, <span class="blk"></span>)
+    </div>
+    <div class="hint"><b>Mẹo:</b> tâm mới = trung bình tọa độ các điểm trong cụm; chỉ tính trên đúng các điểm đã gán.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B5 · k-means 1 vòng</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>k-means — tiếp theo</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B5</span><h1>k-means 1 vòng <small>— hội tụ &amp; hình</small></h1></div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Vòng tiếp có đổi cụm?</h2><span class="tag">kiểm hội tụ</span></div>
+    <div class="calc">
+      Gán lại 4 điểm với tâm mới (μ₁, μ₂ ở Bước 2): có điểm nào đổi cụm không? → <span class="blk" style="min-width:60px"></span><br>
+      Kết luận: <span class="blk" style="min-width:200px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> khi không điểm nào đổi nhà, tâm không dời nữa → thuật toán <b>hội tụ</b>, dừng.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vẽ 4 điểm &amp; đánh dấu tâm</h2><span class="tag">2 cụm</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="bốn điểm cho sẵn, khung trống để tự đánh dấu tâm và tô cụm"></svg>
+      <div style="flex:1">
+        <div class="why"><b>Vì sao:</b> nhìn hình thấy rõ hai cụm tách nhau → tâm dời về giữa mỗi đám.</div>
+        <div class="note">Tự đánh dấu tâm cũ (× lam = P₁, P₄), tâm mới (★ cam) và tô màu cụm cho 4 điểm.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TỰ KIỂM TRA -->
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>k-means có cần nhãn không? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Khi nào dừng vòng lặp? → <span class="blk" style="min-width:200px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B5 · k-means 1 vòng</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>k-means — một vòng lặp</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B5</span><h1>k-means 1 vòng <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Mỗi vòng làm tổng d² (inertia) giảm hoặc giữ nguyên → đảm bảo hội tụ (về cực tiểu cục bộ). Khởi tạo tâm khác → kết quả khác.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Gán theo tâm gần nhất</h2></div>
+    <div class="calc ans">
+      P₂→μ₁: <span class="blk" data-q="dP2m1">1</span> &nbsp;|&nbsp; →μ₂: <span class="blk" data-q="dP2m2">32</span> → <span class="blk" data-q="cP2">cụm 1</span><br>
+      P₃→μ₁: <span class="blk" data-q="dP3m1">25</span> &nbsp;|&nbsp; →μ₂: <span class="blk" data-q="dP3m2">2</span> → <span class="blk" data-q="cP3">cụm 2</span><br>
+      Cụm 1 = <span class="blk" data-q="c1">{P₁, P₂}</span> &nbsp; Cụm 2 = <span class="blk" data-q="c2">{P₃, P₄}</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">GÁN (điền đủ)</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>điểm</th><th>(x,y)</th><th>d² → c₁</th><th>d² → c₂</th><th>cụm</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Tâm mới</h2></div>
+    <div class="calc ans">
+      μ₁ = (<span class="blk" data-q="m1x">1.5</span>, <span class="blk" data-q="m1y">1</span>) &nbsp;|&nbsp;
+      μ₂ = (<span class="blk" data-q="m2x">5.5</span>, <span class="blk" data-q="m2y">4.5</span>)
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">TÂM MỚI</div>
-      <div class="expr">
-        c₁′ = <b><span data-q="kn1">?</span></b> &nbsp;(<span data-q="kg1">?</span>)<br>
-        c₂′ = <b><span data-q="kn2">?</span></b> &nbsp;(<span data-q="kg2">?</span>)
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Vòng tiếp có đổi cụm?</h2></div>
+    <div class="calc ans">
+      Gán lại với tâm mới → các điểm <b>giữ nguyên cụm</b> → đã <b>hội tụ</b>, dừng.
+    </div>
+    <div class="why"><b>Vì sao:</b> khi không điểm nào đổi nhà, tâm không dời nữa → thuật toán dừng.</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Cụm 1 có <span class="qa" id="kcntQA">?</span> điểm.</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Lặp gán↔cập nhật cho tới khi tâm không đổi. k-means nhạy với khởi tạo (dùng k-means++) và giả định
-        cụm "tròn". Ý tưởng gom vector theo khoảng cách quay lại ở <b>vector quantization</b> và <b>tokenizer</b>.
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hình minh họa</h2><span class="tag">2 cụm</span></div>
+    <div class="figrow">
+      <svg id="figK" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="bốn điểm, tâm cũ dấu × và tâm mới dấu sao, nối điểm tới tâm"></svg>
+      <div style="flex:1">
+        <div class="note"><b style="color:var(--accent)">× lam</b> = tâm cũ, <b style="color:var(--accent2)">★ cam</b> = tâm mới đã dời về giữa cụm.
+        Mỗi đường nối điểm tới tâm cụm của nó.</div>
+        <div class="why"><b>Vì sao:</b> k-means nhạy với <b>tâm khởi tạo</b>; khởi tạo xấu có thể ra cụm kém → chạy nhiều lần, chọn kết quả tốt nhất.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · k-means</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>k-means có cần nhãn không? → <span class="qa">Không — đây là học không giám sát.</span></li>
+      <li>Khi nào dừng? → <span class="qa">Khi không điểm nào đổi cụm (tâm không dời nữa).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> k-means = lặp <b>gán-rồi-dời-tâm</b> tới hội tụ; đơn giản nhưng phụ thuộc khởi tạo &amp; số cụm k.
+    Bài tiếp (B6): giảm chiều dữ liệu bằng <b>PCA</b> (dùng trị riêng A11).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B5 · k-means 1 vòng</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var PTS,C1,C2,G1,G2;
-function f1(v){var r=Math.round(v*10)/10; return (r===Math.round(r))?String(r):r.toFixed(1);}
-
 function generate(){
-  var ok=false,tries=0;
-  while(!ok && tries++<300){
-    C1={x:WB.randInt(0,2), y:WB.randInt(0,2)};
-    C2={x:WB.randInt(4,6), y:WB.randInt(4,6)};
-    // 3 điểm quanh c1, 3 điểm quanh c2
-    var pts=[], used={};
-    function near(cx,cy){
-      var x,y,g=0; do{ x=cx+WB.randInt(-1,2); y=cy+WB.randInt(-1,2); g++; }
-      while((used[x+','+y]||x<0||y<0||x>6||y>6)&&g<40);
-      used[x+','+y]=1; return {x:x,y:y};
-    }
-    for(var j=0;j<3;j++) pts.push(near(C1.x,C1.y));
-    for(var j=0;j<3;j++) pts.push(near(C2.x,C2.y));
-    // gán theo d²
-    var g1=[],g2=[];
-    var amb=false;
-    pts.forEach(function(p){
-      p.d1=(p.x-C1.x)*(p.x-C1.x)+(p.y-C1.y)*(p.y-C1.y);
-      p.d2=(p.x-C2.x)*(p.x-C2.x)+(p.y-C2.y)*(p.y-C2.y);
-      if(p.d1===p.d2) amb=true;
-      if(p.d1<p.d2){p.g=1;g1.push(p);} else {p.g=2;g2.push(p);}
-    });
-    if(amb||g1.length===0||g2.length===0) continue;
-    PTS=pts; G1=g1; G2=g2; ok=true;
-  }
-  var names='P1 P2 P3 P4 P5 P6'.split(' ');
-  PTS.forEach(function(p,i){p.nm=names[i];});
-
-  function mean(g){var sx=0,sy=0; g.forEach(function(p){sx+=p.x;sy+=p.y;}); return {x:sx/g.length,y:sy/g.length, sx:sx,sy:sy,n:g.length};}
-  var m1=mean(G1), m2=mean(G2);
+  // cụm 1 (dưới-trái), cụm 2 (trên-phải) — tách rõ để hội tụ sau 1 vòng
+  var x1 = WB.randInt(1, 2), y1 = WB.randInt(1, 2);
+  var x2 = x1 + 1,           y2 = y1;
+  var x3 = WB.randInt(5, 6), y3 = WB.randInt(4, 5);
+  var x4 = x3 + 1,           y4 = y3 + 1;
+  // tâm khởi tạo: μ1 = P1, μ2 = P4
+  function d2(ax, ay, bx, by){ return (ax-bx)*(ax-bx) + (ay-by)*(ay-by); }
+  var dP2m1 = d2(x2,y2, x1,y1), dP2m2 = d2(x2,y2, x4,y4);
+  var dP3m1 = d2(x3,y3, x1,y1), dP3m2 = d2(x3,y3, x4,y4);
+  // tâm mới
+  var m1x = (x1+x2)/2, m1y = (y1+y2)/2;
+  var m2x = (x3+x4)/2, m2y = (y3+y4)/2;
 
   WB.setAll({
-    c1x:String(C1.x),c1y:String(C1.y),c2x:String(C2.x),c2y:String(C2.y),
-    kn1:'('+f1(m1.x)+', '+f1(m1.y)+')', kn2:'('+f1(m2.x)+', '+f1(m2.y)+')',
-    kg1:m1.sx+'/'+m1.n+', '+m1.sy+'/'+m1.n, kg2:m2.sx+'/'+m2.n+', '+m2.sy+'/'+m2.n,
-    kcnt:String(G1.length)
+    x1: WB.fmtInt(x1), y1: WB.fmtInt(y1), x2: WB.fmtInt(x2), y2: WB.fmtInt(y2),
+    x3: WB.fmtInt(x3), y3: WB.fmtInt(y3), x4: WB.fmtInt(x4), y4: WB.fmtInt(y4),
+    dP2m1: WB.fmtInt(dP2m1), dP2m2: WB.fmtInt(dP2m2), cP2: 'cụm 1',
+    dP3m1: WB.fmtInt(dP3m1), dP3m2: WB.fmtInt(dP3m2), cP3: 'cụm 2',
+    c1: '{P₁, P₂}', c2: '{P₃, P₄}',
+    m1x: WB.fmtTrim(m1x), m1y: WB.fmtTrim(m1y), m2x: WB.fmtTrim(m2x), m2y: WB.fmtTrim(m2y)
   });
-  C1._new=m1; C2._new=m2;
 
-  buildTbl('tbl',true); buildTbl('ktbl',false);
-  ['n1B','n2B','cntB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  document.getElementById('kcntQA').textContent=String(G1.length);
+  drawKmeans('figK',
+    [[x1,y1],[x2,y2],[x3,y3],[x4,y4]],
+    [[x1,y1],[x4,y4]],           // tâm cũ
+    [[m1x,m1y],[m2x,m2y]],       // tâm mới
+    [0,0,1,1]);                  // gán cụm
 
-  drawKM('sch1',false); drawKM('sch2',true);
+  drawKmeansBlank('figQ', [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]);
 }
 
-function buildTbl(id,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  PTS.forEach(function(p){
-    var tr=document.createElement('tr');
-    var add=function(html,bl,txt){var td=document.createElement('td'); if(bl){td.className='blank';td.textContent=txt;} else td.innerHTML=html; tr.appendChild(td);};
-    add('<b>'+p.nm+'</b>'); add('('+p.x+','+p.y+')');
-    add('', blank, p.d1); add('', blank, p.d2);
-    var cl=p.g===1?'<span class="c1">1</span>':'<span class="c2">2</span>';
-    add(blank?'':cl, blank, p.g);
-    el.appendChild(tr);
+function drawKmeansBlank(id, pts){
+  var box = document.getElementById(id); if(!box) return;
+  var W=200, H=150, pad=16;
+  var xs = pts.map(function(p){return p[0];});
+  var ys = pts.map(function(p){return p[1];});
+  var xmin=Math.min.apply(null,xs)-1.5, xmax=Math.max.apply(null,xs)+1.5;
+  var ymin=Math.min.apply(null,ys)-1.5, ymax=Math.max.apply(null,ys)+1.5;
+  function X(x){ return (pad + (x-xmin)/(xmax-xmin)*(W-2*pad)).toFixed(1); }
+  function Y(y){ return (H-pad - (y-ymin)/(ymax-ymin)*(H-2*pad)).toFixed(1); }
+  var s = '<rect x="3" y="3" width="'+(W-6)+'" height="'+(H-6)+'" fill="none" stroke="#ddd" stroke-width="1"/>';
+  pts.forEach(function(p,i){
+    s += '<circle cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="3" fill="none" stroke="#888" stroke-width="1.3"/>';
+    s += '<text x="'+(parseFloat(X(p[0]))+4)+'" y="'+(parseFloat(Y(p[1]))-3)+'" font-size="8" fill="#444">P'+(i+1)+'</text>';
   });
+  box.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
 }
 
-function drawKM(id,showNew){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=150,pad=16,gw=W-2*pad,gh=H-2*pad;
-  function sx(x){return(pad+x/6*gw).toFixed(1);}
-  function sy(y){return(pad+gh-y/6*gh).toFixed(1);}
-  var s='<defs><marker id="km'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c5cff"/></marker></defs>';
-  for(var g=0;g<=6;g++){
-    s+='<line x1="'+sx(g)+'" y1="'+sy(0)+'" x2="'+sx(g)+'" y2="'+sy(6)+'" stroke="#f0ece2"/>';
-    s+='<line x1="'+sx(0)+'" y1="'+sy(g)+'" x2="'+sx(6)+'" y2="'+sy(g)+'" stroke="#f0ece2"/>';
-  }
-  // điểm theo cụm
-  PTS.forEach(function(p){
-    var col=p.g===1?'#0e7490':'#b45309';
-    s+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="3.5" fill="'+col+'" opacity="0.85"/>';
+function drawKmeans(id, pts, oldC, newC, assign){
+  var box = document.getElementById(id); if(!box) return;
+  var W=200, H=150, pad=16;
+  var xs = pts.concat(oldC, newC).map(function(p){return p[0];});
+  var ys = pts.concat(oldC, newC).map(function(p){return p[1];});
+  var xmin=Math.min.apply(null,xs)-1, xmax=Math.max.apply(null,xs)+1;
+  var ymin=Math.min.apply(null,ys)-1, ymax=Math.max.apply(null,ys)+1;
+  function X(x){ return (pad + (x-xmin)/(xmax-xmin)*(W-2*pad)).toFixed(1); }
+  function Y(y){ return (H-pad - (y-ymin)/(ymax-ymin)*(H-2*pad)).toFixed(1); }
+  var col = ['#0e7490', '#b45309'];
+  var s = '';
+  // đường nối điểm → tâm mới của cụm
+  pts.forEach(function(p,i){
+    var c = newC[assign[i]];
+    s += '<line x1="'+X(p[0])+'" y1="'+Y(p[1])+'" x2="'+X(c[0])+'" y2="'+Y(c[1])+'" stroke="'+col[assign[i]]+'" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.7"/>';
   });
-  function cross(c,col){return '<text x="'+sx(c.x)+'" y="'+(parseFloat(sy(c.y))+4)+'" text-anchor="middle" font-size="13" font-weight="700" fill="'+col+'">✕</text>';}
-  s+=cross(C1,'#0e7490'); s+=cross(C2,'#b45309');
-  if(showNew){
-    s+='<line x1="'+sx(C1.x)+'" y1="'+sy(C1.y)+'" x2="'+sx(C1._new.x)+'" y2="'+sy(C1._new.y)+'" stroke="#7c5cff" stroke-width="1.3" marker-end="url(#km'+id+')"/>';
-    s+='<line x1="'+sx(C2.x)+'" y1="'+sy(C2.y)+'" x2="'+sx(C2._new.x)+'" y2="'+sy(C2._new.y)+'" stroke="#7c5cff" stroke-width="1.3" marker-end="url(#km'+id+')"/>';
-    s+='<circle cx="'+sx(C1._new.x)+'" cy="'+sy(C1._new.y)+'" r="3" fill="none" stroke="#0e7490" stroke-width="1.6"/>';
-    s+='<circle cx="'+sx(C2._new.x)+'" cy="'+sy(C2._new.y)+'" r="3" fill="none" stroke="#b45309" stroke-width="1.6"/>';
-  }
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="k-means một vòng">'+s+'</svg>';
+  // điểm
+  pts.forEach(function(p,i){
+    s += '<circle cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="3.2" fill="'+col[assign[i]]+'"/>';
+    s += '<text x="'+(parseFloat(X(p[0]))+4)+'" y="'+(parseFloat(Y(p[1]))-3)+'" font-size="8" fill="'+col[assign[i]]+'">P'+(i+1)+'</text>';
+  });
+  // tâm cũ (×)
+  oldC.forEach(function(c,i){
+    s += '<text x="'+X(c[0])+'" y="'+(parseFloat(Y(c[1]))+3)+'" text-anchor="middle" font-size="13" fill="#0e7490" font-weight="700">×</text>';
+  });
+  // tâm mới (★)
+  newC.forEach(function(c,i){
+    s += '<text x="'+X(c[0])+'" y="'+(parseFloat(Y(c[1]))+4)+'" text-anchor="middle" font-size="13" fill="#b45309">★</text>';
+  });
+  box.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
 }
 
 WB.wire(generate);

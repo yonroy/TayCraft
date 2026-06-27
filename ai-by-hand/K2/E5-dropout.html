@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Dropout — mask + scale</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài E5 — Dropout (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
-  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .dtbl td.off{background:#eee;color:#999;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -26,155 +23,183 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Dropout</h1><span class="vi">— mask + scale</span>
-    <span class="tag">a' = a · mask / p · (inverted dropout)</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Dropout "tắt" ngẫu nhiên một phần nơ-ron mỗi lượt huấn luyện → mạng không ỷ lại
-    vào vài nơ-ron, học biểu diễn bền hơn (chống overfit). Để kỳ vọng đầu ra <b>không đổi</b>, ta chia phần còn lại
-    cho xác suất giữ p (inverted dropout). Khi suy luận (test) thì <b>tắt</b> dropout.
-    <div class="fm">huấn luyện: a'ᵢ = aᵢ · maskᵢ / p &nbsp;(maskᵢ ∈ {0,1}, P(giữ)=p) &nbsp;·&nbsp; test: dùng a nguyên</div>
+  <div class="wb-title"><span class="no">Bài E5</span><h1>Dropout <small>— tắt ngẫu nhiên + scale</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Mạng dễ "ỷ lại" vài nơ-ron mạnh (đồng thích nghi). Dropout <b>tắt ngẫu nhiên</b> một phần nơ-ron mỗi
+    bước → buộc mỗi nơ-ron tự lực vì bạn của nó có thể biến mất → đặc trưng dư thừa, mạnh mẽ hơn, như huấn luyện một <b>tập hợp</b> mạng con.
+    <div class="formula">
+      Huấn luyện: h' = (mask · h) / (1 − p) &nbsp; (mask ∈ {0,1}, P(0)=p) &nbsp;&nbsp; Suy luận: dùng h nguyên
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Giữ ~p phần nơ-ron, mỗi cái <b>phóng đại 1/p</b> để bù phần bị tắt → tổng kỳ vọng giữ nguyên. Với p=0.5: nửa
-    số nơ-ron tắt, nửa còn lại <b>nhân đôi</b>.
+    Mỗi bước như <b>điểm danh ngẫu nhiên</b>: p phần nơ-ron "nghỉ" (×0), số còn lại làm bù bằng cách <b>phóng to 1/(1−p)</b> để tổng
+    kỳ vọng giữ nguyên. Mạng học cách hoạt động dù thiếu người → bền hơn.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Xám gạch chéo</b> = nơ-ron bị tắt (mask 0) · <b>cam</b> = nơ-ron giữ, phóng đại ×1/p.</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">p = <span data-q="p">0.5</span></span></div>
+    <div class="calc" style="font-size:15px">
+      Kích hoạt h = (<span class="gv" data-q="h1">2</span>, <span class="gv" data-q="h2">4</span>, <span class="gv" data-q="h3">6</span>, <span class="gv" data-q="h4">8</span>) ·
+      mặt nạ rớt mẫu mask = (<span class="gv" data-q="m1">1</span>, <span class="gv" data-q="m2">0</span>, <span class="gv" data-q="m3">1</span>, <span class="gv" data-q="m4">0</span>)
     </div>
-
-    <div class="work">
-      <div class="bandh fw">KÍCH HOẠT · p = <span data-q="p">0.5</span> → 1/p = <span data-q="ip">2</span></div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>i</th><th>aᵢ</th><th>maskᵢ</th><th>aᵢ·maskᵢ</th><th>a'ᵢ = (aᵢ·maskᵢ)/p</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:8px">KIỂM KỲ VỌNG</div>
-      <div class="expr">
-        Σaᵢ (gốc) = <span class="ublk" id="saB"></span> &nbsp;·&nbsp; Σa'ᵢ (lượt này) = <span class="ublk" id="sdB"></span>
-        &nbsp;(dao động quanh Σaᵢ; <b>kỳ vọng</b> = Σaᵢ)
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Khi test (suy luận), dropout được <span class="ublk" style="min-width:50px"></span> (bật/tắt).</li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">mask = 1 giữ nơ-ron, = 0 tắt. Tỉ lệ tắt p = <span class="gv" data-q="p">0.5</span>.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Dropout</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — áp mặt nạ -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Áp mặt nạ</h2><span class="tag">mask · h</span></div>
+    <div class="calc">
+      mask · h = (<span class="blk" style="min-width:38px"></span>, <span class="blk" style="min-width:38px"></span>, <span class="blk" style="min-width:38px"></span>, <span class="blk" style="min-width:38px"></span>)
+    </div>
+    <div class="why"><b>Vì sao:</b> nơ-ron bị tắt đóng góp 0 cho bước này → mạng buộc dùng nơ-ron khác.</div>
+  </div>
+
+  <!-- BƯỚC 2 — scale -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Scale 1/(1−p)</h2><span class="tag">bù lại</span></div>
+    <div class="calc">
+      hệ số = 1/(1 − <span data-q="p">0.5</span>) = <span class="blk" style="min-width:34px"></span>;
+      h' = hệ số · (mask·h) = (<span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:34px"></span>)
+    </div>
+    <div class="hint">Phóng to để <b>kỳ vọng</b> đầu ra không đổi giữa train và test.</div>
+  </div>
+
+  <!-- BƯỚC 3 — kiểm kỳ vọng -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Kiểm kỳ vọng</h2><span class="tag">E[h'ᵢ] = hᵢ</span></div>
+    <div class="calc">
+      E[h'ᵢ] = (1−p)·(hᵢ/(1−p)) + p·0 = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> nhờ scale, trung bình giữ nguyên → không cần chỉnh gì lúc suy luận.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Vì sao phải scale 1/(1−p)? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Lúc suy luận có tắt nơ-ron không? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Dropout</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài E5</span><h1>Dropout <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Mỗi lượt một mask khác → như huấn luyện vô số mạng con chia sẻ trọng số (ensemble ngầm).</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>mask · h</h2></div>
+    <div class="calc ans">(<span class="blk" data-q="mh1">2</span>, <span class="blk" data-q="mh2">0</span>, <span class="blk" data-q="mh3">6</span>, <span class="blk" data-q="mh4">0</span>)</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">KÍCH HOẠT · 1/p = <span data-q="ip">2</span></div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>i</th><th>aᵢ</th><th>maskᵢ</th><th>aᵢ·maskᵢ</th><th>a'ᵢ</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Scale & h'</h2></div>
+    <div class="calc ans">hệ số = <span class="blk" data-q="scale">2</span>; h' = (<span class="blk" data-q="o1">4</span>, <span class="blk" data-q="o2">0</span>, <span class="blk" data-q="o3">12</span>, <span class="blk" data-q="o4">0</span>)</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
-      <div class="expr">
-        Σaᵢ = <span data-q="ksa">?</span> &nbsp;·&nbsp; Σa'ᵢ = <b><span data-q="ksd">?</span></b>
-        &nbsp;·&nbsp; E[a'ᵢ] = p·(aᵢ/p) = <b>aᵢ</b> → kỳ vọng giữ nguyên
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Kỳ vọng</h2></div>
+    <div class="calc ans">E[h'ᵢ] = hᵢ → giữ nguyên trung bình (vd vị trí 1: <span class="blk" data-q="h1b">2</span>)</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Test: dropout <span class="qa">tắt</span> (dùng cả mạng, không mask, không scale).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Dropout = "ensemble ngầm" + bù tỉ lệ 1/p để giữ kỳ vọng. Là cách chống overfit rẻ, nhất là
-        cho lớp fully-connected to. Với CNN/Transformer thường thay bằng BatchNorm/LayerNorm + dropout nhẹ.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Train (tắt + scale) vs Suy luận (đầy đủ)</h2><span class="tag">chỉ train mới tắt</span></div>
+    <div class="figrow">
+      <svg id="figD" class="fig" viewBox="0 0 260 150" width="80mm" height="46mm" aria-label="lúc train vài nơ-ron bị tắt và scale, lúc suy luận dùng cả mạng"></svg>
+      <div style="flex:1">
+        <div class="note">Lúc <b>train</b>: nơ-ron <b>mờ/gạch</b> bị tắt, phần còn lại phóng to ×1/(1−p). Lúc <b>suy luận</b>: dùng <b>cả mạng</b>
+          (không tắt, không scale) → ổn định, tất định. Dropout chỉ là "nhiễu huấn luyện".</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Dropout</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Vì sao scale 1/(1−p)? → <span class="qa">Giữ kỳ vọng đầu ra bằng nhau giữa train và test.</span></li>
+      <li>Suy luận có tắt không? → <span class="qa">Không — dùng cả mạng.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Dropout = tắt ngẫu nhiên + scale lúc train; như huấn luyện tập hợp mạng con → chống overfit.
+    Bài tiếp (E6): chuẩn hóa kích hoạt theo batch — <b style="color:var(--accent2)">BatchNorm</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-function fT(v){return WB.fmtTrim(v);}
-
 function generate(){
-  var p=0.5, ip=2, n=6;
-  var a=[], mask=[];
-  for(var i=0;i<n;i++){ a.push(WB.randInt(1,5)); mask.push(WB.pick([0,1])); }
-  // đảm bảo không phải toàn 0 hay toàn 1 (cho có cả tắt lẫn giữ)
-  if(mask.every(function(m){return m===1;})) mask[WB.randInt(0,n-1)]=0;
-  if(mask.every(function(m){return m===0;})) mask[WB.randInt(0,n-1)]=1;
-  var am=a.map(function(v,i){return v*mask[i];});
-  var ad=am.map(function(v){return v*ip;});
-  var sa=a.reduce(function(s,v){return s+v;},0);
-  var sd=ad.reduce(function(s,v){return s+v;},0);
-
-  buildTbl('qtbl',a,mask,am,ad,true);
-  buildTbl('ktbl',a,mask,am,ad,false);
-  ['saB','sdB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  WB.setAll({ p:fT(p), ip:String(ip), ksa:fI(sa), ksd:fI(sd) });
-
-  drawNeurons('sch1',a,mask,false);
-  drawNeurons('sch2',a,mask,true);
-}
-
-function buildTbl(id,a,mask,am,ad,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  for(var i=0;i<a.length;i++){
-    var tr=document.createElement('tr');
-    var c=[String(i+1), fI(a[i]), String(mask[i]), fI(am[i]), fI(ad[i])];
-    c.forEach(function(v,j){
-      var td=document.createElement('td'); td.textContent=v;
-      if(blank && j>=3) td.className='blank';
-      else if(!blank && mask[i]===0 && j>=3) td.className='off';
-      tr.appendChild(td);
-    });
-    el.appendChild(tr);
+  var p = 0.5, scale = 1/(1-p);
+  var h = [WB.randInt(1,9), WB.randInt(1,9), WB.randInt(1,9), WB.randInt(1,9)];
+  // chọn đúng 2 trong 4 vị trí để tắt (đúng tỉ lệ p=0.5)
+  var idx = [0,1,2,3];
+  for (var i=idx.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=idx[i]; idx[i]=idx[j]; idx[j]=t; }
+  var off = {}; off[idx[0]]=1; off[idx[1]]=1;        // hai vị trí tắt
+  var mask = [0,1,2,3].map(function(k){ return off[k]?0:1; });
+  var mh = [0,1,2,3].map(function(k){ return mask[k]*h[k]; });
+  var o  = mh.map(function(v){ return v*scale; });
+  var set = { p: String(p), scale: WB.fmtTrim(scale) };
+  for (var k=0;k<4;k++){
+    set['h'+(k+1)] = String(h[k]);
+    set['m'+(k+1)] = String(mask[k]);
+    set['mh'+(k+1)] = String(mh[k]);
+    set['o'+(k+1)] = WB.fmtTrim(o[k]);
   }
+  set['h1b'] = String(h[0]);
+  WB.setAll(set);
+  drawDrop('figD', mask);
 }
 
-function drawNeurons(id,a,mask,show){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=132, n=a.length;
-  var cols=n, x0=18, gap=(W-36)/(n-1);
-  var cy=60;
-  var s='';
-  for(var i=0;i<n;i++){
-    var x=x0+i*gap;
-    if(mask[i]===0){
-      s+='<circle cx="'+x.toFixed(1)+'" cy="'+cy+'" r="9" fill="#eee" stroke="#bbb" stroke-width="1.2"/>';
-      s+='<line x1="'+(x-6).toFixed(1)+'" y1="'+(cy-6)+'" x2="'+(x+6).toFixed(1)+'" y2="'+(cy+6)+'" stroke="#999" stroke-width="1.4"/>';
-      s+='<line x1="'+(x-6).toFixed(1)+'" y1="'+(cy+6)+'" x2="'+(x+6).toFixed(1)+'" y2="'+(cy-6)+'" stroke="#999" stroke-width="1.4"/>';
-    } else {
-      s+='<circle cx="'+x.toFixed(1)+'" cy="'+cy+'" r="10" fill="#ffe6cc" stroke="#b45309" stroke-width="1.6"/>';
-      if(show) s+='<text x="'+x.toFixed(1)+'" y="'+(cy+3.5)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#7a3d00">'+(a[i]*2)+'</text>';
+// mạng nhỏ: train tắt vài nơ-ron (mờ), test đầy đủ
+function drawDrop(id, mask){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  function net(ox, label, dim){
+    var s = '<text x="'+(ox+34)+'" y="14" text-anchor="middle" style="font-size:9px" fill="#475569" font-weight="700">'+label+'</text>';
+    var xin = ox+8, xh = ox+38, xo = ox+68;
+    var yin = [40, 100], yh = [28, 64, 100, 130], yo = [64, 100];
+    // cạnh
+    for (var a=0;a<yin.length;a++) for (var b=0;b<yh.length;b++){
+      var faded = dim && (mask[b]===0);
+      s += '<line x1="'+xin+'" y1="'+yin[a]+'" x2="'+xh+'" y2="'+yh[b]+'" stroke="'+(faded?'#e2e8f0':'#cbd2da')+'" stroke-width="0.8"/>';
     }
-    s+='<text x="'+x.toFixed(1)+'" y="'+(cy+24)+'" text-anchor="middle" font-size="7.5" fill="#6b7280">a'+(i+1)+'='+a[i]+'</text>';
+    for (var b2=0;b2<yh.length;b2++) for (var c=0;c<yo.length;c++){
+      var faded2 = dim && (mask[b2]===0);
+      s += '<line x1="'+xh+'" y1="'+yh[b2]+'" x2="'+xo+'" y2="'+yo[c]+'" stroke="'+(faded2?'#e2e8f0':'#cbd2da')+'" stroke-width="0.8"/>';
+    }
+    for (var a3=0;a3<yin.length;a3++) s += '<circle cx="'+xin+'" cy="'+yin[a3]+'" r="5" fill="#0e7490"/>';
+    for (var b3=0;b3<yh.length;b3++){
+      var on = !dim || mask[b3]===1;
+      s += '<circle cx="'+xh+'" cy="'+yh[b3]+'" r="6" fill="'+(on?'#b45309':'#fff')+'" stroke="'+(on?'#b45309':'#cbd2da')+'" stroke-width="1.4"'+(on?'':' stroke-dasharray="2 2"')+'/>';
+      if(!on){ s += '<line x1="'+(xh-5)+'" y1="'+(yh[b3]-5)+'" x2="'+(xh+5)+'" y2="'+(yh[b3]+5)+'" stroke="#94a3b8" stroke-width="1"/>'; }
+    }
+    for (var c2=0;c2<yo.length;c2++) s += '<circle cx="'+xo+'" cy="'+yo[c2]+'" r="5" fill="#7c5cff"/>';
+    return s;
   }
-  s+='<text x="89" y="18" text-anchor="middle" font-size="8.5" fill="#6b7280">giữ ×2 · tắt = 0</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="các nơ-ron, một số bị dropout">'+s+'</svg>';
+  svg.innerHTML = net(0, 'Train (dropout)', true) + net(132, 'Suy luận (đầy đủ)', false)
+    + '<line x1="120" y1="20" x2="120" y2="138" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"/>';
 }
-
 WB.wire(generate);
 generate();
 </script>

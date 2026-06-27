@@ -1,23 +1,19 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Hệ phương trình tuyến tính — Gaussian Elimination 2×2</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài A10 — Hệ phương trình 2×2 (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
-  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .aug{border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-top:4px;}
-  .aug td{padding:3px 7px;text-align:center;border:1px solid #ddd;}
-  .aug td.sep{border-left:2px solid #555;background:#f9f9f9;}
-  .aug tr:first-child td{background:#f3ede0;}
-  .aug td.hl{background:#d6ecf6;font-weight:700;}
-  .aug td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .aug td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .step-arrow{color:#b45309;font-weight:700;margin:2px 0;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:5px;}
+.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
+.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
+.page .calc{line-height:1.75;}
+.page .why{margin-top:4px;}
+.page .note{margin-top:3px;}
+.sys{font-family:var(--mono);font-size:14px;line-height:1.7;}
 </style>
 </head>
 <body>
@@ -28,272 +24,207 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Hệ phương trình tuyến tính</h1><span class="vi">— Gaussian Elimination 2×2</span>
-    <span class="tag">khử Gauss · ma trận tăng cường</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Giải Ax = b là <b>bài toán trung tâm</b> của đại số tuyến tính.
-    Trong ML: <b>normal equation</b> w = (XᵀX)⁻¹Xᵀy về bản chất là giải hệ (XᵀX)w = Xᵀy.
-    Khử Gauss (row reduction) giúp tránh tính nghịch đảo — hiệu quả hơn khi ma trận lớn.
-    <div class="fm">Ma trận tăng cường [A|b] → rút gọn → đọc nghiệm từ hàng dưới lên</div>
+  <div class="wb-title"><span class="no">Bài A10</span><h1>Hệ phương trình tuyến tính 2×2 <small>— Linear system</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Rất nhiều bài toán quy về "tìm bộ số thỏa <b>đồng thời</b> nhiều ràng buộc" — đó là hệ phương trình.
+    Hồi quy tuyến tính (B1) giải đúng một hệ như vậy. Làm tay một hệ 2×2 giúp thấy rõ cơ chế.
+    <div class="formula">
+      a₁x + b₁y = c₁ &nbsp;;&nbsp; a₂x + b₂y = c₂ &nbsp;⇔&nbsp; A·[x, y]ᵀ = [c₁, c₂]ᵀ
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Hai phương trình = hai đường thẳng trên mặt phẳng. <b>Nghiệm = giao điểm</b>.
-    Khử Gauss như "quay" một đường thẳng cho đến khi nó trở thành "x = số" → rồi thay ngược lên.
+    Mỗi phương trình là một <b>đường thẳng</b> trên mặt phẳng. <b>Nghiệm = giao điểm</b> hai đường. Hai đường cắt nhau → một
+    nghiệm; song song → vô nghiệm; trùng nhau → vô số nghiệm.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Xanh</b> = đường thẳng 1; <b>Cam</b> = đường thẳng 2; <b>Tím</b> = giao điểm (nghiệm).</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn hệ</h2><span class="tag">2 ẩn x, y</span></div>
+    <div class="sys">
+      (pt1) &nbsp;<span data-q="a1">2</span>x <span data-q="b1s">+ 1</span>y = <span data-q="c1">5</span><br>
+      (pt2) &nbsp;<span data-q="a2">1</span>x <span data-q="b2s">+ 3</span>y = <span data-q="c2">10</span>
     </div>
-
-    <div class="work">
-      <div class="bandh fw">HỆ PHƯƠNG TRÌNH CHO SẴN</div>
-      <div class="expr" id="sysEq"></div>
-
-      <div class="bandh fw" style="margin-top:6px">MA TRẬN TĂNG CƯỜNG [A | b]</div>
-      <table class="aug" id="augTable0"></table>
-
-      <div class="bandh fw" style="margin-top:6px">BƯỚC 1 · Khử x₁ ở hàng 2 (H2 ← H2 − k·H1)</div>
-      <div class="expr step-arrow" id="step1Label">k = ?/? = ?</div>
-      <table class="aug" id="augTable1"></table>
-
-      <div class="bandh fw" style="margin-top:6px">BƯỚC 2 · Đọc x₂, rồi thay ngược (back-sub)</div>
-      <div class="expr" id="backSub"></div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Thay (x₁, x₂) vừa tìm vào phương trình 1 — có đúng không? → <span style="display:inline-block;min-width:90px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">Mục tiêu: tìm (x, y) thỏa <b>cả hai</b> phương trình.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Hệ phương trình tuyến tính</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — khử x -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Khử một ẩn (làm hệ số x bằng nhau)</h2><span class="tag">cộng/trừ vế</span></div>
+    <div class="calc">
+      Nhân pt2 với <span data-q="mul">2</span> → hệ số x khớp pt1 (= <span data-q="a1">2</span>):<br>
+      &nbsp;&nbsp;<span data-q="a1">2</span>x + <span data-q="e2y">6</span>y = <span data-q="e2r">20</span><br>
+      Trừ pt1: ( <span data-q="e2y">6</span> − <span data-q="b1">1</span> )y = <span data-q="e2r">20</span> − <span data-q="c1">5</span>
+      → <span data-q="ycoef">5</span>y = <span class="blk" style="min-width:42px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> nhân để hệ số x bằng nhau rồi trừ → x biến mất, còn <b>một ẩn một phương trình</b>.</div>
+  </div>
+
+  <!-- BƯỚC 2 — tìm y, thế x -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Tìm y rồi thế ngược</h2><span class="tag">back-substitute</span></div>
+    <div class="calc">
+      y = <span data-q="yrhs">15</span> / <span data-q="ycoef">5</span> = <span class="blk" style="min-width:36px"></span><br>
+      Thế vào pt2: x = <span data-q="c2">10</span> − <span data-q="b2">3</span>·y = <span class="blk" style="min-width:36px"></span>
+    </div>
+    <div class="hint">Thế vào phương trình <b>đơn giản hơn</b> (hệ số nhỏ) cho nhẹ tính.</div>
+  </div>
+
+  <!-- BƯỚC 3 — thử lại -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Thử lại</h2><span class="tag">kiểm</span></div>
+    <div class="calc">
+      pt1: <span data-q="a1">2</span>·x + <span data-q="b1">1</span>·y = <span class="blk" style="min-width:36px"></span> (= <span data-q="c1">5</span> ✓)<br>
+      pt2: <span data-q="a2">1</span>·x + <span data-q="b2">3</span>·y = <span class="blk" style="min-width:36px"></span> (= <span data-q="c2">10</span> ✓)
+    </div>
+    <div class="why"><b>Vì sao:</b> nghiệm đúng phải thỏa <b>cả hai</b> phương trình, không chỉ một.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Khi nào hệ <b>vô nghiệm</b>? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Nghiệm ứng với điều gì trên hình? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Hệ phương trình tuyến tính</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A10</span><h1>Hệ phương trình 2×2 <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Giao điểm = nghiệm (x₁*, x₂*). Nếu hai đường song song → vô nghiệm; trùng nhau → vô số nghiệm.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Khử x</h2></div>
+    <div class="calc ans">
+      <span data-q="ycoef">5</span>y = <span data-q="e2r">20</span> − <span data-q="c1">5</span> = <span class="blk" data-q="yrhs">15</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">HỆ CHO SẴN</div>
-      <div class="expr" id="sysEq2"></div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>y rồi x</h2></div>
+    <div class="calc ans">
+      y = <span data-q="yrhs">15</span> / <span data-q="ycoef">5</span> = <span class="blk" data-q="ysol">3</span><br>
+      x = <span data-q="c2">10</span> − <span data-q="b2">3</span>·<span data-q="ysol">3</span> = <span class="blk" data-q="xsol">1</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">TĂNG CƯỜNG → SAU KHỬ GAUSS</div>
-      <table class="aug" id="kaugTable0"></table>
-      <div class="expr step-arrow" id="kstep1Label">→</div>
-      <table class="aug" id="kaugTable1"></table>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Thử lại</h2></div>
+    <div class="calc ans">
+      pt1: <span data-q="a1">2</span>·<span data-q="xsol">1</span> + <span data-q="b1">1</span>·<span data-q="ysol">3</span> = <span class="blk" data-q="chk1">5</span> ✓<br>
+      pt2: <span data-q="a2">1</span>·<span data-q="xsol">1</span> + <span data-q="b2">3</span>·<span data-q="ysol">3</span> = <span class="blk" data-q="chk2">10</span> ✓
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">NGHIỆM</div>
-      <div class="expr" id="kSolution"></div>
-      <div class="expr" id="kCheck" style="font-size:11px;color:var(--dim)"></div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li id="kVerify">Thay lại: ✓ đúng</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Khử Gauss là thuật toán O(n³) cho hệ n biến — máy tính dùng LU decomposition (tương tự) để
-        giải hiệu quả. Trong deep learning, hiếm khi giải hệ tường minh; thay vào đó dùng <b>gradient descent</b>
-        để tìm nghiệm gần đúng dần dần (Bài A12–A14). Nhưng normal equation (B2) vẫn dùng giải trực tiếp.
+  <!-- BƯỚC 4 / SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hình học: nghiệm = giao hai đường</h2><span class="tag">giao 2 đường</span></div>
+    <div class="figrow">
+      <svg id="figL" class="fig" viewBox="0 0 170 160" width="54mm" height="50mm" aria-label="hai đường thẳng cắt nhau tại nghiệm của hệ"></svg>
+      <div style="flex:1">
+        <div class="calc ans">Nghiệm: (x, y) = ( <span data-q="xsol">1</span>, <span data-q="ysol">3</span> )</div>
+        <div class="note">Đường lam = pt1, đường cam = pt2; <b>chấm tím</b> = giao điểm = nghiệm.
+          Nếu hai đường <b>song song</b> (det A = 0) thì <b>vô nghiệm</b> — A9 cho biết qua định thức.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Hệ phương trình tuyến tính</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Khi nào vô nghiệm? → <span class="qa">Hai đường song song (det A = 0, vế phải không khớp).</span></li>
+      <li>Nghiệm trên hình? → <span class="qa">Giao điểm của hai đường thẳng.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Khử Gauss = biến hệ thành một ẩn rồi thế ngược; nghiệm là giao điểm hình học. Định thức (A9) báo trước
+    có nghiệm duy nhất hay không. Bài tiếp (A11): trị riêng — hướng mà ma trận <b>không xoay</b>, chỉ co giãn.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var fI=WB.fmtInt;
-
-function fmtC(v){
-  // format coefficient: "3x₁", "-2x₁", "x₁"
-  if(v===0) return '0';
-  return fI(v);
-}
-
 function generate(){
-  // Sinh hệ có nghiệm nguyên x1*, x2* trong [-3,3]
-  var x1s, x2s, a11, a12, a21, a22, b1, b2, det;
+  var f = WB.fmtInt;
+  // dựng hệ có nghiệm NGUYÊN: chọn (x0,y0) trước, a2=1 cho khử sạch
+  var x0, y0, a1, b1, b2, a2 = 1, det;
   do {
-    a11=WB.randIntNZ(-3,4); a12=WB.randInt(-3,4);
-    a21=WB.randInt(-3,4); a22=WB.randIntNZ(-3,4);
-    det=a11*a22-a12*a21;
-  } while(det===0);
-  x1s=WB.randInt(-2,3); x2s=WB.randInt(-2,3);
-  b1=a11*x1s+a12*x2s;
-  b2=a21*x1s+a22*x2s;
+    x0 = WB.randInt(-2, 4); y0 = WB.randInt(-2, 4);
+    a1 = WB.pick([2, 3]);
+    b1 = WB.randIntNZ(-3, 3); b2 = WB.randIntNZ(-3, 3);
+    det = a1*b2 - a2*b1;
+  } while (det === 0 || b1 === b2 || (x0 === 0 && y0 === 0));
+  var c1 = a1*x0 + b1*y0;
+  var c2 = a2*x0 + b2*y0;
 
-  // khử: k = a21/a11
-  // H2 ← H2 - (a21/a11)·H1
-  // Để giữ nguyên số nguyên, dùng dạng: H2*a11 - a21*H1
-  // Nhưng đơn giản hơn: nếu a11 chia hết a21, dùng k = a21/a11
-  // Nếu không chia hết, có thể scale H1 trước — nhưng phức tạp.
-  // Giải pháp: scale H2 bằng a11 rồi khử.
-  // new_a21 = a21*a11 - a21*a11 = 0 ✓
-  // new_a22 = a22*a11 - a12*a21
-  // new_b2  = b2*a11 - b1*a21
-  var scale = a11; // nhân H2 với a11 trước
-  var na22 = a22*a11 - a12*a21; // = det
-  var nb2  = b2*a11 - b1*a21;
-  // x2 = nb2 / na22 = nb2 / det
-  // x2s should = nb2/det
-  // Verify: nb2/det = (b2*a11 - b1*a21)/(a11*a22-a12*a21)
-  // = ((a21*x1s+a22*x2s)*a11 - (a11*x1s+a12*x2s)*a21) / det
-  // = (a22*a11*x2s - a12*a21*x2s) / det = x2s*(a11*a22-a12*a21)/det = x2s ✓
+  var mul = a1;                 // nhân pt2 (a2=1) với a1 để khớp hệ số x
+  var e2y = a1*b2, e2r = a1*c2; // pt2 sau khi nhân
+  var ycoef = e2y - b1, yrhs = e2r - c1;
+  var ysol = yrhs / ycoef;      // = y0
+  var xsol = c2 - b2*ysol;      // = x0
+  var chk1 = a1*xsol + b1*ysol; // = c1
+  var chk2 = a2*xsol + b2*ysol; // = c2
 
-  // Phương trình sau khử:
-  // H2 (scaled): a21*a11·x1 + (a22*a11-a12*a21)·x2 = b2*a11 - b1*a21
-  // → 0·x1 + det·x2 = nb2
+  // chuỗi "+ b" / "− b" cho hiển thị hệ
+  function term(v){ var s = f(v); return /^−/.test(s) ? '− ' + s.slice(1) : '+ ' + s; }
 
-  // Build display
-  buildSystem(a11,a12,b1,a21,a22,b2,x1s,x2s,scale,na22,nb2);
-  drawLines('sch1',a11,a12,b1,a21,a22,b2,x1s,x2s,false);
-  drawLines('sch2',a11,a12,b1,a21,a22,b2,x1s,x2s,true);
-}
-
-function eqStr(a,b,rhs){
-  // ax₁ + bx₂ = rhs
-  var s='';
-  if(a===1) s+='x₁';
-  else if(a===-1) s+='−x₁';
-  else s+=fI(a)+'x₁';
-  if(b>=0) s+=' + '+fI(b)+'x₂';
-  else s+=' − '+fI(-b)+'x₂';
-  s+=' = '+fI(rhs);
-  return s;
-}
-
-function buildAugRow(tr, v1,v2,v3, blank){
-  while(tr.children.length) tr.removeChild(tr.lastChild);
-  [v1,v2].forEach(function(v){
-    var td=document.createElement('td');
-    if(blank){td.className='blank'; td.textContent=fI(v);}
-    else td.textContent=fI(v);
-    tr.appendChild(td);
+  WB.setAll({
+    a1: f(a1), a2: f(a2), b1: f(b1), b2: f(b2), c1: f(c1), c2: f(c2),
+    b1s: term(b1), b2s: term(b2),
+    mul: f(mul), e2y: f(e2y), e2r: f(e2r),
+    ycoef: f(ycoef), yrhs: f(yrhs),
+    ysol: f(ysol), xsol: f(xsol),
+    chk1: f(chk1), chk2: f(chk2)
   });
-  var sep=document.createElement('td'); sep.className='sep';
-  if(blank){sep.className='sep blank'; sep.textContent=fI(v3);}
-  else sep.textContent=fI(v3);
-  tr.appendChild(sep);
+  drawLines('figL', a1, b1, c1, a2, b2, c2, x0, y0);
 }
 
-function buildTable(tableId, r1v, r2v, blank2){
-  var tbl=document.getElementById(tableId); if(!tbl) return;
-  tbl.innerHTML='<thead><tr><th>x₁</th><th>x₂</th><th>b</th></tr></thead>';
-  var tbody=document.createElement('tbody');
-  var tr1=document.createElement('tr');
-  buildAugRow(tr1,r1v[0],r1v[1],r1v[2],false);
-  var tr2=document.createElement('tr');
-  buildAugRow(tr2,r2v[0],r2v[1],r2v[2],blank2);
-  tbody.appendChild(tr1); tbody.appendChild(tr2);
-  tbl.appendChild(tbody);
-}
-
-function buildSystem(a11,a12,b1,a21,a22,b2,x1s,x2s,scale,na22,nb2){
-  var sysStr=eqStr(a11,a12,b1)+'<br>'+eqStr(a21,a22,b2);
-  document.getElementById('sysEq').innerHTML=sysStr;
-  document.getElementById('sysEq2').innerHTML=sysStr;
-
-  // aug table 0
-  buildTable('augTable0',[a11,a12,b1],[a21,a22,b2],false);
-  // aug table 1 (after elimination — row 2 = 0, na22, nb2)
-  buildTable('augTable1',[a11,a12,b1],[0,na22,nb2],true);
-
-  // step1 label
-  var s1='H2 ← ';
-  if(scale!==1) s1+=fI(scale)+'·H2';
-  else s1+='H2';
-  s1+=' − '+fI(a21)+'·H1';
-  if(scale!==1) s1+=' &nbsp;(nhân H2 với '+fI(a11)+' để tránh phân số)';
-  document.getElementById('step1Label').innerHTML=s1;
-
-  // back sub (ĐỀ — bỏ trống)
-  var bs='x₂ = '+fI(nb2)+' ÷ '+fI(na22)+' = <span class="ublk" id="x2b"></span><br>';
-  bs+='x₁ = ('+fI(b1)+' − '+fI(a12)+'·x₂) ÷ '+fI(a11)+' = <span class="ublk" id="x1b"></span>';
-  document.getElementById('backSub').innerHTML=bs;
-
-  // ĐÁP ÁN
-  buildTable('kaugTable0',[a11,a12,b1],[a21,a22,b2],false);
-  buildTable('kaugTable1',[a11,a12,b1],[0,na22,nb2],false);
-  document.getElementById('kstep1Label').innerHTML='⟶ '+s1;
-
-  document.getElementById('kSolution').innerHTML=
-    'x₂ = '+fI(nb2)+' ÷ '+fI(na22)+' = <b>'+fI(x2s)+'</b><br>'+
-    'x₁ = ('+fI(b1)+' − '+fI(a12)+'·'+fI(x2s)+') ÷ '+fI(a11)+' = <b>'+fI(x1s)+'</b>';
-  document.getElementById('kCheck').innerHTML=
-    'Kiểm PT1: '+fI(a11)+'·'+fI(x1s)+' + '+fI(a12)+'·'+fI(x2s)+' = '+fI(a11*x1s+a12*x2s)+' = '+fI(b1)+' ✓';
-  document.getElementById('kVerify').innerHTML=
-    'Thay lại PT1: '+fI(a11)+'·('+fI(x1s)+') + '+fI(a12)+'·('+fI(x2s)+') = <span class="qa">'+fI(a11*x1s+a12*x2s)+' = '+fI(b1)+' ✓</span>';
-}
-
-function drawLines(id,a11,a12,b1,a21,a22,b2,x1s,x2s,showSol){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=148;
-  var padl=20,padr=10,padt=12,padb=18;
-  var pw=W-padl-padr, ph=H-padt-padb;
-  var xmin=-5,xmax=5,ymin=-5,ymax=5;
-  function sx(x){return(padl+(x-xmin)/(xmax-xmin)*pw).toFixed(1);}
-  function sy(y){return(padt+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
-
-  var s='<defs>'
-    +'<marker id="tax'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
-    +'</defs>';
-  s+='<line x1="'+padl+'" y1="'+sy(0)+'" x2="'+(W-padr+5)+'" y2="'+sy(0)+'" stroke="#ddd" stroke-width="1" marker-end="url(#tax'+id+')"/>';
-  s+='<line x1="'+sx(0)+'" y1="'+(H-padb)+'" x2="'+sx(0)+'" y2="'+padt+'" stroke="#ddd" stroke-width="1" marker-end="url(#tax'+id+')"/>';
-  s+='<text x="'+(W-padr+2)+'" y="'+(parseFloat(sy(0))+4)+'" font-size="8" fill="#9aa3af">x₁</text>';
-  s+='<text x="'+(parseFloat(sx(0))+2)+'" y="'+(padt+2)+'" font-size="8" fill="#9aa3af">x₂</text>';
-
-  // line 1: a11*x1 + a12*x2 = b1 → x2 = (b1 - a11*x1)/a12
-  function drawLine(a,b,c,color){
-    // ax1 + bx2 = c
-    if(Math.abs(b)<0.001){
-      // vertical: x1 = c/a
-      if(Math.abs(a)<0.001) return;
-      var xi=c/a;
-      if(xi<xmin||xi>xmax) return;
-      s+='<line x1="'+sx(xi)+'" y1="'+sy(ymin)+'" x2="'+sx(xi)+'" y2="'+sy(ymax)+'" stroke="'+color+'" stroke-width="2"/>';
-    } else {
-      var pts2=''; var first=true;
-      for(var xi=xmin;xi<=xmax;xi+=0.5){
-        var yi=(c-a*xi)/b;
-        if(yi<ymin-1||yi>ymax+1) continue;
-        pts2+=(first?'M':'L')+sx(xi)+','+sy(Math.max(ymin,Math.min(ymax,yi)));
-        first=false;
-      }
-      if(pts2) s+='<path d="'+pts2+'" fill="none" stroke="'+color+'" stroke-width="2"/>';
-    }
+// hai đường a·x + b·y = c trên lưới [-5,5], đánh dấu giao điểm (x0,y0)
+function drawLines(id, a1, b1, c1, a2, b2, c2, x0, y0){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var O = {x: 85, y: 80}, u = 13, R = 5;
+  function X(v){ return (O.x + v*u).toFixed(1); }
+  function Y(v){ return (O.y - v*u).toFixed(1); }
+  var s = '';
+  for (var g = -R; g <= R; g++){
+    s += '<line x1="'+X(g)+'" y1="'+Y(-R)+'" x2="'+X(g)+'" y2="'+Y(R)+'" stroke="#eef0f2" stroke-width="1"/>';
+    s += '<line x1="'+X(-R)+'" y1="'+Y(g)+'" x2="'+X(R)+'" y2="'+Y(g)+'" stroke="#eef0f2" stroke-width="1"/>';
   }
-  drawLine(a11,a12,b1,'#0e7490');
-  drawLine(a21,a22,b2,'#b45309');
-
-  // nhãn đường
-  s+='<text x="'+(W-padr-2)+'" y="'+(padt+10)+'" text-anchor="end" font-size="8" fill="#0e7490">PT1</text>';
-  s+='<text x="'+(W-padr-2)+'" y="'+(padt+20)+'" text-anchor="end" font-size="8" fill="#b45309">PT2</text>';
-
-  if(showSol && x1s>=xmin && x1s<=xmax && x2s>=ymin && x2s<=ymax){
-    s+='<circle cx="'+sx(x1s)+'" cy="'+sy(x2s)+'" r="4.5" fill="#7c5cff"/>';
-    s+='<text x="'+(parseFloat(sx(x1s))+5)+'" y="'+(parseFloat(sy(x2s))-4)+'" font-size="9" fill="#7c5cff" font-weight="700">('+fI(x1s)+','+fI(x2s)+')</text>';
+  s += '<line x1="'+X(-R)+'" y1="'+Y(0)+'" x2="'+X(R)+'" y2="'+Y(0)+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<line x1="'+X(0)+'" y1="'+Y(-R)+'" x2="'+X(0)+'" y2="'+Y(R)+'" stroke="#9aa3ad" stroke-width="1"/>';
+  // đường a·x+b·y=c → y = (c − a·x)/b ; b≠0 đã đảm bảo
+  function lineSeg(a, b, c, color){
+    var xL = -R, xR = R;
+    var yL = (c - a*xL)/b, yR = (c - a*xR)/b;
+    return '<line x1="'+X(xL)+'" y1="'+Y(yL)+'" x2="'+X(xR)+'" y2="'+Y(yR)+'" stroke="'+color+'" stroke-width="2.4"/>';
   }
-
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="hai đường thẳng và giao điểm">'+s+'</svg>';
+  s += lineSeg(a1, b1, c1, '#0e7490');
+  s += lineSeg(a2, b2, c2, '#b45309');
+  // giao điểm
+  s += '<circle cx="'+X(x0)+'" cy="'+Y(y0)+'" r="3.6" fill="#7c5cff" stroke="#fff" stroke-width="1"/>';
+  s += '<text x="'+(O.x + x0*u + 6)+'" y="'+(O.y - y0*u - 5)+'" style="font-size:9px" fill="#7c5cff" font-weight="700">('+WB.fmtInt(x0)+', '+WB.fmtInt(y0)+')</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

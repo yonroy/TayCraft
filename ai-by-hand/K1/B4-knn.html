@@ -1,22 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · k-NN — k láng giềng gần nhất</title>
-<link rel="stylesheet" href="../wb-canvas.css">
-<style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:3px;}
-  .ublk{display:inline-block;min-width:40px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .cA{color:#0e7490;font-weight:700;} .cB{color:#b45309;font-weight:700;}
-</style>
+<title>Làm toán AI · Bài B4 — k-NN (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 </head>
 <body>
 
@@ -26,188 +14,178 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>k-NN — k láng giềng gần nhất</h1><span class="vi">— k-Nearest Neighbors</span>
-    <span class="tag">khoảng cách · k=3 · bỏ phiếu</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> k-NN là bộ phân loại <b>không huấn luyện</b>: chỉ nhớ dữ liệu, khi gặp điểm mới thì
-    tìm k điểm gần nhất rồi cho chúng "bỏ phiếu". Nó dạy rõ khái niệm <b>khoảng cách</b> và <b>ranh giới quyết định</b>
-    — nền của embedding & similarity search trong AI hiện đại.
-    <div class="fm">d²(q, xᵢ) = (qₓ−xᵢₓ)² + (q_y−xᵢ_y)² &nbsp;|&nbsp; lớp(q) = đa số nhãn trong k điểm d² nhỏ nhất</div>
+  <div class="wb-title"><span class="no">Bài B4</span><h1>k-NN — k láng giềng gần nhất <small>— k-Nearest Neighbors</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> k-NN cho thấy ý tưởng cốt lõi của ML: <b>mẫu giống nhau thì nhãn giống nhau</b>. Không
+    huấn luyện, chỉ cần khoảng cách — nền tảng của truy hồi (retrieval) và nhiều hệ gợi ý.
+    <div class="formula">
+      d²(x, xᵢ) = <span style="font-size:15px">Σ</span> (xⱼ − xᵢⱼ)² &nbsp;→&nbsp; chọn k điểm d nhỏ nhất &nbsp;→&nbsp; nhãn = đa số phiếu
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    "Hãy cho tôi biết bạn của bạn là ai, tôi sẽ nói bạn là ai." Dùng <b>d²</b> (bình phương khoảng cách) thay vì d —
-    so sánh thứ hạng y hệt nhau mà <b>không cần khai căn</b>.
+    Hỏi <b>k người hàng xóm gần nhất</b> rồi theo số đông. k nhỏ → nhạy nhiễu; k lớn → mượt nhưng có thể "nuốt" ranh
+    giới lớp. So sánh khoảng cách thì dùng <b>d²</b> là đủ (khỏi căn) → số đẹp hơn.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><span class="cA">● lam = lớp A</span>, <span class="cB">■ cam = lớp B</span>, <b>★ = điểm hỏi q</b>.
-      Vòng tròn nét đứt bao k=3 điểm gần nhất.</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">DỮ LIỆU & ĐIỂM HỎI</div>
-      <div class="expr">Điểm hỏi q = (<span data-q="qx">3</span>, <span data-q="qy">3</span>) &nbsp;·&nbsp; k = 3</div>
-      <table class="dtbl" id="tbl">
-        <tr><th>điểm</th><th>x</th><th>y</th><th>lớp</th><th>d² tới q</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:7px">BỎ PHIẾU (3 điểm d² nhỏ nhất)</div>
-      <div class="expr">
-        3 gần nhất: <span class="ublk" id="nnB" style="min-width:140px"></span><br>
-        Phiếu: A = <span class="ublk" id="vaB"></span> &nbsp; B = <span class="ublk" id="vbB"></span>
-        &nbsp;→&nbsp; lớp(q) = <span class="ublk" id="clsB"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Nếu lấy k = 1, lớp của q là gì? <span class="ublk" id="k1B" style="min-width:60px"></span></li>
-        </ol>
+  <!-- GIVEN + SVG -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>5 điểm &amp; điểm hỏi Q</h2><span class="tag">k = 3</span></div>
+    <div class="figrow">
+      <svg id="figA" class="fig" viewBox="0 0 175 150" width="62mm" height="53mm" aria-label="5 điểm hai lớp và điểm hỏi Q trên lưới"></svg>
+      <div style="flex:1">
+        <div class="calc" style="line-height:1.7">
+          P₁<b style="color:#0e7490">🔵</b>(<span data-q="p1">1,1</span>) · P₂<b style="color:#0e7490">🔵</b>(<span data-q="p2">2,1</span>)<br>
+          P₃<b style="color:#b45309">🔴</b>(<span data-q="p3">4,4</span>) · P₄<b style="color:#b45309">🔴</b>(<span data-q="p4">5,4</span>) · P₅<b style="color:#b45309">🔴</b>(<span data-q="p5">4,1</span>)<br>
+          Điểm hỏi Q = (<b data-q="q">2,2</b>)
+        </div>
+        <div class="why"><b>Vì sao:</b> k-NN <b>không học</b> tham số — chỉ lưu dữ liệu rồi đo khoảng cách lúc dự đoán.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · k-NN</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Khoảng cách d² tới Q</h2><span class="tag">5 phép</span></div>
+    <div class="calc">
+      d²(Q,P₁) = <span class="blk"></span> · d²(Q,P₂) = <span class="blk"></span> · d²(Q,P₃) = <span class="blk"></span> · d²(Q,P₄) = <span class="blk"></span> · d²(Q,P₅) = <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> d² = (Δx)² + (Δy)² — cộng bình phương hai hiệu tọa độ.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Chọn k=3 gần nhất &amp; bỏ phiếu</h2><span class="tag">đa số</span></div>
+    <div class="calc">
+      3 điểm gần nhất: <span class="blk" style="min-width:130px"></span><br>
+      Phiếu → 🔵 <span class="blk" style="min-width:24px"></span> : 🔴 <span class="blk" style="min-width:24px"></span> &nbsp;→&nbsp; Q thuộc lớp <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> chọn k <b>lẻ</b> để tránh hòa phiếu; đa số quyết định nhãn của Q.</div>
+  </div>
+
+  <!-- TỰ KIỂM TRA -->
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>k-NN có "huấn luyện" không? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Vì sao nên chọn k lẻ? → <span class="blk" style="min-width:160px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>k-NN — k láng giềng gần nhất</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B4</span><h1>k-NN <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">k nhỏ → ranh giới gấp khúc (nhạy nhiễu); k lớn → mượt hơn nhưng có thể bỏ chi tiết. Chọn k là đánh đổi bias–variance.</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">d² TỪNG ĐIỂM (điền đủ)</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>điểm</th><th>x</th><th>y</th><th>lớp</th><th>d² tới q</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
-      <div class="expr">
-        3 gần nhất: <b><span data-q="knn">?</span></b><br>
-        Phiếu A = <span data-q="kva">?</span>, B = <span data-q="kvb">?</span> &nbsp;→&nbsp; lớp(q) = <b><span data-q="kcls">?</span></b>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>k=1 → lấy điểm gần nhất → lớp <span class="qa" id="kk1QA">?</span></li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> k-NN = "lười": không học tham số, chỉ đo khoảng cách lúc dự đoán → chậm khi dữ liệu lớn.
-        Ý tưởng "gần nhau ⇒ giống nhau" tái xuất ở <b>cosine similarity</b> (A4) và truy hồi vector trong RAG.
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Khoảng cách d²</h2></div>
+    <div class="calc ans">
+      P₁: <span class="blk" data-q="d1">2</span> · P₂: <span class="blk" data-q="d2">1</span> · P₃: <span class="blk" data-q="d3">8</span> · P₄: <span class="blk" data-q="d4">13</span> · P₅: <span class="blk" data-q="d5">5</span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · k-NN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Bỏ phiếu k=3</h2></div>
+    <div class="calc ans">
+      3 gần nhất: <span class="blk" data-q="near">P₂, P₁, P₅</span><br>
+      🔵 <span class="blk" data-q="vblue">2</span> : 🔴 <span class="blk" data-q="vred">1</span> &nbsp;→&nbsp; Q thuộc lớp <span class="blk" data-q="pred">🔵 (Xanh)</span>
+    </div>
+    <div class="note" data-q="ksvg2"></div>
+    <svg id="figK" class="fig" viewBox="0 0 175 150" width="58mm" height="50mm" style="margin-top:4px"></svg>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>k-NN có huấn luyện không? → <span class="qa">Không — chỉ lưu dữ liệu và đo khoảng cách lúc dự đoán</span></li>
+      <li>Vì sao chọn k lẻ? → <span class="qa">Tránh hòa phiếu giữa hai lớp</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> k-NN = đo khoảng cách + bỏ phiếu đa số; đơn giản nhưng chậm khi dữ liệu lớn (phải so mọi điểm).
+    Bài tiếp (B5): gom cụm <b>không nhãn</b> — k-means.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var PTS, Q, ORDER;
-
 function generate(){
-  // 3 điểm lớp A (0), 3 điểm lớp B (1), tọa độ phân biệt trên lưới 0..6
-  var ok=false, tries=0;
-  while(!ok && tries++<200){
-    var used={}, pts=[];
-    function rnd(){return WB.randInt(0,6);}
-    for(var c=0;c<2;c++) for(var j=0;j<3;j++){
-      var x,y,key,g=0;
-      do{ x=rnd(); y=rnd(); key=x+','+y; g++; }while(used[key]&&g<40);
-      used[key]=1; pts.push({x:x,y:y,c:c});
-    }
-    var qx=rnd(), qy=rnd();
-    if(used[qx+','+qy]) continue;
-    pts.forEach(function(p){ p.d=(p.x-qx)*(p.x-qx)+(p.y-qy)*(p.y-qy); });
-    var order=pts.slice().sort(function(a,b){return a.d-b.d;});
-    // top-3 phải có đa số rõ (không 1-1-1 kiểu hòa) và d² của #3 < d² của #4 (tránh nhập nhằng biên)
-    var top=order.slice(0,3);
-    var va=top.filter(function(p){return p.c===0;}).length;
-    var vb=3-va;
-    if(va===vb) continue;
-    if(order[2].d===order[3].d) continue;       // tránh hòa ở biên k=3
-    if(order[0].d===order[1].d) continue;        // k=1 rõ ràng
-    PTS=pts; Q={x:qx,y:qy}; ORDER=order;
-    PTS._va=va; PTS._vb=vb; PTS._cls=va>vb?'A':'B'; PTS._k1=order[0].c===0?'A':'B';
-    ok=true;
-  }
+  // 2 điểm xanh (góc thấp-trái), 3 điểm đỏ (góc cao-phải)
+  var pts = [
+    { x: WB.randInt(1, 2), y: WB.randInt(1, 2), c: 'blue' },
+    { x: WB.randInt(1, 2), y: WB.randInt(2, 3), c: 'blue' },
+    { x: WB.randInt(4, 5), y: WB.randInt(3, 4), c: 'red' },
+    { x: WB.randInt(4, 5), y: WB.randInt(3, 4), c: 'red' },
+    { x: WB.randInt(4, 5), y: WB.randInt(1, 2), c: 'red' }
+  ];
+  // điểm hỏi: nghiêng về một phía → đáp án đổi theo 🎲
+  var side = WB.pick(['blue', 'red']);
+  var Q = side === 'blue' ? { x: 2, y: WB.randInt(2, 3) } : { x: 4, y: WB.randInt(2, 3) };
 
-  var names='P1 P2 P3 P4 P5 P6'.split(' ');
-  PTS.forEach(function(p,i){p.nm=names[i];});
-  var nn3=ORDER.slice(0,3).map(function(p){return p.nm;}).join(', ');
+  var d = pts.map(function(p, i){ return { i: i, d2: (p.x - Q.x) * (p.x - Q.x) + (p.y - Q.y) * (p.y - Q.y), c: p.c }; });
+  var sorted = d.slice().sort(function(a, b){ return a.d2 - b.d2; });
+  var near3 = sorted.slice(0, 3);
+  var vblue = near3.filter(function(o){ return o.c === 'blue'; }).length;
+  var vred = 3 - vblue;
+  var predBlue = vblue > vred;
+  var nearNames = near3.map(function(o){ return 'P' + (o.i + 1); }).join(', ');
+  var r3 = Math.sqrt(near3[2].d2);   // bán kính vòng bao 3 điểm gần nhất
 
-  WB.setAll({
-    qx:String(Q.x), qy:String(Q.y),
-    knn:nn3, kva:String(PTS._va), kvb:String(PTS._vb),
-    kcls:'lớp '+PTS._cls, kk1:'lớp '+PTS._k1
-  });
+  var set = {
+    p1: pts[0].x + ',' + pts[0].y, p2: pts[1].x + ',' + pts[1].y,
+    p3: pts[2].x + ',' + pts[2].y, p4: pts[3].x + ',' + pts[3].y, p5: pts[4].x + ',' + pts[4].y,
+    q: Q.x + ',' + Q.y,
+    d1: String(d[0].d2), d2: String(d[1].d2), d3: String(d[2].d2), d4: String(d[3].d2), d5: String(d[4].d2),
+    near: nearNames, vblue: String(vblue), vred: String(vred),
+    pred: predBlue ? '🔵 (Xanh)' : '🔴 (Đỏ)'
+  };
+  WB.setAll(set);
 
-  buildTbl('tbl', true);
-  buildTbl('ktbl', false);
-  ['nnB','vaB','vbB','clsB','k1B'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  document.getElementById('kk1QA').textContent='lớp '+PTS._k1;
-
-  drawScatter('sch1',false);
-  drawScatter('sch2',true);
+  drawKNN('figA', pts, Q, null);
+  drawKNN('figK', pts, Q, r3);
 }
 
-function buildTbl(id, blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  PTS.forEach(function(p){
-    var tr=document.createElement('tr');
-    var cls=p.c===0?'<span class="cA">A</span>':'<span class="cB">B</span>';
-    var cells=['<b>'+p.nm+'</b>',p.x,p.y,cls];
-    cells.forEach(function(v){var td=document.createElement('td'); td.innerHTML=v; tr.appendChild(td);});
-    var td=document.createElement('td');
-    if(blank){ td.className='blank'; td.textContent=p.d; } else td.textContent=p.d;
-    tr.appendChild(td);
-    el.appendChild(tr);
-  });
-}
-
-function drawScatter(id, showK){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=150, pad=16, gw=W-2*pad, gh=H-2*pad;
-  function sx(x){return(pad+x/6*gw).toFixed(1);}
-  function sy(y){return(pad+gh-y/6*gh).toFixed(1);}
-  var s='';
-  // lưới
-  for(var g=0;g<=6;g++){
-    s+='<line x1="'+sx(g)+'" y1="'+sy(0)+'" x2="'+sx(g)+'" y2="'+sy(6)+'" stroke="#f0ece2"/>';
-    s+='<line x1="'+sx(0)+'" y1="'+sy(g)+'" x2="'+sx(6)+'" y2="'+sy(g)+'" stroke="#f0ece2"/>';
+function drawKNN(id, pts, Q, r3){
+  var box = document.getElementById(id); if (!box) return;
+  var O = { x: 22, y: 128 }, u = 22, m = 6;
+  function X(x){ return (O.x + x * u).toFixed(1); }
+  function Y(y){ return (O.y - y * u).toFixed(1); }
+  var s = '';
+  for (var g = 0; g <= m; g++){
+    s += '<line x1="' + X(0) + '" y1="' + Y(g) + '" x2="' + X(m) + '" y2="' + Y(g) + '" stroke="#eef1f4" stroke-width="1"/>';
+    s += '<line x1="' + X(g) + '" y1="' + Y(0) + '" x2="' + X(g) + '" y2="' + Y(m) + '" stroke="#eef1f4" stroke-width="1"/>';
   }
-  s+='<line x1="'+sx(0)+'" y1="'+sy(0)+'" x2="'+sx(6)+'" y2="'+sy(0)+'" stroke="#ccc"/>';
-  s+='<line x1="'+sx(0)+'" y1="'+sy(0)+'" x2="'+sx(0)+'" y2="'+sy(6)+'" stroke="#ccc"/>';
-  // vòng k=3
-  if(showK){
-    var r3=Math.sqrt(ORDER[2].d), r4=Math.sqrt(ORDER[3].d);
-    var rr=(r3+r4)/2;
-    var rpx=(rr/6*gw).toFixed(1);
-    s+='<circle cx="'+sx(Q.x)+'" cy="'+sy(Q.y)+'" r="'+rpx+'" fill="none" stroke="#7c5cff" stroke-width="1.3" stroke-dasharray="4 3"/>';
-  }
-  // điểm
-  PTS.forEach(function(p){
-    if(p.c===0) s+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="4" fill="#0e7490"/>';
-    else s+='<rect x="'+(parseFloat(sx(p.x))-3.5)+'" y="'+(parseFloat(sy(p.y))-3.5)+'" width="7" height="7" fill="#b45309"/>';
-    s+='<text x="'+(parseFloat(sx(p.x))+5)+'" y="'+(parseFloat(sy(p.y))-4)+'" font-size="7.5" fill="#666">'+p.nm+'</text>';
+  s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(m) + '" y2="' + Y(0) + '" stroke="#cbd2d9" stroke-width="1"/>';
+  s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + Y(m) + '" stroke="#cbd2d9" stroke-width="1"/>';
+  if (r3 != null) s += '<circle cx="' + X(Q.x) + '" cy="' + Y(Q.y) + '" r="' + (r3 * u + 4).toFixed(1) + '" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 2"/>';
+  pts.forEach(function(p, i){
+    var col = p.c === 'blue' ? '#0e7490' : '#b45309';
+    s += '<circle cx="' + X(p.x) + '" cy="' + Y(p.y) + '" r="4" fill="' + col + '"/>';
+    s += '<text x="' + (parseFloat(X(p.x)) + 5) + '" y="' + (parseFloat(Y(p.y)) - 4) + '" font-size="7.5" fill="' + col + '">P' + (i + 1) + '</text>';
   });
-  // q (★)
-  s+='<text x="'+sx(Q.x)+'" y="'+(parseFloat(sy(Q.y))+4)+'" text-anchor="middle" font-size="14" fill="#111">★</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="biểu đồ phân tán k-NN">'+s+'</svg>';
+  // điểm hỏi Q (sao đen)
+  s += '<path d="M' + X(Q.x) + ',' + (parseFloat(Y(Q.y)) - 5) + ' l1.5,3.2 l3.5,0.4 l-2.7,2.3 l0.9,3.5 l-3.2,-1.9 l-3.2,1.9 l0.9,-3.5 l-2.7,-2.3 l3.5,-0.4 z" fill="#16202e"/>';
+  s += '<text x="' + (parseFloat(X(Q.x)) + 6) + '" y="' + (parseFloat(Y(Q.y)) + 8) + '" font-size="8" fill="#16202e" font-weight="700">Q</text>';
+  box.innerHTML = '<svg viewBox="0 0 175 150">' + s + '</svg>';
 }
 
 WB.wire(generate);

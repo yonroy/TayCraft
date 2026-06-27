@@ -3,18 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Khởi tạo trọng số — Xavier / He</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài E1 — Khởi tạo trọng số (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.0;margin-top:3px;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .lntab{font-family:var(--mono);font-size:11px;color:#0c4a5e;background:#eef6fa;border:1px solid #cfe3ec;
-    border-radius:6px;padding:4px 7px;margin-top:5px;line-height:1.6;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -25,152 +23,172 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Khởi tạo trọng số</h1><span class="vi">— Xavier / He init</span>
-    <span class="tag">std = √(2/(n_in+n_out)) · He: √(2/n_in)</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Trọng số ban đầu quá nhỏ → tín hiệu tắt dần qua các lớp; quá lớn → nổ. Xavier (Glorot)
-    và He (Kaiming) chọn <b>phương sai khởi tạo</b> theo số đầu vào/ra (fan-in/fan-out) để giữ độ lớn tín hiệu ổn định
-    suốt mạng sâu. He hợp ReLU, Xavier hợp tanh/sigmoid.
-    <div class="fm">Xavier: Var = 2/(n_in+n_out) &nbsp;·&nbsp; He: Var = 2/n_in &nbsp;·&nbsp; std = √Var</div>
+  <div class="wb-title"><span class="no">Bài E1</span><h1>Khởi tạo trọng số <small>— Xavier / He</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Khởi tạo quá nhỏ → tín hiệu teo dần (vanishing); quá lớn → nổ (exploding). Mục tiêu: giữ <b>phương sai
+    kích hoạt ổn định</b> qua các lớp. Xavier/He chọn độ lệch chuẩn theo số đầu vào để đạt điều đó.
+    <div class="formula">
+      Xavier: Var(w) = 1/n_in (std = √(1/n_in)) &nbsp;&nbsp; He (ReLU): Var(w) = 2/n_in (std = √(2/n_in))
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Mỗi nơ-ron cộng n_in tích vô hướng; muốn tổng không phình to, phương sai mỗi trọng số phải <b>tỉ lệ nghịch</b>
-    với fan-in. Nhiều đầu vào → khởi tạo nhỏ lại. Đó là toàn bộ ý tưởng.
+    Mỗi nơ-ron cộng n_in tích → phương sai đầu ra ≈ n_in × Var(w) × Var(x). Muốn đầu ra <b>không phình theo n_in</b>, cho Var(w)
+    tỉ lệ nghịch n_in. ReLU "tắt nửa" tín hiệu → He nhân đôi để bù.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>fan-in</b> = số mũi tên vào · <b>fan-out</b> = số mũi tên ra. std nhỏ khi fan lớn.</div>
-      <div class="lntab" id="sqt1"></div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">n_in = <span data-q="nin">2</span></span></div>
+    <div class="calc" style="font-size:15px">
+      Lớp có n_in = <span class="gv" data-q="nin">2</span> đầu vào, dùng kích hoạt <b>ReLU</b>.
     </div>
-
-    <div class="work">
-      <div class="bandh fw">CHO: n_in = <span data-q="nin">4</span>, n_out = <span data-q="nout">4</span></div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>cách</th><th>công thức Var</th><th>Var</th><th>std = √Var</th></tr>
-        <tr><td>Xavier</td><td>2/(n_in+n_out)</td><td class="blank" id="xv"></td><td class="blank" id="xs"></td></tr>
-        <tr><td>He</td><td>2/n_in</td><td class="blank" id="hv"></td><td class="blank" id="hs"></td></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:8px">KHOẢNG KHỞI TẠO</div>
-      <div class="expr">
-        Lấy mẫu w ~ N(0, std²): hầu hết w nằm trong ±2·std.
-        Xavier: ±<span class="ublk" id="xr" style="display:inline-block;min-width:42px;border-bottom:1.6px dashed #b9b9b9"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>n_in tăng gấp 4 thì std He <span class="ublk" style="min-width:80px"></span> (gấp đôi / giảm nửa).</li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">Cần chọn độ lệch chuẩn (std) ban đầu cho trọng số sao cho tín hiệu không teo/nổ.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Khởi tạo trọng số</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — Xavier -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Xavier std</h2><span class="tag">tanh/sigmoid</span></div>
+    <div class="calc">
+      √(1/n_in) = √(1/<span data-q="nin">2</span>) = <span class="blk" style="min-width:50px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> giữ phương sai đầu ra ≈ phương sai đầu vào (hợp kích hoạt đối xứng tanh/sigmoid).</div>
+  </div>
+
+  <!-- BƯỚC 2 — He -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>He std</h2><span class="tag">ReLU</span></div>
+    <div class="calc">
+      √(2/n_in) = √(2/<span data-q="nin">2</span>) = <span class="blk" style="min-width:50px"></span>
+    </div>
+    <div class="hint">ReLU loại bỏ nửa âm → mất nửa phương sai → nhân 2 trong tử số để bù.</div>
+  </div>
+
+  <!-- BƯỚC 3 — kiểm phương sai -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Kiểm phương sai đầu ra (He)</h2><span class="tag">ổn định</span></div>
+    <div class="calc">
+      Var(z) ≈ n_in·Var(w)·Var(x) = <span data-q="nin">2</span>·(2/<span data-q="nin">2</span>)·Var(x) = 2·Var(x);
+      qua ReLU (÷2) → ≈ <span class="blk" style="min-width:70px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> nhờ vậy tín hiệu giữ độ lớn qua nhiều lớp → train được mạng sâu.</div>
+  </div>
+
+  <!-- BƯỚC 4 — hỏng nếu sai -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hỏng nếu khởi tạo sai</h2><span class="tag">teo / nổ</span></div>
+    <div class="note">std cố định 0.01 cho mạng 50 lớp → kích hoạt <b>teo</b> về 0; std = 1 cho tanh → <b>bão hòa</b>. Khởi tạo đúng + normalize (E6)
+      + residual (F9) mới train nổi mạng sâu.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Vì sao He nhân 2 so với Xavier? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Khởi tạo quá lớn gây gì? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E1 · Khởi tạo trọng số</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Khởi tạo trọng số</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài E1</span><h1>Khởi tạo trọng số <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">He có hệ số 2 ở tử (bù cho ReLU cắt nửa tín hiệu) → std lớn hơn Xavier một chút.</div>
-      <div class="lntab" id="sqt2"></div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Xavier</h2></div>
+    <div class="calc ans">√(1/<span data-q="nin">2</span>) = <span class="blk" data-q="xavier">0.707</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO: n_in = <span data-q="nin">4</span>, n_out = <span data-q="nout">4</span></div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>cách</th><th>công thức</th><th>Var</th><th>std</th></tr>
-        <tr><td>Xavier</td><td>2/(n_in+n_out)</td><td data-q="kxv">?</td><td data-q="kxs">?</td></tr>
-        <tr><td>He</td><td>2/n_in</td><td data-q="khv">?</td><td data-q="khs">?</td></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>He</h2></div>
+    <div class="calc ans">√(2/<span data-q="nin">2</span>) = <span class="blk" data-q="he">1.0</span></div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
-      <div class="expr">
-        Xavier std = <b><span data-q="kxs2">?</span></b> → khoảng ±<b><span data-q="kxr">?</span></b> &nbsp;·&nbsp;
-        He std = <b><span data-q="khs2">?</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Phương sai đầu ra</h2></div>
+    <div class="calc ans">2·Var(x), qua ReLU ÷2 → ≈ <span class="blk" data-q="vx">Var(x)</span> (giữ nguyên độ lớn)</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>n_in ×4 → Var ÷4 → std ÷2 → <span class="qa">giảm nửa</span>.</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Khởi tạo đúng = giữ phương sai tín hiệu ~ hằng qua mọi lớp, tránh vanish/explode (E2).
-        Kết hợp với chuẩn hóa (BatchNorm E6, LayerNorm Bài 20) và residual để huấn luyện mạng rất sâu.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Phương sai kích hoạt theo độ sâu</h2><span class="tag">ổn định vs teo/nổ</span></div>
+    <div class="figrow">
+      <svg id="figV" class="fig" viewBox="0 0 230 150" width="74mm" height="46mm" aria-label="phương sai theo lớp: khởi tạo đúng giữ ổn định, quá nhỏ teo dần, quá lớn nổ"></svg>
+      <div style="flex:1">
+        <div class="note">Đường <b>lam</b> = khởi tạo đúng (He/Xavier) → phương sai <b>ổn định</b>. <b>Xám</b> = std quá nhỏ → teo về 0.
+          <b>Cam</b> = std quá lớn → nổ. Khởi tạo đúng giữ tín hiệu sống qua nhiều lớp.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Khởi tạo trọng số</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>He nhân 2? → <span class="qa">ReLU loại nửa âm, mất nửa phương sai → bù gấp đôi.</span></li>
+      <li>Khởi tạo quá lớn? → <span class="qa">Exploding: kích hoạt/gradient nổ qua các lớp.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Xavier/He chọn std theo n_in để giữ phương sai ổn định; He cho ReLU. Bài tiếp (E2): nếu sai, tín hiệu
+    <b>vanishing / exploding</b> thế nào qua các lớp.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E1 · Khởi tạo trọng số</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function f2(v){return WB.fmt2(v);}
-function fI(v){return WB.fmtInt(v);}
-
 function generate(){
-  // chọn để Var ra số chẵn (0.25/0.5/1.0) & √ tra bảng khớp
-  var pair=WB.pick([[4,4],[2,2],[2,6]]);
-  var nin=pair[0], nout=pair[1];
-  var xv=Math.round(2/(nin+nout)*100)/100, hv=Math.round(2/nin*100)/100;
-  var xs=Math.sqrt(xv), hs=Math.sqrt(hv);   // derive từ Var đã làm tròn → khớp bảng √
-  var xr=Math.round(2*xs*100)/100;
-
-  ['xv','xs','hv','hs','xr'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  function f3(v){ return (Math.round(v*1000)/1000).toString(); }
+  var nin = WB.pick([2, 4, 8]);
+  var xavier = Math.sqrt(1/nin), he = Math.sqrt(2/nin);
   WB.setAll({
-    nin:fI(nin), nout:fI(nout),
-    kxv:f2(xv), kxs:f2(xs), khv:f2(hv), khs:f2(hs),
-    kxs2:f2(xs), kxr:f2(xr), khs2:f2(hs)
+    nin: String(nin),
+    xavier: f3(xavier), he: f3(he), vx: 'Var(x)'
   });
-
-  renderSqrt('sqt1',[xv,hv]); renderSqrt('sqt2',[xv,hv]);
-  drawFan('sch1',nin,nout); drawFan('sch2',nin,nout);
+  drawDepth('figV');
 }
 
-function renderSqrt(id,vals){
-  var el=document.getElementById(id); if(!el) return;
-  var seen={}, arr=[];
-  vals.forEach(function(v){var k=Math.round(v*100)/100; if(!seen[k]){seen[k]=1; arr.push(f2(k)+'→'+f2(Math.sqrt(k)));}});
-  el.innerHTML='Tra √: '+arr.join(' · ');
-}
-
-function drawFan(id,nin,nout){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=132;
-  var ni=Math.min(nin,6), no=Math.min(nout,6);
-  var s='';
-  var cx=89, cy=66;
-  // nơ-ron trung tâm
-  function ys(n,i){return 16 + (H-32)*(i+0.5)/n;}
-  // vào (trái)
-  for(var i=0;i<ni;i++){
-    s+='<line x1="22" y1="'+ys(ni,i).toFixed(1)+'" x2="'+cx+'" y2="'+cy+'" stroke="#0e7490" stroke-width="1"/>';
-    s+='<circle cx="22" cy="'+ys(ni,i).toFixed(1)+'" r="3" fill="#d6ecf6" stroke="#0e7490"/>';
+// phương sai theo độ sâu: ổn định (lam), teo (xám), nổ (cam)
+function drawDepth(id){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var x0 = 24, y0 = 122, W = 190, H = 100, N = 6;
+  function X(i){ return (x0 + i/(N-1)*W).toFixed(1); }
+  function Y(v){ return (y0 - Math.min(v,1)*H).toFixed(1); }   // v∈[0,1] normalized
+  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<line x1="'+x0+'" y1="'+(y0-H)+'" x2="'+x0+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<text x="'+(x0-2)+'" y="'+(y0-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">Var</text>';
+  s += '<text x="'+(x0+W)+'" y="'+(y0+11)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">lớp</text>';
+  function poly(fn, col, dash){
+    var p = ''; for (var i=0;i<N;i++) p += X(i)+','+Y(fn(i))+' ';
+    return '<polyline points="'+p.trim()+'" fill="none" stroke="'+col+'" stroke-width="2.2"'+(dash?' stroke-dasharray="4 3"':'')+'/>';
   }
-  // ra (phải)
-  for(var j=0;j<no;j++){
-    s+='<line x1="'+cx+'" y1="'+cy+'" x2="156" y2="'+ys(no,j).toFixed(1)+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
-    s+='<circle cx="156" cy="'+ys(no,j).toFixed(1)+'" r="3" fill="#ffe6cc" stroke="#b45309"/>';
-  }
-  s+='<circle cx="'+cx+'" cy="'+cy+'" r="8" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>';
-  s+='<text x="22" y="12" text-anchor="middle" font-size="8" fill="#0e7490">n_in='+nin+'</text>';
-  s+='<text x="156" y="12" text-anchor="middle" font-size="8" fill="#b45309">n_out='+nout+'</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="fan-in và fan-out của một nơ-ron">'+s+'</svg>';
+  s += poly(function(){ return 0.55; }, '#0e7490', false);        // ổn định
+  s += poly(function(i){ return 0.55*Math.pow(0.6,i); }, '#9aa3ad', true);  // teo
+  s += poly(function(i){ return Math.min(1, 0.18*Math.pow(1.7,i)); }, '#b45309', false); // nổ
+  s += '<text x="'+X(3)+'" y="'+(Y(0.62))+'" style="font-size:8px" fill="#0e7490" font-weight="700">ổn định</text>';
+  s += '<text x="'+X(3.2)+'" y="'+(Y(0.1))+'" style="font-size:8px" fill="#9aa3ad">teo</text>';
+  s += '<text x="'+X(3.4)+'" y="'+(Y(0.95))+'" style="font-size:8px" fill="#b45309" font-weight="700">nổ</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

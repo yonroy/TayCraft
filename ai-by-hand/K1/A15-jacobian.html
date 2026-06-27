@@ -1,15 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Ma trận Jacobian 2×2 — Jacobian Matrix</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài A15 — Ma trận Jacobian (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
-  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:5px;}
+.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
+.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
+.page .calc{line-height:1.75;}
+.page .why{margin-top:4px;}
+.page .note{margin-top:3px;}
+.page .cell{height:8mm;}
+.page .mtx{--cell:12mm;}
 </style>
 </head>
 <body>
@@ -20,180 +25,201 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Ma trận Jacobian 2×2</h1><span class="vi">— Jacobian Matrix</span>
-    <span class="tag">Jᵢⱼ = ∂fᵢ/∂xⱼ · điền ô trắng</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Jacobian là <b>bảng tất cả đạo hàm riêng</b> của hàm vectơ → vectơ.
-    Trong lan truyền ngược (backprop), gradient chạy ngược qua mỗi lớp bằng cách nhân với Jacobian của lớp đó.
-    Khi Jacobian có trị riêng lớn hơn 1 nhiều → gradient exploding; nhỏ hơn 1 nhiều → gradient vanishing.
-    <div class="fm">J = [[∂f₁/∂x₁, ∂f₁/∂x₂], [∂f₂/∂x₁, ∂f₂/∂x₂]] &nbsp;|&nbsp; Jᵢⱼ = ∂fᵢ/∂xⱼ</div>
+  <div class="wb-title"><span class="no">Bài A15</span><h1>Ma trận Jacobian <small>— Jacobian</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Mỗi lớp mạng là một hàm <b>vectơ → vectơ</b>. Để lan gradient qua lớp, ta cần biết <b>mỗi đầu ra nhạy
+    thế nào với mỗi đầu vào</b> — đúng là Jacobian. Nó là "gradient" cho hàm nhiều đầu ra.
+    <div class="formula">
+      f: ℝⁿ → ℝᵐ &nbsp;&nbsp; J<sub>ij</sub> = ∂f<sub>i</sub> / ∂x<sub>j</sub> &nbsp;&nbsp; (J là ma trận m×n)
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Gradient (A14) là Jacobian đặc biệt khi f: ℝⁿ → ℝ (một đầu ra). Jacobian tổng quát hơn: f: ℝⁿ → ℝᵐ.
-    <b>Hàng i</b> = gradient của f_i theo tất cả đầu vào; <b>cột j</b> = ảnh hưởng của x_j lên tất cả đầu ra.
+    Jacobian xếp chồng các gradient: <b>mỗi hàng là gradient của một đầu ra</b>. Tại một điểm, nó là <b>phép biến đổi tuyến tính
+    xấp xỉ</b> hàm — cho biết một nhiễu nhỏ ở đầu vào lan ra đầu ra thế nào.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Mỗi ô Jᵢⱼ</b> = đạo hàm riêng ∂fᵢ/∂xⱼ tại điểm (x₁₀, x₂₀). Màu xanh = hàng 1, cam = hàng 2.</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn hàm vectơ→vectơ</h2><span class="tag">f: ℝ²→ℝ²</span></div>
+    <div class="calc" style="font-size:15px">
+      f₁ = x² <span data-q="bs">+ y</span> &nbsp;,&nbsp; f₂ = x·y &nbsp;;&nbsp; xét tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> )
     </div>
+    <div class="note">Hai đầu ra (f₁, f₂), hai đầu vào (x, y) → Jacobian là ma trận 2×2.</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN · hàm f: ℝ² → ℝ²</div>
-      <div class="expr" id="funcDef"></div>
+  <!-- BƯỚC 1 — hàng 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Hàng 1 = ∇f₁</h2><span class="tag">đầu ra f₁</span></div>
+    <div class="calc">
+      ∂f₁/∂x = 2x = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
+      ∂f₁/∂y = <span class="blk" style="min-width:30px"></span> &nbsp; (tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ))
+    </div>
+    <div class="why"><b>Vì sao:</b> hàng i chỉ quan tâm đầu ra fᵢ; mỗi <b>cột</b> là một biến đầu vào (x trước, y sau).</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">BƯỚC 1 · Tính đạo hàm riêng (ký hiệu tổng quát)</div>
-      <div class="expr" id="partials"></div>
+  <!-- BƯỚC 2 — hàng 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Hàng 2 = ∇f₂</h2><span class="tag">đầu ra f₂</span></div>
+    <div class="calc">
+      ∂f₂/∂x = y = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
+      ∂f₂/∂y = x = <span class="blk" style="min-width:36px"></span>
+    </div>
+    <div class="hint">f₂ = x·y nên đạo hàm theo x là y, theo y là x (biến kia đóng vai hằng số nhân).</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">BƯỚC 2 · Thay điểm (x₁₀, x₂₀) — điền vào Jacobian</div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:3px">Tại <b>(x₁₀, x₂₀) = (<span data-q="p1">1</span>, <span data-q="p2">2</span>)</b></div>
-      <div class="row">
-        <div class="blk"><div class="nm">J (ĐỀ)</div>
-          <div class="m c2" id="jacQ"></div>
-        </div>
-      </div>
-
-      <div class="why"><b>Vì sao:</b> Jacobian tại một điểm = ma trận xấp xỉ tuyến tính cục bộ của f. Lan truyền ngược nhân Jacobian từng lớp theo quy tắc chuỗi (Bài A13).</div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Nếu f: ℝ³ → ℝ², Jacobian có kích thước bao nhiêu? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
-      </div>
+  <!-- BƯỚC 3 — gom J -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Gom thành J(<span data-q="x0">1</span>, <span data-q="y0">2</span>)</h2><span class="tag">2×2</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">J</div>
+        <div class="mtx c2">
+          <div class="cell blank"></div><div class="cell blank"></div>
+          <div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
+      <div class="note" style="max-width:74mm">Vị trí (i, j) = ∂fᵢ/∂xⱼ. Hàng trên = ∇f₁, hàng dưới = ∇f₂.</div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Ma trận Jacobian 2×2</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 4 — ý nghĩa -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Ý nghĩa: biến đổi cục bộ</h2><span class="tag">J·dx</span></div>
+    <div class="note">Một nhiễu nhỏ dx = (Δx, Δy) đổi đầu ra ≈ <b>J·dx</b> (đúng phép ma trận × vectơ ở A8).
+      <b>det J</b> = hệ số phóng đại diện tích cục bộ; det J = 0 ⇒ lớp "ép phẳng" thông tin.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>f: ℝⁿ→ℝᵐ thì Jacobian kích thước gì? → <span class="blk" style="min-width:60px"></span></li>
+      <li>Mỗi <b>hàng</b> của Jacobian là gì? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Ma trận Jacobian 2×2</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A15</span><h1>Ma trận Jacobian <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Jacobian = xấp xỉ tuyến tính f tại điểm → giống gradient nhưng cho hàm nhiều đầu ra.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Hàng 1 = ∇f₁</h2></div>
+    <div class="calc ans">
+      ∂f₁/∂x = 2x = <span class="blk" data-q="j11">2</span> ; ∂f₁/∂y = <span class="blk" data-q="j12">1</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN</div>
-      <div class="expr" id="kfuncDef"></div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Hàng 2 = ∇f₂</h2></div>
+    <div class="calc ans">
+      ∂f₂/∂x = y = <span class="blk" data-q="j21">2</span> ; ∂f₂/∂y = x = <span class="blk" data-q="j22">1</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">ĐẠO HÀM RIÊNG</div>
-      <div class="expr" id="kpartials"></div>
-
-      <div class="bandh fw" style="margin-top:6px">JACOBIAN TẠI (<span data-q="p1">1</span>, <span data-q="p2">2</span>)</div>
-      <div class="row">
-        <div class="blk out"><div class="nm">J</div>
-          <div class="m c2" id="kjac"></div>
-        </div>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>f: ℝ³ → ℝ²: Jacobian kích thước <span class="qa">2×3 (m hàng × n cột)</span></li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Jacobian khái quát gradient (1 đầu ra) sang nhiều đầu ra. Trong <b>backprop</b>:
-        gradient qua lớp tuyến tính y=Wx+b là J = W (Jacobian ∂y/∂x = W).
-        Chuỗi Jacobian từng lớp nhân lại = gradient tổng thể (quy tắc chuỗi đa chiều). Trị riêng của J
-        quyết định gradient có explode/vanish qua nhiều lớp không.
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>J(<span data-q="x0">1</span>, <span data-q="y0">2</span>)</h2></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">J</div>
+        <div class="mtx c2">
+          <div class="cell ans" data-q="j11">2</div><div class="cell ans" data-q="j12">1</div>
+          <div class="cell ans" data-q="j21">2</div><div class="cell ans" data-q="j22">1</div>
+        </div></div>
+      <div class="calc ans" style="flex:1">det J = <span data-q="j11">2</span>·<span data-q="j22">1</span> − <span data-q="j12">1</span>·<span data-q="j21">2</span> = <span data-q="detj">0</span>
+        <div class="note" style="margin-top:4px">det J = <span data-q="detj">0</span> ⇒ tại điểm này lớp <span data-q="detword">ép phẳng (suy biến)</span>.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Ma trận Jacobian 2×2</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: J biến hình vuông → hình bình hành</h2><span class="tag">xấp xỉ cục bộ</span></div>
+    <div class="figrow">
+      <svg id="figJ" class="fig" viewBox="0 0 180 150" width="56mm" height="46mm" aria-label="hai cột của Jacobian căng thành hình bình hành, diện tích bằng det"></svg>
+      <div style="flex:1">
+        <div class="note">Hai <b>cột</b> của J là ảnh của hai vectơ đơn vị: lam (<span data-q="j11">2</span>, <span data-q="j21">2</span>) và cam (<span data-q="j12">1</span>, <span data-q="j22">1</span>).
+          Diện tích vùng tô = <b>|det J|</b>. Vùng dẹt ⇒ thông tin bị nén.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Kích thước Jacobian? → <span class="qa">m×n.</span></li>
+      <li>Mỗi hàng là? → <span class="qa">Gradient của một thành phần đầu ra.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Jacobian = chồng các gradient = xấp xỉ tuyến tính cục bộ của hàm vectơ→vectơ; backprop nhân các Jacobian dọc
+    mạng. Hết phần giải tích nền. Bài tiếp (A16): sang <b>xác suất</b> — kỳ vọng &amp; phương sai.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var fI=WB.fmtInt;
-
 function generate(){
-  // f1(x1,x2) = a*x1^2 + b*x2 , f2(x1,x2) = c*x1 + d*x2^2
-  var a=WB.pick([1,2,3]), b=WB.randIntNZ(-3,4);
-  var c=WB.randIntNZ(-3,4), d=WB.pick([1,2,3]);
-  var p1=WB.pick([1,2,3]), p2=WB.pick([1,2,3]);
+  var f = WB.fmtInt;
+  // f1 = x² + b·y, f2 = x·y ; điểm (x0,y0)
+  var b = WB.pick([1, 2]);
+  var x0 = WB.randIntNZ(-2, 3), y0 = WB.randIntNZ(-2, 3);
+  var j11 = 2*x0, j12 = b, j21 = y0, j22 = x0;
+  var detj = j11*j22 - j12*j21;
+  var detword = detj === 0 ? 'ép phẳng (suy biến)' : 'phóng đại diện tích × ' + f(Math.abs(detj));
 
-  // J = [[∂f1/∂x1, ∂f1/∂x2],[∂f2/∂x1, ∂f2/∂x2]]
-  //   = [[2a*x1, b], [c, 2d*x2]]
-  var j11=2*a*p1, j12=b, j21=c, j22=2*d*p2;
+  function signed(v){ var s = f(v), neg = /^−/.test(s), mag = neg ? s.slice(1) : s; if (mag==='1') mag=''; return (neg ? '− ' : '+ ') + mag; }
 
-  WB.setAll({p1:fI(p1), p2:fI(p2)});
-
-  var fStr = 'f₁(x₁,x₂) = '+fI(a)+'x₁² + '+fI(b)+'x₂<br>f₂(x₁,x₂) = '+fI(c)+'x₁ + '+fI(d)+'x₂²';
-  var pStr = '∂f₁/∂x₁ = '+fI(2*a)+'x₁ &nbsp; ∂f₁/∂x₂ = '+fI(b)+'<br>∂f₂/∂x₁ = '+fI(c)+' &nbsp; ∂f₂/∂x₂ = '+fI(2*d)+'x₂';
-  ['funcDef','kfuncDef'].forEach(function(id){document.getElementById(id).innerHTML=fStr;});
-  ['partials','kpartials'].forEach(function(id){document.getElementById(id).innerHTML=pStr;});
-
-  // ĐỀ — blank
-  var jacQ=document.getElementById('jacQ');
-  if(jacQ) jacQ.innerHTML='<div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>';
-  // ĐÁP ÁN — filled
-  var kjac=document.getElementById('kjac');
-  if(kjac) kjac.innerHTML=[j11,j12,j21,j22].map(function(v){return '<div class="cell">'+fI(v)+'</div>';}).join('');
-
-  drawJac('sch1',a,b,c,d,p1,p2,j11,j12,j21,j22,false);
-  drawJac('sch2',a,b,c,d,p1,p2,j11,j12,j21,j22,true);
-}
-
-function drawJac(id,a,b,c,d,p1,p2,j11,j12,j21,j22,showVals){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=148;
-  var s='';
-  // 3 boxes: x-space (input), f-space (output), J matrix
-  var bw=46,bh=36,pad=10;
-  // Box 1: input (x1, x2) xanh
-  var b1x=8,b1y=56;
-  s+='<rect x="'+b1x+'" y="'+b1y+'" width="'+bw+'" height="'+bh+'" fill="#d6ecf6" stroke="#0e7490" stroke-width="1.5" rx="4"/>';
-  s+='<text x="'+(b1x+bw/2)+'" y="'+(b1y-6)+'" text-anchor="middle" font-size="9" fill="#0e7490" font-weight="700">x ∈ ℝ²</text>';
-  s+='<text x="'+(b1x+bw/2)+'" y="'+(b1y+16)+'" text-anchor="middle" font-size="10" fill="#0e7490">x₁='+(showVals?WB.fmtInt(p1):'?')+'</text>';
-  s+='<text x="'+(b1x+bw/2)+'" y="'+(b1y+30)+'" text-anchor="middle" font-size="10" fill="#0e7490">x₂='+(showVals?WB.fmtInt(p2):'?')+'</text>';
-
-  // Arrow
-  s+='<defs><marker id="jah'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#555"/></marker></defs>';
-  var ax1=b1x+bw+4, ay=b1y+bh/2;
-  s+='<line x1="'+ax1+'" y1="'+ay+'" x2="'+(ax1+28)+'" y2="'+ay+'" stroke="#555" stroke-width="1.5" marker-end="url(#jah'+id+')"/>';
-  s+='<text x="'+(ax1+14)+'" y="'+(ay-4)+'" text-anchor="middle" font-size="9" fill="#555">f(x)</text>';
-
-  // Box 2: output (f1,f2) cam
-  var b2x=b1x+bw+36, b2y=b1y;
-  s+='<rect x="'+b2x+'" y="'+b2y+'" width="'+bw+'" height="'+bh+'" fill="#fdecd2" stroke="#b45309" stroke-width="1.5" rx="4"/>';
-  s+='<text x="'+(b2x+bw/2)+'" y="'+(b2y-6)+'" text-anchor="middle" font-size="9" fill="#b45309" font-weight="700">f ∈ ℝ²</text>';
-  s+='<text x="'+(b2x+bw/2)+'" y="'+(b2y+16)+'" text-anchor="middle" font-size="10" fill="#b45309">f₁</text>';
-  s+='<text x="'+(b2x+bw/2)+'" y="'+(b2y+30)+'" text-anchor="middle" font-size="10" fill="#b45309">f₂</text>';
-
-  // Jacobian box
-  var jx=130, jy=14, jcw=20, jch=18;
-  s+='<text x="'+jx+'" y="11" font-size="9" fill="#7c5cff" font-weight="700">J (2×2)</text>';
-  var jdata=showVals?[j11,j12,j21,j22]:['?','?','?','?'];
-  [[0,0],[0,1],[1,0],[1,1]].forEach(function(rc,k){
-    var rx=jx+rc[1]*jcw, ry=jy+rc[0]*jch;
-    s+='<rect x="'+rx+'" y="'+ry+'" width="'+(jcw-2)+'" height="'+(jch-2)+'" fill="'+(rc[0]===0?'#eaf4fb':'#fef3e2')+'" stroke="#ccc" stroke-width="1"/>';
-    s+='<text x="'+(rx+(jcw-2)/2)+'" y="'+(ry+(jch-2)/2+4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+(rc[0]===0?'#0e7490':'#b45309')+'">'+jdata[k]+'</text>';
+  WB.setAll({
+    bs: signed(b) + 'y',
+    x0: f(x0), y0: f(y0),
+    j11: f(j11), j12: f(j12), j21: f(j21), j22: f(j22),
+    detj: f(detj), detword: detword
   });
-
-  // row labels
-  s+='<text x="'+(jx-8)+'" y="'+(jy+jch/2+4)+'" text-anchor="end" font-size="9" fill="#0e7490">f₁</text>';
-  s+='<text x="'+(jx-8)+'" y="'+(jy+jch+jch/2+4)+'" text-anchor="end" font-size="9" fill="#b45309">f₂</text>';
-  s+='<text x="'+(jx+jcw/2)+'" y="'+(jy+2*jch+12)+'" text-anchor="middle" font-size="8" fill="#555">x₁</text>';
-  s+='<text x="'+(jx+jcw+jcw/2)+'" y="'+(jy+2*jch+12)+'" text-anchor="middle" font-size="8" fill="#555">x₂</text>';
-
-  // formula labels
-  s+='<text x="8" y="130" font-size="8" fill="#555">Jᵢⱼ = ∂fᵢ/∂xⱼ tại ('+WB.fmtInt(p1)+','+WB.fmtInt(p2)+')</text>';
-
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="sơ đồ Jacobian">'+s+'</svg>';
+  drawJac('figJ', j11, j21, j12, j22);
 }
 
+// hình bình hành căng bởi hai cột của J: col1=(j11,j21) lam, col2=(j12,j22) cam
+function drawJac(id, c1x, c1y, c2x, c2y){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var O = {x: 90, y: 78};
+  var mx = Math.max(2, Math.abs(c1x), Math.abs(c2x), Math.abs(c1x+c2x), Math.abs(c1y), Math.abs(c2y), Math.abs(c1y+c2y));
+  var u = 62 / mx;
+  function X(v){ return (O.x + v*u).toFixed(1); }
+  function Y(v){ return (O.y - v*u).toFixed(1); }
+  var s = '<defs>'
+    + '<marker id="j1'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'
+    + '<marker id="j2'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
+    + '</defs>';
+  // trục
+  s += '<line x1="14" y1="'+Y(0)+'" x2="166" y2="'+Y(0)+'" stroke="#cdd3d9" stroke-width="1"/>';
+  s += '<line x1="'+X(0)+'" y1="8" x2="'+X(0)+'" y2="142" stroke="#cdd3d9" stroke-width="1"/>';
+  // hình bình hành
+  s += '<polygon points="'+X(0)+','+Y(0)+' '+X(c1x)+','+Y(c1y)+' '+X(c1x+c2x)+','+Y(c1y+c2y)+' '+X(c2x)+','+Y(c2y)
+    + '" fill="#7c5cff22" stroke="#7c5cff" stroke-width="0.8"/>';
+  // cột 1 lam
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(c1x)+'" y2="'+Y(c1y)+'" stroke="#0e7490" stroke-width="2.4" marker-end="url(#j1'+id+')"/>';
+  // cột 2 cam
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(c2x)+'" y2="'+Y(c2y)+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#j2'+id+')"/>';
+  svg.innerHTML = s;
+}
 WB.wire(generate);
 generate();
 </script>

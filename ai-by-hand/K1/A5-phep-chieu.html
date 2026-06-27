@@ -1,14 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Phép chiếu vectơ — Projection (canvas)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài A5 — Phép chiếu vectơ (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .m{--cw:10mm;}
-  .scalar .cell{--cw:18mm;font-size:13px;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.66;}
+.page .why{margin-top:5px;}
 </style>
 </head>
 <body>
@@ -19,225 +22,257 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Phép chiếu vectơ</h1><span class="vi">— Vector Projection</span>
-    <span class="tag">điền ô trắng · proj_b(a) = (a·b/‖b‖²)·b</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Phép chiếu trả lời câu hỏi: <b>"a đi được bao xa theo hướng b?"</b>. Đây là bản chất hình học
-    của tích vô hướng — và là nền của <b>attention</b> (chiếu query lên key), <b>PCA</b> (chiếu dữ liệu lên trục chính),
-    và <b>Gram-Schmidt</b> (tạo bộ trực chuẩn).
-    <div class="fm">proj_b(a) = &nbsp;<span style="font-size:15px">a·b</span><span style="font-size:11px;vertical-align:middle;margin:0 3px">/</span><span style="font-size:15px">‖b‖²</span>&nbsp; · b &nbsp;|&nbsp; ‖b‖² = b₁²+b₂²+b₃²</div>
+  <div class="wb-title"><span class="no">Bài A5</span><h1>Phép chiếu vectơ <small>— Projection</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Nhiều thuật toán hỏi "<b>a đi theo hướng b bao nhiêu?</b>": PCA giữ phần chiếu lên trục chính,
+    hồi quy bình phương nhỏ nhất chiếu y lên không gian cột, attention trộn Value theo trọng số. Phép chiếu trả lời bằng một
+    <b>vectơ nằm trên đường b</b>.
+    <div class="formula">
+      proj<sub>b</sub>(a) = ( a·b / ‖b‖<sup>2</sup> ) · b &nbsp;&nbsp;|&nbsp;&nbsp; độ dài bóng = a·b / ‖b‖
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Đứng dưới ánh đèn chiếu thẳng xuống b — <b>bóng của a trên b</b> chính là proj_b(a). Nếu a vuông góc b thì bóng = 0.
-    Nếu a song song b thì bóng = chính a. Hệ số <b>a·b/‖b‖²</b> là "tỷ lệ a đi được trên b".
+    Chiếu <b>ánh nắng vuông góc</b> xuống đường thẳng theo b: <b>bóng</b> của mũi tên a in trên đường đó chính là phép chiếu.
+    Nắng đứng bóng ⇒ phần vuông góc bị "ép phẳng", chỉ còn phần dọc theo b.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Lam</b> = a &nbsp;·&nbsp; <b>Cam</b> = b &nbsp;·&nbsp; <b>Tím</b> = proj_b(a) &nbsp;·&nbsp; nét đứt = vuông góc</div>
+  <!-- BƯỚC 0 -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn hai vectơ</h2><span class="tag">a, b</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">a</div>
+        <div class="mtx c2"><div class="cell given" data-q="a1">3</div><div class="cell given" data-q="a2">4</div></div></div>
+      <div class="mwrap"><div class="mlabel">b</div>
+        <div class="mtx c2"><div class="cell given" data-q="b1">2</div><div class="cell given" data-q="b2">1</div></div></div>
+      <div class="note" style="max-width:60mm">Chiếu a lên hướng b: tách a thành phần <b>dọc b</b> và phần <b>vuông góc b</b>.</div>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN · hai vectơ 1×3</div>
-      <div class="row">
-        <div class="blk in"><div class="nm">a <s>1×3</s></div><div class="m c3" id="a"></div></div>
-        <div class="blk w"><div class="nm">b <s>1×3</s></div><div class="m c3" id="b"></div></div>
-      </div>
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tích vô hướng a·b</h2><span class="tag">a nghiêng về b</span></div>
+    <div class="calc">
+      a·b = <span data-q="a1">3</span>·<span data-q="b1">2</span> + <span data-q="a2">4</span>·<span data-q="b2">1</span>
+      = <span class="blk"></span> + <span class="blk"></span> = <span class="blk" style="min-width:48px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> a·b đo "mức a nghiêng về b"; chia tiếp cho độ dài b để ra hệ số chiếu công bằng.</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">BƯỚC 1 · tích vô hướng a·b</div>
-      <div class="row">
-        <div class="blk hot"><div class="nm">aᵢ·bᵢ <s>từng cặp</s></div><div class="m c3" id="prod"></div></div>
-        <div class="op">→</div>
-        <div class="blk out scalar"><div class="nm">a·b <s>tổng</s></div><div class="m c1" id="dot"></div></div>
-      </div>
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Bình phương chuẩn ‖b‖²</h2><span class="tag">khỏi căn</span></div>
+    <div class="calc">
+      ‖b‖<sup>2</sup> = <span data-q="b1">2</span>² + <span data-q="b2">1</span>²
+      = <span class="blk"></span> + <span class="blk"></span> = <span class="blk" style="min-width:48px"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> dùng <b>‖b‖²</b> (không cần lấy căn) nên số đẹp hơn — đằng nào cũng chia.</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 2 · chuẩn bình phương ‖b‖²</div>
-      <div class="row">
-        <div class="blk"><div class="nm">bᵢ² <s>từng ô</s></div><div class="m c3" id="bsq"></div></div>
-        <div class="op">→</div>
-        <div class="blk hot scalar"><div class="nm">‖b‖²</div><div class="m c1" id="bnorm2"></div></div>
-      </div>
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Hệ số &amp; vectơ chiếu</h2><span class="tag">k·b</span></div>
+    <div class="calc">
+      k = a·b / ‖b‖<sup>2</sup> = <span class="blk"></span> / <span class="blk"></span> = <span class="blk" style="min-width:34px"></span><br>
+      proj = k·b = <span class="blk" style="min-width:24px"></span>·(<span data-q="b1">2</span>, <span data-q="b2">1</span>)
+      = (<span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>)
+    </div>
+    <div class="why"><b>Vì sao:</b> nhân k với chính b để bóng <b>nằm đúng trên đường b</b>; k cho biết bóng dài gấp mấy lần b.</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 3 · chiếu proj_b(a) = (a·b/‖b‖²)·b</div>
-      <div class="row">
-        <div class="blk out scalar"><div class="nm">t = a·b/‖b‖²</div><div class="m c1" id="t"></div><div class="fm">hệ số chiếu</div></div>
-        <div class="op">×</div>
-        <div class="blk w"><div class="nm">b</div><div class="m c3" id="bx"></div></div>
-        <div class="op">=</div>
-        <div class="blk bw"><div class="nm">proj_b(a)</div><div class="m c3" id="proj"></div></div>
-      </div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A5 · Phép chiếu vectơ</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
 
-      <div class="why"><b>Vì sao:</b> t = a·b/‖b‖² là "bao nhiêu phần đơn vị của b"; nhân t với b để ra vectơ theo hướng b.</div>
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Phép chiếu — tiếp theo</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A5</span><h1>Phép chiếu vectơ <small>— vẽ bóng</small></h1></div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>a vuông góc b (a·b = 0) → proj_b(a) = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-          <li>a song song b (a = kb) → proj_b(a) = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vẽ bóng của a lên b</h2><span class="tag">tự chiếu</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="a lam và b cam cho sẵn, khung trống để tự vẽ hình chiếu và đoạn vuông góc"></svg>
+      <div style="flex:1">
+        <div class="why"><b>Vì sao:</b> bóng là phần của a <b>nằm trên đường b</b>; đoạn nối từ đầu a xuống đường b <b>vuông góc</b> với b.</div>
+        <div class="note">Tự kẻ vectơ chiếu (tím) dọc b dài bằng proj đã tính, và đoạn nét đứt vuông góc từ đầu a xuống đường b.
+          độ dài bóng = a·b/‖b‖ = <span class="blk" style="min-width:46px"></span>.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Phép chiếu vectơ — Vector Projection</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Phép chiếu của a lên b là một <b>số</b> hay một <b>vectơ</b>? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Nếu a ⟂ b thì proj<sub>b</sub>(a) bằng gì? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A5 · Phép chiếu vectơ</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Phép chiếu vectơ</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A5</span><h1>Phép chiếu vectơ <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">proj_b(a) luôn <b>song song b</b>; đoạn vuông góc = a − proj_b(a).</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1–2</div><h2>Tích vô hướng &amp; ‖b‖²</h2></div>
+    <div class="calc ans">
+      a·b = <span data-q="dotExpr">3·2 + 4·1</span> = <span class="blk" data-q="dot">10</span> &nbsp;|&nbsp;
+      ‖b‖<sup>2</sup> = <span data-q="nb2Expr">2² + 1²</span> = <span class="blk" data-q="nb2">5</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN</div>
-      <div class="row">
-        <div class="blk in"><div class="nm">a</div><div class="m c3" id="ka"></div></div>
-        <div class="blk w"><div class="nm">b</div><div class="m c3" id="kb"></div></div>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Hệ số &amp; vectơ chiếu</h2></div>
+    <div class="calc ans">
+      k = <span data-q="dot">10</span>/<span data-q="nb2">5</span> = <span class="blk" data-q="k">2</span> &nbsp;→&nbsp;
+      proj = <span data-q="k">2</span>·(<span data-q="b1">2</span>,<span data-q="b2">1</span>)
+      = (<span class="blk" data-q="px">4</span>, <span class="blk" data-q="py">2</span>)
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 1 · a·b</div>
-      <div class="row">
-        <div class="blk hot"><div class="nm">aᵢ·bᵢ</div><div class="m c3" id="kprod"></div></div>
-        <div class="op">→</div>
-        <div class="blk out scalar"><div class="nm">a·b</div><div class="m c1" id="kdot"></div></div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 2 · ‖b‖²</div>
-      <div class="row">
-        <div class="blk"><div class="nm">bᵢ²</div><div class="m c3" id="kbsq"></div></div>
-        <div class="op">→</div>
-        <div class="blk hot scalar"><div class="nm">‖b‖²</div><div class="m c1" id="kbnorm2"></div></div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 3 · proj_b(a)</div>
-      <div class="row">
-        <div class="blk out scalar"><div class="nm">t</div><div class="m c1" id="kt"></div></div>
-        <div class="op">×</div>
-        <div class="blk w"><div class="nm">b</div><div class="m c3" id="kbx"></div></div>
-        <div class="op">=</div>
-        <div class="blk bw"><div class="nm">proj_b(a)</div><div class="m c3" id="kproj"></div></div>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>a⊥b → proj_b(a) = <span class="qa">vectơ 0 (0,0,0)</span></li>
-          <li>a ∥ b → proj_b(a) = <span class="qa">chính a (bóng trùng với a)</span></li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Phép chiếu gặp lại trong <b>Scaled Dot-Product Attention</b> (Bài 11): Q·Kᵀ đo "mức chiếu" của query lên
-        key — ô nào lớn thì vectơ đó "đi theo hướng" key nhiều nhất. Cũng là bước lõi của <b>PCA</b> và
-        <b>Gram-Schmidt</b>. Bài kế (A6): chuyển vị ma trận — phép lật hàng↔cột cần thiết cho QKᵀ.
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hình học: bóng vuông góc</h2><span class="tag">a = dọc + vuông góc</span></div>
+    <div class="figrow">
+      <svg id="figK" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="vectơ a lam, b cam, hình chiếu tím dọc b, đoạn nét đứt vuông góc từ đầu a"></svg>
+      <div style="flex:1">
+        <div class="calc ans">
+          độ dài bóng = a·b/‖b‖ = <span data-q="dot">10</span>/√<span data-q="nb2">5</span> ≈ <span class="blk" data-q="blen">4.47</span>
+        </div>
+        <div class="note"><b style="color:var(--accent)">a (lam)</b>, <b style="color:var(--accent2)">b (cam)</b>,
+          <b style="color:var(--v)">proj (tím)</b> dọc b. Phần <b>vuông góc</b> = a − proj =
+          (<span data-q="perpx">−1</span>, <span data-q="perpy">2</span>) — nét đứt; nó ⟂ b.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Phép chiếu vectơ — Vector Projection</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Chiếu là số hay vectơ? → <span class="qa">Một vectơ (nằm trên đường b).</span></li>
+      <li>a ⟂ b → <span class="qa">Vectơ 0 (vì a·b = 0).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Phép chiếu tách a = (phần dọc b) + (phần vuông góc b). Giữ phần chiếu = nén dữ liệu
+    theo hướng quan trọng (PCA). Bài tiếp (A6): <b>chuyển vị ma trận</b> — lật hàng↔cột, thao tác đứng sau mọi tích vô hướng theo lô.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A5 · Phép chiếu vectơ</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var fI = function(x){ return WB.fmtInt(x); };
-var f2 = function(x){ return WB.fmt2(x); };
-
-function fill(id, arr, blank, fmt){
-  var fn = fmt || fI;
-  var el = document.getElementById(id); if(!el) return; var s='';
-  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fn(arr[i]))+'</div>';
-  el.innerHTML=s;
-}
-
 function generate(){
-  var a, b;
-  do{ a=[WB.randInt(-3,4),WB.randInt(-3,4),WB.randInt(-3,4)]; }while(a[0]===0&&a[1]===0&&a[2]===0);
-  do{ b=[WB.randInt(-3,4),WB.randInt(-3,4),WB.randInt(-3,4)]; }while(b[0]===0&&b[1]===0&&b[2]===0);
+  // [a1,a2,b1,b2] chọn sao cho k = (a·b)/‖b‖² nguyên và a ∦ b
+  var SET = [
+    [3,4,2,1], [1,3,2,1], [4,2,1,1], [2,6,1,1], [5,1,1,1], [1,5,1,1], [3,5,1,1]
+  ];
+  var s = WB.pick(SET);
+  var a1=s[0], a2=s[1], b1=s[2], b2=s[3];
+  var dot = a1*b1 + a2*b2;
+  var nb2 = b1*b1 + b2*b2;
+  var k = dot/nb2;
+  var px = k*b1, py = k*b2;
+  var perpx = a1-px, perpy = a2-py;
+  var blen = dot/Math.sqrt(nb2);
 
-  var prod=[a[0]*b[0],a[1]*b[1],a[2]*b[2]];
-  var dot=prod[0]+prod[1]+prod[2];
-  var bsq=[b[0]*b[0],b[1]*b[1],b[2]*b[2]];
-  var bnorm2=bsq[0]+bsq[1]+bsq[2];
-  var t = bnorm2===0 ? 0 : dot/bnorm2;
-  var proj=[t*b[0],t*b[1],t*b[2]];
+  WB.setAll({
+    a1: WB.fmtInt(a1), a2: WB.fmtInt(a2), b1: WB.fmtInt(b1), b2: WB.fmtInt(b2),
+    dotExpr: a1+'·'+b1+' + '+a2+'·'+b2,
+    nb2Expr: b1+'² + '+b2+'²',
+    dot: WB.fmtInt(dot), nb2: WB.fmtInt(nb2), k: WB.fmtInt(k),
+    px: WB.fmtInt(px), py: WB.fmtInt(py),
+    perpx: WB.fmtInt(perpx), perpy: WB.fmtInt(perpy),
+    blen: WB.fmt2(blen)
+  });
 
-  // ĐỀ
-  fill('a',a,false); fill('b',b,false);
-  fill('prod',prod,true); fill('dot',[dot],true);
-  fill('bsq',bsq,true); fill('bnorm2',[bnorm2],true);
-  fill('t',[f2(t)],true); fill('bx',b,false);
-  fill('proj',proj.map(f2),true);
-  // ĐÁP ÁN
-  fill('ka',a,false); fill('kb',b,false);
-  fill('kprod',prod,false); fill('kdot',[dot],false);
-  fill('kbsq',bsq,false); fill('kbnorm2',[bnorm2],false);
-  fill('kt',[f2(t)],false); fill('kbx',b,false);
-  fill('kproj',proj.map(f2),false);
-
-  // SVG (dùng 2D: a[0],a[1] vs b[0],b[1])
-  var a2=[a[0],a[1]], b2=[b[0],b[1]];
-  var b2n2=b2[0]*b2[0]+b2[1]*b2[1];
-  if(b2n2===0){b2=[2,1];b2n2=5;}
-  var t2=(a2[0]*b2[0]+a2[1]*b2[1])/b2n2;
-  var p2=[t2*b2[0],t2*b2[1]];
-  drawProj('sch1',a2,b2,p2);
-  drawProj('sch2',a2,b2,p2);
+  drawProj('figK', [a1,a2], [b1,b2], [px,py]);
+  drawProjBlank('figQ', [a1,a2], [b1,b2]);
 }
 
-function drawProj(id,a,b,p){
-  var box=document.getElementById(id); if(!box) return;
-  var mx=Math.max(Math.abs(a[0]),Math.abs(a[1]),Math.abs(b[0]),Math.abs(b[1]),Math.abs(p[0]),Math.abs(p[1]),2);
-  var pad=22, unit=Math.min(76/mx,22), W=178, H=148;
-  var O={x:pad+mx*unit*0.3,y:H-pad-mx*unit*0.1};
-  function X(x){return(O.x+x*unit).toFixed(1);}
-  function Y(y){return(O.y-y*unit).toFixed(1);}
-  var s='<defs>'
-    +'<marker id="mh'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
-    +'<marker id="ma'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
-    +'<marker id="mb'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
-    +'<marker id="mp'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#7c5cff"/></marker>'
-    +'</defs>';
-  // lưới
-  for(var g=-mx;g<=mx;g++){
-    s+='<line x1="'+X(g)+'" y1="'+Y(-mx)+'" x2="'+X(g)+'" y2="'+Y(mx)+'" stroke="#ece7da" stroke-width="0.8"/>';
-    s+='<line x1="'+X(-mx)+'" y1="'+Y(g)+'" x2="'+X(mx)+'" y2="'+Y(g)+'" stroke="#ece7da" stroke-width="0.8"/>';
+// ĐỀ: chỉ vẽ a (lam), b (cam) + đường hướng b; học sinh tự kẻ proj & đoạn vuông góc.
+function drawProjBlank(id, a, b){
+  var svg = document.getElementById(id); if(!svg) return;
+  var O = { x: 22, y: 128 };
+  var m = Math.max(a[0], a[1], b[0], b[1], 4);
+  var unit = 110/m;
+  function X(x){ return (O.x + x*unit).toFixed(1); }
+  function Y(y){ return (O.y - y*unit).toFixed(1); }
+  var s = '<defs>'
+    + '<marker id="bl'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
+    + '<marker id="bc'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
+    + '</defs>';
+  for (var g=0; g<=m; g++){
+    s += '<line class="grid" x1="'+X(g)+'" y1="'+Y(0)+'" x2="'+X(g)+'" y2="'+Y(m)+'"/>';
+    s += '<line class="grid" x1="'+X(0)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'"/>';
   }
-  // trục
-  s+='<line x1="'+X(-mx)+'" y1="'+Y(0)+'" x2="'+(parseFloat(X(mx))+8).toFixed(1)+'" y2="'+Y(0)+'" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#mh'+id+')"/>';
-  s+='<line x1="'+X(0)+'" y1="'+Y(-mx)+'" x2="'+X(0)+'" y2="'+(parseFloat(Y(mx))-8).toFixed(1)+'" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#mh'+id+')"/>';
-  // đường vuông góc từ proj tới a (nét đứt xám)
-  s+='<line x1="'+X(a[0])+'" y1="'+Y(a[1])+'" x2="'+X(p[0])+'" y2="'+Y(p[1])+'" stroke="#aaa" stroke-width="1.2" stroke-dasharray="3 2"/>';
-  // b kéo dài (nét mờ)
-  var blen=Math.sqrt(b[0]*b[0]+b[1]*b[1]); var sc=(blen>0?mx/blen:1);
-  s+='<line x1="'+X(-b[0]*sc)+'" y1="'+Y(-b[1]*sc)+'" x2="'+X(b[0]*sc)+'" y2="'+Y(b[1]*sc)+'" stroke="#fdecd2" stroke-width="1" stroke-dasharray="4 3"/>';
-  // vectơ a (lam)
-  s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(a[0])+'" y2="'+Y(a[1])+'" stroke="#0e7490" stroke-width="2.6" marker-end="url(#ma'+id+')"/>';
-  // vectơ b (cam)
-  s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(b[0])+'" y2="'+Y(b[1])+'" stroke="#b45309" stroke-width="2.2" marker-end="url(#mb'+id+')"/>';
-  // proj (tím)
-  if(Math.abs(p[0])>0.1||Math.abs(p[1])>0.1){
-    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(p[0])+'" y2="'+Y(p[1])+'" stroke="#7c5cff" stroke-width="2.6" marker-end="url(#mp'+id+')"/>';
+  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+(O.x+m*unit+8).toFixed(1)+'" y2="'+Y(0)+'"/>';
+  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+(O.y-m*unit-8).toFixed(1)+'"/>';
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(b[0]*m)+'" y2="'+Y(b[1]*m)+'" stroke="#e3c489" stroke-width="1" stroke-dasharray="2 3"/>';
+  s += '<line style="stroke:#b45309;stroke-width:2.6" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(b[0])+'" y2="'+Y(b[1])+'" marker-end="url(#bc'+id+')"/>';
+  s += '<line style="stroke:#0e7490;stroke-width:2.6" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(a[0])+'" y2="'+Y(a[1])+'" marker-end="url(#bl'+id+')"/>';
+  s += '<text x="'+(parseFloat(X(a[0]))+3)+'" y="'+(parseFloat(Y(a[1]))-3)+'" style="font-size:10px" fill="#0e7490" font-weight="700">a</text>';
+  s += '<text x="'+(parseFloat(X(b[0]))+3)+'" y="'+(parseFloat(Y(b[1]))+11)+'" style="font-size:10px" fill="#b45309" font-weight="700">b</text>';
+  svg.innerHTML = s;
+}
+
+// a (lam), b (cam), proj (tím) dọc b, nét đứt vuông góc từ đầu a xuống đường b.
+function drawProj(id, a, b, p){
+  var svg = document.getElementById(id); if(!svg) return;
+  var O = { x: 22, y: 128 };
+  var m = Math.max(a[0], a[1], b[0], b[1], p[0], p[1], 4);
+  var unit = 110/m;
+  function X(x){ return (O.x + x*unit).toFixed(1); }
+  function Y(y){ return (O.y - y*unit).toFixed(1); }
+  var s = '<defs>'
+    + '<marker id="al'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#0e7490"/></marker>'
+    + '<marker id="ac'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
+    + '<marker id="av'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#7c5cff"/></marker>'
+    + '</defs>';
+  // lưới + trục
+  for (var g=0; g<=m; g++){
+    s += '<line class="grid" x1="'+X(g)+'" y1="'+Y(0)+'" x2="'+X(g)+'" y2="'+Y(m)+'"/>';
+    s += '<line class="grid" x1="'+X(0)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'"/>';
   }
+  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+(O.x+m*unit+8).toFixed(1)+'" y2="'+Y(0)+'"/>';
+  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+(O.y-m*unit-8).toFixed(1)+'"/>';
+  // đường hướng b kéo dài (nhạt)
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(b[0]*m)+'" y2="'+Y(b[1]*m)+'" stroke="#e3c489" stroke-width="1" stroke-dasharray="2 3"/>';
+  // b (cam)
+  s += '<line style="stroke:#b45309;stroke-width:2.6" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(b[0])+'" y2="'+Y(b[1])+'" marker-end="url(#ac'+id+')"/>';
+  // proj (tím) dọc b
+  s += '<line style="stroke:#7c5cff;stroke-width:2.8" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(p[0])+'" y2="'+Y(p[1])+'" marker-end="url(#av'+id+')"/>';
+  // nét đứt vuông góc: đầu a → đầu proj
+  s += '<line x1="'+X(a[0])+'" y1="'+Y(a[1])+'" x2="'+X(p[0])+'" y2="'+Y(p[1])+'" stroke="#5b6776" stroke-width="1.2" stroke-dasharray="4 3"/>';
+  // a (lam)
+  s += '<line style="stroke:#0e7490;stroke-width:2.6" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(a[0])+'" y2="'+Y(a[1])+'" marker-end="url(#al'+id+')"/>';
   // nhãn
-  var ax=a[0]<0?-7:5, ay=a[1]<0?12:-5;
-  s+='<text x="'+(parseFloat(X(a[0]))+ax).toFixed(1)+'" y="'+(parseFloat(Y(a[1]))+ay).toFixed(1)+'" font-size="9.5" fill="#0e7490" font-weight="700">a</text>';
-  var bx=b[0]<0?-10:4, by=b[1]<0?12:-4;
-  s+='<text x="'+(parseFloat(X(b[0]))+bx).toFixed(1)+'" y="'+(parseFloat(Y(b[1]))+by).toFixed(1)+'" font-size="9.5" fill="#b45309" font-weight="700">b</text>';
-  if(Math.abs(p[0])>0.1||Math.abs(p[1])>0.1){
-    var px=p[0]<0?-28:4, py=p[1]<0?12:-4;
-    s+='<text x="'+(parseFloat(X(p[0]))+px).toFixed(1)+'" y="'+(parseFloat(Y(p[1]))+py).toFixed(1)+'" font-size="9" fill="#7c5cff" font-weight="700">proj</text>';
-  }
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="chiếu vectơ a lên b">'+s+'</svg>';
+  s += '<text x="'+(parseFloat(X(a[0]))+3)+'" y="'+(parseFloat(Y(a[1]))-3)+'" style="font-size:10px" fill="#0e7490" font-weight="700">a</text>';
+  s += '<text x="'+(parseFloat(X(b[0]))+3)+'" y="'+(parseFloat(Y(b[1]))+11)+'" style="font-size:10px" fill="#b45309" font-weight="700">b</text>';
+  s += '<text x="'+(parseFloat(X(p[0]))+2)+'" y="'+(parseFloat(Y(p[1]))+12)+'" style="font-size:9px" fill="#7c5cff" font-weight="700">proj</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

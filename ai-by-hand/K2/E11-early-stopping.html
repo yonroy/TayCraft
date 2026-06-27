@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Early Stopping — chọn điểm dừng</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài E11 — Early stopping (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
-  .ublk{display:inline-block;min-width:36px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .dtbl td.best{background:#d6f5d6;font-weight:700;color:#0a6;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+.vtab{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#475569;}
+.vtab b{color:#b45309;}
 </style>
 </head>
 <body>
@@ -26,163 +25,186 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Early Stopping</h1><span class="vi">— chọn điểm dừng</span>
-    <span class="tag">dừng tại epoch có val loss nhỏ nhất</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Train loss luôn giảm khi học thêm, nhưng đến lúc nào đó mô hình bắt đầu <b>học thuộc</b>
-    nhiễu của tập train → <b>val loss tăng lại</b> (overfit). Early stopping theo dõi val loss và <b>dừng ở đáy</b> của
-    nó — lấy mô hình tổng quát tốt nhất, khỏi huấn luyện thừa.
-    <div class="fm">điểm dừng = argmin&nbsp;ₜ val_loss(t) &nbsp;·&nbsp; sau đó: train↓ nhưng val↑ → khoảng cách (gap) nới rộng</div>
+  <div class="wb-title"><span class="no">Bài E11</span><h1>Early stopping <small>— dừng đúng lúc</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Train loss luôn giảm, nhưng quá lâu thì mô hình bắt đầu <b>học thuộc nhiễu</b> → val loss tăng lại.
+    Early stopping bắt đúng "đỉnh khái quát": dừng ở val loss thấp nhất, lưu mô hình ở đó.
+    <div class="formula">
+      Theo dõi val_loss; không cải thiện trong "patience" epoch → dừng, khôi phục trọng số tại val_loss tốt nhất.
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Train loss đi xuống mãi; val loss hình chữ <b>U</b>. Đáy chữ U là lúc mô hình "vừa khít" — học thêm chỉ làm
-    overfit. Khoảng cách val − train (generalization gap) <b>phình ra</b> sau điểm đó.
+    Như <b>ôn thi</b>: học thêm giúp tới một điểm, sau đó <b>học tủ</b> làm điểm thi tụt. Early stopping = "ngừng học khi điểm thi
+    thử bắt đầu tệ đi", giữ lại bản tốt nhất.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Lam</b> = train (giảm mãi) · <b>cam</b> = val (chữ U) · <b>vạch xanh</b> = điểm dừng (đáy val).</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">patience = <span data-q="pat">2</span></span></div>
+    <div class="calc vtab">
+      val_loss qua 6 epoch:
+      <span data-q="v1">0.50</span>, <span data-q="v2">0.40</span>, <span data-q="v3">0.35</span>,
+      <span data-q="v4">0.34</span>, <span data-q="v5">0.36</span>, <span data-q="v6">0.38</span>
     </div>
-
-    <div class="work">
-      <div class="bandh fw">ĐƯỜNG HỌC THEO EPOCH</div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>epoch</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
-        <tr id="rTrain"><th>train</th></tr>
-        <tr id="rVal"><th>val</th></tr>
-        <tr id="rGapQ"><th>gap=val−train</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:8px">CHỌN ĐIỂM DỪNG</div>
-      <div class="expr">
-        val nhỏ nhất tại epoch <span class="ublk" id="epB"></span> → dừng ở đó · val = <span class="ublk" id="vmB"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Sau điểm dừng, train loss vẫn giảm nhưng val loss <span class="ublk" style="min-width:46px"></span> (tăng/giảm).</li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">Train_loss vẫn giảm đều suốt 6 epoch — nhưng ta quyết định dừng theo <b>val_loss</b>.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Early Stopping</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — tìm val thấp nhất -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tìm val thấp nhất</h2><span class="tag">đỉnh khái quát</span></div>
+    <div class="calc">
+      nhỏ nhất = <span class="blk" style="min-width:48px"></span> tại epoch <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> đây là điểm khái quát tốt nhất — nơi ta muốn giữ mô hình.</div>
+  </div>
+
+  <!-- BƯỚC 2 — đếm không cải thiện -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Đếm "không cải thiện"</h2><span class="tag">tới patience</span></div>
+    <div class="calc">
+      epoch 5 (<span data-q="v5">0.36</span> &gt; <span data-q="best">0.34</span>): xấu lần 1; epoch 6 (<span data-q="v6">0.38</span>): xấu lần 2 → đạt patience = <span class="blk" style="min-width:30px"></span>
+    </div>
+    <div class="hint">patience cho phép <b>dao động nhỏ</b> trước khi kết luận đã qua đỉnh.</div>
+  </div>
+
+  <!-- BƯỚC 3 — dừng & khôi phục -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Dừng & khôi phục</h2><span class="tag">lấy bản tốt nhất</span></div>
+    <div class="calc">
+      dừng sau epoch <span class="blk" style="min-width:30px"></span>, khôi phục trọng số epoch <span class="blk" style="min-width:30px"></span> (val = <span data-q="best">0.34</span>)
+    </div>
+    <div class="why"><b>Vì sao:</b> train loss thấp hơn ở epoch cuối nhưng đó là overfit → bỏ.</div>
+  </div>
+
+  <!-- BƯỚC 4 — đường cong -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đường cong train ↓ val ↑</h2><span class="tag">dấu hiệu overfit</span></div>
+    <div class="note">Dấu hiệu overfit là <b>khoảng cách</b> train–val nới rộng. Early stopping rẻ và hiệu quả; thường đi kèm lưu checkpoint tốt nhất.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Dừng dựa trên loss nào? → <span class="blk" style="min-width:150px"></span></li>
+      <li>"Patience" để làm gì? → <span class="blk" style="min-width:160px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Early Stopping</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài E11</span><h1>Early stopping <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Thực hành: "patience" = chờ vài epoch không cải thiện rồi mới dừng (tránh dừng nhầm do nhiễu).</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Val thấp nhất</h2></div>
+    <div class="calc ans"><span class="blk" data-q="best">0.34</span> tại epoch <span class="blk" data-q="bestEpoch">4</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">ĐƯỜNG HỌC THEO EPOCH</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>epoch</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
-        <tr id="kTrain"><th>train</th></tr>
-        <tr id="kVal"><th>val</th></tr>
-        <tr id="kGap"><th>gap</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Đạt patience</h2></div>
+    <div class="calc ans">2 epoch liên tiếp không cải thiện = patience <span class="blk" data-q="pat2">2</span></div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
-      <div class="expr">
-        điểm dừng = epoch <b><span data-q="kep">?</span></b> (val nhỏ nhất = <b><span data-q="kvm">?</span></b>);
-        gap nhỏ nhất ở đó, rồi <b>phình ra</b> → overfit.
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Dừng & khôi phục</h2></div>
+    <div class="calc ans">dừng sau epoch <span class="blk" data-q="stopEpoch">6</span>, khôi phục epoch <span class="blk" data-q="bestEpoch">4</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Sau điểm dừng: val loss <span class="qa">tăng</span> (overfit) dù train vẫn giảm → nên dừng sớm.</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Early stopping = regularization "miễn phí": lấy mô hình ở đáy val loss, bỏ phần huấn luyện
-        thừa gây overfit. Đi cùng L2 (E3), dropout (E5). Hết Phần E (chuẩn hóa & huấn luyện); Phần F sang CNN.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">⌣</div><h2>Train giảm mãi · Val hình chữ U</h2><span class="tag">điểm dừng</span></div>
+    <div class="figrow">
+      <svg id="figE" class="fig" viewBox="0 0 240 160" width="76mm" height="51mm" aria-label="đường train giảm mãi và val hình chữ U, đánh dấu điểm dừng tại đáy val"></svg>
+      <div style="flex:1">
+        <div class="note"><b>Lam</b> = train loss (giảm mãi). <b>Cam</b> = val loss (chữ U). Chấm đánh dấu <b>đáy val</b> = điểm khôi phục;
+          sau đó val tăng = overfit. Khoảng cách train–val nới rộng là dấu hiệu.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Early Stopping</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Loss nào? → <span class="qa">Validation loss (không phải train loss).</span></li>
+      <li>Patience? → <span class="qa">Cho phép dao động nhỏ trước khi kết luận đã qua đỉnh khái quát.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Early stopping = dừng khi val loss hết cải thiện, giữ bản tốt nhất; chống overfit, tiết kiệm.
+    Hết Phần E. Sang Phần F (CNN) — Bài tiếp (16): <b style="color:var(--accent2)">một bộ lọc tích chập</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fT(v){return WB.fmtTrim(v);}
-
-var PRE=[
-  {train:[5,3.5,2.5,2,1.6,1.3,1.1], val:[5.5,3.8,2.8,2.4,2.6,3.2,4.2]},   // min epoch 4
-  {train:[5,3.6,2.7,2.1,1.7,1.4,1.2], val:[5.6,3.9,3,2.5,2.3,2.7,3.6]},   // min epoch 5
-  {train:[4.8,3.2,2.3,1.8,1.5,1.3,1.1], val:[5.2,3.4,2.5,2.7,3.2,3.9,4.8]} // min epoch 3
-];
-
 function generate(){
-  var p=WB.pick(PRE);
-  var train=p.train, val=p.val;
-  var gap=val.map(function(v,i){return Math.round((v-train[i])*10)/10;});
-  // điểm dừng = argmin val
-  var ep=0, vm=val[0];
-  for(var i=1;i<val.length;i++){ if(val[i]<vm){vm=val[i]; ep=i;} }
-
-  fillRow('rTrain',train,false,-1); fillRow('rVal',val,false,-1); fillRow('rGapQ',gap,true,-1);
-  fillRow('kTrain',train,false,-1); fillRow('kVal',val,false,ep); fillRow('kGap',gap,false,ep);
-
-  ['epB','vmB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  WB.setAll({ kep:String(ep+1), kvm:fT(vm) });
-
-  drawCurves('sch1',train,val,ep,false);
-  drawCurves('sch2',train,val,ep,true);
-}
-
-function fillRow(id,arr,blank,best){
-  var tr=document.getElementById(id); if(!tr) return;
-  while(tr.children.length>1) tr.removeChild(tr.lastChild);
-  arr.forEach(function(v,i){
-    var td=document.createElement('td'); td.textContent=fT(v);
-    if(blank) td.className='blank';
-    else if(best===i) td.className='best';
-    tr.appendChild(td);
+  function f2(v){ return (Math.round(v*100)/100).toFixed(2); }
+  // val: giảm tới đáy ở epoch 4 rồi tăng (patience=2 → dừng epoch 6)
+  var best = 0.30 + 0.02*WB.randInt(0, 4);     // 0.30..0.38
+  var d1 = 0.01 + 0.01*WB.randInt(0,2);        // v3-v4
+  var d2 = 0.04 + 0.01*WB.randInt(0,3);        // v2-v3
+  var d3 = 0.08 + 0.01*WB.randInt(0,3);        // v1-v2
+  var e1 = 0.02 + 0.01*WB.randInt(0,2);        // v5-v4
+  var e2 = e1 + 0.01 + 0.01*WB.randInt(0,2);   // v6-v4 (> e1 → vẫn xấu)
+  var v4 = best;
+  var v3 = v4 + d1, v2 = v3 + d2, v1 = v2 + d3;
+  var v5 = v4 + e1, v6 = v4 + e2;
+  WB.setAll({
+    pat: '2', pat2: '2',
+    v1: f2(v1), v2: f2(v2), v3: f2(v3), v4: f2(v4), v5: f2(v5), v6: f2(v6),
+    best: f2(best), bestEpoch: '4', stopEpoch: '6'
   });
+  drawES('figE', [v1,v2,v3,v4,v5,v6]);
 }
 
-function drawCurves(id,train,val,ep,show){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=128, padl=16,padr=8,padt=10,padb=18;
-  var pw=W-padl-padr, ph=H-padt-padb;
-  var n=train.length;
-  var mx=Math.max.apply(null,val)+0.3, mn=Math.min.apply(null,train)-0.3;
-  function px(i){return (padl+i/(n-1)*pw).toFixed(1);}
-  function py(v){return (padt+ph-(v-mn)/(mx-mn)*ph).toFixed(1);}
-  var s='';
-  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
-  // vạch điểm dừng
-  s+='<line x1="'+px(ep)+'" y1="'+padt+'" x2="'+px(ep)+'" y2="'+(H-padb)+'" stroke="#0a6" stroke-width="1.2" stroke-dasharray="3 2"/>';
-  // train (lam)
-  var dt='M'+px(0)+','+py(train[0]); for(var i=1;i<n;i++) dt+=' L'+px(i)+','+py(train[i]);
-  s+='<path d="'+dt+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
-  // val (cam)
-  var dv='M'+px(0)+','+py(val[0]); for(var j=1;j<n;j++) dv+=' L'+px(j)+','+py(val[j]);
-  s+='<path d="'+dv+'" fill="none" stroke="#b45309" stroke-width="1.8"/>';
-  for(var k=0;k<n;k++){
-    s+='<text x="'+px(k)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="7" fill="#6b7280">'+(k+1)+'</text>';
-  }
-  // chấm đáy val
-  s+='<circle cx="'+px(ep)+'" cy="'+py(val[ep])+'" r="3.2" fill="#0a6"/>';
-  if(show) s+='<text x="'+px(ep)+'" y="'+(parseFloat(py(val[ep]))-4)+'" text-anchor="middle" font-size="7.5" fill="#0a6">dừng</text>';
-  s+='<text x="'+(W-padr)+'" y="'+(padt+6)+'" text-anchor="end" font-size="7.5" fill="#6b7280">lam train · cam val</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đường train và val theo epoch, điểm dừng">'+s+'</svg>';
+// train giảm mãi (lam) + val chữ U (cam), chấm đáy
+function drawES(id, val){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var x0 = 28, y0 = 130, W = 196, H = 104, N = 6;
+  var vmax = Math.max.apply(null, val), vmin = Math.min.apply(null, val);
+  function X(i){ return (x0 + i/(N-1)*W).toFixed(1); }
+  function Yv(v){ return (y0 - (v - 0.20)/(vmax - 0.20 + 0.02)*H).toFixed(1); }
+  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<line x1="'+x0+'" y1="'+(y0-H)+'" x2="'+x0+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<text x="'+(x0-2)+'" y="'+(y0-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">loss</text>';
+  s += '<text x="'+(x0+W)+'" y="'+(y0+11)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">epoch</text>';
+  // train: giảm đều
+  var tp = '';
+  for (var i=0;i<N;i++){ tp += X(i)+','+Yv(0.46 - 0.05*i)+' '; }
+  s += '<polyline points="'+tp.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.2"/>';
+  // val: chữ U
+  var vp = '';
+  for (var j=0;j<N;j++){ vp += X(j)+','+Yv(val[j])+' '; }
+  s += '<polyline points="'+vp.trim()+'" fill="none" stroke="#b45309" stroke-width="2.2"/>';
+  // chấm đáy val (epoch 4 = index 3)
+  s += '<circle cx="'+X(3)+'" cy="'+Yv(val[3])+'" r="3.6" fill="#b45309"/>';
+  s += '<line x1="'+X(3)+'" y1="'+(y0-H)+'" x2="'+X(3)+'" y2="'+y0+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>';
+  s += '<text x="'+X(3)+'" y="'+(y0-H-1)+'" text-anchor="middle" style="font-size:8px" fill="#b45309" font-weight="700">dừng</text>';
+  s += '<text x="'+X(4.6)+'" y="'+Yv(0.30)+'" style="font-size:8px" fill="#0e7490" font-weight="700">train</text>';
+  s += '<text x="'+X(4.4)+'" y="'+Yv(val[5]+0.01)+'" style="font-size:8px" fill="#b45309" font-weight="700">val</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài A20 — One-hot encoding (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="../index.html">← Mục lục</a>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Toán nền (A)</div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài A20</span><h1>One-hot encoding <small>— One-hot Encoding</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~10 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Máy chỉ tính trên <b>số</b>, nhưng nhãn lớp <b>không có thứ tự</b> (mèo không "nhỏ hơn" chó).
+    Gán 0,1,2,3 vô tình tạo thứ tự giả. <b>One-hot</b> cho mỗi lớp một <b>trục riêng</b> → các lớp bình đẳng, và khớp đúng
+    với đầu ra softmax — nên nó là <b>nhãn đích</b> của cross-entropy.
+    <div class="formula">
+      lớp k trong K lớp &nbsp;→&nbsp; vectơ dài K: vị trí k = 1, còn lại = 0 &nbsp;&nbsp;|&nbsp;&nbsp;
+      <span style="font-size:18px">Σ</span> eᵢ = 1
+    </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    One-hot như một <b>dãy bóng đèn</b>: bật đúng <b>một</b> bóng (lớp đúng), tắt hết phần còn lại. Không bóng nào "to" hơn
+    bóng nào — mọi lớp bình đẳng, chỉ khác <b>vị trí</b> sáng.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Bảng lớp &amp; nhãn cho sẵn</h2><span class="tag">K = 4 lớp</span></div>
+    <div class="row">
+      <div class="note" style="max-width:none;flex:1">
+        Các lớp (kèm chỉ số 0-based): <b style="font-family:var(--mono)" data-q="clslist">mèo(0), chó(1), chim(2), cá(3)</b>.<br>
+        Nhãn cần mã hóa: <b style="color:var(--accent);font-size:15px" data-q="tname">chó</b>.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tìm chỉ số lớp</h2><span class="tag">đọc bảng</span></div>
+    <div class="calc">
+      <span data-q="tname">chó</span> → index = <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> one-hot chỉ cần biết <b>vị trí</b> của lớp, không cần giá trị độ lớn — đó là điều khiến các lớp bình đẳng.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Dựng vectơ one-hot</h2><span class="tag">độ dài K = 4</span></div>
+    <div class="mwrap"><div class="mlabel">one-hot(<span data-q="tname">chó</span>) <s>1×4</s></div>
+      <div class="mtx c4" style="--cell:14mm">
+        <div class="cell blank tall"></div><div class="cell blank tall"></div>
+        <div class="cell blank tall"></div><div class="cell blank tall"></div>
+      </div></div>
+    <div class="hint"><b>Cách điền:</b> đặt đúng <b>một</b> số 1 tại index vừa tìm, mọi ô khác = 0.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tính chất &amp; lọc xác suất</h2><span class="tag">Σ = 1</span></div>
+    <div class="calc">
+      Tổng các ô: <span class="blk" style="min-width:40px"></span> (one-hot luôn cộng lại bằng 1)<br>
+      Cho softmax p = [<span data-q="pdisp">0.10, 0.60, 0.20, 0.10</span>] → one-hot · p = p tại lớp đúng = <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> nhân one-hot với dự đoán softmax sẽ <b>lọc ra đúng xác suất của lớp thật</b> — chính là con số đi vào cross-entropy <span style="font-family:var(--mono)">−ln pₖ</span>.</div>
+  </div>
+
+  <!-- STEP 4 — nối softmax / cross-entropy -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Nối với softmax &amp; cross-entropy</h2><span class="tag">nhãn đích</span></div>
+    <div class="figrow">
+      <svg id="figA" class="fig" viewBox="0 0 200 132" width="74mm" height="49mm" aria-label="so sánh one-hot nhãn thật và softmax dự đoán theo từng lớp"></svg>
+      <div style="flex:1">
+        <div class="calc">
+          Nhãn thật = one-hot lớp <span data-q="tname">chó</span> · xác suất mô hình cho lớp đúng p<sub>đúng</sub> = <span data-q="ptrue">0.60</span><br>
+          Loss = −ln(p<sub>đúng</sub>) = −ln(<span data-q="ptrue">0.60</span>) ≈ <span class="blk" style="min-width:54px"></span>
+        </div>
+        <div class="note">Cột <b style="color:var(--accent)">lam</b> = one-hot (nhãn thật, đúng 1 ô = 1); cột <b style="color:var(--accent2)">cam</b> = softmax dự đoán. Giải mã ngược: <b>argmax</b> của softmax → tên lớp.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TỰ KIỂM TRA -->
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Tổng các phần tử của một vectơ one-hot bằng bao nhiêu? → <span class="blk" style="min-width:60px"></span></li>
+      <li>Vì sao không mã hóa lớp bằng 0,1,2,3 trực tiếp? → <span class="blk" style="min-width:230px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A20 · One-hot encoding</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A20</span><h1>One-hot encoding <small>— lời giải &amp; kiểm tra</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chỉ số lớp</h2></div>
+    <div class="calc ans">
+      <span data-q="tname">chó</span> → index = <span class="blk" data-q="tidx">1</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Vectơ one-hot</h2></div>
+    <div class="mwrap"><div class="mlabel">one-hot(<span data-q="tname">chó</span>) <s>1×4</s></div>
+      <div class="mtx c4" style="--cell:14mm">
+        <div class="cell ans tall" data-q="oh0">0</div><div class="cell ans tall" data-q="oh1">1</div>
+        <div class="cell ans tall" data-q="oh2">0</div><div class="cell ans tall" data-q="oh3">0</div>
+      </div></div>
+    <div class="calc ans" style="margin-top:4px">one-hot = <span data-q="ohvec">(0, 1, 0, 0)</span> &nbsp;·&nbsp; tổng = <span class="blk">1</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Lọc xác suất lớp đúng</h2></div>
+    <div class="calc ans">
+      one-hot · p = p tại lớp đúng = <span class="blk" data-q="ptrue">0.60</span> &nbsp;<span style="color:var(--dim);font-weight:400">(các ô khác nhân 0 nên biến mất)</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Cross-entropy</h2></div>
+    <div class="figrow">
+      <svg id="figK" class="fig" viewBox="0 0 200 132" width="68mm" height="45mm"></svg>
+      <div style="flex:1">
+        <div class="calc ans">
+          y = one-hot(lớp <span data-q="tidx">1</span>) = <span data-q="ohvec">(0, 1, 0, 0)</span><br>
+          Loss = −ln(p<sub>đúng</sub>) = −ln(<span data-q="ptrue">0.60</span>) ≈ <span class="blk" data-q="ce">0.51</span>
+        </div>
+        <div class="note">Vì yᵢ = 0 với mọi i ≠ lớp đúng, tổng −Σ yᵢ·ln pᵢ <b>chỉ còn một số hạng</b>. Loss = 0 khi p<sub>đúng</sub> = 1 (đoán chắc, đúng).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Tổng các phần tử one-hot → <span class="qa">1 (đúng một số 1)</span></li>
+      <li>Không dùng 0,1,2,3 vì → <span class="qa">tạo thứ tự / khoảng cách giả giữa các lớp vốn bình đẳng</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> One-hot = bật một bóng đèn cho lớp đúng; tổng = 1, khớp với đầu ra softmax (Categorical). Nhân one-hot với
+    dự đoán = lấy xác suất lớp thật → nền của <b>cross-entropy</b>. <b>Hết Phần A (Toán nền)</b> — sẵn sàng sang ML cổ điển
+    (Phần B) và nơ-ron (Phần C).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A20 · One-hot encoding</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CLASSES = ["mèo", "chó", "chim", "cá"];
+
+function generate(){
+  var K = 4;
+  var tidx = WB.randInt(0, K - 1);
+  var tname = CLASSES[tidx];
+
+  // one-hot
+  var oh = [0, 0, 0, 0]; oh[tidx] = 1;
+
+  // softmax p: lớp đúng là argmax (đoán đúng) để minh họa giải mã argmax
+  var raw = [];
+  for (var i = 0; i < K; i++) raw.push(WB.randInt(1, 4));
+  raw[tidx] += WB.randInt(4, 7);
+  var tot = raw.reduce(function(s, v){ return s + v; }, 0);
+  var p = raw.map(function(v){ return Math.round(v / tot * 100) / 100; });
+  // chỉnh làm tròn để Σp = 1 (bù vào lớp đúng)
+  var diff = Math.round((1 - p.reduce(function(s, v){ return s + v; }, 0)) * 100) / 100;
+  p[tidx] = Math.round((p[tidx] + diff) * 100) / 100;
+  var ptrue = p[tidx];
+  var ce = -Math.log(ptrue);
+
+  WB.setAll({
+    clslist: CLASSES.map(function(c, i){ return c + '(' + i + ')'; }).join(', '),
+    tname: tname,
+    tidx: String(tidx),
+    oh0: String(oh[0]), oh1: String(oh[1]), oh2: String(oh[2]), oh3: String(oh[3]),
+    ohvec: '(' + oh.join(', ') + ')',
+    pdisp: p.map(WB.fmt2).join(', '),
+    ptrue: WB.fmt2(ptrue),
+    ce: WB.fmt2(ce)
+  });
+
+  drawFig('figA', K, tidx, p, false);
+  drawFig('figK', K, tidx, p, true);
+}
+
+// One-hot (ô vuông lam) ở trên · softmax (cột cam) ở dưới, theo từng lớp.
+function drawFig(id, K, tidx, p, showVals){
+  var svg = document.getElementById(id); if (!svg) return;
+  var W = 200, pad = 16;
+  var span = (W - 2 * pad) / K;
+  var cw = Math.min(span * 0.6, 20);
+  var ohY = 22, ohH = cw;
+  var base = 104, maxH = 42;
+  var pmax = Math.max.apply(null, p) * 1.15;
+  var s = '';
+  s += '<text x="' + (W / 2) + '" y="11" text-anchor="middle" font-size="8.5" fill="#0e7490" font-weight="700">One-hot (nhãn thật)</text>';
+  for (var i = 0; i < K; i++){
+    var cx = pad + span * (i + 0.5);
+    var on = (i === tidx);
+    // ô one-hot
+    s += '<rect x="' + (cx - cw / 2).toFixed(1) + '" y="' + ohY + '" width="' + cw.toFixed(1) + '" height="' + ohH.toFixed(1) +
+         '" rx="2" fill="' + (on ? '#cdeaf2' : '#f1f3f5') + '" stroke="' + (on ? '#0e7490' : '#cbd2d9') + '" stroke-width="1.2"/>';
+    s += '<text x="' + cx.toFixed(1) + '" y="' + (ohY + ohH / 2 + 3.5).toFixed(1) + '" text-anchor="middle" font-size="10" font-weight="700" fill="' +
+         (on ? '#0e7490' : '#aab2bb') + '">' + (on ? '1' : '0') + '</text>';
+    // cột softmax
+    var bh = maxH * (p[i] / pmax);
+    s += '<rect x="' + (cx - cw / 2).toFixed(1) + '" y="' + (base - bh).toFixed(1) + '" width="' + cw.toFixed(1) + '" height="' + bh.toFixed(1) +
+         '" rx="2" fill="' + (on ? '#e8a44d' : '#fbe6cf') + '" stroke="' + (on ? '#b45309' : '#e8c79b') + '" stroke-width="1"/>';
+    if (showVals) s += '<text x="' + cx.toFixed(1) + '" y="' + (base - bh - 3).toFixed(1) + '" text-anchor="middle" font-size="7.5" fill="#b45309" font-weight="700">' + WB.fmt2(p[i]) + '</text>';
+    // nhãn chỉ số lớp
+    s += '<text x="' + cx.toFixed(1) + '" y="' + (base + 10).toFixed(1) + '" text-anchor="middle" font-size="8" fill="#5b6776">' + i + '</text>';
+  }
+  s += '<line x1="' + pad + '" y1="' + base + '" x2="' + (W - pad) + '" y2="' + base + '" stroke="#cbd2d9" stroke-width="1"/>';
+  s += '<text x="' + (W / 2) + '" y="' + (base + 22) + '" text-anchor="middle" font-size="8.5" fill="#b45309" font-weight="700">Softmax dự đoán (theo lớp)</text>';
+  svg.innerHTML = s;
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

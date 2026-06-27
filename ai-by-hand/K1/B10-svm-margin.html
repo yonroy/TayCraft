@@ -1,21 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · SVM — lề hình học</title>
-<link rel="stylesheet" href="../wb-canvas.css">
-<style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:3px;}
-  .ublk{display:inline-block;min-width:40px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:3px 5px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-</style>
+<title>Làm toán AI · Bài B10 — SVM: lề hình học (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 </head>
 <body>
 
@@ -25,180 +14,235 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>SVM — lề hình học</h1><span class="vi">— Support Vector Machine: Margin</span>
-    <span class="tag">khoảng cách điểm → siêu phẳng</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> SVM tìm siêu phẳng phân tách <b>có lề rộng nhất</b> giữa hai lớp. Lề = khoảng cách tới điểm gần
-    nhất (support vector). Khái niệm "khoảng cách có dấu tới một mặt phẳng" và "tối đa hóa lề" còn xuất hiện trong contrastive
-    learning và regularization.
-    <div class="fm">f(x) = w·x + b &nbsp;|&nbsp; khoảng cách = |w·x + b| / ‖w‖ &nbsp;|&nbsp; lề tối ưu = 2 / ‖w‖ &nbsp;|&nbsp; lớp = dấu f(x)</div>
+  <div class="wb-title"><span class="no">Bài B10</span><h1>SVM: lề hình học <small>— SVM margin</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Nhiều đường tách được hai lớp, nhưng đường <b>"thoáng" nhất</b> (xa cả hai bên nhất) ít sai trên
+    dữ liệu mới. SVM định nghĩa rõ "thoáng" = lề, và chỉ vài <b>vectơ hỗ trợ</b> sát lề mới quyết định đường.
+    <div class="formula">
+      Đường: w·x + b = 0 &nbsp;|&nbsp; khoảng cách: d = |w·x + b| / ‖w‖ &nbsp;|&nbsp; bề rộng lề = 2/‖w‖
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    w·x+b cho biết điểm nằm phía nào của ranh giới và "xa cỡ nào" (chưa chuẩn hóa); chia cho ‖w‖ để ra <b>khoảng cách thật</b>.
-    Điểm gần ranh giới nhất chính là <b>support vector</b> — chỉ chúng quyết định vị trí siêu phẳng.
+    Tưởng tượng một <b>con đường</b> rộng nhất có thể nhét giữa hai lớp mà không đè lên điểm nào. Vạch giữa là ranh giới; mép
+    đường chạm vài điểm — đó là <b>vectơ hỗ trợ</b>. Càng rộng đường, phân loại càng "chắc tay".
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Đường liền</b> = ranh giới w·x+b=0; chấm tô màu theo dấu f; <b>nét đứt</b> = khoảng cách từ support vector tới ranh giới (= lề).</div>
+  <!-- BƯỚC 0 -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn — đường &amp; điểm</h2><span class="tag">w, b, 3 điểm</span></div>
+    <div class="calc">
+      w = (<span class="gv" data-q="w1">1</span>, <span class="gv" data-q="w2">1</span>) &nbsp; b = <span class="gv" data-q="b">−3</span><br>
+      A(<span data-q="Ax">3</span>,<span data-q="Ay">2</span>) 🔵 &nbsp; B(<span data-q="Bx">1</span>,<span data-q="By">1</span>) 🔴 &nbsp; C(<span data-q="Cx">4</span>,<span data-q="Cy">4</span>) 🔵
     </div>
+    <div class="why" style="margin-top:5px"><b>Vì sao:</b> w·x+b là "điểm số thô"; chia cho ‖w‖ mới thành <b>khoảng cách thật</b> tới đường.</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN — siêu phẳng</div>
-      <div class="expr">
-        w = (<span data-q="w1">3</span>, <span data-q="w2">4</span>), b = <span data-q="b">−12</span> &nbsp;→&nbsp;
-        ‖w‖ = √(<span data-q="w1s">9</span>+<span data-q="w2s">16</span>) = <span data-q="nw">5</span>
-      </div>
+  <div class="grid2">
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chuẩn ‖w‖</h2><span class="tag">độ dài w</span></div>
+    <div class="calc">
+      ‖w‖ = √(<span data-q="w1">1</span>² + <span data-q="w2">1</span>²) = √2 ≈ <span class="blk"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> ‖w‖ là độ dài vectơ pháp tuyến — không phụ thuộc điểm nào.</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:5px">KHOẢNG CÁCH CÓ DẤU: f(x)/‖w‖</div>
-      <table class="dtbl" id="tbl">
-        <tr><th>điểm</th><th>(x,y)</th><th>f = w·x+b</th><th>d = f/5</th><th>lớp (dấu)</th></tr>
-      </table>
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Khoảng cách từ A</h2><span class="tag">phía 🔵</span></div>
+    <div class="calc">
+      w·A + b = <span class="blk"></span> &nbsp;→&nbsp; d_A = |·|/√2 ≈ <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> dấu của w·x+b cho biết <b>phía</b> nào của đường; trị tuyệt đối chia ‖w‖ cho khoảng cách.</div>
+  </div>
+  </div><!-- /grid2 -->
 
-      <div class="bandh fw" style="margin-top:6px">SUPPORT VECTOR & LỀ</div>
-      <div class="expr">
-        |d| nhỏ nhất ở: <span class="ublk" id="svB" style="min-width:60px"></span> &nbsp;→&nbsp;
-        lề (1 phía) = <span class="ublk" id="marB"></span>
-      </div>
+  <!-- BƯỚC 3 + 4 -->
+  <div class="grid2">
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Khoảng cách từ B</h2><span class="tag">phía 🔴</span></div>
+    <div class="calc">
+      w·B + b = <span class="blk"></span> &nbsp;→&nbsp; d_B = |·|/√2 ≈ <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> B gần đường hơn → ứng viên <b>vectơ hỗ trợ</b>.</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Điểm có |d| lớn nhất nằm xa hay gần ranh giới? <span class="ublk" id="qB" style="min-width:60px"></span></li>
-        </ol>
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Bề rộng lề</h2><span class="tag">2/‖w‖</span></div>
+    <div class="calc">
+      bề rộng = 2/√2 = √2 ≈ <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="note">SVM <b>tối đa hóa</b> đại lượng này ⇔ <b>tối thiểu ‖w‖</b>, với ràng buộc mọi điểm đúng phía &amp; ngoài lề.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B10 · SVM lề hình học</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>SVM lề — tiếp theo</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B10</span><h1>SVM lề <small>— vẽ đường &amp; lề</small></h1></div>
+
+  <!-- BƯỚC 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vẽ đường phân tách &amp; lề</h2><span class="tag">đường + lề</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="ba điểm hai lớp cho sẵn, khung trống để tự kẻ đường và hai mép lề"></svg>
+      <div style="flex:1">
+        <div class="why"><b>Vì sao:</b> đường w·x+b=0 chia đôi mặt phẳng; hai mép lề (nét đứt) cách đều đường, chạm <b>vectơ hỗ trợ</b>.</div>
+        <div class="note">Tự kẻ đường giữa (lam) và hai mép lề (nét đứt); điểm chạm mép = vectơ hỗ trợ. Đường ⟂ w = (1,1).</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · SVM lề</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- TỰ KIỂM TRA -->
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Dấu của w·x + b cho biết gì? → <span class="blk" style="min-width:200px"></span></li>
+      <li>SVM tối ưu hóa cái gì? → <span class="blk" style="min-width:200px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B10 · SVM lề hình học</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>SVM — lề hình học</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B10</span><h1>SVM lề <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">SVM "cứng" yêu cầu mọi điểm nằm ngoài lề (|d| ≥ lề). Tối ưu = tìm w,b cho lề 2/‖w‖ lớn nhất mà vẫn phân tách đúng.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chuẩn ‖w‖</h2></div>
+    <div class="calc ans">
+      ‖w‖ = √(<span data-q="w1">1</span>²+<span data-q="w2">1</span>²) = √2 ≈ <span class="blk" data-q="normw">1.41</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">KHOẢNG CÁCH (điền đủ)</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>điểm</th><th>(x,y)</th><th>f = w·x+b</th><th>d = f/5</th><th>lớp</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2–3</div><h2>Khoảng cách A, B</h2></div>
+    <div class="calc ans">
+      w·A+b = <span class="blk" data-q="scoreA">2</span> (dương → 🔵) → d_A = <span class="blk" data-q="dA">1.41</span><br>
+      w·B+b = <span class="blk" data-q="scoreB">−1</span> (âm → 🔴) → d_B = <span class="blk" data-q="dB">0.71</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ</div>
-      <div class="expr">
-        Support vector: <b><span data-q="ksv">?</span></b> &nbsp;(|d| nhỏ nhất = <span data-q="kmar">?</span>)<br>
-        Lề tối ưu nếu đặt giữa: 2/‖w‖ = 2/5 = <b>0.4</b> (so sánh khái niệm)
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Bề rộng lề</h2></div>
+    <div class="calc ans">
+      2/√2 = √2 ≈ <span class="blk" data-q="margin">1.41</span>
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>|d| lớn → <span class="qa">xa</span> ranh giới (phân loại "tự tin" hơn).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Chỉ <b>support vector</b> (điểm sát lề) định hình ranh giới — bỏ điểm xa đi không đổi nghiệm.
-        Với dữ liệu không tách tuyến tính → <b>kernel</b> nâng chiều. Tư tưởng "lề" ↔ regularization và margin loss trong DL.
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Hình minh họa</h2><span class="tag">đường + lề</span></div>
+    <div class="figrow">
+      <svg id="figK" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="đường phân tách, hai mép lề nét đứt, ba điểm hai lớp"></svg>
+      <div style="flex:1">
+        <div class="note"><b style="color:var(--accent)">Đường giữa (lam)</b> là ranh giới; <b>hai nét đứt</b> là mép lề. Điểm chạm mép = vectơ hỗ trợ.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · SVM lề</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Dấu w·x+b → <span class="qa">Điểm nằm phía nào của đường phân tách.</span></li>
+      <li>SVM tối ưu → <span class="qa">Lề rộng nhất ⇔ ‖w‖ nhỏ nhất (với ràng buộc phân loại đúng).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Lề = |w·x+b|/‖w‖, bề rộng = 2/‖w‖; SVM chọn đường lề rộng nhất, chỉ phụ thuộc vectơ hỗ trợ.
+    Bài tiếp (B11): ghép nhiều mô hình yếu — <b>Gradient Boosting</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B10 · SVM lề hình học</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function f1(v){var r=Math.round(v*100)/100; return (r<0?'−':'')+Math.abs(r).toFixed(2);}
-function sgn(v){return v>0?'+':'−';}
-var PTS,Wv,Bv,NW;
-
 function generate(){
-  Wv=WB.pick([[3,4],[4,3]]); NW=5;
-  // b sao cho có điểm 2 phía trên lưới 0..6
-  var ok=false,tries=0;
-  while(!ok && tries++<200){
-    Bv=WB.randInt(-22,-8);
-    var used={}, pts=[];
-    function pt(){var x,y,g=0; do{x=WB.randInt(0,6);y=WB.randInt(0,6);g++;}while(used[x+','+y]&&g<40); used[x+','+y]=1; return {x:x,y:y};}
-    for(var i=0;i<4;i++) pts.push(pt());
-    pts.forEach(function(p){ p.f=Wv[0]*p.x+Wv[1]*p.y+Bv; p.d=p.f/NW; p.ad=Math.abs(p.d); });
-    var pos=pts.filter(function(p){return p.f>0;}).length;
-    if(pos===0||pos===4) continue;            // cần 2 phía
-    var ads=pts.map(function(p){return p.ad;}).sort(function(a,b){return a-b;});
-    if(ads[0]===ads[1]) continue;             // support vector duy nhất
-    if(pts.some(function(p){return p.f===0;})) continue; // không nằm trên đường
-    PTS=pts; ok=true;
+  var w1 = 1, w2 = 1;                       // giữ ‖w‖ = √2 để số đẹp
+  var b = WB.pick([-2, -3, -4]);
+  // chọn điểm cho điểm số cố định: A→+2, B→−1, C→+4
+  function ptForScore(score){
+    var sum = score - b;                    // x+y = score − b (vì w=(1,1))
+    var x = Math.max(0, Math.min(sum, WB.randInt(0, sum)));
+    var y = sum - x;
+    return [x, y];
   }
-  var names='A B C D'.split(' ');
-  PTS.forEach(function(p,i){p.nm=names[i];});
-  var sv=PTS.slice().sort(function(a,b){return a.ad-b.ad;})[0];
+  var A = ptForScore(2), B = ptForScore(-1), C = ptForScore(4);
+  var normw = Math.sqrt(2);
+  var scoreA = w1*A[0]+w2*A[1]+b, scoreB = w1*B[0]+w2*B[1]+b;
+  var dA = Math.abs(scoreA)/normw, dB = Math.abs(scoreB)/normw;
+  var margin = 2/normw;
 
   WB.setAll({
-    w1:String(Wv[0]), w2:String(Wv[1]), b:WB.fmtInt(Bv),
-    w1s:String(Wv[0]*Wv[0]), w2s:String(Wv[1]*Wv[1]), nw:String(NW),
-    ksv:sv.nm+' ('+sv.x+','+sv.y+')', kmar:f1(sv.ad)
+    w1: ''+w1, w2: ''+w2, b: WB.fmtInt(b),
+    Ax: ''+A[0], Ay: ''+A[1], Bx: ''+B[0], By: ''+B[1], Cx: ''+C[0], Cy: ''+C[1],
+    normw: WB.fmt2(normw),
+    scoreA: WB.fmtInt(scoreA), dA: WB.fmt2(dA),
+    scoreB: WB.fmtInt(scoreB), dB: WB.fmt2(dB),
+    margin: WB.fmt2(margin)
   });
-  buildTbl('tbl',true); buildTbl('ktbl',false);
-  ['svB','marB','qB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
 
-  drawSVM('sch1',false,sv); drawSVM('sch2',true,sv);
+  var figPts = [['A',A,'#0e7490'],['B',B,'#dc2626'],['C',C,'#0e7490']];
+  drawSVM('figK', w1, w2, b, figPts);
+  drawSVMBlank('figQ', figPts);
 }
-
-function buildTbl(id,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  PTS.forEach(function(p){
-    var tr=document.createElement('tr');
-    var add=function(html,bl,txt){var td=document.createElement('td'); if(bl){td.className='blank';td.textContent=txt;} else td.innerHTML=html; tr.appendChild(td);};
-    add('<b>'+p.nm+'</b>'); add('('+p.x+','+p.y+')');
-    add('', blank, WB.fmtInt(p.f));
-    add('', blank, f1(p.d));
-    add(blank?'':('<b>'+sgn(p.f)+'</b>'), blank, sgn(p.f));
-    el.appendChild(tr);
+function drawSVMBlank(id, pts){
+  var box = document.getElementById(id); if(!box) return;
+  var W=200, H=150, pad=16;
+  var allx = pts.map(function(p){return p[1][0];}), ally = pts.map(function(p){return p[1][1];});
+  var xmin=0, xmax=Math.max.apply(null,allx)+1, ymin=0, ymax=Math.max.apply(null,ally)+1;
+  function X(x){ return (pad + (x-xmin)/(xmax-xmin)*(W-2*pad)).toFixed(1); }
+  function Y(y){ return (H-pad - (y-ymin)/(ymax-ymin)*(H-2*pad)).toFixed(1); }
+  var s = '<rect x="3" y="3" width="194" height="144" fill="none" stroke="#ddd" stroke-width="1"/>';
+  pts.forEach(function(p){
+    s += '<circle cx="'+X(p[1][0])+'" cy="'+Y(p[1][1])+'" r="3.6" fill="'+p[2]+'"/>';
+    s += '<text x="'+(parseFloat(X(p[1][0]))+4)+'" y="'+(parseFloat(Y(p[1][1]))-3)+'" font-size="8.5" fill="'+p[2]+'" font-weight="700">'+p[0]+'</text>';
   });
+  box.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
 }
-
-function drawSVM(id,showMargin,sv){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=150,pad=16,gw=W-2*pad,gh=H-2*pad;
-  function sx(x){return(pad+x/6*gw).toFixed(1);}
-  function sy(y){return(pad+gh-y/6*gh).toFixed(1);}
-  var s='';
-  for(var g=0;g<=6;g++){
-    s+='<line x1="'+sx(g)+'" y1="'+sy(0)+'" x2="'+sx(g)+'" y2="'+sy(6)+'" stroke="#f3efe6"/>';
-    s+='<line x1="'+sx(0)+'" y1="'+sy(g)+'" x2="'+sx(6)+'" y2="'+sy(g)+'" stroke="#f3efe6"/>';
+function drawSVM(id, w1, w2, b, pts){
+  var box = document.getElementById(id); if(!box) return;
+  var W=200, H=150, pad=16;
+  var allx = pts.map(function(p){return p[1][0];}), ally = pts.map(function(p){return p[1][1];});
+  var xmin=0, xmax=Math.max.apply(null,allx)+1, ymin=0, ymax=Math.max.apply(null,ally)+1;
+  function X(x){ return (pad + (x-xmin)/(xmax-xmin)*(W-2*pad)).toFixed(1); }
+  function Y(y){ return (H-pad - (y-ymin)/(ymax-ymin)*(H-2*pad)).toFixed(1); }
+  // đường w1 x + w2 y + b = 0 → y = (−b − w1 x)/w2
+  function lineY(x, off){ return (-(b+off) - w1*x)/w2; }
+  function seg(off, dash, col){
+    var x0=xmin, x1=xmax;
+    return '<line x1="'+X(x0)+'" y1="'+Y(lineY(x0,off))+'" x2="'+X(x1)+'" y2="'+Y(lineY(x1,off))+'" stroke="'+col+'" stroke-width="'+(off===0?2:1)+'"'+(dash?' stroke-dasharray="4 3"':'')+'/>';
   }
-  // ranh giới w1 x + w2 y + b = 0 → y = -(w1 x + b)/w2
-  function lineY(x){return -(Wv[0]*x+Bv)/Wv[1];}
-  var x0=-1,x1=7;
-  s+='<line x1="'+sx(x0)+'" y1="'+sy(lineY(x0))+'" x2="'+sx(x1)+'" y2="'+sy(lineY(x1))+'" stroke="#111" stroke-width="1.8"/>';
-  // điểm
-  PTS.forEach(function(p){
-    var col=p.f>0?'#0e7490':'#b45309';
-    if(p.f>0) s+='<circle cx="'+sx(p.x)+'" cy="'+sy(p.y)+'" r="4" fill="'+col+'"/>';
-    else s+='<rect x="'+(parseFloat(sx(p.x))-3.5)+'" y="'+(parseFloat(sy(p.y))-3.5)+'" width="7" height="7" fill="'+col+'"/>';
-    s+='<text x="'+(parseFloat(sx(p.x))+5)+'" y="'+(parseFloat(sy(p.y))-4)+'" font-size="8" fill="#555">'+p.nm+'</text>';
+  var s = seg(0,false,'#0e7490') + seg(1,true,'#9aa3af') + seg(-1,true,'#9aa3af');
+  pts.forEach(function(p){
+    s += '<circle cx="'+X(p[1][0])+'" cy="'+Y(p[1][1])+'" r="3.6" fill="'+p[2]+'"/>';
+    s += '<text x="'+(parseFloat(X(p[1][0]))+4)+'" y="'+(parseFloat(Y(p[1][1]))-3)+'" font-size="8.5" fill="'+p[2]+'" font-weight="700">'+p[0]+'</text>';
   });
-  // margin: hạ vuông góc từ sv xuống đường
-  if(showMargin && sv){
-    var t=(Wv[0]*sv.x+Wv[1]*sv.y+Bv)/(NW*NW);
-    var fx=sv.x - t*Wv[0], fy=sv.y - t*Wv[1];     // chân vuông góc
-    s+='<line x1="'+sx(sv.x)+'" y1="'+sy(sv.y)+'" x2="'+sx(fx)+'" y2="'+sy(fy)+'" stroke="#7c5cff" stroke-width="1.6" stroke-dasharray="4 3"/>';
-    s+='<circle cx="'+sx(sv.x)+'" cy="'+sy(sv.y)+'" r="6" fill="none" stroke="#7c5cff" stroke-width="1.4"/>';
-  }
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="SVM ranh giới và lề">'+s+'</svg>';
+  box.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
 }
-
 WB.wire(generate);
 generate();
 </script>

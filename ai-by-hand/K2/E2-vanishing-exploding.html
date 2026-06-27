@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Vanishing / Exploding Gradient — Grad Flow</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài E2 — Vanishing / Exploding gradient (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.0;margin-top:3px;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -23,158 +23,184 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Vanishing / Exploding</h1><span class="vi">— Grad Flow</span>
-    <span class="tag">∂ℒ/∂x ∝ ∏ factorₗ → tắt (&lt;1) hoặc nổ (&gt;1)</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Backprop nhân chuỗi đạo hàm qua từng lớp. Nếu mỗi lớp nhân với hệ số &lt; 1, tích sau
-    nhiều lớp <b>tắt dần về 0</b> (vanishing) → lớp đầu không học được. Nếu &gt; 1, tích <b>nổ</b> → loss = NaN. Đây là
-    lý do cần khởi tạo tốt (E1), chuẩn hóa, residual, và clipping (E9).
-    <div class="fm">gradient lớp ℓ = (∏ từ ℓ tới cuối các factor) · với factor = wₗ · f′(zₗ)</div>
+  <div class="wb-title"><span class="no">Bài E2</span><h1>Vanishing / Exploding gradient <small>— teo / nổ</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Gradient qua mạng sâu là <b>tích</b> nhiều thừa số. Nếu mỗi thừa số &lt; 1 → teo về 0 (vanishing):
+    lớp đầu gần như không học; nếu &gt; 1 → nổ (exploding): cập nhật loạn, loss thành NaN. Hiểu nó dẫn tới mọi cách chữa.
+    <div class="formula">
+      ∂L/∂(lớp đầu) = ∏ (đạo hàm cục bộ mỗi lớp) &nbsp;&nbsp; rᴸ → 0 nếu r&lt;1 · → ∞ nếu r&gt;1
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    0.5⁴ = 0.0625 (gần như tắt), 2⁴ = 16 (phình to). Mạng càng <b>sâu</b>, mũ càng lớn → lệch khỏi 1 chút cũng
-    thành thảm họa. Bí quyết: giữ factor ≈ <b>1</b> ở mọi lớp.
+    Gradient truyền ngược như <b>tiếng vọng qua L căn phòng</b>: mỗi phòng nhân âm lượng với r. r=0.5 qua 10 phòng còn ~0.001
+    (tắt ngấm); r=1.5 thành ~58 (nổ tai). Chỉ r≈1 mới giữ tín hiệu ổn định.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Cam</b> = factor &lt; 1 (tắt) · <b>lam</b> = factor &gt; 1 (nổ). Trục dọc log: mỗi lớp nhân thêm.</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag"><span data-q="L">10</span> lớp</span></div>
+    <div class="calc" style="font-size:15px">
+      Mạng <span class="gv" data-q="L">10</span> lớp; mỗi lớp nhân gradient với hệ số r. Xét
+      <b>r = <span class="gv" data-q="r1">0.5</span></b> (vd σ' nhỏ) và <b>r = <span class="gv" data-q="r2">1.5</span></b>.
+    </div>
+    <div class="note">Gradient tới lớp đầu = r nhân với chính nó L lần = r<sup>L</sup>.</div>
+  </div>
+
+  <div class="grid2">
+    <!-- BƯỚC 1 — vanishing -->
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Vanishing (r&lt;1)</h2><span class="tag">teo</span></div>
+      <div class="calc">
+        r<sup>L</sup> = <span data-q="r1">0.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" style="min-width:70px"></span>
+      </div>
+      <div class="why"><b>Vì sao:</b> nhân dồn số &lt;1 → teo theo cấp số nhân → lớp đầu <b>học rất chậm</b>.</div>
     </div>
 
-    <div class="work">
-      <div class="bandh fw">TÍCH LŨY QUA <span data-q="L">4</span> LỚP</div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>lớp ℓ</th><th>factor = <span data-q="fa">0.5</span></th><th>tích ∏ (tắt)</th><th>factor = <span data-q="fb">2</span></th><th>tích ∏ (nổ)</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:8px">SAU CÙNG</div>
-      <div class="expr">
-        tắt: <span data-q="fa">0.5</span>^<span data-q="L">4</span> = <span class="ublk" id="paB" style="display:inline-block;min-width:46px;border-bottom:1.6px dashed #b9b9b9"></span>
-        &nbsp;·&nbsp; nổ: <span data-q="fb">2</span>^<span data-q="L">4</span> = <span class="ublk" id="pbB" style="display:inline-block;min-width:46px;border-bottom:1.6px dashed #b9b9b9"></span>
+    <!-- BƯỚC 2 — exploding -->
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Exploding (r&gt;1)</h2><span class="tag">nổ</span></div>
+      <div class="calc">
+        r<sup>L</sup> = <span data-q="r2">1.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" style="min-width:70px"></span>
       </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Factor = 1 ở mọi lớp thì tích sau L lớp = <span class="ublk" style="min-width:40px"></span></li>
-        </ol>
-      </div>
+      <div class="hint">Số &gt;1 nhân dồn → nổ → cập nhật khổng lồ, loss thành NaN.</div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Vanishing / Exploding</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 3 — vùng an toàn -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Vùng an toàn (r≈1)</h2><span class="tag">ổn định</span></div>
+    <div class="calc">
+      r<sup>L</sup> = 1.0<sup><span data-q="L">10</span></sup> = <span class="blk" style="min-width:50px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> muốn gradient sống sót qua nhiều lớp, mỗi lớp phải giữ "độ khuếch đại" ≈ 1.</div>
+  </div>
+
+  <!-- BƯỚC 4 — cách chữa -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Cách chữa</h2><span class="tag">ReLU / init / norm / skip</span></div>
+    <div class="note">σ' ≤ 0.25 gây vanishing → <b>ReLU</b> (đạo hàm 1); <b>init He</b> (E1) giữ r≈1; <b>BatchNorm/LayerNorm</b> (E6) ổn định;
+      <b>residual</b> (F9) cho đường tắt gradient; <b>clipping</b> (E9) chặn nổ.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Vì sao sigmoid sâu gây vanishing? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Điều kiện để gradient ổn định qua độ sâu? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Vanishing / Exploding</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài E2</span><h1>Vanishing / Exploding gradient <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">ReLU giữ f′=1 (không co như sigmoid f′≤0.25) → đỡ vanishing. Residual cộng "đường tắt" factor=1.</div>
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Vanishing</h2></div>
+      <div class="calc ans"><span data-q="r1">0.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" data-q="vanish">0.001</span></div>
     </div>
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Exploding</h2></div>
+      <div class="calc ans"><span data-q="r2">1.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" data-q="explode">57.7</span></div>
+    </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">TÍCH LŨY QUA <span data-q="L">4</span> LỚP</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>lớp ℓ</th><th>factor=<span data-q="fa">0.5</span></th><th>∏ (tắt)</th><th>factor=<span data-q="fb">2</span></th><th>∏ (nổ)</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Vùng an toàn</h2></div>
+    <div class="calc ans">1.0<sup><span data-q="L">10</span></sup> = <span class="blk" data-q="stable">1</span> (giữ nguyên độ lớn)</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
-      <div class="expr">
-        tắt: <span data-q="fa">0.5</span>^<span data-q="L">4</span> = <b><span data-q="kpa">?</span></b> (≈0, lớp đầu "đói" gradient)
-        &nbsp;·&nbsp; nổ: <span data-q="fb">2</span>^<span data-q="L">4</span> = <b><span data-q="kpb">?</span></b> (bùng nổ)
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Factor = 1 → 1^L = <span class="qa">1</span> (gradient giữ nguyên độ lớn — lý tưởng).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Độ sâu khuếch đại mọi sai lệch khỏi factor = 1. Giải pháp: khởi tạo Xavier/He (E1), hàm
-        kích hoạt không bão hòa (ReLU), chuẩn hóa (BatchNorm E6 / LayerNorm), kết nối residual, và gradient
-        clipping (E9) cho vế nổ.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Gradient theo độ sâu (3 giá trị r)</h2><span class="tag">teo / ổn định / nổ</span></div>
+    <div class="figrow">
+      <svg id="figG" class="fig" viewBox="0 0 230 150" width="74mm" height="46mm" aria-label="gradient theo độ sâu: r nhỏ hơn 1 teo về 0, r bằng 1 ổn định, r lớn hơn 1 nổ"></svg>
+      <div style="flex:1">
+        <div class="note">Đường <b>xám nét đứt</b> = r&lt;1 → teo về 0 (vanishing). <b>Lam</b> = r=1 → ổn định.
+          <b>Cam</b> = r&gt;1 → nổ (exploding). Cùng số lớp, chỉ khác r mà số phận gradient khác hẳn.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Vanishing / Exploding</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Sigmoid sâu vanishing? → <span class="qa">σ' ≤ 0.25 &lt; 1, nhân dồn qua nhiều lớp → teo về 0.</span></li>
+      <li>Gradient ổn định? → <span class="qa">Hệ số khuếch đại mỗi lớp ≈ 1.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Gradient = tích thừa số; r&lt;1 teo, r&gt;1 nổ, cần r≈1. Bài tiếp (E3): một cách kiểm soát
+    độ lớn trọng số — <b style="color:var(--accent2)">L2 regularization</b> (weight decay).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fT(v){return WB.fmtTrim(v);}
-
 function generate(){
-  var L=WB.pick([4,5]);
-  var fa=WB.pick([0.5]);          // tắt
-  var fb=WB.pick([2]);            // nổ
-  var pa=[], pb=[], ca=1, cb=1;
-  for(var l=1;l<=L;l++){ ca*=fa; cb*=fb; pa.push(ca); pb.push(cb); }
-
-  buildTbl('qtbl',L,fa,fb,pa,pb,true);
-  buildTbl('ktbl',L,fa,fb,pa,pb,false);
-  ['paB','pbB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  WB.setAll({ L:String(L), fa:fT(fa), fb:fT(fb), kpa:fT(pa[L-1]), kpb:fT(pb[L-1]) });
-
-  drawFlow('sch1',pa,pb,false);
-  drawFlow('sch2',pa,pb,true);
+  function f3(v){ var r = Math.round(v*1000)/1000; return r.toString(); }
+  function fnum(v){ // gọn: số lớn không thập phân, số nhỏ 3 chữ số
+    if (v >= 10) return (Math.round(v*10)/10).toString();
+    return f3(v);
+  }
+  var L  = WB.pick([8, 10, 12]);
+  var r1 = WB.pick([0.5, 0.7, 0.8]);   // vanishing
+  var r2 = WB.pick([1.2, 1.3, 1.5]);   // exploding
+  WB.setAll({
+    L: String(L),
+    r1: f3(r1), r2: f3(r2),
+    vanish: fnum(Math.pow(r1, L)),
+    explode: fnum(Math.pow(r2, L)),
+    stable: '1'
+  });
+  drawGrad('figG', r1, r2, L);
 }
 
-function buildTbl(id,L,fa,fb,pa,pb,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  for(var l=0;l<L;l++){
-    var tr=document.createElement('tr');
-    var c=[String(l+1), fT(fa), fT(pa[l]), fT(fb), fT(pb[l])];
-    c.forEach(function(v,j){
-      var td=document.createElement('td'); td.textContent=v;
-      if(blank && (j===2 || j===4)) td.className='blank';
-      tr.appendChild(td);
-    });
-    el.appendChild(tr);
+// gradient theo độ sâu: teo (xám đứt), ổn định (lam), nổ (cam)
+function drawGrad(id, r1, r2, L){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var x0 = 24, y0 = 122, W = 190, H = 100, N = L + 1;
+  function X(i){ return (x0 + i/(N-1)*W).toFixed(1); }
+  function Y(v){ return (y0 - Math.min(Math.max(v,0),1)*H).toFixed(1); } // v∈[0,1]
+  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<line x1="'+x0+'" y1="'+(y0-H)+'" x2="'+x0+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<text x="'+(x0-2)+'" y="'+(y0-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">∥g∥</text>';
+  s += '<text x="'+(x0+W)+'" y="'+(y0+11)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">lớp</text>';
+  function poly(fn, col, dash){
+    var p = ''; for (var i=0;i<N;i++) p += X(i)+','+Y(fn(i))+' ';
+    return '<polyline points="'+p.trim()+'" fill="none" stroke="'+col+'" stroke-width="2.2"'+(dash?' stroke-dasharray="4 3"':'')+'/>';
   }
+  // bắt đầu cùng điểm 0.55 cho dễ so; nổ khởi điểm thấp để thấy vươn lên
+  s += poly(function(i){ return 0.55*Math.pow(r1, i); }, '#9aa3ad', true);          // teo
+  s += poly(function(){ return 0.55; }, '#0e7490', false);                          // ổn định
+  s += poly(function(i){ return Math.min(1, 0.18*Math.pow(r2, i)); }, '#b45309', false); // nổ
+  s += '<text x="'+X(2.5)+'" y="'+Y(0.16)+'" style="font-size:8px" fill="#9aa3ad">teo (r&lt;1)</text>';
+  s += '<text x="'+X(2.4)+'" y="'+Y(0.62)+'" style="font-size:8px" fill="#0e7490" font-weight="700">ổn định</text>';
+  s += '<text x="'+X(2.6)+'" y="'+Y(0.96)+'" style="font-size:8px" fill="#b45309" font-weight="700">nổ (r&gt;1)</text>';
+  svg.innerHTML = s;
 }
-
-function drawFlow(id,pa,pb,show){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=132, padl=18,padr=10,padt=12,padb=18;
-  var pw=W-padl-padr, ph=H-padt-padb;
-  var L=pa.length;
-  // thang log quanh 1
-  var maxlog=Math.log(Math.max.apply(null,pb))/Math.log(10);
-  var minlog=Math.log(Math.min.apply(null,pa))/Math.log(10);
-  var span=Math.max(Math.abs(maxlog),Math.abs(minlog))*1.1+0.001;
-  function px(l){return (padl + l/(L)*pw).toFixed(1);}
-  function py(v){var lg=Math.log(v)/Math.log(10); return (padt+ph/2 - lg/span*(ph/2)).toFixed(1);}
-  var s='';
-  s+='<line x1="'+padl+'" y1="'+(padt+ph/2)+'" x2="'+(W-padr)+'" y2="'+(padt+ph/2)+'" stroke="#bbb" stroke-width="1" stroke-dasharray="3 2"/>';
-  s+='<text x="'+(W-padr)+'" y="'+(padt+ph/2-2)+'" text-anchor="end" font-size="7.5" fill="#6b7280">∏=1</text>';
-  // đường nổ (lam) & tắt (cam)
-  var da='M'+px(0)+','+py(1), db='M'+px(0)+','+py(1);
-  for(var l=0;l<L;l++){ da+=' L'+px(l+1)+','+py(pa[l]); db+=' L'+px(l+1)+','+py(pb[l]); }
-  s+='<path d="'+db+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
-  s+='<path d="'+da+'" fill="none" stroke="#b45309" stroke-width="1.8"/>';
-  for(var k=0;k<L;k++){
-    s+='<circle cx="'+px(k+1)+'" cy="'+py(pb[k])+'" r="2.4" fill="#0e7490"/>';
-    s+='<circle cx="'+px(k+1)+'" cy="'+py(pa[k])+'" r="2.4" fill="#b45309"/>';
-    s+='<text x="'+px(k+1)+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="7.5" fill="#6b7280">'+(k+1)+'</text>';
-  }
-  if(show){
-    s+='<text x="'+px(L)+'" y="'+(parseFloat(py(pb[L-1]))-3)+'" text-anchor="end" font-size="7.5" fill="#0e7490">'+WB.fmtTrim(pb[L-1])+'</text>';
-    s+='<text x="'+px(L)+'" y="'+(parseFloat(py(pa[L-1]))+9)+'" text-anchor="end" font-size="7.5" fill="#b45309">'+WB.fmtTrim(pa[L-1])+'</text>';
-  }
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="tích gradient qua các lớp, tắt và nổ">'+s+'</svg>';
-}
-
 WB.wire(generate);
 generate();
 </script>

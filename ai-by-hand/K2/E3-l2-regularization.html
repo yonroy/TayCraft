@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · L2 Regularization / Weight Decay</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài E3 — L2 regularization (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.0;margin-top:3px;}
-  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .dtbl tr.sumr td{background:#eef6fa;font-weight:700;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -26,159 +23,189 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>L2 Regularization</h1><span class="vi">— Weight Decay</span>
-    <span class="tag">ℒ += λ·½‖w‖² · ∂/∂wᵢ = λ·wᵢ</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Trọng số lớn → mô hình quá "uốn éo" khớp cả nhiễu (overfit). L2 thêm phạt λ·½Σwᵢ²
-    vào loss; gradient của phạt là λ·wᵢ, nên mỗi bước trọng số bị <b>co về 0</b> theo tỉ lệ — gọi là weight decay.
-    <div class="fm">ℒ_tổng = ℒ_data + λ·½Σwᵢ² &nbsp;·&nbsp; gradient phạt = λ·wᵢ &nbsp;·&nbsp; wᵢ ← wᵢ − η·λ·wᵢ = (1−ηλ)·wᵢ</div>
+  <div class="wb-title"><span class="no">Bài E3</span><h1>L2 regularization <small>— weight decay</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Trọng số lớn → hàm "gồ ghề", khớp cả nhiễu (overfit). L2 thêm áp lực kéo mọi trọng số về 0 → đường biên
+    mượt, khái quát tốt hơn trên dữ liệu mới. λ điều tiết mức phạt.
+    <div class="formula">
+      L_tổng = L_data + λ·Σ wᵢ² &nbsp;&nbsp; ∂(phạt)/∂wᵢ = 2λ·wᵢ &nbsp;→&nbsp; w ← w − η(g + 2λw)
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Mỗi bước nhân mọi trọng số với (1−ηλ) &lt; 1 → tất cả <b>co đều</b> về 0 theo phần trăm. Trọng số to bị kéo
-    mạnh hơn (phạt bậc hai), nhưng không bao giờ ép hẳn về 0 như L1 (E4).
+    Mỗi bước học, ngoài đi theo gradient dữ liệu, trọng số còn bị <b>kéo co về 0</b> một chút (tỉ lệ với chính nó). Trọng số lớn bị kéo
+    mạnh hơn → cả mô hình "nhẹ" và mượt. Vì thế gọi là <b>weight decay</b> (trọng số rò rỉ dần).
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Tím nhạt</b> = w trước · <b>cam</b> = w sau weight decay. Mọi cột thấp đi cùng tỉ lệ (1−ηλ).</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">TRỌNG SỐ · λ=<span data-q="lam">0.2</span>, η=<span data-q="eta">0.5</span> → (1−ηλ)=<span data-q="fac">0.9</span></div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>i</th><th>wᵢ</th><th>wᵢ²</th><th>grad phạt λ·wᵢ</th><th>wᵢ ← (1−ηλ)·wᵢ</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:8px">PHẠT L2</div>
-      <div class="expr">
-        ℒ_phạt = λ·½·Σwᵢ² = <span data-q="lam">0.2</span>·½·<span class="ublk" id="ssqB"></span> = <span class="ublk" id="penB"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>L2 có ép trọng số về <b>đúng 0</b> không? → <span class="ublk" style="min-width:60px"></span></li>
-        </ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">λ=<span data-q="lam">0.1</span></span></div>
+    <div class="calc" style="font-size:14.5px">
+      w = ( <span class="gv" data-q="w1">2</span>, <span class="gv" data-q="w2">−1</span>, <span class="gv" data-q="w3">3</span> ) ;
+      gradient dữ liệu g = ( <span class="gv" data-q="g1">0.5</span>, <span class="gv" data-q="g2">0.5</span>, <span class="gv" data-q="g3">−0.5</span> ) ;
+      λ = <span class="gv" data-q="lam">0.1</span> ; η = <span class="gv" data-q="eta">0.1</span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · L2 Regularization</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — phạt -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Phạt L2</h2><span class="tag">λ·Σw²</span></div>
+    <div class="calc">
+      λ·Σw² = <span data-q="lam">0.1</span>·(<span data-q="sqExpr">2² + (−1)² + 3²</span>) = <span data-q="lam">0.1</span>·<span data-q="sumsq">14</span> = <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> cộng vào loss → tối ưu phải <b>đánh đổi</b> giữa khớp dữ liệu và giữ w nhỏ.</div>
+  </div>
+
+  <!-- BƯỚC 2 — gradient phạt -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Gradient phạt</h2><span class="tag">2λw</span></div>
+    <div class="calc">
+      2λw = <span data-q="dlam">0.2</span>·(<span data-q="w1">2</span>, <span data-q="w2">−1</span>, <span data-q="w3">3</span>) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
+    </div>
+    <div class="hint">Gradient phạt <b>tỉ lệ chính w</b> → trọng số lớn bị kéo về 0 mạnh hơn.</div>
+  </div>
+
+  <!-- BƯỚC 3 — cập nhật -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Gradient tổng &amp; cập nhật</h2><span class="tag">g + 2λw</span></div>
+    <div class="calc">
+      w ← w − η·(g + 2λw) = ( <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:40px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> mọi trọng số bị thu nhỏ thêm so với chỉ dùng gradient dữ liệu g.</div>
+  </div>
+
+  <!-- BƯỚC 4 — vai trò λ -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vai trò của λ</h2><span class="tag">đánh đổi</span></div>
+    <div class="note">λ lớn → w bị ép quá nhỏ → <b>underfit</b>; λ nhỏ → ít tác dụng → vẫn <b>overfit</b>. AdamW (D14) áp decay <b>tách rời</b> đúng tinh thần này.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>L2 ép trọng số về đâu? → <span class="blk" style="min-width:150px"></span></li>
+      <li>λ quá lớn gây gì? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>L2 Regularization</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài E3</span><h1>L2 regularization <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">AdamW (D14) chính là tách phần weight decay này ra khỏi gradient của Adam.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Phạt L2</h2></div>
+    <div class="calc ans">λ·Σw² = <span data-q="lam">0.1</span>·<span data-q="sumsq">14</span> = <span class="blk" data-q="pen">1.4</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Gradient phạt</h2></div>
+    <div class="calc ans">
+      2λw = ( <span class="blk" data-q="gp1">0.4</span>, <span class="blk" data-q="gp2">−0.2</span>, <span class="blk" data-q="gp3">0.6</span> )
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">TRỌNG SỐ · (1−ηλ)=<span data-q="fac">0.9</span></div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>i</th><th>wᵢ</th><th>wᵢ²</th><th>λ·wᵢ</th><th>wᵢ mới</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tổng &amp; cập nhật</h2></div>
+    <div class="calc ans">
+      g + 2λw = ( <span data-q="gt1">0.9</span>, <span data-q="gt2">0.3</span>, <span data-q="gt3">0.1</span> )<br>
+      w − <span data-q="eta">0.1</span>·(…) = ( <span class="blk" data-q="wn1">1.91</span>, <span class="blk" data-q="wn2">−1.03</span>, <span class="blk" data-q="wn3">2.99</span> )
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
-      <div class="expr">
-        Σwᵢ² = <span data-q="kssq">?</span> &nbsp;→&nbsp; ℒ_phạt = <b><span data-q="kpen">?</span></b>
-        &nbsp;·&nbsp; mọi wᵢ co còn <b>90%</b>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>L2 co theo tỉ lệ nên <span class="qa">không</span> ép về đúng 0 (chỉ nhỏ dần). Muốn thưa → dùng L1 (E4).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> L2 = "giữ trọng số nhỏ" → hàm mượt, ít overfit. Tương đương weight decay (1−ηλ) mỗi bước.
-        L1 (E4) phạt |w| → tạo trọng số bằng 0 (thưa, chọn đặc trưng). Hai loss phạt, hai hiệu ứng khác nhau.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trọng số bị kéo về 0</h2><span class="tag">weight decay</span></div>
+    <div class="figrow">
+      <svg id="figW" class="fig" viewBox="0 0 230 140" width="74mm" height="42mm" aria-label="trọng số trước và sau một bước có L2: đều co về 0"></svg>
+      <div style="flex:1">
+        <div class="note">Cột <b>lam</b> = w trước, <b>cam</b> = w sau một bước. Mỗi trọng số nhích <b>về 0</b> (lớn nhích nhiều hơn) — đó là weight decay.
+          λ càng lớn, kéo càng mạnh → đường biên càng mượt.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · L2 Regularization</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Ép về đâu? → <span class="qa">Về 0 (nhỏ lại) — mô hình mượt, ít overfit.</span></li>
+      <li>λ quá lớn? → <span class="qa">Underfit (phạt mạnh quá, w bị ép quá nhỏ).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> L2 = phạt ‖w‖², gradient 2λw kéo trọng số về 0 (weight decay). Bài tiếp (E4): L1 phạt |w| → tạo <b>trọng số bằng 0</b>
+    (thưa, chọn đặc trưng).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-function fT(v){return WB.fmtTrim(v);}
-
 function generate(){
-  var lam=0.2, eta=0.5, fac=1-eta*lam;   // 0.9
-  var w=WB.pickDistinct([4,-2,3,-1,2,-3,1,-4],4);
-  var sq=w.map(function(v){return v*v;});
-  var grad=w.map(function(v){return lam*v;});
-  var nw=w.map(function(v){return fac*v;});
-  var ssq=sq.reduce(function(s,v){return s+v;},0);
-  var pen=lam*0.5*ssq;
+  var ft = WB.fmtTrim;
+  function f2(v){ return (Math.round(v*100)/100).toString().replace('-','−'); }
+  var w = [WB.randIntNZ(-3,3), WB.randIntNZ(-3,3), WB.randIntNZ(-3,3)];
+  var g = [WB.pick([0.5,-0.5,1,-1]), WB.pick([0.5,-0.5,1,-1]), WB.pick([0.5,-0.5,1,-1])];
+  var lam = 0.1, eta = 0.1, dlam = 2*lam;
+  var sumsq = w[0]*w[0] + w[1]*w[1] + w[2]*w[2];
+  var pen = lam*sumsq;
+  var gp = w.map(function(v){ return Math.round(dlam*v*100)/100; });
+  var gt = [g[0]+gp[0], g[1]+gp[1], g[2]+gp[2]].map(function(v){ return Math.round(v*100)/100; });
+  var wn = [w[0]-eta*gt[0], w[1]-eta*gt[1], w[2]-eta*gt[2]].map(function(v){ return Math.round(v*100)/100; });
 
-  buildTbl('qtbl',w,sq,grad,nw,true);
-  buildTbl('ktbl',w,sq,grad,nw,false);
-  ['ssqB','penB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  WB.setAll({ lam:fT(lam), eta:fT(eta), fac:fT(fac), kssq:fI(ssq), kpen:fT(pen) });
-
-  drawBars('sch1',w,nw,false);
-  drawBars('sch2',w,nw,true);
-}
-
-function buildTbl(id,w,sq,grad,nw,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  for(var i=0;i<w.length;i++){
-    var tr=document.createElement('tr');
-    var c=[String(i+1), fI(w[i]), fI(sq[i]), fT(grad[i]), fT(nw[i])];
-    c.forEach(function(v,j){
-      var td=document.createElement('td'); td.textContent=v;
-      if(blank && j>=2) td.className='blank';
-      tr.appendChild(td);
-    });
-    el.appendChild(tr);
-  }
-  var ssq=sq.reduce(function(s,v){return s+v;},0);
-  var tr2=document.createElement('tr'); tr2.className='sumr';
-  ['Σ','',fI(ssq),'',''].forEach(function(v,j){
-    var td=document.createElement('td');
-    if(j===0) td.innerHTML='<b>Σ</b>';
-    else if(j===2){ if(blank) td.className='blank'; else td.textContent=v; }
-    else td.textContent='';
-    tr2.appendChild(td);
+  WB.setAll({
+    w1: ft(w[0]), w2: ft(w[1]), w3: ft(w[2]),
+    g1: ft(g[0]), g2: ft(g[1]), g3: ft(g[2]),
+    lam: ft(lam), eta: ft(eta), dlam: ft(dlam),
+    sqExpr: w.map(function(v){ return WB.wrap(ft(v)) + '²'; }).join(' + '),
+    sumsq: ft(sumsq), pen: ft(pen),
+    gp1: f2(gp[0]), gp2: f2(gp[1]), gp3: f2(gp[2]),
+    gt1: f2(gt[0]), gt2: f2(gt[1]), gt3: f2(gt[2]),
+    wn1: f2(wn[0]), wn2: f2(wn[1]), wn3: f2(wn[2])
   });
-  el.appendChild(tr2);
+  drawDecay('figW', w, wn);
 }
 
-function drawBars(id,w,nw,show){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=132, padl=14,padr=8,padt=12,padb=16;
-  var pw=W-padl-padr, ph=H-padt-padb;
-  var mx=Math.max.apply(null,w.map(function(v){return Math.abs(v);}))+0.5;
-  var zero=padt+ph/2, scale=(ph/2-4)/mx, gw=pw/w.length;
-  var s='';
-  s+='<line x1="'+padl+'" y1="'+zero.toFixed(1)+'" x2="'+(W-padr)+'" y2="'+zero.toFixed(1)+'" stroke="#bbb" stroke-width="1"/>';
-  for(var i=0;i<w.length;i++){
-    var x0=padl+i*gw, bw=gw*0.28;
-    var xw=x0+gw*0.16, xn=x0+gw*0.52;
-    var hw=w[i]*scale, hn=nw[i]*scale;
-    s+='<rect x="'+xw.toFixed(1)+'" y="'+(hw>=0?zero-hw:zero).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.abs(hw).toFixed(1)+'" fill="#ece2ff" stroke="#c3b1f5" stroke-width="1"/>';
-    s+='<rect x="'+xn.toFixed(1)+'" y="'+(hn>=0?zero-hn:zero).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.abs(hn).toFixed(1)+'" fill="#e3a76a" stroke="#b45309" stroke-width="1"/>';
-    s+='<text x="'+(x0+gw/2).toFixed(1)+'" y="'+(H-3)+'" text-anchor="middle" font-size="7.5" fill="#6b7280">w'+(i+1)+'</text>';
-    if(show){
-      s+='<text x="'+(xn+bw/2).toFixed(1)+'" y="'+(hn>=0?(zero-hn-2):(zero-hn+8)).toFixed(1)+'" text-anchor="middle" font-size="7" fill="#b45309">'+fT(nw[i])+'</text>';
-    }
+// cột |w| trước (lam) vs sau (cam) — co về 0
+function drawDecay(id, w, wn){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var x0 = 24, zeroY = 70, gap = 64, bw = 18, H = 50;
+  var mx = Math.max.apply(null, w.map(Math.abs).concat([1]));
+  var s = '<line x1="'+x0+'" y1="'+zeroY+'" x2="'+(x0+3*gap)+'" y2="'+zeroY+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<text x="'+(x0-2)+'" y="'+(zeroY+3)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">0</text>';
+  function bar(x, val, col){
+    var h = val/mx*H, yTop = val>=0 ? zeroY-h : zeroY;
+    return '<rect x="'+x+'" y="'+yTop.toFixed(1)+'" width="'+bw+'" height="'+Math.abs(h).toFixed(1)+'" fill="'+col+'33" stroke="'+col+'" stroke-width="1.4"/>';
   }
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="trọng số trước và sau weight decay">'+s+'</svg>';
+  for (var i=0;i<3;i++){
+    var bx = x0 + 12 + i*gap;
+    s += bar(bx, w[i], '#0e7490');
+    s += bar(bx+bw+3, wn[i], '#b45309');
+    s += '<text x="'+(bx+bw)+'" y="'+(zeroY+H*0.5+18)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">w'+(i+1)+'</text>';
+  }
+  s += '<text x="'+(x0+8)+'" y="12" style="font-size:7.5px" fill="#0e7490" font-weight="700">■ trước</text>';
+  s += '<text x="'+(x0+52)+'" y="12" style="font-size:7.5px" fill="#b45309" font-weight="700">■ sau</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

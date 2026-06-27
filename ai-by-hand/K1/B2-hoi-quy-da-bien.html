@@ -1,16 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Hồi quy tuyến tính nhiều biến — Multivariate LR (Normal Equation)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
-<style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:12.5px;line-height:2.0;margin-top:3px;}
-  .ublk{display:inline-block;min-width:40px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-</style>
+<title>Làm toán AI · Bài B2 — Hồi quy tuyến tính nhiều biến (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 </head>
 <body>
 
@@ -20,196 +14,173 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Hồi quy tuyến tính nhiều biến</h1><span class="vi">— Multivariate Linear Regression</span>
-    <span class="tag">w = (XᵀX)⁻¹Xᵀy · normal equation</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Khi đầu vào có <b>nhiều đặc trưng</b>, hồi quy thành y = Xw. Nghiệm giải tích
-    (normal equation) <b>w = (XᵀX)⁻¹Xᵀy</b> là một lớp tuyến tính được "huấn luyện trong một bước" — chính là
-    phép giải mà mạng nơ-ron xấp xỉ dần bằng gradient descent.
-    <div class="fm">X ∈ ℝⁿˣᵈ &nbsp;|&nbsp; ŷ = Xw &nbsp;|&nbsp; MSE = (1/n)‖y − Xw‖² &nbsp;|&nbsp; ∂MSE/∂w = 0 ⇒ XᵀX·w = Xᵀy</div>
+  <div class="wb-title"><span class="no">Bài B2</span><h1>Hồi quy tuyến tính nhiều biến <small>— Multivariate Regression</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Dữ liệu thật có nhiều cột (tuổi, cân, giờ học…). Dự đoán = <b>tổ hợp tuyến tính</b> các
+    đặc trưng có trọng số. Đây đúng là phép một nơ-ron làm <i>trước</i> khi qua hàm kích hoạt.
+    <div class="formula">
+      ŷ = w·x + b = w₁x₁ + w₂x₂ + b &nbsp;&nbsp;|&nbsp;&nbsp; MSE = (1/m) <span style="font-size:15px">Σ</span> (ŷⱼ − yⱼ)²
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    <b>XᵀX</b> đo "mỗi đặc trưng tương quan với nhau ra sao", <b>Xᵀy</b> đo "mỗi đặc trưng tương quan với đầu ra ra sao".
-    Chia cái sau cho cái trước (theo nghĩa ma trận) → trọng số w. Ở đây hai cột X <b>trực giao</b> nên XᵀX là ma trận
-    <b>chéo</b> → giải cực gọn.
+    Mỗi đặc trưng có một <b>núm chỉnh</b> (trọng số wᵢ): núm lớn → đặc trưng đó ảnh hưởng mạnh tới dự đoán. Dự đoán =
+    cộng các đóng góp wᵢxᵢ rồi thêm "mức nền" b.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Lam</b> = dữ liệu cho sẵn; <b>vàng</b> = ma trận trung gian XᵀX, Xᵀy; <b>xanh</b> = nghiệm w.
-      XᵀX chéo ⇒ wⱼ = (Xᵀy)ⱼ / (XᵀX)ⱼⱼ.</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">DỮ LIỆU — n = 3 mẫu, d = 2 đặc trưng</div>
-      <div class="row">
-        <div class="blk in"><div class="nm">X <s>3×2</s></div><div class="m c2" id="X"></div></div>
-        <div class="op">·</div>
-        <div class="blk w"><div class="nm">w <s>2×1</s></div><div class="m c1" id="wq"></div></div>
-        <div class="op">=</div>
-        <div class="blk in"><div class="nm">y <s>3×1</s></div><div class="m c1" id="y"></div></div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:7px">BƯỚC 1 — XᵀX (2×2) và Xᵀy (2×1)</div>
-      <div class="row">
-        <div class="blk hot"><div class="nm">XᵀX</div><div class="m c2" id="XtX"></div></div>
-        <div class="blk hot"><div class="nm">Xᵀy</div><div class="m c1" id="Xty"></div></div>
-        <div class="opn">XᵀX chéo<br>(2 cột ⟂)</div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:7px">BƯỚC 2 — GIẢI w (XᵀX chéo)</div>
-      <div class="expr">
-        w₁ = (Xᵀy)₁ / (XᵀX)₁₁ = <span class="ublk" id="xty1B"></span> / <span class="ublk" id="d1B"></span> = <span class="ublk" id="w1B"></span><br>
-        w₂ = (Xᵀy)₂ / (XᵀX)₂₂ = <span class="ublk" id="xty2B"></span> / <span class="ublk" id="d2B"></span> = <span class="ublk" id="w2B"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Dự đoán ŷ cho x = (<span data-q="qx1">2</span>, <span data-q="qx2">1</span>): ŷ = w₁x₁ + w₂x₂ = <span class="ublk" id="ypB"></span></li>
-        </ol>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 đặc trưng</span></div>
+    <div class="row">
+      <div class="note" style="max-width:none;flex:1">
+        Trọng số w = (<b data-q="w1">1</b>, <b data-q="w2">2</b>), bias b = <b data-q="bb">1</b>.<br>
+        Mẫu 1: x⁽¹⁾ = (<span data-q="x11">2</span>, <span data-q="x12">3</span>), nhãn y₁ = <span data-q="y1">9</span> &nbsp;·&nbsp;
+        Mẫu 2: x⁽²⁾ = (<span data-q="x21">1</span>, <span data-q="x22">1</span>), nhãn y₂ = <span data-q="y2">5</span>.
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Hồi quy đa biến</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="grid2">
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Dự đoán hai mẫu</h2><span class="tag">w·x + b</span></div>
+    <div class="calc">
+      ŷ₁ = <span data-q="w1">1</span>·<span data-q="x11">2</span> + <span data-q="w2">2</span>·<span data-q="x12">3</span> + <span data-q="bb">1</span> = <span class="blk"></span><br>
+      ŷ₂ = <span data-q="w1">1</span>·<span data-q="x21">1</span> + <span data-q="w2">2</span>·<span data-q="x22">1</span> + <span data-q="bb">1</span> = <span class="blk"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> đúng là một tích vô hướng w·x rồi cộng bias — "một nơ-ron tuyến tính".</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Sai số &amp; MSE</h2><span class="tag">đo lệch</span></div>
+    <div class="calc">
+      ŷ₂ − y₂ = <span class="blk" style="min-width:30px"></span> (mẫu 1 khớp: ŷ₁−y₁ = 0)<br>
+      MSE = ½[(ŷ₁−y₁)² + (ŷ₂−y₂)²] = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> bình phương dư rồi lấy trung bình trên m = 2 mẫu.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Một gradient cho w₁</h2><span class="tag">∂MSE/∂w₁</span></div>
+    <div class="figrow">
+      <svg id="figA" class="fig" viewBox="0 0 200 130" width="66mm" height="43mm" aria-label="sơ đồ: hai đặc trưng có trọng số cộng thành dự đoán"></svg>
+      <div style="flex:1">
+        <div class="calc">
+          ∂MSE/∂w₁ = (2/m) <span style="font-size:14px">Σ</span> (ŷⱼ−yⱼ)·x₁⁽ʲ⁾<br>
+          = (2/2)[(0)(<span data-q="x11">2</span>) + (<span data-q="err2">−1</span>)(<span data-q="x21">1</span>)] = <span class="blk" style="min-width:46px"></span>
+        </div>
+        <div class="why"><b>Vì sao:</b> gradient chỉ hướng giảm sai số; trừ nó (×học suất) là một bước cập nhật trọng số (Bài 10).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TỰ KIỂM TRA -->
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>wᵢ lớn nghĩa là gì? → <span class="blk" style="min-width:200px"></span></li>
+      <li>ŷ = w·x + b giống thành phần nào của mạng nơ-ron? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B2 · Hồi quy nhiều biến</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Hồi quy tuyến tính nhiều biến</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B2</span><h1>Hồi quy nhiều biến <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">XᵀX·w = Xᵀy là hệ "phương trình chuẩn". Nghịch đảo XᵀX = huấn luyện một-bước; gradient descent
-      là cách lặp để tránh nghịch đảo khi d lớn.</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">XᵀX, Xᵀy (điền đủ)</div>
-      <div class="row">
-        <div class="blk hot"><div class="nm">XᵀX</div><div class="m c2" id="kXtX"></div></div>
-        <div class="blk hot"><div class="nm">Xᵀy</div><div class="m c1" id="kXty"></div></div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:6px">NGHIỆM w</div>
-      <div class="expr">
-        w₁ = <span data-q="kxty1">?</span> / <span data-q="kd1">?</span> = <b><span data-q="kw1">?</span></b> &nbsp;&nbsp;
-        w₂ = <span data-q="kxty2">?</span> / <span data-q="kd2">?</span> = <b><span data-q="kw2">?</span></b>
-      </div>
-      <div class="row" style="margin-top:3px">
-        <div class="blk out"><div class="nm">w <s>nghiệm</s></div><div class="m c1" id="kw"></div></div>
-        <div class="opn">ŷ = Xw<br>khớp y</div>
-      </div>
-      <div class="expr">Dự đoán x=(<span data-q="qx1">2</span>,<span data-q="qx2">1</span>): ŷ = <b><span data-q="kyp">?</span></b></div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>ŷ = w₁·<span data-q="qx1">2</span> + w₂·<span data-q="qx2">1</span> = <span class="qa" id="kypQA">?</span></li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Normal equation cho nghiệm chính xác trong <b>một bước</b> nhưng phải nghịch đảo XᵀX (tốn O(d³)).
-        Khi d lớn → dùng <b>gradient descent</b> (Phần D). Thêm hàm sigmoid sau Xw → <b>hồi quy logistic</b> (B3).
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Dự đoán</h2></div>
+    <div class="calc ans">
+      ŷ₁ = <span class="blk" data-q="p1">9</span> &nbsp;|&nbsp; ŷ₂ = <span class="blk" data-q="p2">4</span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Hồi quy đa biến</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Sai số &amp; MSE</h2></div>
+    <div class="calc ans">
+      ŷ₂ − y₂ = <span class="blk" data-q="err2">−1</span> &nbsp;|&nbsp; MSE = ½[0² + (<span data-q="err2">−1</span>)²] = <span class="blk" data-q="mse">0.5</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Gradient w₁</h2></div>
+    <div class="calc ans">
+      ∂MSE/∂w₁ = (2/2)[0·<span data-q="x11">2</span> + (<span data-q="err2">−1</span>)·<span data-q="x21">1</span>] = <span class="blk" data-q="gw1">−1</span>
+    </div>
+    <div class="note">Cập nhật: w₁ ← w₁ − η·(<span data-q="gw1">−1</span>) → tăng w₁ một chút để kéo ŷ₂ về gần y₂.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>wᵢ lớn → <span class="qa">đặc trưng i ảnh hưởng mạnh tới dự đoán</span></li>
+      <li>ŷ = w·x + b → <span class="qa">phần tuyến tính của một nơ-ron (trước hàm kích hoạt)</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Hồi quy nhiều biến = tích vô hướng trọng số + bias + đo sai số bằng MSE; gradient cho biết chỉnh trọng số ra sao.
+    Bài tiếp (B3): thêm hàm <b>sigmoid</b> để dự đoán <b>xác suất</b> (hồi quy logistic).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B2 · Hồi quy nhiều biến</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-
-function fill(id, arr, blank){
-  var el=document.getElementById(id); if(!el) return; var s='';
-  for(var i=0;i<arr.length;i++)
-    s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
-  el.innerHTML=s;
-}
-
 function generate(){
-  // 2 cột trực giao (Σx1x2 = 0) → XᵀX chéo. Chọn template + w_true ngẫu nhiên.
-  var templates=[
-    {x1:[1,2,1], x2:[1,-1,1]},   // d1=6, d2=3
-    {x1:[2,1,1], x2:[0,1,-1]},   // d1=6, d2=2
-    {x1:[1,1,2], x2:[1,1,-1]}    // d1=6, d2=3
-  ];
-  var T=WB.pick(templates);
-  var x1=T.x1, x2=T.x2;
-  var w1=WB.pick([1,2,3]), w2=WB.pick([-2,-1,1,2,3]);
-  // y = w1*x1 + w2*x2 (khớp đúng → nghiệm sạch)
-  var y=[0,1,2].map(function(i){return w1*x1[i]+w2*x2[i];});
-
-  var d1=x1.reduce(function(s,v){return s+v*v;},0);     // (XᵀX)11
-  var d2=x2.reduce(function(s,v){return s+v*v;},0);     // (XᵀX)22
-  var off=[0,1,2].reduce(function(s,i){return s+x1[i]*x2[i];},0); // = 0
-  var xty1=[0,1,2].reduce(function(s,i){return s+x1[i]*y[i];},0);
-  var xty2=[0,1,2].reduce(function(s,i){return s+x2[i]*y[i];},0);
-
-  // X 3×2 theo hàng: [x1_i, x2_i]
-  var Xrows=[x1[0],x2[0], x1[1],x2[1], x1[2],x2[2]];
-
-  var qx1=WB.pick([2,3,4]), qx2=WB.pick([1,2,3]);
-  var yp=w1*qx1+w2*qx2;
+  var w1 = WB.randInt(1, 3), w2 = WB.randInt(1, 3), b = WB.randInt(0, 2);
+  var x11 = WB.randInt(1, 3), x12 = WB.randInt(1, 3);
+  var x21 = WB.randInt(1, 3), x22 = WB.randInt(1, 3);
+  var p1 = w1 * x11 + w2 * x12 + b;      // mẫu 1 khớp đúng
+  var p2 = w1 * x21 + w2 * x22 + b;
+  var y1 = p1;                            // err1 = 0
+  var y2 = p2 + 1;                        // err2 = −1
+  var err2 = p2 - y2;                     // = −1
+  var mse = (0 * 0 + err2 * err2) / 2;
+  var gw1 = (2 / 2) * (0 * x11 + err2 * x21);
 
   WB.setAll({
-    kxty1:fI(xty1), kxty2:fI(xty2), kd1:fI(d1), kd2:fI(d2),
-    kw1:fI(w1), kw2:fI(w2),
-    qx1:fI(qx1), qx2:fI(qx2), kyp:fI(yp)
+    w1: WB.fmtInt(w1), w2: WB.fmtInt(w2), bb: WB.fmtInt(b),
+    x11: WB.fmtInt(x11), x12: WB.fmtInt(x12), x21: WB.fmtInt(x21), x22: WB.fmtInt(x22),
+    y1: WB.fmtInt(y1), y2: WB.fmtInt(y2),
+    p1: WB.fmtInt(p1), p2: WB.fmtInt(p2),
+    err2: WB.fmtInt(err2), mse: WB.fmt2(mse), gw1: WB.fmtInt(gw1)
   });
-
-  // ĐỀ
-  fill('X', Xrows, false);
-  fill('wq', [w1,w2], true);           // w để trống (ẩn nghiệm)
-  fill('y', y, false);
-  fill('XtX', [d1,off,off,d2], true);
-  fill('Xty', [xty1,xty2], true);
-  // ĐÁP ÁN
-  fill('kXtX', [d1,off,off,d2], false);
-  fill('kXty', [xty1,xty2], false);
-  fill('kw', [w1,w2], false);
-
-  ['xty1B','d1B','w1B','xty2B','d2B','w2B','ypB'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.textContent='';
-  });
-  document.getElementById('kypQA').textContent=fI(yp);
-
-  drawFlow('sch1'); drawFlow('sch2');
+  drawFig('figA', w1, w2, b);
 }
 
-function drawFlow(id){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=150;
-  function bx(x,y,w,h,fill,stroke,t,ts){
-    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.3"/>'
-      +'<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="'+(ts||9)+'" font-weight="700" fill="#333">'+t+'</text>';
-  }
-  function ar(x1,y1,x2,y2){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#fa'+id+')"/>';}
-  var s='<defs><marker id="fa'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker></defs>';
-  // hàng trên: X, y
-  s+=bx(14,12,52,26,'#fdecd2','#e3c489','X  (3×2)');
-  s+=bx(112,12,52,26,'#fdecd2','#e3c489','y  (3×1)');
-  // giữa: XᵀX, Xᵀy
-  s+=bx(8,62,68,26,'#fff3b0','#e6cf6a','XᵀX (2×2)');
-  s+=bx(102,62,68,26,'#fff3b0','#e6cf6a','Xᵀy (2×1)');
-  // dưới: w
-  s+=bx(58,112,62,28,'#d6ecf6','#a7d3e3','w = (XᵀX)⁻¹Xᵀy',8);
-  // arrows
-  s+=ar(40,38,40,60);
-  s+=ar(138,38,138,60);
-  s+=ar(60,38,120,60);    // X cũng vào Xᵀy
-  s+=ar(50,88,82,110);
-  s+=ar(132,88,98,110);
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="luồng normal equation">'+s+'</svg>';
+// Sơ đồ tĩnh: x1, x2 (lam) → ×w → Σ(+b) → ŷ
+function drawFig(id, w1, w2, b){
+  var box = document.getElementById(id); if (!box) return;
+  var s = '<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
+  s += '<circle cx="26" cy="36" r="13" fill="#d6eef0" stroke="#0e7490" stroke-width="1.3"/><text x="26" y="40" text-anchor="middle" font-size="11" fill="#0e7490" font-weight="700">x₁</text>';
+  s += '<circle cx="26" cy="94" r="13" fill="#d6eef0" stroke="#0e7490" stroke-width="1.3"/><text x="26" y="98" text-anchor="middle" font-size="11" fill="#0e7490" font-weight="700">x₂</text>';
+  s += '<circle cx="120" cy="65" r="16" fill="#fbe6cf" stroke="#b45309" stroke-width="1.4"/><text x="120" y="62" text-anchor="middle" font-size="11" fill="#b45309" font-weight="700">Σ</text><text x="120" y="74" text-anchor="middle" font-size="8" fill="#b45309">+b</text>';
+  s += '<line x1="40" y1="40" x2="105" y2="60" stroke="#5b6776" stroke-width="1.2"/><text x="60" y="42" font-size="8.5" fill="#0e7490" font-weight="700">w₁=' + WB.fmtInt(w1) + '</text>';
+  s += '<line x1="40" y1="90" x2="105" y2="72" stroke="#5b6776" stroke-width="1.2"/><text x="60" y="94" font-size="8.5" fill="#0e7490" font-weight="700">w₂=' + WB.fmtInt(w2) + '</text>';
+  s += '<line x1="136" y1="65" x2="176" y2="65" stroke="#5b6776" stroke-width="1.2" marker-end="url(#a1)"/>';
+  s += '<text x="190" y="69" text-anchor="middle" font-size="11" fill="#16202e" font-weight="700">ŷ</text>';
+  box.innerHTML = '<svg viewBox="0 0 200 130">' + s + '</svg>';
 }
 
 WB.wire(generate);

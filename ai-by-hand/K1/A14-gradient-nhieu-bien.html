@@ -1,17 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Gradient hàm nhiều biến — Gradient (canvas)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài A14 — Gradient hàm nhiều biến (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.3;margin-top:4px;}
-  .expr .lbl{color:var(--accent);font-weight:700;}
-  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .m{--cw:10mm;--ch:8mm;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -22,210 +23,220 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Gradient hàm nhiều biến</h1><span class="vi">— Gradient ∇f</span>
-    <span class="tag">điền ô trắng · ∇f = (∂f/∂x₁, ∂f/∂x₂, …)</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Gradient là vectơ chứa tất cả đạo hàm riêng — <b>"hướng dốc nhất đi lên"</b>. Gradient
-    descent đi ngược hướng này: w ← w − η·∇f(w). Trong mạng, ∇f theo tất cả trọng số W là thứ backprop tính để cập nhật.
-    <div class="fm">∇f(x₁,x₂) = (∂f/∂x₁, ∂f/∂x₂) &nbsp;|&nbsp; ∂/∂xᵢ = đạo hàm chỉ theo xᵢ, giữ cố định biến còn lại</div>
+  <div class="wb-title"><span class="no">Bài A14</span><h1>Gradient hàm nhiều biến <small>— Gradient</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Hàm mất mát phụ thuộc <b>hàng triệu trọng số</b>. Gradient gói toàn bộ "độ nhạy theo từng trọng số"
+    vào một vectơ; trừ nó (× học suất) là <b>một bước huấn luyện</b>. Đây là động cơ tối ưu của mọi mạng nơ-ron.
+    <div class="formula">
+      ∇f = ( ∂f/∂x , ∂f/∂y ) &nbsp;&nbsp; bước học: w ← w − η · ∇f
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Đứng trên mặt địa hình 2D (núi). <b>∇f</b> là mũi tên chỉ hướng dốc lên nhất. Gradient descent bước ngược
-    <b>−∇f</b>: luôn đi xuống. Sau nhiều bước nhỏ về đáy thung lũng = loss nhỏ nhất.
+    Đứng trên một <b>quả đồi</b> (mặt hàm). Gradient là mũi tên chỉ <b>hướng dốc lên gắt nhất</b>. Muốn xuống đáy (loss nhỏ) thì
+    bước <b>ngược</b> mũi tên đó. Độ dài mũi tên = độ dốc.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Cam</b> = ∇f (hướng lên dốc nhất) · <b>Tím</b> = −∇f (hướng gradient descent đi)</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn hàm hai biến</h2><span class="tag">f(x, y)</span></div>
+    <div class="calc" style="font-size:15px">
+      f = x² <span data-q="kxy">+ xy</span> + y² &nbsp;;&nbsp; xét tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> )
     </div>
+    <div class="note">Mục tiêu: đạo hàm riêng theo từng biến, gom thành ∇f, rồi đi <b>một bước</b> gradient descent.</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN · f(x₁, x₂) = a·x₁² + b·x₂²</div>
-      <div class="expr">
-        f(x₁,x₂) = <span data-q="a">2</span>·x₁² + <span data-q="b">3</span>·x₂²
-      </div>
+  <!-- BƯỚC 1 — ∂f/∂x -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Đạo hàm riêng ∂f/∂x</h2><span class="tag">coi y là hằng</span></div>
+    <div class="calc">
+      ∂f/∂x = 2x <span data-q="dfxg">+ y</span> = <span class="blk" style="min-width:60px"></span> (tổng quát)<br>
+      tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ): = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> đạo hàm riêng = "đổi một biến, giữ nguyên biến kia" — đo độ nhạy theo đúng trục đó.</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">ĐẠO HÀM RIÊNG (ký hiệu ∂, "đờ-pan")</div>
-      <div class="expr">
-        ∂f/∂x₁ = <span class="ublk" id="df1"></span>
-        <span style="color:var(--dim);font-size:11px">&nbsp;[xem x₂ như hằng số]</span><br>
-        ∂f/∂x₂ = <span class="ublk" id="df2"></span>
-        <span style="color:var(--dim);font-size:11px">&nbsp;[xem x₁ như hằng số]</span>
-      </div>
-
-      <div class="bandh fw" style="margin-top:7px">TÍNH GRADIENT TẠI ĐIỂM (x₁₀, x₂₀)</div>
-      <div class="expr">
-        (x₁₀, x₂₀) = (<span data-q="x10">1</span>, <span data-q="x20">2</span>)<br>
-        ∂f/∂x₁ tại điểm = <span class="ublk" id="g1"></span><br>
-        ∂f/∂x₂ tại điểm = <span class="ublk" id="g2"></span>
-      </div>
-
-      <div class="row" style="margin-top:5px">
-        <div class="blk bw"><div class="nm">∇f <s>vectơ 2×1</s></div><div class="m c1" id="gvec"></div></div>
-        <div class="why" style="flex:1;margin-left:10px"><b>Vì sao:</b> gradient là vectơ cùng cỡ với input, chỉ hướng dốc nhất lên. Cập nhật: (x₁,x₂) ← (x₁,x₂) − η·∇f — bước nhỏ về đáy.</div>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>f(x₁,x₂) = x₁·x₂ → ∂f/∂x₁ = ? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-          <li>∇f = 0 có nghĩa gì? → <span style="display:inline-block;min-width:130px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
-      </div>
+  <!-- BƯỚC 2 — ∂f/∂y -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Đạo hàm riêng ∂f/∂y</h2><span class="tag">coi x là hằng</span></div>
+    <div class="calc">
+      ∂f/∂y = <span data-q="dfyg">x</span> + 2y = <span class="blk" style="min-width:60px"></span><br>
+      tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ): = <span class="blk" style="min-width:40px"></span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Gradient hàm nhiều biến — Gradient ∇f</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 3 — gom ∇f -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Gom thành ∇f</h2><span class="tag">vectơ</span></div>
+    <div class="calc">
+      ∇f( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
+    </div>
+    <div class="hint">Thứ tự thành phần khớp thứ tự biến: x trước, y sau.</div>
+  </div>
+
+  <!-- BƯỚC 4 — một bước GD -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Một bước gradient descent</h2><span class="tag">η = <span data-q="eta">0.1</span></span></div>
+    <div class="calc">
+      (x, y) ← ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) − <span data-q="eta">0.1</span>·( <span data-q="gx">4</span>, <span data-q="gy">5</span> )
+      = ( <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:40px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> trừ gradient kéo điểm về phía <b>f nhỏ hơn</b>; η nhỏ để không "vọt qua" đáy.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Gradient là một số hay vectơ? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Để <b>giảm</b> f, đi theo hay ngược ∇? → <span class="blk" style="min-width:90px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A14 · Gradient hàm nhiều biến</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Gradient hàm nhiều biến</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A14</span><h1>Gradient hàm nhiều biến <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Đường contour = tập hợp điểm có cùng f. ∇f ⊥ contour — vuông góc với đường mức.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>∂f/∂x</h2></div>
+    <div class="calc ans">
+      ∂f/∂x = 2x <span data-q="dfxg">+ y</span> = <span class="blk" data-q="dfxs">2x + y</span>;
+      tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) = <span class="blk" data-q="gx">4</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN</div>
-      <div class="expr">
-        f(x₁,x₂) = <span data-q="a">2</span>·x₁² + <span data-q="b">3</span>·x₂²
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>∂f/∂y</h2></div>
+    <div class="calc ans">
+      ∂f/∂y = <span data-q="dfyg">x</span> + 2y = <span class="blk" data-q="dfys">x + 2y</span>;
+      tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) = <span class="blk" data-q="gy">5</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">ĐẠO HÀM RIÊNG</div>
-      <div class="expr">
-        ∂f/∂x₁ = <span class="ublk" data-q="df1_ans">4x₁</span><br>
-        ∂f/∂x₂ = <span class="ublk" data-q="df2_ans">6x₂</span>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>∇f</h2></div>
+    <div class="calc ans">
+      ∇f( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) = ( <span class="blk" data-q="gx">4</span>, <span class="blk" data-q="gy">5</span> )
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">TẠI ĐIỂM (<span data-q="x10">1</span>, <span data-q="x20">2</span>)</div>
-      <div class="expr">
-        ∂f/∂x₁ = <span class="ublk" data-q="g1_ans">4</span><br>
-        ∂f/∂x₂ = <span class="ublk" data-q="g2_ans">12</span>
-      </div>
-      <div class="row" style="margin-top:5px">
-        <div class="blk bw"><div class="nm">∇f</div><div class="m c1" id="kgvec"></div></div>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Một bước GD</h2></div>
+    <div class="calc ans">
+      ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) − <span data-q="eta">0.1</span>·( <span data-q="gx">4</span>, <span data-q="gy">5</span> )
+      = ( <span class="blk" data-q="nx">0.6</span>, <span class="blk" data-q="ny">1.5</span> )
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>f=x₁·x₂ → ∂f/∂x₁ = <span class="qa">x₂</span> (giữ x₂ như hằng số)</li>
-          <li>∇f = 0 → <span class="qa">điểm dừng (điểm cực tiểu, cực đại, hoặc yên ngựa)</span></li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Gradient ∇f(w) tính trên toàn bộ trọng số mạng chính là thứ <b>backprop</b> (Bài 12) tính ra.
-        Mỗi bước <b>gradient descent</b>: w ← w − η·∇L(w) — đi ngược hướng dốc để giảm loss L.
-        Bài kế (D5 / Bài 10): thực hành đi từng bước gradient descent trên bề mặt parabol.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Đường đồng mức &amp; bước −∇</h2><span class="tag">xuống dốc</span></div>
+    <div class="figrow">
+      <svg id="figG" class="fig" viewBox="0 0 180 160" width="56mm" height="50mm" aria-label="đường đồng mức của f và mũi tên trừ gradient hướng về đáy"></svg>
+      <div style="flex:1">
+        <div class="note">Các vòng = <b>đường đồng mức</b> (f bằng nhau); <b>mũi tên cam</b> = <b>−∇f</b> tại điểm, chỉ về phía đáy.
+          Bước theo −∇ làm f giảm; η quyết định bước dài/ngắn.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Gradient hàm nhiều biến — Gradient ∇f</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Số hay vectơ? → <span class="qa">Vectơ — mỗi thành phần là một đạo hàm riêng.</span></li>
+      <li>Giảm f? → <span class="qa">Đi ngược ∇ (hướng dốc xuống).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Gradient = vectơ đạo hàm riêng = hướng tăng nhanh nhất; trừ nó là một bước học. Bài tiếp (A15): khi đầu ra là
+    <b>vectơ nhiều thành phần</b>, bảng đạo hàm riêng trở thành <b>ma trận Jacobian</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A14 · Gradient hàm nhiều biến</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var fI = WB.fmtInt;
-
-function fillCol(id, arr, blank){
-  var el=document.getElementById(id); if(!el) return; var s='';
-  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
-  el.innerHTML=s;
-}
-
 function generate(){
-  var a  = WB.pick([1,2,3]);    // f = a·x1² + b·x2²
-  var b  = WB.pick([1,2,3]);
-  var x10 = WB.pick([-2,-1,1,2]);
-  var x20 = WB.pick([-2,-1,1,2]);
+  var f = WB.fmtInt, ft = WB.fmtTrim;
+  var k = WB.pick([1, 2, -1, -2]);
+  var x0 = WB.randIntNZ(-2, 3), y0 = WB.randIntNZ(-2, 3);
+  var eta = WB.pick([0.1, 0.2]);
+  var gx = 2*x0 + k*y0;
+  var gy = k*x0 + 2*y0;
+  var nx = x0 - eta*gx, ny = y0 - eta*gy;
 
-  // đạo hàm riêng: ∂f/∂x1 = 2ax1, ∂f/∂x2 = 2bx2
-  var da1 = 2*a, da2 = 2*b;
-  var g1 = da1 * x10;
-  var g2 = da2 * x20;
-
-  // data-q
-  WB.setAll({
-    a: fI(a), b: fI(b),
-    x10: fI(x10), x20: fI(x20),
-    df1_ans: fI(da1)+'·x₁',
-    df2_ans: fI(da2)+'·x₂',
-    g1_ans: fI(g1),
-    g2_ans: fI(g2)
-  });
-
-  // ĐỀ: trống
-  ['df1','df2','g1','g2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=''; });
-  fillCol('gvec',[g1,g2],true);
-  fillCol('kgvec',[g1,g2],false);
-
-  drawGrad('sch1',a,b,x10,x20,g1,g2,false);
-  drawGrad('sch2',a,b,x10,x20,g1,g2,true);
-}
-
-function drawGrad(id,a,b,x10,x20,g1,g2,showGrad){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=148;
-  var pad={l:20,r:15,t:20,b:20}, pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
-  var rng=3.5;
-  function sx(x){ return (pad.l+(x+rng)/(2*rng)*pw).toFixed(1); }
-  function sy(y){ return (pad.t+ph-(y+rng)/(2*rng)*ph).toFixed(1); }
-  var s='<defs>'
-    +'<marker id="mhg'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
-    +'<marker id="mga'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#b45309"/></marker>'
-    +'<marker id="mgb'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#7c5cff"/></marker>'
-    +'</defs>';
-  // trục
-  s+='<line x1="'+pad.l+'" y1="'+sy(0)+'" x2="'+(W-pad.r+7)+'" y2="'+sy(0)+'" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#mhg'+id+')"/>';
-  s+='<line x1="'+sx(0)+'" y1="'+(H-pad.b)+'" x2="'+sx(0)+'" y2="'+(pad.t-7)+'" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#mhg'+id+')"/>';
-  s+='<text x="'+(W-pad.r+2)+'" y="'+(parseFloat(sy(0))+4)+'" font-size="9" fill="#6b7280">x₁</text>';
-  s+='<text x="'+(parseFloat(sx(0))+3)+'" y="'+(pad.t-2)+'" font-size="9" fill="#6b7280">x₂</text>';
-
-  // contour ellipses for f = a*x1²+b*x2²
-  var levels=[1,2,4,8];
-  levels.forEach(function(lv){
-    // a·r1² + b·r2² = lv → ellipse: semi-axes r1=√(lv/a), r2=√(lv/b)
-    var r1=Math.sqrt(lv/a), r2=Math.sqrt(lv/b);
-    var pts=''; var N=60;
-    for(var k=0;k<=N;k++){
-      var theta=k/N*2*Math.PI;
-      var cx=r1*Math.cos(theta), cy=r2*Math.sin(theta);
-      if(Math.abs(cx)>rng||Math.abs(cy)>rng) { if(k>0) pts+=' '; continue; }
-      pts+=(pts?'L':'M')+sx(cx)+','+sy(cy);
-    }
-    if(pts) s+='<path d="'+pts+'Z" fill="none" stroke="#e0dbd0" stroke-width="'+(lv===1?'1.5':'1')+'"/>';
-  });
-
-  // điểm (x10,x20)
-  s+='<circle cx="'+sx(x10)+'" cy="'+sy(x20)+'" r="4" fill="#0e7490"/>';
-  s+='<text x="'+(parseFloat(sx(x10))+5)+'" y="'+(parseFloat(sy(x20))-3)+'" font-size="8.5" fill="#0e7490" font-weight="700">('+fI(x10)+','+fI(x20)+')</text>';
-
-  if(showGrad){
-    // ∇f (cam, dài ~20px normalize)
-    var mag=Math.sqrt(g1*g1+g2*g2)||1;
-    var scale=22/mag;
-    var gex=x10+g1*scale/((pw/(2*rng))), gey=x20+g2*scale/((ph/(2*rng)));
-    s+='<line x1="'+sx(x10)+'" y1="'+sy(x20)+'" x2="'+sx(gex)+'" y2="'+sy(gey)+'" stroke="#b45309" stroke-width="2.2" marker-end="url(#mga'+id+')"/>';
-    s+='<text x="'+(parseFloat(sx(gex))+3)+'" y="'+(parseFloat(sy(gey))-2)+'" font-size="9" fill="#b45309" font-weight="700">∇f</text>';
-    // −∇f (tím, gradient descent direction)
-    var ngex=x10-g1*scale/((pw/(2*rng))), ngey=x20-g2*scale/((ph/(2*rng)));
-    s+='<line x1="'+sx(x10)+'" y1="'+sy(x20)+'" x2="'+sx(ngex)+'" y2="'+sy(ngey)+'" stroke="#7c5cff" stroke-width="1.6" marker-end="url(#mgb'+id+')"/>';
-    s+='<text x="'+(parseFloat(sx(ngex))-20)+'" y="'+(parseFloat(sy(ngey))+4)+'" font-size="9" fill="#7c5cff">−∇f</text>';
+  // " + 2y" / " − y" / " + y" theo hệ số & tên biến
+  function termV(c, vn){
+    var s = f(c), neg = /^−/.test(s), mag = neg ? s.slice(1) : s;
+    if (mag === '1') mag = '';
+    return (neg ? ' − ' : ' + ') + mag + vn;
   }
+  // chuỗi "+ xy" cho f
+  var kxy = termV(k, 'xy');
+  // ∂f/∂x = 2x + k·y  (phần "+ k y")
+  var dfxg = termV(k, 'y');
+  // ∂f/∂y = k·x + 2y  (phần "k x" đứng đầu, rồi "+ 2y" cố định)
+  function leadV(c, vn){
+    var s = f(c), neg = /^−/.test(s), mag = neg ? s.slice(1) : s;
+    if (mag === '1') mag = '';
+    return (neg ? '−' : '') + mag + vn;
+  }
+  var dfyg = leadV(k, 'x');
+  var dfxs = '2x' + termV(k, 'y');
+  var dfys = leadV(k, 'x') + ' + 2y';
 
-  s+='<text x="14" y="14" font-size="9.5" fill="#6b7280">f(x₁,x₂)='+fI(a)+'x₁²+'+fI(b)+'x₂² &nbsp;(đường contour)</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="contour plot với gradient tại điểm">'+s+'</svg>';
+  WB.setAll({
+    kxy: kxy, x0: f(x0), y0: f(y0), eta: ft(eta),
+    dfxg: dfxg, dfyg: dfyg, dfxs: dfxs, dfys: dfys,
+    gx: f(gx), gy: f(gy), nx: ft(nx), ny: ft(ny)
+  });
+  drawGrad('figG', x0, y0, gx, gy);
 }
 
+// đường đồng mức (vòng) + mũi tên −∇ tại (x0,y0)
+function drawGrad(id, x0, y0, gx, gy){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var O = {x: 90, y: 80}, u = 16, R = 4;
+  function X(v){ return (O.x + v*u).toFixed(1); }
+  function Y(v){ return (O.y - v*u).toFixed(1); }
+  var s = '<defs><marker id="g'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
+  // trục
+  s += '<line x1="'+X(-R)+'" y1="'+Y(0)+'" x2="'+X(R)+'" y2="'+Y(0)+'" stroke="#cdd3d9" stroke-width="1"/>';
+  s += '<line x1="'+X(0)+'" y1="'+Y(-R)+'" x2="'+X(0)+'" y2="'+Y(R)+'" stroke="#cdd3d9" stroke-width="1"/>';
+  // các vòng đồng mức (ellipse xấp xỉ, tâm gốc)
+  var rr = [1.2, 2.2, 3.2];
+  for (var i = 0; i < rr.length; i++){
+    s += '<ellipse cx="'+X(0)+'" cy="'+Y(0)+'" rx="'+(rr[i]*u*1.15).toFixed(1)+'" ry="'+(rr[i]*u*0.8).toFixed(1)+'" fill="none" stroke="#0e7490" stroke-width="1.4" opacity="0.7"/>';
+  }
+  // điểm
+  s += '<circle cx="'+X(x0)+'" cy="'+Y(y0)+'" r="3.2" fill="#111"/>';
+  // mũi tên −∇ (chuẩn hóa độ dài để gọn)
+  var nrm = Math.sqrt(gx*gx + gy*gy) || 1;
+  var L = 2.2;
+  var ex = x0 - gx/nrm*L, ey = y0 - gy/nrm*L;
+  s += '<line x1="'+X(x0)+'" y1="'+Y(y0)+'" x2="'+X(ex)+'" y2="'+Y(ey)+'" stroke="#b45309" stroke-width="2.6" marker-end="url(#g'+id+')"/>';
+  s += '<text x="'+(parseFloat(X(ex)))+'" y="'+(parseFloat(Y(ey))-5)+'" text-anchor="middle" style="font-size:9px" fill="#b45309" font-weight="700">−∇f</text>';
+  svg.innerHTML = s;
+}
 WB.wire(generate);
 generate();
 </script>

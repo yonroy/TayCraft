@@ -1,20 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · exp &amp; log (bảng tra) — Exponential &amp; Logarithm</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài A18 — exp &amp; log (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .tbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
-  .tbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .tbl td{padding:3px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .tbl tr:nth-child(even) td{background:#faf8f2;}
-  .tbl td.hl{background:#fff3b0;font-weight:700;}
-  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.2;margin-top:4px;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+.ltab{border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-top:2px;}
+.ltab td,.ltab th{border:1px solid var(--line);padding:2px 8px;text-align:center;}
+.ltab th{background:var(--given);font-weight:700;}
 </style>
 </head>
 <body>
@@ -25,230 +26,208 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>exp &amp; log (bảng tra)</h1><span class="vi">— Exponential &amp; Logarithm</span>
-    <span class="tag">tra bảng · eˣ và ln x</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> <code>exp</code> và <code>ln</code> xuất hiện khắp AI:
-    <b>softmax</b> = eˣⁱ / Σeˣʲ; <b>cross-entropy loss</b> = −Σyᵢ ln ŷᵢ; <b>sigmoid</b> = 1/(1+e⁻ᶻ).
-    Tính tay với số thật giúp hiểu tại sao eˣ luôn dương và ln biến nhân thành cộng.
-    <div class="fm">e ≈ 2.718 &nbsp;|&nbsp; e⁰ = 1 &nbsp;|&nbsp; ln(1) = 0 &nbsp;|&nbsp; ln(eˣ) = x &nbsp;|&nbsp; ln(a·b) = ln a + ln b</div>
+  <div class="wb-title"><span class="no">Bài A18</span><h1>exp &amp; log <small>— Exp &amp; Log (dùng bảng tra)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Softmax dùng eˣ để biến logit thành xác suất dương; cross-entropy dùng ln để phạt dự đoán sai.
+    Nắm tính chất exp/log giúp hiểu <b>vì sao</b> các công thức đó hoạt động, và tính nhẩm được kết quả.
+    <div class="formula">
+      e<sup>a+b</sup> = eᵃ · eᵇ &nbsp;&nbsp; ln(a·b) = ln a + ln b &nbsp;&nbsp; ln(eˣ) = x &nbsp;&nbsp; e<sup>ln x</sup> = x
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    <b>eˣ</b> tăng rất nhanh (gấp đôi ≈ mỗi 0.7 đơn vị); luôn > 0 — lý do softmax chuyển điểm thô thành xác suất dương.
-    <b>ln x</b> là hàm ngược: nén khoảng cách lớn về nhỏ — loss dùng ln để "phạt nặng" dự đoán sai chắc chắn.
+    <b>exp</b> biến phép cộng thành phép nhân (tăng <b>rất nhanh</b>, luôn dương). <b>log</b> làm ngược lại: nén số lớn, biến
+    nhân thành cộng. Chúng là <b>hai chiều của một cánh cửa</b> — đi qua rồi đi ngược thì về chỗ cũ.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Xanh</b> = eˣ (luôn dương, vọt nhanh). <b>Cam</b> = ln x (chỉ x > 0, tăng chậm). Điểm giao: (0,1) vì e⁰ = 1 và ln(1) = 0... gần nhau tại x=1.</div>
+  <!-- GIVEN — bảng tra cố định -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Bảng tra cho sẵn</h2><span class="tag">tra cứu</span></div>
+    <div class="row" style="gap:18px;flex-wrap:wrap">
+      <table class="ltab">
+        <tr><th>x</th><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><th>eˣ</th><td>1</td><td>2.72</td><td>7.39</td><td>20.1</td></tr>
+      </table>
+      <table class="ltab">
+        <tr><th>y</th><td>0.37</td><td>0.5</td><td>1</td><td>2.72</td><td>7.39</td></tr>
+        <tr><th>ln y</th><td>−1</td><td>−0.69</td><td>0</td><td>1</td><td>2</td></tr>
+      </table>
     </div>
-
-    <div class="work">
-      <div class="bandh fw">BẢNG TRA (dùng cho bài này)</div>
-      <table class="tbl" id="refTable"></table>
-
-      <div class="bandh fw" style="margin-top:7px">TÍNH · softmax 3 phần tử</div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:3px">z = [<span data-q="z1">1</span>, <span data-q="z2">2</span>, <span data-q="z3">3</span>] &nbsp;→&nbsp; eᶻⁱ tra bảng → chia tổng</div>
-      <div class="expr">
-        e<sup><span data-q="z1">1</span></sup> = <span class="ublk" id="e1b"></span> &nbsp;
-        e<sup><span data-q="z2">2</span></sup> = <span class="ublk" id="e2b"></span> &nbsp;
-        e<sup><span data-q="z3">3</span></sup> = <span class="ublk" id="e3b"></span>
-      </div>
-      <div class="expr">
-        S = <span class="ublk" id="e1b2"></span> + <span class="ublk" id="e2b2"></span> + <span class="ublk" id="e3b2"></span> = <span class="ublk" id="sumB"></span>
-      </div>
-      <div class="expr">
-        p₁ = <span class="ublk" id="p1b"></span>/S ≈ <span class="ublk" id="p1r"></span> &nbsp;
-        p₂ ≈ <span class="ublk" id="p2r"></span> &nbsp;
-        p₃ ≈ <span class="ublk" id="p3r"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>e⁰ = ? &nbsp;&nbsp; ln(1) = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-          <li>Tổng các xác suất softmax = ? → <span style="display:inline-block;min-width:60px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">Mọi câu hỏi đều rơi đúng mốc trong bảng — chỉ việc tra, không cần máy tính.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · exp &amp; log (bảng tra)</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — eˣ -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tính eˣ</h2><span class="tag">luôn dương</span></div>
+    <div class="calc">
+      e<sup><span data-q="ea">2</span></sup> = <span class="blk" style="min-width:46px"></span> &nbsp;;&nbsp;
+      e<sup><span data-q="eb">0</span></sup> = <span class="blk" style="min-width:36px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> eˣ luôn &gt; 0 → dùng làm "điểm số dương" trong softmax (không có xác suất âm).</div>
+  </div>
+
+  <!-- BƯỚC 2 — ln -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Tính ln</h2><span class="tag">nén số</span></div>
+    <div class="calc">
+      ln <span data-q="lp">1</span> = <span class="blk" style="min-width:40px"></span> &nbsp;;&nbsp;
+      ln <span data-q="lq">2.72</span> = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="hint">ln của số &lt; 1 là <b>âm</b> → vì thế −ln p (loss) luôn ≥ 0.</div>
+  </div>
+
+  <!-- BƯỚC 3 — tính chất -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tính chất "cộng ↔ nhân"</h2><span class="tag">eᵃ⁺ᵇ = eᵃ·eᵇ</span></div>
+    <div class="calc">
+      e<sup>(1+1)</sup> = e¹·e¹ = 2.72·2.72 ≈ <span class="blk" style="min-width:46px"></span> &nbsp;(= e² ✓)
+    </div>
+    <div class="why"><b>Vì sao:</b> nhờ "cộng↔nhân", softmax/CE rút gọn được; ln(eˣ) = x là lý do log-softmax gọn gàng.</div>
+  </div>
+
+  <!-- BƯỚC 4 — ứng dụng -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Xem trước softmax / cross-entropy</h2><span class="tag">ứng dụng</span></div>
+    <div class="calc">
+      softmax(z)ₖ = e<sup>zₖ</sup> / Σ e<sup>zⱼ</sup> &nbsp;;&nbsp; CE = −ln(p lớp đúng)<br>
+      Ví dụ: −ln(<span data-q="cep">0.37</span>) ≈ <span class="blk" style="min-width:40px"></span> (nat)
+    </div>
+    <div class="note">Dự đoán đúng với xác suất <span data-q="cep">0.37</span> tốn khoảng từng ấy loss; p càng gần 1, loss càng gần 0.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>ln 1 = ? và e⁰ = ? → <span class="blk" style="min-width:90px"></span></li>
+      <li>ln(eˣ) = ? → <span class="blk" style="min-width:60px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A18 · exp &amp; log</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>exp &amp; log (bảng tra)</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A18</span><h1>exp &amp; log <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Tại điểm z lớn: e<sup>z</sup> ≫ các e<sup>zⱼ</sup> khác → softmax ≈ 1 cho argmax (winner-take-all).</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>eˣ</h2></div>
+    <div class="calc ans">
+      e<sup><span data-q="ea">2</span></sup> = <span class="blk" data-q="eaV">7.39</span> ;
+      e<sup><span data-q="eb">0</span></sup> = <span class="blk" data-q="ebV">1</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">BẢNG TRA</div>
-      <table class="tbl" id="refTable2"></table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>ln</h2></div>
+    <div class="calc ans">
+      ln <span data-q="lp">1</span> = <span class="blk" data-q="lpV">0</span> ;
+      ln <span data-q="lq">2.72</span> = <span class="blk" data-q="lqV">1</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">KẾT QUẢ SOFTMAX</div>
-      <div class="expr">
-        e<sup><span data-q="z1">1</span></sup> = <b><span data-q="ke1">2.72</span></b> &nbsp;
-        e<sup><span data-q="z2">2</span></sup> = <b><span data-q="ke2">7.39</span></b> &nbsp;
-        e<sup><span data-q="z3">3</span></sup> = <b><span data-q="ke3">20.09</span></b>
-      </div>
-      <div class="expr">
-        S = <span data-q="ke1">2.72</span> + <span data-q="ke2">7.39</span> + <span data-q="ke3">20.09</span> = <b><span data-q="ksum">30.20</span></b>
-      </div>
-      <div class="expr">
-        p₁ = <b><span data-q="kp1">0.090</span></b> &nbsp; p₂ = <b><span data-q="kp2">0.245</span></b> &nbsp; p₃ = <b><span data-q="kp3">0.665</span></b>
-      </div>
-      <div style="font-size:11px;color:var(--dim);margin-top:2px">Kiểm: p₁+p₂+p₃ = <span data-q="ksum2">1.000</span></div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tính chất</h2></div>
+    <div class="calc ans">
+      e<sup>(1+1)</sup> = 2.72·2.72 ≈ <span class="blk" data-q="prop">7.39</span> = e² ✓
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>e⁰ = <span class="qa">1</span> &nbsp;&nbsp; ln(1) = <span class="qa">0</span></li>
-          <li>Tổng softmax = <span class="qa">1 (luôn luôn — đây là điều kiện xác suất hợp lệ)</span></li>
-        </ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Ví dụ cross-entropy</h2></div>
+    <div class="calc ans">
+      −ln(<span data-q="cep">0.37</span>) ≈ <span class="blk" data-q="ceV">1</span> nat
+    </div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> <code>softmax</code> biến điểm thô (logit) thành xác suất: luôn dương, tổng = 1.
-        Phần tử lớn nhất (z₃=<span data-q="z3">3</span>) chiếm xác suất cao nhất ≈ <span data-q="kp3">0.67</span>.
-        <b>Cross-entropy loss</b> dùng ln để phạt nặng khi mô hình "chắc chắn sai": −ln(p) → ∞ khi p → 0.
-        Bài kế B3 dùng đúng hai hàm này kết hợp.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: eˣ và ln x là hàm ngược</h2><span class="tag">đối xứng qua y=x</span></div>
+    <div class="figrow">
+      <svg id="figX" class="fig" viewBox="0 0 180 160" width="56mm" height="50mm" aria-label="đồ thị e mũ x và ln x đối xứng nhau qua đường y bằng x"></svg>
+      <div style="flex:1">
+        <div class="note">Đường <b>lam</b> = eˣ (tăng rất nhanh, luôn dương); đường <b>cam</b> = ln x (nén lại); chúng <b>đối xứng qua y = x</b> (đường đứt) — đúng nghĩa "hàm ngược".</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · exp &amp; log (bảng tra)</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>ln 1, e⁰? → <span class="qa">ln 1 = 0 ; e⁰ = 1.</span></li>
+      <li>ln(eˣ)? → <span class="qa">= x (exp &amp; log là hàm ngược của nhau).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> exp tạo số dương (softmax), log nén &amp; phạt (cross-entropy); "cộng↔nhân" là tính chất ta xài liên tục.
+    Bài tiếp (A19): <b>chuẩn hóa dữ liệu</b> (min-max &amp; z-score) — đưa số về thang chuẩn trước khi vào mô hình.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A18 · exp &amp; log</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-// Bảng eˣ và ln x cố định để học sinh tra tay
-var EXP_TABLE = [
-  {x:0,   ex:'1.00',  lnx:'—'},
-  {x:0.5, ex:'1.65',  lnx:'—'},
-  {x:1,   ex:'2.72',  lnx:'0.00'},
-  {x:1.5, ex:'4.48',  lnx:'0.41'},
-  {x:2,   ex:'7.39',  lnx:'0.69'},
-  {x:2.5, ex:'12.18', lnx:'0.92'},
-  {x:3,   ex:'20.09', lnx:'1.10'},
-  {x:3.5, ex:'33.12', lnx:'1.25'},
-  {x:4,   ex:'54.60', lnx:'1.39'}
-];
-
-function buildTable(id, hlRows){
-  var el=document.getElementById(id); if(!el) return;
-  var hl=hlRows||[];
-  var s='<tr><th>x</th><th>eˣ</th><th>ln x (x>0)</th></tr>';
-  EXP_TABLE.forEach(function(r,i){
-    var isHL=hl.indexOf(r.x)>=0;
-    s+='<tr><td class="'+(isHL?'hl':'')+'" >'+r.x+'</td>'
-      +'<td class="'+(isHL?'hl':'')+'" >'+r.ex+'</td>'
-      +'<td class="'+(isHL?'hl':'')+'" >'+r.lnx+'</td></tr>';
-  });
-  el.innerHTML=s;
-}
-
-function lookupExp(x){
-  for(var i=0;i<EXP_TABLE.length;i++) if(EXP_TABLE[i].x===x) return parseFloat(EXP_TABLE[i].ex);
-  return null;
-}
-
 function generate(){
-  // Chọn 3 giá trị nguyên trong bảng (1,2,3) hoặc đổi thành (0,1,2), (1,2,3), (0.5,1,2)
-  var sets=[[1,2,3],[0,1,2],[2,3,4],[1,2.5,3],[0.5,2,3]];
-  var s=WB.pick(sets);
-  var z1=s[0],z2=s[1],z3=s[2];
-  var e1=lookupExp(z1)||Math.exp(z1);
-  var e2=lookupExp(z2)||Math.exp(z2);
-  var e3=lookupExp(z3)||Math.exp(z3);
-  var sum=e1+e2+e3;
-  var p1=e1/sum, p2=e2/sum, p3=e3/sum;
+  // bảng tra CỐ ĐỊNH; random chỉ ở việc chọn mốc để hỏi
+  var EXP = { '0':'1', '1':'2.72', '2':'7.39', '3':'20.1' };
+  var LN = { '0.37':'−1', '0.5':'−0.69', '1':'0', '2.72':'1', '7.39':'2' };
+
+  var es = WB.pickDistinct(['0','1','2','3'], 2);
+  var ls = WB.pickDistinct(['0.37','0.5','1','2.72','7.39'], 2);
+  var cep = WB.pick(['0.37', '0.5']);
+  var ceV = cep === '0.37' ? '1' : '0.69';
 
   WB.setAll({
-    z1: z1, z2: z2, z3: z3,
-    ke1: e1.toFixed(2), ke2: e2.toFixed(2), ke3: e3.toFixed(2),
-    ksum: sum.toFixed(2), ksum2: (p1+p2+p3).toFixed(3),
-    kp1: p1.toFixed(3), kp2: p2.toFixed(3), kp3: p3.toFixed(3)
+    ea: es[0], eaV: EXP[es[0]], eb: es[1], ebV: EXP[es[1]],
+    lp: ls[0], lpV: LN[ls[0]], lq: ls[1], lqV: LN[ls[1]],
+    prop: '7.39',
+    cep: cep, ceV: ceV
   });
-
-  // ĐỀ — ô trống
-  ['e1b','e2b','e3b','e1b2','e2b2','e3b2','sumB','p1b','p1r','p2r','p3r'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.textContent='';
-  });
-
-  // Highlight các hàng cần tra
-  buildTable('refTable',[z1,z2,z3]);
-  buildTable('refTable2',[z1,z2,z3]);
-
-  drawCurves('sch1',false);
-  drawCurves('sch2',true);
+  drawExpLn('figX');
 }
 
-function drawCurves(id, showPts){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=148;
-  var pad={l:24,r:10,t:12,b:20};
-  var pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
-  // range x: -1..4
-  var xmin=-1,xmax=4.2,ymin=-1.5,ymax=12;
-  function sx(x){return(pad.l+(x-xmin)/(xmax-xmin)*pw).toFixed(1);}
-  function sy(y){return(pad.t+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
-
-  var s='<defs>'
-    +'<marker id="ax'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker>'
-    +'</defs>';
-  // trục x
-  s+='<line x1="'+pad.l+'" y1="'+sy(0)+'" x2="'+(W-pad.r+6)+'" y2="'+sy(0)+'" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#ax'+id+')"/>';
-  // trục y
-  s+='<line x1="'+sx(0)+'" y1="'+(H-pad.b)+'" x2="'+sx(0)+'" y2="'+(pad.t-6)+'" stroke="#9aa3af" stroke-width="1.2" marker-end="url(#ax'+id+')"/>';
-  s+='<text x="'+(W-pad.r+2)+'" y="'+(parseFloat(sy(0))+4)+'" font-size="9" fill="#6b7280">x</text>';
-  s+='<text x="'+(parseFloat(sx(0))+2)+'" y="'+(pad.t-1)+'" font-size="9" fill="#6b7280">y</text>';
-
-  // tick x=1
-  s+='<line x1="'+sx(1)+'" y1="'+(parseFloat(sy(0))-3)+'" x2="'+sx(1)+'" y2="'+(parseFloat(sy(0))+3)+'" stroke="#9aa3af" stroke-width="1"/>';
-  s+='<text x="'+sx(1)+'" y="'+(parseFloat(sy(0))+10)+'" text-anchor="middle" font-size="8" fill="#6b7280">1</text>';
-
-  // đường eˣ (xanh)
-  var pts=''; var xs=[];
-  for(var xi=-1;xi<=4.0;xi+=0.15) xs.push(xi);
-  pts=xs.map(function(xi,i){
-    var yi=Math.exp(xi);
-    if(yi>ymax+1) return null;
-    return (i===0?'M':'L')+sx(xi)+','+sy(yi);
-  }).filter(Boolean).join('');
-  s+='<path d="'+pts+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
-  s+='<text x="'+(parseFloat(sx(2.2))+4)+'" y="'+sy(Math.exp(2.2))+'" font-size="9" fill="#0e7490" font-weight="700">eˣ</text>';
-
-  // đường ln x (cam)
-  var pts2=''; var first2=true;
-  for(var xi=0.05;xi<=4.0;xi+=0.12){
-    var yi=Math.log(xi);
-    if(yi<ymin) continue;
-    pts2+=(first2?'M':'L')+sx(xi)+','+sy(yi);
-    first2=false;
-  }
-  s+='<path d="'+pts2+'" fill="none" stroke="#b45309" stroke-width="2"/>';
-  s+='<text x="'+(parseFloat(sx(3.8))-2)+'" y="'+(parseFloat(sy(Math.log(3.8)))-4)+'" font-size="9" fill="#b45309" font-weight="700">ln x</text>';
-
-  // điểm giao (1, 1) và (1, 0)
-  if(showPts){
-    s+='<circle cx="'+sx(1)+'" cy="'+sy(Math.exp(1))+'" r="3" fill="#0e7490"/>';
-    s+='<text x="'+(parseFloat(sx(1))+4)+'" y="'+sy(Math.exp(1))+'" font-size="8.5" fill="#0e7490">e¹≈2.72</text>';
-    s+='<circle cx="'+sx(1)+'" cy="'+sy(0)+'" r="3" fill="#b45309"/>';
-    s+='<text x="'+(parseFloat(sx(1))+4)+'" y="'+(parseFloat(sy(0))-3)+'" font-size="8.5" fill="#b45309">ln(1)=0</text>';
-  }
-
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="đồ thị eˣ và ln x">'+s+'</svg>';
+// eˣ (lam) và ln x (cam) đối xứng qua y=x
+function drawExpLn(id){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var O = {x: 30, y: 130}, S = 30;            // 1 đơn vị = 30px, gốc ở (30,130)
+  function X(v){ return (O.x + v*S).toFixed(1); }
+  function Y(v){ return (O.y - v*S).toFixed(1); }
+  var s = '';
+  // trục
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(3.4)+'" y2="'+Y(0)+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+Y(3.4)+'" stroke="#9aa3ad" stroke-width="1"/>';
+  // y = x
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(3.2)+'" y2="'+Y(3.2)+'" stroke="#9aa3ad" stroke-width="1" stroke-dasharray="3 3"/>';
+  s += '<text x="'+X(3.0)+'" y="'+Y(3.3)+'" style="font-size:8px" fill="#9aa3ad">y=x</text>';
+  // eˣ (lam): x từ −? ; vẽ x∈[−1.2, 1.3]
+  var p = '', x, y;
+  for (x = -1.3; x <= 1.35; x += 0.1){ y = Math.exp(x); if (y <= 3.5) p += X(x)+','+Y(y)+' '; }
+  s += '<polyline points="'+p.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.2"/>';
+  s += '<text x="'+X(1.4)+'" y="'+Y(3.1)+'" style="font-size:9px" fill="#0e7490" font-weight="700">eˣ</text>';
+  // ln x (cam): x∈[0.1, 3.4]
+  p = '';
+  for (x = 0.1; x <= 3.45; x += 0.1){ y = Math.log(x); if (y >= -1.3) p += X(x)+','+Y(y)+' '; }
+  s += '<polyline points="'+p.trim()+'" fill="none" stroke="#b45309" stroke-width="2.2"/>';
+  s += '<text x="'+X(3.05)+'" y="'+Y(1.4)+'" style="font-size:9px" fill="#b45309" font-weight="700">ln x</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

@@ -1,19 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Cây quyết định — Entropy & Information Gain</title>
-<link rel="stylesheet" href="../wb-canvas.css">
-<style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:12.5px;line-height:1.95;margin-top:3px;}
-  .ublk{display:inline-block;min-width:42px;text-align:center;border-bottom:1.6px dashed #b9b9b9;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
-  .dtbl th,.dtbl td{padding:2px 6px;border:1px solid #d5c49a;text-align:center;}
-  .dtbl th{background:#f3ede0;font-size:10.5px;}
-</style>
+<title>Làm toán AI · Bài B8 — Cây quyết định: Entropy &amp; IG (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 </head>
 <body>
 
@@ -23,153 +14,237 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Cây quyết định — Entropy & IG</h1><span class="vi">— Entropy / Information Gain</span>
-    <span class="tag">chọn split giảm entropy nhiều nhất</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Cây quyết định chia dữ liệu bằng câu hỏi yes/no. Để chọn câu hỏi tốt nhất, ta đo
-    <b>entropy</b> (độ "lộn xộn" của nhãn) trước và sau khi chia; <b>Information Gain</b> = lượng lộn xộn giảm được.
-    Đây là nền của Random Forest, XGBoost và cả khái niệm "thông tin" trong cross-entropy.
-    <div class="fm">H(S) = −Σ pₖ log₂ pₖ &nbsp;|&nbsp; IG = H(cha) − Σ (nᵢ/n)·H(conᵢ) &nbsp;|&nbsp; chọn split có IG lớn nhất</div>
+  <div class="wb-title"><span class="no">Bài B8</span><h1>Cây quyết định: Entropy &amp; IG <small>— Entropy &amp; Information Gain</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Cây hỏi từng câu "có/không" để tách lớp — dễ hiểu, dễ giải thích. Bí quyết: chọn câu hỏi làm dữ
+    liệu <b>"sạch lớp" nhất</b>. Entropy đo độ lẫn lộn; IG đo lợi ích một phép chia. Đây cũng là nền của Random Forest, XGBoost.
+    <div class="formula">
+      H(S) = −Σ pₖ·log₂ pₖ &nbsp;&nbsp;|&nbsp;&nbsp; IG = H(cha) − Σ (|con|/|cha|)·H(con)
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Entropy = 1 bit khi 50–50 (mù tịt), = 0 khi thuần một lớp (biết chắc). Một câu hỏi <b>tốt</b> tách dữ liệu thành các nhóm
-    càng "thuần" càng tốt → entropy con thấp → IG cao.
+    Entropy = <b>mức bất ngờ / lộn xộn</b>: nửa–nửa (0.5/0.5) → H=1 (rối nhất); thuần một lớp → H=0 (chắc chắn). Chọn phép chia
+    kéo các nhánh con về <b>càng thuần càng tốt</b> — đó là information gain lớn.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint">Nút cha (tỉ lệ +/−) chia theo đặc trưng <b>Gió</b> thành 2 nút con. Con càng thuần → entropy thấp → IG cao.</div>
-      <table class="dtbl" style="margin-top:5px">
-        <tr><th>n=3</th><td>0,3 → 0</td><td>1,2 → .92</td></tr>
-        <tr><th>n=6</th><td>0,6→0 · 1,5→.65</td><td>2,4→.92 · 3→1.0</td></tr>
-      </table>
+  <!-- BƯỚC 0 -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng log₂</h2><span class="tag">8 mẫu</span></div>
+    <div class="calc">
+      Cha: <b>4 Có / 4 Không</b>. Một đặc trưng chia thành:
+      nhánh trái (<span class="gv" data-q="Lco">3</span> Có, <span class="gv" data-q="Lkh">1</span> Không),
+      nhánh phải (<span class="gv" data-q="Rco">1</span> Có, <span class="gv" data-q="Rkh">3</span> Không).<br>
+      Bảng: log₂(1/2)=−1 · log₂(1/4)=−2 · log₂(3/4)=−0.415 · log₂(1)=0
     </div>
+    <div class="why" style="margin-top:5px"><b>Vì sao:</b> entropy dùng log₂ nên đơn vị là <b>bit</b>; chỉ cần tra bảng các phân số đẹp.</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">CHO SẴN — 6 mẫu (+ = chơi, − = không)</div>
-      <div class="expr">
-        Cha: <span data-q="pY">4</span>+ / <span data-q="pN">2</span>− &nbsp;(n=6)<br>
-        Gió nhẹ: <span data-q="aY">3</span>+ / <span data-q="aN">0</span>− (n=3) &nbsp;·&nbsp;
-        Gió mạnh: <span data-q="bY">1</span>+ / <span data-q="bN">2</span>− (n=3)
-      </div>
+  <div class="grid2">
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Entropy cha</h2><span class="tag">4:4</span></div>
+    <div class="calc">
+      H = −(4/8)log₂(4/8) − (4/8)log₂(4/8) = <span class="blk"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> 50–50 là trạng thái lộn xộn nhất → entropy cực đại = 1 bit.</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">BƯỚC 1 — ENTROPY (tra bảng)</div>
-      <div class="expr">
-        H(cha) = H(<span data-q="pY">4</span>/6) = <span class="ublk" id="hpB"></span><br>
-        H(nhẹ) = <span class="ublk" id="haB"></span> &nbsp; H(mạnh) = <span class="ublk" id="hbB"></span>
-      </div>
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Entropy mỗi nhánh</h2><span class="tag">con</span></div>
+    <div class="calc">
+      H(trái) = <span class="blk" style="min-width:46px"></span><br>
+      H(phải) = <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> nhánh thuần (toàn một lớp) → H = 0; nhánh (3:1) → tra bảng 3/4, 1/4.</div>
+  </div>
+  </div><!-- /grid2 -->
 
-      <div class="bandh fw" style="margin-top:5px">BƯỚC 2 — INFORMATION GAIN</div>
-      <div class="expr">
-        IG = H(cha) − [ (3/6)·H(nhẹ) + (3/6)·H(mạnh) ]<br>
-        &nbsp; = <span class="ublk" id="hpB2"></span> − [ .5·<span class="ublk" id="haB2"></span> + .5·<span class="ublk" id="hbB2"></span> ]
-        = <span class="ublk" id="igB"></span>
-      </div>
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Information Gain</h2><span class="tag">giảm entropy</span></div>
+    <div class="calc">
+      IG = H(cha) − [(|trái|/8)·H(trái) + (|phải|/8)·H(phải)] = <span class="blk" style="min-width:60px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> trọng số mỗi nhánh = tỉ lệ số mẫu rơi vào nhánh đó; IG = entropy giảm được nhờ phép chia.</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Nếu một nút con thuần (toàn +), entropy của nó = <span class="ublk" id="qB" style="min-width:40px"></span></li>
-        </ol>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B8 · Entropy &amp; IG</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Entropy &amp; IG — tiếp theo</div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B8</span><h1>Entropy &amp; IG <small>— chọn câu hỏi tốt nhất</small></h1></div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Chọn câu hỏi tốt nhất</h2><span class="tag">cây cha → 2 con</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 200 130" width="68mm" height="44mm" aria-label="cây nhỏ cha chia hai con, ô IG để trống"></svg>
+      <div style="flex:1">
+        <div class="calc">Điền IG (Bước 3) vào nhánh: IG = <span class="blk" style="min-width:50px"></span><br>
+          Cây chọn phép chia có IG <span class="blk" style="min-width:60px"></span> nhất.</div>
+        <div class="why"><b>Vì sao:</b> IG càng lớn → các nhánh con càng "sạch lớp" → phép chia càng đáng dùng.</div>
+        <div class="note">Cây thử <b>mọi đặc trưng</b>, chọn IG cao nhất, rồi lặp trên từng nhánh tới khi thuần (H=0) hoặc đạt điều kiện dừng.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Entropy & IG</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- TỰ KIỂM TRA -->
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Entropy bằng 0 nghĩa là gì? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Cây chọn phép chia theo tiêu chí nào? → <span class="blk" style="min-width:200px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B8 · Entropy &amp; IG</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Cây quyết định — Entropy & IG</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài B8</span><h1>Entropy &amp; IG <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Thuật toán thử mọi đặc trưng, tính IG, chọn cái IG lớn nhất làm câu hỏi tại nút — rồi lặp lại cho từng nút con.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Entropy cha</h2></div>
+    <div class="calc ans">
+      H(cha) = −(4/8)(−1) − (4/8)(−1) = <span class="blk" data-q="Hcha">1</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">ENTROPY (điền đủ)</div>
-      <div class="expr">
-        H(cha) = <b><span data-q="khp">?</span></b> &nbsp; H(nhẹ) = <b><span data-q="kha">?</span></b> &nbsp; H(mạnh) = <b><span data-q="khb">?</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Entropy mỗi nhánh</h2></div>
+    <div class="calc ans">
+      H(trái): <span data-q="HLexpr">−(3/4)(−0.415) − (1/4)(−2)</span> = <span class="blk" data-q="HL">0.81</span><br>
+      H(phải): <span data-q="HRexpr">−(1/4)(−2) − (3/4)(−0.415)</span> = <span class="blk" data-q="HR">0.81</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">INFORMATION GAIN</div>
-      <div class="expr">
-        IG = <span data-q="khp">?</span> − [ .5·<span data-q="kha">?</span> + .5·<span data-q="khb">?</span> ]<br>
-        &nbsp; = <span data-q="khp">?</span> − <span data-q="kwavg">?</span> = <b><span data-q="kig">?</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Information Gain</h2></div>
+    <div class="calc ans">
+      IG = 1 − [(<span data-q="nL">4</span>/8)·<span data-q="HL">0.81</span> + (<span data-q="nR">4</span>/8)·<span data-q="HR">0.81</span>]
+      = 1 − <span class="blk" data-q="wAvg">0.81</span> = <span class="blk" data-q="IG">0.19</span>
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Nút con thuần → entropy = <span class="qa">0</span> (biết chắc nhãn, không cần thêm thông tin).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> IG &gt; 0 nghĩa là câu hỏi giúp ích; chọn câu hỏi IG lớn nhất rồi đệ quy. Entropy/IG dùng log₂ (bit);
-        đổi sang <b>Gini</b> (B9) thì khỏi log mà ý tưởng "đo độ thuần" vẫn vậy.
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Chọn câu hỏi tốt nhất</h2><span class="tag">cây cha → 2 con</span></div>
+    <div class="figrow">
+      <svg id="figK" class="fig" viewBox="0 0 200 130" width="68mm" height="44mm" aria-label="cây nhỏ: nút cha chia thành hai nút con với số đếm"></svg>
+      <div style="flex:1">
+        <div class="note">IG càng lớn càng đáng chia. Cây thử <b>mọi đặc trưng</b>, chọn IG cao nhất, rồi lặp trên từng nhánh tới khi thuần (H=0) hoặc đạt điều kiện dừng.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Entropy & IG</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Entropy = 0 → <span class="qa">Nhánh thuần một lớp (không lộn xộn).</span></li>
+      <li>Tiêu chí chia → <span class="qa">Information Gain lớn nhất (giảm entropy nhiều nhất).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Entropy đo lộn xộn, IG đo lợi ích chia; cây tham lam chọn IG lớn nhất ở mỗi bước.
+    Bài tiếp (B9): độ "bẩn" thay bằng <b>Gini</b> (CART) — rẻ tính hơn, ý tưởng tương tự.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B8 · Entropy &amp; IG</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function f2(v){return (Math.round(v*100)/100).toFixed(2);}
-var H3={0:0,1:0.92,2:0.92,3:0};
-var H6={0:0,1:0.65,2:0.92,3:1.00,4:0.92,5:0.65,6:0};
-var TREE;
-
+function entropy(co, kh){
+  var n = co + kh; if (co === 0 || kh === 0) return 0;
+  var p = co/n, q = kh/n;
+  return -(p*Math.log2(p) + q*Math.log2(q));
+}
+function frac(co, kh){
+  // chuỗi biểu thức entropy: −(co/n)log₂(co/n) − (kh/n)log₂(kh/n)
+  var n = co + kh;
+  if (co === 0 || kh === 0) return 'thuần → 0';
+  return '−('+co+'/'+n+')log₂('+co+'/'+n+') − ('+kh+'/'+n+')log₂('+kh+'/'+n+')';
+}
 function generate(){
-  var aY,bY,pY,tries=0;
-  do{
-    aY=WB.randInt(0,3); bY=WB.randInt(0,3); pY=aY+bY; tries++;
-  }while((pY<2||pY>4)&&tries<60);    // cha không thuần
-  var aN=3-aY, bN=3-bY, pN=6-pY;
-
-  var hp=H6[pY], ha=H3[aY], hb=H3[bY];
-  var wavg=0.5*ha+0.5*hb;
-  var ig=Math.round((hp-wavg)*100)/100;
-
-  TREE={pY:pY,pN:pN,aY:aY,aN:aN,bY:bY,bN:bN};
+  // các phép chia hợp lệ với bảng log₂ (phân số ∈ {0,1/4,1/2,3/4,1})
+  var splits = [
+    [[3,1],[1,3]],   // IG ≈ 0.19
+    [[4,0],[0,4]],   // chia hoàn hảo → IG = 1
+    [[3,1],[2,2]],   // một nhánh còn rối → IG ≈ 0.09
+    [[1,3],[3,1]]
+  ];
+  var sp = WB.pick(splits);
+  var L = sp[0], R = sp[1];
+  var nL = L[0]+L[1], nR = R[0]+R[1];
+  var HL = entropy(L[0], L[1]), HR = entropy(R[0], R[1]);
+  var wAvg = (nL/8)*HL + (nR/8)*HR;
+  var IG = 1 - wAvg;
 
   WB.setAll({
-    pY:String(pY),pN:String(pN),aY:String(aY),aN:String(aN),bY:String(bY),bN:String(bN),
-    khp:f2(hp), kha:f2(ha), khb:f2(hb), kwavg:f2(wavg), kig:f2(ig)
+    Lco: ''+L[0], Lkh: ''+L[1], Rco: ''+R[0], Rkh: ''+R[1],
+    Hcha: '1',
+    HLexpr: frac(L[0], L[1]), HL: WB.fmt2(HL),
+    HRexpr: frac(R[0], R[1]), HR: WB.fmt2(HR),
+    nL: ''+nL, nR: ''+nR, wAvg: WB.fmt2(wAvg), IG: WB.fmt2(IG)
   });
-  ['hpB','haB','hbB','hpB2','haB2','hbB2','igB','qB'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.textContent='';});
 
-  drawTree('sch1'); drawTree('sch2');
+  drawTree('figK', L, R, IG);
+  drawTreeBlank('figQ', L, R);
 }
-
-function drawTree(id){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=120;
-  function node(x,y,w,t,col){
-    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="22" rx="4" fill="'+col+'" stroke="#bbb"/>'
-      +'<text x="'+(x+w/2)+'" y="'+(y+15)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#333">'+t+'</text>';
-  }
-  var s='';
-  s+=node(64,8,50,TREE.pY+'+ / '+TREE.pN+'−','#fff3b0');
-  // edges
-  s+='<line x1="78" y1="30" x2="36" y2="70" stroke="#0e7490" stroke-width="1.3"/>';
-  s+='<line x1="100" y1="30" x2="142" y2="70" stroke="#b45309" stroke-width="1.3"/>';
-  s+='<text x="48" y="52" font-size="8" fill="#0e7490">nhẹ</text>';
-  s+='<text x="120" y="52" font-size="8" fill="#b45309">mạnh</text>';
-  s+=node(10,70,52,TREE.aY+'+ / '+TREE.aN+'−','#d6ecf6');
-  s+=node(116,70,52,TREE.bY+'+ / '+TREE.bN+'−','#ffe6cc');
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="cây quyết định một split">'+s+'</svg>';
+function drawTreeBlank(id, L, R){
+  var box = document.getElementById(id); if(!box) return;
+  var s = '';
+  s += '<rect x="80" y="10" width="40" height="24" rx="4" fill="#eef3f6" stroke="#0e7490"/>';
+  s += '<text x="100" y="26" text-anchor="middle" font-size="9" fill="#0e7490">4:4</text>';
+  s += '<line x1="100" y1="34" x2="50" y2="70" stroke="#9aa3af"/>';
+  s += '<line x1="100" y1="34" x2="150" y2="70" stroke="#9aa3af"/>';
+  s += '<text x="64" y="50" font-size="8" fill="#b45309">IG=?</text>';
+  s += '<rect x="30" y="70" width="40" height="24" rx="4" fill="#fff5e9" stroke="#b45309"/>';
+  s += '<text x="50" y="86" text-anchor="middle" font-size="9" fill="#b45309">'+L[0]+':'+L[1]+'</text>';
+  s += '<rect x="130" y="70" width="40" height="24" rx="4" fill="#fff5e9" stroke="#b45309"/>';
+  s += '<text x="150" y="86" text-anchor="middle" font-size="9" fill="#b45309">'+R[0]+':'+R[1]+'</text>';
+  box.innerHTML = '<svg viewBox="0 0 200 130">'+s+'</svg>';
 }
-
+function drawTree(id, L, R, IG){
+  var box = document.getElementById(id); if(!box) return;
+  var s = '';
+  // cha
+  s += '<rect x="80" y="10" width="40" height="24" rx="4" fill="#eef3f6" stroke="#0e7490"/>';
+  s += '<text x="100" y="26" text-anchor="middle" font-size="9" fill="#0e7490">4:4</text>';
+  // nhánh
+  s += '<line x1="100" y1="34" x2="50" y2="70" stroke="#9aa3af"/>';
+  s += '<line x1="100" y1="34" x2="150" y2="70" stroke="#9aa3af"/>';
+  s += '<text x="70" y="50" font-size="8" fill="#b45309">IG='+WB.fmt2(IG)+'</text>';
+  // con trái
+  s += '<rect x="30" y="70" width="40" height="24" rx="4" fill="#fff5e9" stroke="#b45309"/>';
+  s += '<text x="50" y="86" text-anchor="middle" font-size="9" fill="#b45309">'+L[0]+':'+L[1]+'</text>';
+  // con phải
+  s += '<rect x="130" y="70" width="40" height="24" rx="4" fill="#fff5e9" stroke="#b45309"/>';
+  s += '<text x="150" y="86" text-anchor="middle" font-size="9" fill="#b45309">'+R[0]+':'+R[1]+'</text>';
+  box.innerHTML = '<svg viewBox="0 0 200 130">'+s+'</svg>';
+}
 WB.wire(generate);
 generate();
 </script>

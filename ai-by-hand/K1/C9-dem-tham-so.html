@@ -1,22 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Đếm tham số mạng — Count Network Parameters</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài C9 — Đếm tham số mạng (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
-  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .ptbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
-  .ptbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .ptbl td{padding:3px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .ptbl td.hl{background:#d6ecf6;font-weight:700;}
-  .ptbl td.ans{background:#fff3b0;font-weight:700;}
-  .ptbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .ptbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -27,207 +23,192 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Đếm tham số mạng</h1><span class="vi">— Count Network Parameters</span>
-    <span class="tag">W: n_in × n_out · b: n_out · Σ mỗi lớp</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Số tham số = "kích thước" của mạng — quyết định khả năng học và chi phí tính toán.
-    GPT-3 có 175 tỷ tham số; ResNet-50 có ~25 triệu. Đếm đúng giúp:
-    (1) ước tính RAM cần thiết; (2) so sánh hai kiến trúc; (3) phát hiện bottleneck.
-    <div class="fm">Lớp tuyến tính: |W| = n_in × n_out &nbsp;|&nbsp; |b| = n_out &nbsp;|&nbsp; tổng lớp = n_in×n_out + n_out</div>
+  <div class="wb-title"><span class="no">Bài C9</span><h1>Đếm tham số mạng <small>— Parameter counting</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Số tham số quyết định <b>bộ nhớ, tốc độ, nguy cơ overfit</b>. Biết đếm giúp ước lượng chi phí một
+    kiến trúc và hiểu vì sao mô hình lớn cần nhiều dữ liệu/điện.
+    <div class="formula">
+      Một lớp (in → out): params = in·out (trọng số) + out (bias) &nbsp;&nbsp; Tổng = Σ qua mọi lớp
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Mỗi <b>kết nối giữa hai nơ-ron</b> = 1 trọng số. Mỗi <b>nơ-ron ở lớp ẩn/output</b> = 1 bias.
-    Đếm hết kết nối + bias = tổng tham số. Tăng chiều rộng (width) tăng tham số theo bình phương;
-    tăng chiều sâu (depth) tăng tuyến tính.
+    Mỗi nơ-ron ở lớp sau <b>nối tới mọi</b> nơ-ron lớp trước → một trọng số cho mỗi dây; cộng thêm <b>một bias</b> cho mỗi nơ-ron.
+    Lớp càng rộng và nối càng dày, số dây (tham số) phình theo <b>tích</b> in × out.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Mỗi mũi tên</b> = 1 trọng số. <b>Số +1</b> bên mỗi lớp = bias. Tổng = tất cả mũi tên + tất cả bias.</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn kiến trúc</h2><span class="tag"><span data-q="n0">3</span> → <span data-q="n1">4</span> → <span data-q="n2">2</span></span></div>
+    <div class="calc" style="font-size:15px">
+      đầu vào <span class="gv" data-q="n0">3</span> · lớp ẩn <span class="gv" data-q="n1">4</span> nơ-ron · đầu ra <span class="gv" data-q="n2">2</span> nơ-ron (fully-connected)
     </div>
+    <div class="note">Hai lớp có trọng số: (đầu vào → ẩn) và (ẩn → đầu ra). Đếm cả <b>bias</b>.</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">KIẾN TRÚC MLP</div>
-      <div style="font-size:12px;margin-bottom:4px;color:var(--dim)">
-        Input: <span data-q="d0">3</span> → Lớp 1: <span data-q="d1">4</span> nơ-ron → Lớp 2: <span data-q="d2">5</span> → Output: <span data-q="d3">2</span>
-      </div>
-      <table class="ptbl" id="paramTable">
-        <tr><th>Lớp</th><th>n_in</th><th>n_out</th><th>W = n_in×n_out</th><th>b = n_out</th><th>Tổng lớp</th></tr>
-        <tr id="pRow1"><td><b>1</b></td></tr>
-        <tr id="pRow2"><td><b>2</b></td></tr>
-        <tr id="pRow3"><td><b>Output</b></td></tr>
-        <tr id="pRowTot"><td colspan="5"><b>TỔNG CỘNG</b></td><td class="blank" id="totB"></td></tr>
-      </table>
+  <!-- BƯỚC 1 — lớp 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Lớp 1 (<span data-q="n0">3</span> → <span data-q="n1">4</span>)</h2><span class="tag">in·out + out</span></div>
+    <div class="calc">
+      trọng số = <span data-q="n0">3</span>·<span data-q="n1">4</span> = <span class="blk" style="min-width:34px"></span> ;
+      bias = <span class="blk" style="min-width:30px"></span> ;
+      cộng = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> <span data-q="n1">4</span> nơ-ron, mỗi nơ-ron có <span data-q="n0">3</span> trọng số (một cho mỗi đầu vào) + 1 bias.</div>
+  </div>
 
-      <div class="why"><b>Mẹo nhớ:</b> Lớp tuyến tính n_in → n_out = hình chữ nhật W(n_out × n_in) + vectơ b(n_out). Cộng từng lớp lại.</div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Nếu thêm 1 lớp ẩn 10 nơ-ron sau lớp 2, tổng tăng thêm bao nhiêu? → <span style="display:inline-block;min-width:70px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
-      </div>
+  <!-- BƯỚC 2 — lớp 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Lớp 2 (<span data-q="n1">4</span> → <span data-q="n2">2</span>)</h2><span class="tag">in·out + out</span></div>
+    <div class="calc">
+      trọng số = <span data-q="n1">4</span>·<span data-q="n2">2</span> = <span class="blk" style="min-width:34px"></span> ;
+      bias = <span class="blk" style="min-width:30px"></span> ;
+      cộng = <span class="blk" style="min-width:34px"></span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Đếm tham số mạng</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 3 — tổng -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tổng toàn mạng</h2><span class="tag">cộng dồn</span></div>
+    <div class="calc">
+      Tổng = <span data-q="L1">16</span> + <span data-q="L2">10</span> = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="hint">Cộng tham số mọi lớp; đừng quên <b>bias</b> (out cái mỗi lớp).</div>
+  </div>
+
+  <!-- BƯỚC 4 — quy mô thực -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao mô hình thật có tỉ tham số?</h2><span class="tag">quy mô</span></div>
+    <div class="note">Một lớp 1000 → 1000 đã có ~1 <b>triệu</b> tham số (10⁶). Xếp hàng trăm lớp rộng 4096 + bảng embedding khổng lồ → <b>hàng tỉ</b>.
+      Tham số phình theo <b>tích</b> in × out của từng lớp.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Lớp in→out có bao nhiêu bias? → <span class="blk" style="min-width:110px"></span></li>
+      <li>Yếu tố nào làm tham số tăng nhanh nhất? → <span class="blk" style="min-width:130px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Đếm tham số mạng</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài C9</span><h1>Đếm tham số mạng <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Lớp rộng hơn tăng tham số nhiều hơn lớp sâu hơn. Bottleneck layer (lớp hẹp) là thiết kế cố ý giảm tham số.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Lớp 1 (<span data-q="n0">3</span> → <span data-q="n1">4</span>)</h2></div>
+    <div class="calc ans">
+      trọng số = <span data-q="n0">3</span>·<span data-q="n1">4</span> = <span class="blk" data-q="w1">12</span> ;
+      bias = <span class="blk" data-q="b1">4</span> ;
+      cộng = <span class="blk" data-q="L1">16</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">KIẾN TRÚC</div>
-      <div style="font-size:12px;margin-bottom:4px;color:var(--dim)">
-        <span data-q="d0">3</span> → <span data-q="d1">4</span> → <span data-q="d2">5</span> → <span data-q="d3">2</span>
-      </div>
-      <table class="ptbl" id="kparamTable">
-        <tr><th>Lớp</th><th>n_in</th><th>n_out</th><th>W</th><th>b</th><th>Tổng</th></tr>
-        <tr id="kpRow1"><td><b>1</b></td></tr>
-        <tr id="kpRow2"><td><b>2</b></td></tr>
-        <tr id="kpRow3"><td><b>Output</b></td></tr>
-        <tr id="kpRowTot"><td colspan="5"><b>TỔNG CỘNG</b></td><td class="ans" id="ktot"></td></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Lớp 2 (<span data-q="n1">4</span> → <span data-q="n2">2</span>)</h2></div>
+    <div class="calc ans">
+      trọng số = <span data-q="n1">4</span>·<span data-q="n2">2</span> = <span class="blk" data-q="w2">8</span> ;
+      bias = <span class="blk" data-q="b2">2</span> ;
+      cộng = <span class="blk" data-q="L2">10</span>
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li id="kExtraLi">Thêm lớp 10 nơ-ron sau lớp 2: thêm <span class="qa" id="kExtraAns">?</span> tham số</li>
-        </ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tổng</h2></div>
+    <div class="calc ans">
+      Tổng = <span data-q="L1">16</span> + <span data-q="L2">10</span> = <span class="blk" data-q="total">26</span> tham số
+    </div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> Quy tắc kinh nghiệm: nhân đôi chiều rộng → nhân 4 tham số (bottleneck giữa 2 lớp).
-        GPT-2 small (117M) có 12 lớp attention, mỗi lớp ~10M params.
-        Với mạng MLP thuần: tham số tập trung ở lớp đầu tiên và cuối cùng (thường là lớn nhất).
-        Kiểm tra "param count" trước khi train — quá ít → underfitting; quá nhiều → cần regularization.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ mạng &amp; số dây</h2><span class="tag">in × out</span></div>
+    <div class="figrow">
+      <svg id="figN" class="fig" viewBox="0 0 230 150" width="72mm" height="44mm" aria-label="sơ đồ mạng fully-connected ba lớp với các dây nối là trọng số"></svg>
+      <div style="flex:1">
+        <div class="note">Mỗi <b>dây</b> = một trọng số (<span data-q="w1">12</span> + <span data-q="w2">8</span> dây);
+          mỗi nơ-ron lớp sau thêm <b>một bias</b> (<span data-q="n1">4</span> + <span data-q="n2">2</span>). Tổng = <span data-q="total">26</span>.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Đếm tham số mạng</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Bao nhiêu bias? → <span class="qa">out (một bias mỗi nơ-ron đầu ra).</span></li>
+      <li>Tăng nhanh nhất do? → <span class="qa">Tích in×out — lớp rộng nối dày.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Tham số mỗi lớp = in·out + out; tổng cộng dồn. Đây là "thước đo cỡ" mô hình. Hết Phần C nền;
+    sang K2 — Bài tiếp (D1): đo sai số bằng MSE / MAE.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var fI=WB.fmtInt;
-
 function generate(){
-  var d0=WB.pick([2,3,4,5]);
-  var d1=WB.pick([3,4,5,6,8]);
-  var d2=WB.pick([4,5,6,8,10]);
-  var d3=WB.pick([2,3,4]);
+  var n0 = WB.randInt(2, 4), n1 = WB.randInt(3, 5), n2 = WB.randInt(2, 3);
+  var w1 = n0*n1, b1 = n1, L1 = w1 + b1;
+  var w2 = n1*n2, b2 = n2, L2 = w2 + b2;
+  var total = L1 + L2;
 
-  WB.setAll({d0:fI(d0),d1:fI(d1),d2:fI(d2),d3:fI(d3)});
-
-  var layers=[
-    {nin:d0,nout:d1},
-    {nin:d1,nout:d2},
-    {nin:d2,nout:d3}
-  ];
-  var rowIds=['pRow1','pRow2','pRow3'];
-  var krowIds=['kpRow1','kpRow2','kpRow3'];
-  var total=0;
-
-  layers.forEach(function(l,i){
-    var w=l.nin*l.nout, b=l.nout, tot=w+b;
-    total+=tot;
-    buildParamRow(rowIds[i],l.nin,l.nout,w,b,tot,true);
-    buildParamRow(krowIds[i],l.nin,l.nout,w,b,tot,false);
+  WB.setAll({
+    n0: String(n0), n1: String(n1), n2: String(n2),
+    w1: String(w1), b1: String(b1), L1: String(L1),
+    w2: String(w2), b2: String(b2), L2: String(L2),
+    total: String(total)
   });
-
-  document.getElementById('totB').textContent='';
-  document.getElementById('ktot').textContent=fI(total);
-
-  // Extra layer quiz: d2 → 10 → d3 replaces d2 → d3
-  // extra params = d2*10 + 10 + 10*d3 + d3 - (d2*d3 + d3)
-  var extraW=d2*10+10+10*d3;
-  var removedW=d2*d3+d3;
-  var extra=extraW-removedW;
-  document.getElementById('kExtraAns').textContent=fI(extra);
-  document.getElementById('kExtraLi').innerHTML=
-    'Thêm lớp 10 nơ-ron (thay d2→d3 bằng d2→10→d3): thêm <span class="qa">'+
-    fI(d2)+'×10+10 + 10×'+fI(d3)+' − '+fI(d2)+'×'+fI(d3)+' = '+fI(extra)+'</span>';
-
-  drawMLP('sch1',[d0,d1,d2,d3],false);
-  drawMLP('sch2',[d0,d1,d2,d3],true);
+  drawNet('figN', n0, n1, n2);
 }
 
-function buildParamRow(rowId,nin,nout,w,b,tot,blank){
-  var tr=document.getElementById(rowId); if(!tr) return;
-  while(tr.children.length>1) tr.removeChild(tr.lastChild);
-  [nin,nout,w,b,tot].forEach(function(v,i){
-    var td=document.createElement('td');
-    if(blank && i>=2){ td.className='blank'; td.textContent=fI(v); }
-    else td.textContent=fI(v);
-    tr.appendChild(td);
-  });
-}
-
-function drawMLP(id,dims,showCounts){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=148;
-  var nLayers=dims.length;
-  var layerX=[]; var maxN=Math.max.apply(null,dims);
-  for(var i=0;i<nLayers;i++) layerX.push(18+i*(W-36)/(nLayers-1));
-
-  var s='<defs>'
-    +'<marker id="ma'+id+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#ccc"/></marker>'
-    +'</defs>';
-
-  var nodeR=6, nodeY=[];
-  dims.forEach(function(n,li){
-    var ys=[];
-    for(var j=0;j<n;j++) ys.push(H/2+(j-(n-1)/2)*Math.min(18,H*0.85/maxN));
-    nodeY.push(ys);
-  });
-
-  // Draw connections (sample — not all for dense networks)
-  dims.forEach(function(n,li){
-    if(li===dims.length-1) return;
-    var nextN=dims[li+1];
-    // draw lines
-    for(var j=0;j<n;j++) for(var k=0;k<nextN;k++){
-      s+='<line x1="'+(layerX[li]+nodeR)+'" y1="'+nodeY[li][j]+'" x2="'+(layerX[li+1]-nodeR)+'" y2="'+nodeY[li+1][k]+'" stroke="#e5e7eb" stroke-width="0.7"/>';
-    }
-  });
-
-  // Draw nodes
-  var colors=['#0e7490','#7c5cff','#b45309','#059669'];
-  dims.forEach(function(n,li){
-    var col=colors[li%colors.length];
-    nodeY[li].forEach(function(y){
-      s+='<circle cx="'+layerX[li]+'" cy="'+y+'" r="'+nodeR+'" fill="'+col+'" opacity="0.85"/>';
-    });
-    // label
-    var lbl=['Input','L1','L2','Output'][li]||('L'+li);
-    s+='<text x="'+layerX[li]+'" y="'+(H-6)+'" text-anchor="middle" font-size="8.5" fill="'+col+'" font-weight="700">'+lbl+'</text>';
-    s+='<text x="'+layerX[li]+'" y="'+(H-15)+'" text-anchor="middle" font-size="8" fill="'+col+'">n='+n+'</text>';
-  });
-
-  if(showCounts){
-    // param counts per layer
-    for(var li=0;li<dims.length-1;li++){
-      var w=dims[li]*dims[li+1]+dims[li+1];
-      var mx=(layerX[li]+layerX[li+1])/2;
-      s+='<text x="'+mx+'" y="12" text-anchor="middle" font-size="9" fill="#b45309" font-weight="700">'+fI(w)+'p</text>';
-    }
+// mạng fully-connected 3 cột: n0 (lam) → n1 (tím) → n2 (cam)
+function drawNet(id, n0, n1, n2){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var cx = [40, 115, 190], H = 150, r = 9;
+  var cols = ['#0e7490', '#7c5cff', '#b45309'];
+  function ys(n){
+    var arr = [], gap = Math.min(30, (H - 30)/Math.max(1, n - 1 || 1)), top = H/2 - gap*(n-1)/2;
+    for (var i = 0; i < n; i++) arr.push(n === 1 ? H/2 : top + i*gap);
+    return arr;
   }
-
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="sơ đồ MLP với số tham số">'+s+'</svg>';
+  var Y0 = ys(n0), Y1 = ys(n1), Y2 = ys(n2), i, j, s = '';
+  // dây lớp 1
+  for (i = 0; i < n0; i++) for (j = 0; j < n1; j++)
+    s += '<line x1="'+cx[0]+'" y1="'+Y0[i].toFixed(1)+'" x2="'+cx[1]+'" y2="'+Y1[j].toFixed(1)+'" stroke="#cdd3d9" stroke-width="0.7"/>';
+  // dây lớp 2
+  for (i = 0; i < n1; i++) for (j = 0; j < n2; j++)
+    s += '<line x1="'+cx[1]+'" y1="'+Y1[i].toFixed(1)+'" x2="'+cx[2]+'" y2="'+Y2[j].toFixed(1)+'" stroke="#cdd3d9" stroke-width="0.7"/>';
+  // nơ-ron
+  function nodes(xs, arr, color){ var t = ''; for (var k = 0; k < arr.length; k++) t += '<circle cx="'+xs+'" cy="'+arr[k].toFixed(1)+'" r="'+r+'" fill="#fff" stroke="'+color+'" stroke-width="2"/>'; return t; }
+  s += nodes(cx[0], Y0, cols[0]) + nodes(cx[1], Y1, cols[1]) + nodes(cx[2], Y2, cols[2]);
+  // nhãn
+  s += '<text x="'+cx[0]+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+cols[0]+'" font-weight="700">'+n0+'</text>';
+  s += '<text x="'+cx[1]+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+cols[1]+'" font-weight="700">'+n1+'</text>';
+  s += '<text x="'+cx[2]+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+cols[2]+'" font-weight="700">'+n2+'</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

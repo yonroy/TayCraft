@@ -1,20 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bernoulli &amp; Categorical — Phân phối rời rạc</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài A17 — Bernoulli / Categorical (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:2.1;margin-top:4px;}
-  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.4;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .ptbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;width:100%;}
-  .ptbl th{background:#f3ede0;padding:3px 7px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .ptbl td{padding:3px 7px;border:1px solid #e2d5b5;text-align:center;}
-  .ptbl td.blank{border-bottom:1.5px dashed #b9b9b9;color:transparent;background:#fff;}
-  .key .ptbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -25,211 +23,193 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Bernoulli &amp; Categorical</h1><span class="vi">— Phân phối rời rạc</span>
-    <span class="tag">P(0)+P(1)=1 · Σpᵢ=1</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Hai phân phối này là <b>đầu ra của mô hình phân loại</b>.
-    <b>Bernoulli</b> (p): phân loại nhị phân — "thư rác hay không?" (output: sigmoid → p).
-    <b>Categorical</b> (p₁,…,pₖ): phân loại K lớp — "chữ số 0–9?" (output: softmax → p₁,…,p₁₀).
-    Cross-entropy loss đo khoảng cách từ phân phối dự đoán đến phân phối nhãn thật.
-    <div class="fm">Bernoulli(p): P(X=1)=p, P(X=0)=1−p &nbsp;|&nbsp; Categorical: Σpᵢ=1, pᵢ≥0</div>
+  <div class="wb-title"><span class="no">Bài A17</span><h1>Bernoulli / Categorical <small>— Distributions</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Phân loại nhị phân = Bernoulli; phân loại nhiều lớp = Categorical. Hiểu hai phân phối này là hiểu
+    <b>mô hình nói gì</b> ở đầu ra, và vì sao cross-entropy đo sai lệch giữa dự đoán và nhãn.
+    <div class="formula">
+      Bernoulli: P(1) = p, P(0) = 1 − p, E[X] = p, Var = p(1 − p)<br>
+      Categorical: pₖ ≥ 0, Σₖ pₖ = 1 &nbsp;(dự đoán lớp = argmax pₖ)
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Bernoulli = đồng xu lệch. Categorical = con súc xắc không đều K mặt.
-    <b>Sigmoid</b> biến z → p ∈ (0,1) (Bernoulli). <b>Softmax</b> biến z₁…zₖ → (p₁…pₖ) (Categorical).
+    Bernoulli = <b>một đồng xu lệch</b> (mặt 1 ra với xác suất p). Categorical = <b>một con xúc xắc lệch</b> K mặt. Softmax biến điểm
+    số thô (logit) thành đúng một con xúc xắc lệch như vậy — các mặt cộng lại bằng 1.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Trái</b>: Bernoulli(p) — 2 thanh. <b>Phải</b>: Categorical 4 lớp — 4 thanh. Tổng = 1.</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">p · K=3</span></div>
+    <div class="calc" style="font-size:14px">
+      Bernoulli: p = <span class="gv" data-q="p">0.7</span> &nbsp;&nbsp;|&nbsp;&nbsp;
+      Categorical (3 lớp): p = ( <span class="gv" data-q="c1">0.2</span>, <span class="gv" data-q="c2">0.5</span>, <span class="gv" data-q="c3">0.3</span> )
     </div>
-
-    <div class="work">
-      <div class="bandh fw">BERNOULLI(p) · p = <span data-q="p">0.3</span></div>
-      <div class="expr">
-        P(X=0) = 1 − <span data-q="p">0.3</span> = <span class="ublk" id="p0b"></span> &nbsp;&nbsp;
-        P(X=1) = <span class="ublk" id="p1b"></span>
-      </div>
-      <div class="expr">
-        E[X] = 0·<span class="ublk" id="p0b2"></span> + 1·<span data-q="p">0.3</span> = <span class="ublk" id="exb"></span>
-      </div>
-
-      <div class="bandh fw" style="margin-top:8px">CATEGORICAL · 4 lớp (softmax output)</div>
-      <table class="ptbl" id="catTable"></table>
-      <div class="expr" style="margin-top:4px">
-        Tổng p = <span class="ublk" id="sumP"></span> &nbsp;&nbsp;
-        argmax = lớp <span class="ublk" id="argmaxB"></span>
-      </div>
-
-      <div class="why"><b>Vì sao:</b> softmax đảm bảo Σpᵢ = 1 nên đầu ra luôn là phân phối Categorical hợp lệ. Nhãn thật y thường dùng one-hot encoding (Bài A20).</div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Bernoulli(0.7): E[X] = ? &nbsp; Var(X) = ? → <span style="display:inline-block;min-width:80px;border-bottom:1.4px dashed #b9b9b9"></span></li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">Một con số p cho Bernoulli; một vectơ 3 số cho Categorical (đầu ra softmax 3 lớp).</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Bernoulli &amp; Categorical</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — Bernoulli -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Bernoulli đầy đủ</h2><span class="tag">1 tham số</span></div>
+    <div class="calc">
+      P(0) = 1 − <span data-q="p">0.7</span> = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
+      E[X] = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
+      Var = <span data-q="p">0.7</span>·<span data-q="q">0.3</span> = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> chỉ một tham số p quyết định tất cả; phương sai lớn nhất tại p = 0.5 (bất định nhất).</div>
+  </div>
+
+  <!-- BƯỚC 2 — Categorical hợp lệ -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Kiểm Categorical hợp lệ</h2><span class="tag">Σ = 1?</span></div>
+    <div class="calc">
+      <span data-q="c1">0.2</span> + <span data-q="c2">0.5</span> + <span data-q="c3">0.3</span> = <span class="blk" style="min-width:34px"></span> &nbsp; (mọi pₖ ≥ 0)
+    </div>
+    <div class="hint">Thiếu hoặc thừa 1 là phân phối sai — softmax luôn đảm bảo tổng đúng 1.</div>
+  </div>
+
+  <!-- BƯỚC 3 — argmax -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Dự đoán &amp; "độ tự tin"</h2><span class="tag">argmax</span></div>
+    <div class="calc">
+      argmax = lớp <span class="blk" style="min-width:34px"></span> &nbsp;;&nbsp; độ tự tin = pₖ lớn nhất = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> mô hình chọn lớp xác suất cao nhất; giá trị đó đi vào cross-entropy −ln pₖ.</div>
+  </div>
+
+  <!-- BƯỚC 4 — one-hot -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Nối với softmax / one-hot</h2><span class="tag">nhãn thật</span></div>
+    <div class="calc">
+      Nhãn thật (lớp <span data-q="argmax">2</span>) dạng one-hot = ( <span class="blk" style="min-width:24px"></span>, <span class="blk" style="min-width:24px"></span>, <span class="blk" style="min-width:24px"></span> )
+    </div>
+    <div class="note">Categorical dự đoán được so với one-hot này; càng khớp → cross-entropy càng nhỏ.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Bernoulli khác Categorical ở đâu? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Tổng xác suất Categorical phải bằng? → <span class="blk" style="min-width:40px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A17 · Bernoulli / Categorical</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Bernoulli &amp; Categorical</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A17</span><h1>Bernoulli / Categorical <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Cross-entropy: −log(pₐᵣgₘₐₓ) nếu nhãn thật là argmax. Nhỏ khi mô hình tự tin đúng.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Bernoulli</h2></div>
+    <div class="calc ans">
+      P(0) = 1 − <span data-q="p">0.7</span> = <span class="blk" data-q="q">0.3</span> ;
+      E[X] = <span class="blk" data-q="ex">0.7</span> ;
+      Var = <span data-q="p">0.7</span>·<span data-q="q">0.3</span> = <span class="blk" data-q="varB">0.21</span>
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">BERNOULLI(p) · p = <span data-q="p">0.3</span></div>
-      <div class="expr">
-        P(X=0) = <b><span data-q="q">0.7</span></b> &nbsp;&nbsp; P(X=1) = <b><span data-q="p">0.3</span></b><br>
-        E[X] = p = <b><span data-q="p">0.3</span></b> &nbsp;&nbsp; Var(X) = p(1−p) = <b><span data-q="pq">0.21</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Categorical hợp lệ</h2></div>
+    <div class="calc ans">
+      <span data-q="c1">0.2</span> + <span data-q="c2">0.5</span> + <span data-q="c3">0.3</span> = <span class="blk" data-q="csum">1</span> ✓
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">CATEGORICAL · 4 lớp</div>
-      <table class="ptbl" id="kcatTable"></table>
-      <div class="expr">
-        Tổng p = <b><span data-q="ksum">1.00</span></b> &nbsp;&nbsp;
-        argmax = lớp <b><span data-q="kargmax">1</span></b>
-      </div>
-      <div class="expr" id="kCELoss" style="font-size:12px;color:var(--dim)"></div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Dự đoán</h2></div>
+    <div class="calc ans">
+      argmax = lớp <span class="blk" data-q="argmax">2</span> ; độ tự tin = <span class="blk" data-q="conf">0.5</span> → cross-entropy = −ln <span data-q="conf">0.5</span>
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Bernoulli(0.7): E[X] = <span class="qa">0.7</span>; Var(X) = 0.7×0.3 = <span class="qa">0.21</span></li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Phân phối Categorical = đầu ra của bất kỳ mô hình phân loại nào.
-        <b>Cross-entropy loss</b> = −ln(pᵧ) với pᵧ là xác suất gán cho nhãn đúng.
-        Khi mô hình chắc chắn đúng (pᵧ → 1): loss → 0. Khi sai (pᵧ → 0): loss → ∞.
-        Bài B3 (Logistic Regression) dùng Bernoulli + cross-entropy; B1–B11 dùng Categorical.
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>One-hot &amp; so với dự đoán</h2></div>
+    <div class="figrow">
+      <svg id="figD" class="fig" viewBox="0 0 230 140" width="72mm" height="40mm" aria-label="cột Categorical dự đoán so với nhãn one-hot"></svg>
+      <div style="flex:1">
+        <div class="calc ans">one-hot (lớp <span data-q="argmax">2</span>) = ( <span class="blk" data-q="oh1">0</span>, <span class="blk" data-q="oh2">1</span>, <span class="blk" data-q="oh3">0</span> )</div>
+        <div class="note">Cột <b>lam</b> = Categorical dự đoán; cột <b>cam</b> = nhãn one-hot. Loss kéo cột lam ở lớp đúng lên gần 1.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Bernoulli &amp; Categorical</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Khác nhau? → <span class="qa">Bernoulli: 2 kết cục; Categorical: K lớp.</span></li>
+      <li>Tổng Categorical? → <span class="qa">1.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Bernoulli/Categorical là "ngôn ngữ đầu ra" của bộ phân loại; softmax tạo ra Categorical, one-hot là nhãn thật.
+    Bài tiếp (A18): <b>exp &amp; log</b> — hai hàm đứng sau softmax và cross-entropy, làm tay bằng bảng tra.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A17 · Bernoulli / Categorical</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function f2(v){return (Math.round(v*100)/100).toFixed(2);}
-
 function generate(){
-  // Bernoulli p = random 0.1..0.9 in steps of 0.1
-  var p = WB.pick([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]);
-  var q = Math.round((1-p)*10)/10;
-  var pq = p*q;
+  var f2 = WB.fmt2;
+  var pT = WB.pick([6, 7, 8]);                 // Bernoulli p theo phần mười
+  var qT = 10 - pT;
+  // Categorical: bội 0.1, tổng = 1, có max duy nhất
+  var TRI = [[2,5,3],[6,2,2],[2,2,6],[1,7,2],[3,1,6],[5,3,2],[2,6,2],[4,1,5]];
+  var C = WB.pick(TRI).slice();
+  // argmax (lớp 1..3)
+  var mi = 0; for (var i = 1; i < 3; i++) if (C[i] > C[mi]) mi = i;
+  var oh = [0,0,0]; oh[mi] = 1;
 
-  // Categorical 4 lớp: xác suất tổng = 1
-  var rawP=[WB.randInt(1,5),WB.randInt(1,5),WB.randInt(1,5),WB.randInt(1,4)];
-  var total=rawP.reduce(function(s,v){return s+v;},0);
-  var catP=rawP.map(function(v){return Math.round(v/total*100)/100;});
-  // fix sum to exactly 1.00
-  var diff=1-catP.reduce(function(s,v){return s+v;},0);
-  catP[0]=Math.round((catP[0]+diff)*100)/100;
-  var argmax=0; catP.forEach(function(v,i){if(v>catP[argmax]) argmax=i;});
-  var ceLoss=-Math.log(catP[argmax]);
+  function pf(t){ return (t/10).toFixed(1); }
 
   WB.setAll({
-    p: f2(p), q: f2(q), pq: f2(pq),
-    ksum: '1.00', kargmax: String(argmax+1)
+    p: pf(pT), q: pf(qT), ex: pf(pT),
+    varB: f2(pT/10 * qT/10),
+    c1: pf(C[0]), c2: pf(C[1]), c3: pf(C[2]), csum: '1',
+    argmax: String(mi + 1), conf: pf(C[mi]),
+    oh1: String(oh[0]), oh2: String(oh[1]), oh3: String(oh[2])
   });
-
-  // ĐỀ: blank
-  ['p0b','p1b','p0b2','exb','sumP','argmaxB'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.textContent='';
-  });
-
-  buildCatTable('catTable',catP,true);
-  buildCatTable('kcatTable',catP,false);
-
-  var ceStr='Cross-entropy (nếu nhãn thật = lớp '+String(argmax+1)+'): −ln('+f2(catP[argmax])+') ≈ '+f2(ceLoss);
-  document.getElementById('kCELoss').textContent=ceStr;
-
-  drawDists('sch1',p,q,catP,argmax,false);
-  drawDists('sch2',p,q,catP,argmax,true);
+  drawDist('figD', C, oh);
 }
 
-function buildCatTable(id,catP,blank){
-  var el=document.getElementById(id); if(!el) return;
-  var s='<tr><th>Lớp</th>';
-  catP.forEach(function(_,i){s+='<th>'+(i+1)+'</th>';});
-  s+='</tr><tr><th>p</th>';
-  catP.forEach(function(v){
-    s+='<td class="'+(blank?'blank':'')+'">'+(blank?f2(v):('<b>'+f2(v)+'</b>'))+'</td>';
-  });
-  s+='</tr>';
-  el.innerHTML=s;
-}
-
-function drawDists(id,p,q,catP,argmax,showLabels){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=148;
-  var s='';
-  var padl=10,padt=18,padb=22,mid=W/2-10;
-
-  // --- Bernoulli (left half) ---
-  var bw=W*0.38, bh=H-padt-padb;
-  var bx=padl;
-  var pmax=Math.max(p,q)*1.2||0.1;
-  function bsy(v){return(padt+bh*(1-v/pmax)).toFixed(1);}
-  function bsx(x){return(bx+(x+0.2)/1.4*bw).toFixed(1);}
-
-  s+='<text x="'+(padl+bw/2)+'" y="12" text-anchor="middle" font-size="9" fill="#0e7490" font-weight="700">Bernoulli('+f2(p)+')</text>';
-  s+='<line x1="'+padl+'" y1="'+(padt+bh)+'" x2="'+(bx+bw+5)+'" y2="'+(padt+bh)+'" stroke="#ddd" stroke-width="1"/>';
-  var bw2=bw*0.25;
-  [[0,q,'#b45309'],[1,p,'#0e7490']].forEach(function(d){
-    var cx=parseFloat(bsx(d[0]));
-    var bht=bh*(d[1]/pmax);
-    var by=padt+bh-bht;
-    s+='<rect x="'+(cx-bw2/2)+'" y="'+by+'" width="'+bw2+'" height="'+bht+'" fill="'+d[2]+'" opacity="0.8" rx="2"/>';
-    s+='<text x="'+cx+'" y="'+(padt+bh+12)+'" text-anchor="middle" font-size="9" fill="#555">'+(d[0]===0?'X=0':'X=1')+'</text>';
-    if(showLabels) s+='<text x="'+cx+'" y="'+(by-4)+'" text-anchor="middle" font-size="8.5" fill="'+d[2]+'">'+f2(d[1])+'</text>';
-  });
-
-  // --- Categorical (right half) ---
-  var cx2=mid+16, cw2=W-cx2-padl;
-  var cmaxP=Math.max.apply(null,catP)*1.2;
-  function csy(v){return(padt+bh*(1-v/cmaxP)).toFixed(1);}
-  function csx(i){return(cx2+(i+0.4)/(catP.length+0.5)*cw2).toFixed(1);}
-
-  s+='<text x="'+(cx2+cw2/2)+'" y="12" text-anchor="middle" font-size="9" fill="#b45309" font-weight="700">Categorical (4 lớp)</text>';
-  s+='<line x1="'+cx2+'" y1="'+(padt+bh)+'" x2="'+(cx2+cw2+5)+'" y2="'+(padt+bh)+'" stroke="#ddd" stroke-width="1"/>';
-  var cbw=cw2/(catP.length+1)*0.65;
-  catP.forEach(function(v,i){
-    var cx3=parseFloat(csx(i));
-    var cht=bh*(v/cmaxP);
-    var cy3=padt+bh-cht;
-    var color=i===argmax?'#b45309':'#0e7490';
-    s+='<rect x="'+(cx3-cbw/2)+'" y="'+cy3+'" width="'+cbw+'" height="'+cht+'" fill="'+color+'" opacity="0.8" rx="2"/>';
-    s+='<text x="'+cx3+'" y="'+(padt+bh+12)+'" text-anchor="middle" font-size="9" fill="#555">'+(i+1)+'</text>';
-    if(showLabels) s+='<text x="'+cx3+'" y="'+(cy3-4)+'" text-anchor="middle" font-size="8" fill="'+color+'">'+f2(v)+'</text>';
-  });
-  // argmax label
-  if(showLabels){
-    var amx=parseFloat(csx(argmax)), amt=bh*(catP[argmax]/cmaxP);
-    s+='<text x="'+amx+'" y="'+(padt+bh-amt-14)+'" text-anchor="middle" font-size="8" fill="#b45309" font-weight="700">argmax</text>';
+// cột Categorical (lam) vs one-hot (cam), 3 lớp
+function drawDist(id, C, oh){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var x0 = 22, y0 = 112, H = 92, gap = 66, bw = 18;
+  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+3*gap)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  for (var i = 0; i < 3; i++){
+    var bx = x0 + 14 + i*gap;
+    var hp = C[i]/10 * H, ho = oh[i] * H;
+    // dự đoán (lam)
+    s += '<rect x="'+bx+'" y="'+(y0-hp).toFixed(1)+'" width="'+bw+'" height="'+hp.toFixed(1)+'" fill="#0e749033" stroke="#0e7490" stroke-width="1.6"/>';
+    s += '<text x="'+(bx+bw/2)+'" y="'+(y0-hp-3).toFixed(1)+'" text-anchor="middle" style="font-size:8px" fill="#0e7490" font-weight="700">'+(C[i]/10).toFixed(1)+'</text>';
+    // one-hot (cam) — kề bên
+    s += '<rect x="'+(bx+bw+3)+'" y="'+(y0-ho).toFixed(1)+'" width="'+bw+'" height="'+ho.toFixed(1)+'" fill="#b4530933" stroke="#b45309" stroke-width="1.6"/>';
+    s += '<text x="'+(bx+bw/2+12)+'" y="'+(y0+12)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">lớp '+(i+1)+'</text>';
   }
-
-  // divider
-  s+='<line x1="'+(mid+8)+'" y1="'+padt+'" x2="'+(mid+8)+'" y2="'+(padt+bh+14)+'" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3 2"/>';
-
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="phân phối Bernoulli và Categorical">'+s+'</svg>';
+  s += '<text x="'+(x0+20)+'" y="14" style="font-size:8px" fill="#0e7490" font-weight="700">■ dự đoán</text>';
+  s += '<text x="'+(x0+90)+'" y="14" style="font-size:8px" fill="#b45309" font-weight="700">■ one-hot</text>';
+  svg.innerHTML = s;
 }
-
 WB.wire(generate);
 generate();
 </script>

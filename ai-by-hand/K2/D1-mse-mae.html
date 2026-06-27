@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · MSE / MAE — Regression Loss</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài D1 — MSE / MAE (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13.5px;line-height:2.05;margin-top:3px;}
-  .ublk{display:inline-block;min-width:38px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.35;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11.5px;}
-  .dtbl td{padding:3px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .dtbl tr.sumr td{background:#eef6fa;font-weight:700;}
+/* siết nhẹ chiều cao (additive, không đụng wb.css) */
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -26,185 +23,186 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>MSE / MAE</h1><span class="vi">— Regression Loss</span>
-    <span class="tag">eᵢ = yᵢ − ŷᵢ · MSE = Σeᵢ²/n · MAE = Σ|eᵢ|/n</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Để "dạy" một mô hình hồi quy, ta cần một con số đo mức <b>sai</b> của dự đoán so với
-    thực tế — đó là <b>hàm mất mát</b>. MSE và MAE là hai thước cơ bản nhất; gradient của chúng chính là tín hiệu
-    để cập nhật trọng số ở mọi bài sau.
-    <div class="fm">MSE = (1/n)·Σ(yᵢ − ŷᵢ)² &nbsp;|&nbsp; MAE = (1/n)·Σ|yᵢ − ŷᵢ|</div>
+  <div class="wb-title"><span class="no">Bài D1</span><h1>MSE / MAE <small>— hàm mất mát hồi quy</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Mạng học bằng cách <b>giảm loss</b>. Chọn loss = chọn cách phạt sai. MSE phạt mạnh sai lớn (nhạy ngoại lệ),
+    MAE phạt đều (bền với ngoại lệ). Hiểu khác biệt để chọn đúng cho bài toán.
+    <div class="formula">
+      MSE = (1/m) Σ (ŷ − y)² &nbsp;&nbsp; MAE = (1/m) Σ |ŷ − y|
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    MSE <b>bình phương</b> sai số nên <b>phạt rất nặng</b> những cú trượt lớn (lỗi 4 → đóng góp 16); MAE đếm sai số
-    <b>tuyến tính</b> nên "đều tay", ít nhạy với điểm ngoại lai. Chọn loss = chọn cách bạn quan tâm tới lỗi lớn.
+    MSE như <b>phạt theo bình phương khoảng cách</b>: lệch gấp đôi thì phạt gấp bốn → rất ghét sai lớn. MAE phạt <b>tuyến tính</b>: lệch
+    gấp đôi phạt gấp đôi → công bằng với ngoại lệ hơn.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Cam</b> = giá trị thật yᵢ · <b>lam</b> = dự đoán ŷᵢ · <b>nét đứt</b> = sai số eᵢ. MSE/MAE tóm các đoạn này thành một số.</div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn nhãn &amp; dự đoán</h2><span class="tag">3 mẫu</span></div>
+    <div class="calc" style="font-size:15px">
+      y (thật) = ( <span class="gv" data-q="y1">2</span>, <span class="gv" data-q="y2">4</span>, <span class="gv" data-q="y3">6</span> ) &nbsp;;&nbsp;
+      ŷ (dự đoán) = ( <span class="gv" data-q="p1">3</span>, <span class="gv" data-q="p2">4</span>, <span class="gv" data-q="p3">4</span> )
     </div>
-
-    <div class="work">
-      <div class="bandh fw">BẢNG SAI SỐ (n = 4 điểm)</div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>i</th><th>yᵢ (thật)</th><th>ŷᵢ (đoán)</th><th>eᵢ = yᵢ−ŷᵢ</th><th>eᵢ²</th><th>|eᵢ|</th></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:8px">GỘP THÀNH MỘT SỐ</div>
-      <div class="expr">
-        MSE = Σeᵢ² / n = <span class="ublk" id="ssqB"></span> / <span data-q="n">4</span> = <span class="ublk" id="mseB"></span>
-      </div>
-      <div class="expr">
-        MAE = Σ|eᵢ| / n = <span class="ublk" id="sabsB"></span> / <span data-q="n">4</span> = <span class="ublk" id="maeB"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Loss nào <b>phạt nặng hơn</b> một cú trượt lớn? → <span class="ublk" style="min-width:70px"></span></li>
-        </ol>
-      </div>
-    </div>
+    <div class="note">Loss đo "dự đoán lệch nhãn bao nhiêu", gộp 3 mẫu thành một con số.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · MSE / MAE</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 — sai số -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Sai số từng mẫu (ŷ − y)</h2><span class="tag">phần dư</span></div>
+    <div class="calc">
+      ŷ − y = ( <span class="blk" style="min-width:28px"></span>, <span class="blk" style="min-width:28px"></span>, <span class="blk" style="min-width:28px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> mọi loss đều bắt đầu từ phần dư (sai số) của mỗi mẫu.</div>
+  </div>
+
+  <!-- BƯỚC 2 — MSE -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>MSE — bình phương, trung bình</h2><span class="tag">phạt bình phương</span></div>
+    <div class="calc">
+      MSE = ( <span data-q="sqExpr">1² + 0² + (−2)²</span> )/3 = ( <span data-q="ssq">1 + 0 + 4</span> )/3 = <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="hint">Bình phương bỏ dấu &amp; phóng đại sai lớn (mẫu lệch nhiều đóng góp phần lớn loss).</div>
+  </div>
+
+  <!-- BƯỚC 3 — MAE -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>MAE — trị tuyệt đối, trung bình</h2><span class="tag">phạt tuyến tính</span></div>
+    <div class="calc">
+      MAE = ( <span data-q="absExpr">|1| + |0| + |−2|</span> )/3 = ( <span data-q="sabs">3</span> )/3 = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> MAE coi sai 2 chỉ "gấp đôi" sai 1 → ngoại lệ ít lấn át kết quả.</div>
+  </div>
+
+  <!-- BƯỚC 4 — đạo hàm -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao thường chọn MSE để học</h2><span class="tag">gradient</span></div>
+    <div class="note">∂MSE/∂ŷᵢ = (2/m)(ŷᵢ − y) → <b>trơn</b>, tỉ lệ với sai số (sai nhiều sửa nhiều). ∂MAE/∂ŷᵢ = ±1/m → hằng, <b>gãy</b> tại 0.
+      MSE cho gradient mượt dễ tối ưu; MAE bền ngoại lệ nhưng độ lớn gradient không đổi.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Loss nào nhạy ngoại lệ hơn? → <span class="blk" style="min-width:90px"></span></li>
+      <li>Vì sao MSE tiện cho gradient descent? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>MSE / MAE</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài D1</span><h1>MSE / MAE <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">eᵢ² ≥ 0 luôn (bình phương); |eᵢ| ≥ 0. Cả hai loss = 0 ⇔ dự đoán khớp hoàn toàn.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Sai số</h2></div>
+    <div class="calc ans">
+      ŷ − y = ( <span class="blk" data-q="e1">1</span>, <span class="blk" data-q="e2">0</span>, <span class="blk" data-q="e3">−2</span> )
     </div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">BẢNG SAI SỐ</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>i</th><th>yᵢ</th><th>ŷᵢ</th><th>eᵢ</th><th>eᵢ²</th><th>|eᵢ|</th></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>MSE</h2></div>
+    <div class="calc ans">
+      MSE = ( <span data-q="ssq">1 + 0 + 4</span> )/3 = <span class="blk" data-q="mse">1.67</span>
+    </div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:7px">KẾT QUẢ</div>
-      <div class="expr">
-        MSE = <span data-q="kssq">?</span> / <span data-q="n">4</span> = <b><span data-q="kmse">?</span></b>
-        &nbsp;&nbsp;·&nbsp;&nbsp; MAE = <span data-q="ksabs">?</span> / <span data-q="n">4</span> = <b><span data-q="kmae">?</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>MAE</h2></div>
+    <div class="calc ans">
+      MAE = ( <span data-q="sabs">3</span> )/3 = <span class="blk" data-q="mae">1</span>
+    </div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Phạt nặng cú trượt lớn hơn: <span class="qa">MSE</span> (vì bình phương sai số).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> MSE và MAE biến cả bảng sai số thành <b>một con số</b> để tối ưu. MSE trơn, dễ lấy đạo hàm
-        (gradient = 2e) nên hay dùng để huấn luyện; MAE bền với ngoại lai. Bài sau chuyển sang loss cho <b>phân loại</b>:
-        Binary Cross-Entropy (D2) và Cross-Entropy (Bài 17).
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hình: loss theo sai số</h2><span class="tag">bình phương vs |·|</span></div>
+    <div class="figrow">
+      <svg id="figL" class="fig" viewBox="0 0 210 150" width="66mm" height="44mm" aria-label="hai đường loss: bình phương (MSE) và trị tuyệt đối (MAE) theo sai số"></svg>
+      <div style="flex:1">
+        <div class="note">Đường <b>lam</b> = (sai số)² (MSE): cong, dốc mạnh khi lệch lớn. Đường <b>cam</b> = |sai số| (MAE): chữ V, dốc đều.
+          MSE phạt sai lớn nặng hơn hẳn.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · MSE / MAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Nhạy ngoại lệ hơn? → <span class="qa">MSE (bình phương phạt mạnh sai lớn).</span></li>
+      <li>MSE tiện gradient? → <span class="qa">Gradient trơn, tỉ lệ với sai số (không gãy như MAE).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> MSE phạt bình phương (nhạy ngoại lệ, gradient mượt); MAE phạt tuyến tính (bền hơn). Bài tiếp (D2): loss cho
+    <b>phân loại nhị phân</b> — Binary Cross-Entropy.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-function fT(v){return WB.fmtTrim(v);}
-
 function generate(){
-  var n=4;
-  var ys=[], es=[], yh=[];
-  for(var i=0;i<n;i++){
-    ys.push(WB.randInt(3,9));
-    es.push(WB.randIntNZ(-3,3));     // sai số eᵢ = yᵢ − ŷᵢ
-    yh.push(ys[i]-es[i]);
-  }
-  var sq=es.map(function(e){return e*e;});
-  var ab=es.map(function(e){return Math.abs(e);});
-  var ssq=sq.reduce(function(s,v){return s+v;},0);
-  var sabs=ab.reduce(function(s,v){return s+v;},0);
-  var mse=ssq/n, mae=sabs/n;
-
-  buildTbl('qtbl',ys,yh,es,sq,ab,true);
-  buildTbl('ktbl',ys,yh,es,sq,ab,false);
-
-  // xoá ô trống trang ĐỀ
-  ['ssqB','mseB','sabsB','maeB'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
+  var f = WB.fmtInt, ft = WB.fmtTrim;
+  var y = [WB.randInt(1,6), WB.randInt(1,6), WB.randInt(1,6)];
+  var e = [WB.pick([1,-1,2,-2,1,-1]), WB.pick([0,1,-1,0]), WB.pick([2,-2,1,-1,2,-2])];
+  var p = [y[0]+e[0], y[1]+e[1], y[2]+e[2]];
+  var sq = e.map(function(v){ return v*v; });
+  var ab = e.map(Math.abs);
+  var ssq = sq[0]+sq[1]+sq[2], sabs = ab[0]+ab[1]+ab[2];
+  var mse = ssq/3, mae = sabs/3;
 
   WB.setAll({
-    n:String(n),
-    kssq:fI(ssq), ksabs:fI(sabs), kmse:fT(mse), kmae:fT(mae)
+    y1: f(y[0]), y2: f(y[1]), y3: f(y[2]),
+    p1: f(p[0]), p2: f(p[1]), p3: f(p[2]),
+    e1: f(e[0]), e2: f(e[1]), e3: f(e[2]),
+    sqExpr: e.map(function(v){ return WB.wrap(f(v)) + '²'; }).join(' + '),
+    ssq: WB.sumExpr(sq, f),
+    absExpr: e.map(function(v){ return '|' + f(v) + '|'; }).join(' + '),
+    sabs: f(sabs),
+    mse: ft(mse), mae: ft(mae)
   });
-
-  drawErr('sch1',ys,yh,false);
-  drawErr('sch2',ys,yh,true);
+  drawLoss('figL');
 }
 
-function buildTbl(id,ys,yh,es,sq,ab,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  for(var i=0;i<ys.length;i++){
-    var tr=document.createElement('tr');
-    var cells=[i+1,ys[i],yh[i],es[i],sq[i],ab[i]];
-    cells.forEach(function(v,j){
-      var td=document.createElement('td');
-      td.textContent=fI(v);
-      if(blank && j>=3){ td.className='blank'; }   // eᵢ, eᵢ², |eᵢ| để trống ở ĐỀ
-      tr.appendChild(td);
-    });
-    el.appendChild(tr);
-  }
-  // hàng tổng Σ
-  var ssq=sq.reduce(function(s,v){return s+v;},0);
-  var sabs=ab.reduce(function(s,v){return s+v;},0);
-  var tr2=document.createElement('tr'); tr2.className='sumr';
-  var labels=['Σ','','','', ssq, sabs];
-  labels.forEach(function(v,j){
-    var td=document.createElement('td');
-    if(j===0){ td.innerHTML='<b>Σ</b>'; }
-    else if(j>=4){ if(blank){ td.className='blank'; } else { td.textContent=fI(v); } }
-    else { td.textContent=''; }
-    tr2.appendChild(td);
-  });
-  el.appendChild(tr2);
+// loss theo sai số: (e)² lam, |e| cam
+function drawLoss(id){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  var X0 = 20, X1 = 200, Y0 = 12, Y1 = 130, emin = -3, emax = 3, lmax = 9;
+  function SX(e){ return (X0 + (e - emin)/(emax - emin)*(X1 - X0)).toFixed(1); }
+  function SY(l){ return (Y1 - l/lmax*(Y1 - Y0)).toFixed(1); }
+  var s = '<rect x="'+X0+'" y="'+Y0+'" width="'+(X1-X0)+'" height="'+(Y1-Y0)+'" fill="#fafbfc" stroke="#e5e7eb" stroke-width="1"/>';
+  s += '<line x1="'+SX(0)+'" y1="'+Y0+'" x2="'+SX(0)+'" y2="'+Y1+'" stroke="#eef0f2" stroke-width="1"/>';
+  var p, e;
+  p = ''; for (e = emin; e <= emax + 0.01; e += 0.2) p += SX(e)+','+SY(e*e)+' ';
+  s += '<polyline points="'+p.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.4"/>';
+  s += '<text x="'+SX(2.2)+'" y="'+SY(7.2)+'" style="font-size:9px" fill="#0e7490" font-weight="700">(sai số)²</text>';
+  p = ''; for (e = emin; e <= emax + 0.01; e += 0.2) p += SX(e)+','+SY(Math.abs(e))+' ';
+  s += '<polyline points="'+p.trim()+'" fill="none" stroke="#b45309" stroke-width="2.4"/>';
+  s += '<text x="'+SX(2.4)+'" y="'+SY(3.4)+'" style="font-size:9px" fill="#b45309" font-weight="700">|sai số|</text>';
+  s += '<text x="'+SX(0)+'" y="'+(Y1-3)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">sai số = 0</text>';
+  svg.innerHTML = s;
 }
-
-function drawErr(id,ys,yh,showVals){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=150, padl=14,padr=10,padt=12,padb=16;
-  var pw=W-padl-padr, ph=H-padt-padb;
-  var all=ys.concat(yh);
-  var ymin=Math.min.apply(null,all)-1, ymax=Math.max.apply(null,all)+1;
-  var n=ys.length;
-  function px(i){return (padl + (i+0.5)/n*pw).toFixed(1);}
-  function py(y){return (padt+ph-(y-ymin)/(ymax-ymin)*ph).toFixed(1);}
-  var s='';
-  s+='<line x1="'+padl+'" y1="'+(H-padb)+'" x2="'+(W-padr)+'" y2="'+(H-padb)+'" stroke="#ddd" stroke-width="1"/>';
-  for(var i=0;i<n;i++){
-    var x=px(i);
-    // sai số (nét đứt)
-    s+='<line x1="'+x+'" y1="'+py(ys[i])+'" x2="'+x+'" y2="'+py(yh[i])+'" stroke="#9aa3af" stroke-width="1.1" stroke-dasharray="3 2"/>';
-    // dự đoán ŷ (lam, rỗng)
-    s+='<circle cx="'+x+'" cy="'+py(yh[i])+'" r="3.4" fill="#fff" stroke="#0e7490" stroke-width="1.8"/>';
-    // thật y (cam, đặc)
-    s+='<circle cx="'+x+'" cy="'+py(ys[i])+'" r="3.4" fill="#b45309"/>';
-    s+='<text x="'+x+'" y="'+(H-padb+11)+'" text-anchor="middle" font-size="8" fill="#6b7280">'+(i+1)+'</text>';
-    if(showVals){
-      s+='<text x="'+(parseFloat(x)+5)+'" y="'+py(ys[i])+'" font-size="7.5" fill="#b45309">'+fI(ys[i])+'</text>';
-      s+='<text x="'+(parseFloat(x)+5)+'" y="'+py(yh[i])+'" font-size="7.5" fill="#0e7490">'+fI(yh[i])+'</text>';
-    }
-  }
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="giá trị thật vs dự đoán, sai số dọc">'+s+'</svg>';
-}
-
 WB.wire(generate);
 generate();
 </script>

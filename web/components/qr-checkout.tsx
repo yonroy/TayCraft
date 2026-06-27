@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/utils";
 
+// Kênh liên hệ admin cho fallback "chờ duyệt tay" — set ở env (NEXT_PUBLIC_*), để trống nếu không dùng.
+const CONTACT = {
+  zalo: process.env.NEXT_PUBLIC_CONTACT_ZALO, // số điện thoại Zalo, vd 0901234567
+  messenger: process.env.NEXT_PUBLIC_CONTACT_FB, // URL đầy đủ, vd https://m.me/yourpage
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL, // vd hotro@taycraft.vn
+};
+const HAS_CONTACT = Boolean(CONTACT.zalo || CONTACT.messenger || CONTACT.email);
+
+// Sau bao lâu chưa nhận được tiền thì gợi ý liên hệ admin (ms).
+const HELP_DELAY_MS = 60_000;
+
 interface OrderData {
   id: string;
   amountVnd: number;
@@ -19,6 +30,7 @@ export function QrCheckout({ product }: { product?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Tạo đơn khi vào trang.
@@ -67,6 +79,13 @@ export function QrCheckout({ product }: { product?: string }) {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [order, router]);
+
+  // Sau HELP_DELAY_MS chưa nhận được tiền → hiện khối liên hệ admin (poll vẫn chạy tiếp).
+  useEffect(() => {
+    if (!order || paid) return;
+    const t = setTimeout(() => setShowHelp(true), HELP_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [order, paid]);
 
   function copy(text: string, label: string) {
     navigator.clipboard.writeText(text);
@@ -142,7 +161,78 @@ export function QrCheckout({ product }: { product?: string }) {
         <span className="inline-block h-2 w-2 rounded-full bg-accent animate-pulse" />
         Đang chờ thanh toán…
       </div>
+
+      {showHelp && <AdminFallback order={order} onCopy={copy} copied={copied} />}
     </div>
+  );
+}
+
+// Khối fallback: hiện sau ~60s nếu chưa tự nhận được tiền → khách nhắn admin duyệt tay.
+function AdminFallback({
+  order,
+  onCopy,
+  copied,
+}: {
+  order: OrderData;
+  onCopy: (text: string, label: string) => void;
+  copied: string | null;
+}) {
+  const msg = `Tôi đã chuyển khoản đơn ${order.transferCode} (${formatVnd(
+    order.amountVnd,
+  )}). Nhờ admin kiểm tra và mở khóa giúp ạ.`;
+  const subject = `Xác nhận thanh toán ${order.transferCode}`;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-accent-2/40 bg-accent-2/5 p-5">
+      <h3 className="text-sm font-bold">Đã chuyển khoản mà chưa mở khóa? 🤔</h3>
+      <p className="mt-1 text-xs text-dim">
+        Hệ thống thường tự mở khóa trong 1–2 phút. Nếu đã lâu, nhắn cho admin kèm mã đơn{" "}
+        <b className="font-mono text-accent-2">{order.transferCode}</b> để được duyệt tay (thường
+        trong vài giờ).
+      </p>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {CONTACT.zalo && (
+          <ContactLink href={`https://zalo.me/${CONTACT.zalo}`} label="💬 Nhắn Zalo" />
+        )}
+        {CONTACT.messenger && <ContactLink href={CONTACT.messenger} label="💬 Messenger" />}
+        {CONTACT.email && (
+          <ContactLink
+            href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(
+              subject,
+            )}&body=${encodeURIComponent(msg)}`}
+            label="✉️ Gửi email"
+          />
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 px-3 text-xs"
+          onClick={() => onCopy(msg, "msg")}
+        >
+          {copied === "msg" ? "✓ Đã copy lời nhắn" : "Copy lời nhắn"}
+        </Button>
+      </div>
+
+      {!HAS_CONTACT && (
+        <p className="mt-2 text-xs text-dim">
+          Copy lời nhắn trên rồi gửi cho admin qua kênh liên hệ trên trang chủ.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ContactLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex h-9 items-center rounded-lg border border-line px-3 text-xs font-medium hover:bg-line/40"
+    >
+      {label}
+    </a>
   );
 }
 

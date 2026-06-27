@@ -6,6 +6,7 @@ import { AdminConfirmButton } from "@/components/admin-order-actions";
 import { AdminFlashSale } from "@/components/admin-flash-sale";
 import { getUser, isAdmin } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
+import { productById } from "@/lib/products";
 import { db } from "@/lib/db";
 import { orders, profiles } from "@/lib/db/schema";
 import { formatVnd } from "@/lib/utils";
@@ -27,6 +28,7 @@ export default async function AdminPage() {
     .select({
       id: orders.id,
       transferCode: orders.transferCode,
+      product: orders.product,
       amountVnd: orders.amountVnd,
       status: orders.status,
       createdAt: orders.createdAt,
@@ -61,6 +63,7 @@ export default async function AdminPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">Mã CK</th>
                 <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Gói</th>
                 <th className="px-4 py-3 font-medium">Số tiền</th>
                 <th className="px-4 py-3 font-medium">Trạng thái</th>
                 <th className="px-4 py-3 font-medium">Tạo lúc</th>
@@ -70,16 +73,30 @@ export default async function AdminPage() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-dim">
+                  <td colSpan={7} className="px-4 py-8 text-center text-dim">
                     Chưa có đơn hàng nào.
                   </td>
                 </tr>
               ) : (
-                rows.map((r) => (
+                rows.map((r) => {
+                  const prod = productById(r.product);
+                  const priceMismatch = prod != null && r.amountVnd !== prod.priceVnd;
+                  return (
                   <tr key={r.id} className="border-t border-line">
                     <td className="px-4 py-3 font-mono font-bold">{r.transferCode}</td>
                     <td className="px-4 py-3 text-dim">{r.email ?? "—"}</td>
-                    <td className="px-4 py-3">{formatVnd(r.amountVnd)}</td>
+                    <td className="px-4 py-3">{prod?.label ?? r.product}</td>
+                    <td className="px-4 py-3">
+                      {formatVnd(r.amountVnd)}
+                      {priceMismatch && (
+                        <span
+                          className="ml-1 text-accent-2"
+                          title={`Lệch giá gói ${prod.label} (${formatVnd(prod.priceVnd)})`}
+                        >
+                          ⚠️
+                        </span>
+                      )}
+                    </td>
                     <td className={`px-4 py-3 ${STATUS[r.status]?.cls ?? ""}`}>
                       {STATUS[r.status]?.label ?? r.status}
                     </td>
@@ -90,7 +107,8 @@ export default async function AdminPage() {
                       {r.status === "pending" && <AdminConfirmButton orderId={r.id} />}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

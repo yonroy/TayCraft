@@ -13,8 +13,13 @@ export function AdminConfirmButton({ orderId }: { orderId: string }) {
     setLoading(true);
     const res = await fetch(`/api/admin/orders/${orderId}/confirm`, { method: "POST" });
     setLoading(false);
-    if (res.ok) router.refresh();
-    else window.alert("Không duyệt được đơn. Thử lại.");
+    if (res.ok) {
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => null);
+      window.alert(data?.error ?? "Không duyệt được đơn. Thử lại.");
+      if (res.status === 409) router.refresh(); // đơn đã đổi trạng thái → cập nhật bảng
+    }
   }
 
   return (

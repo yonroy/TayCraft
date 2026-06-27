@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      // Log để soi trong Vercel Logs (vd "both auth code and code verifier should be non-empty"
+      // = lệch host giữa lúc bấm đăng nhập và lúc nhận callback).
+      console.error("[auth/callback] exchangeCodeForSession failed:", error.message, "host=", request.headers.get("host"));
+    }
     if (!error) {
       const {
         data: { user },

@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const DISMISS_KEY = "launch-popup-dismissed";
-
 type Status = {
   limit: number;
   remaining: number;
@@ -88,9 +86,9 @@ export function LaunchPopup() {
           setOpen(false);
           return;
         }
-        // Mở nếu: vừa quay lại để nhận, HOẶC chưa từng đóng popup.
-        const dismissed = localStorage.getItem(DISMISS_KEY) === "1";
-        if (wantClaim || !dismissed) setOpen(true);
+        // Luôn mở: server chỉ render popup này cho người CHƯA sở hữu K1 (chưa nhận & chưa mua),
+        // nên cứ quay lại trang chủ là hiện lại. Đóng ✕ chỉ ẩn ở lần xem hiện tại, không lưu vĩnh viễn.
+        setOpen(true);
         if (wantClaim && !autoClaimed.current) {
           autoClaimed.current = true;
           claim();
@@ -114,7 +112,6 @@ export function LaunchPopup() {
   if (!open || !status || status.expired) return null;
 
   const close = () => {
-    localStorage.setItem(DISMISS_KEY, "1");
     setOpen(false);
   };
 

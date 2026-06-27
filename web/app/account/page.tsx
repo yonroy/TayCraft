@@ -4,7 +4,9 @@ import { desc, eq } from "drizzle-orm";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { getUser, hasAccess } from "@/lib/auth";
+import { getUser, accessibleCourses } from "@/lib/auth";
+import { COURSES } from "@/lib/products";
+import { FREE_COURSES } from "@/lib/lessons";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { formatVnd } from "@/lib/utils";
@@ -19,7 +21,9 @@ export default async function AccountPage() {
   const user = await getUser();
   if (!user) redirect("/login?next=/account");
 
-  const access = await hasAccess(user.id);
+  const courses = await accessibleCourses(user.id);
+  const full = COURSES.every((c) => courses.includes(c.id));
+  const hasPaid = courses.some((c) => !FREE_COURSES.includes(c));
   const myOrders = await db
     .select()
     .from(orders)
@@ -37,16 +41,20 @@ export default async function AccountPage() {
           <div>
             <div className="font-semibold">Trạng thái</div>
             <div className="text-dim text-sm">
-              {access ? "Đã mở khóa trọn bộ ✅" : "Chưa mua khóa học"}
+              {full
+                ? "Đã mở khóa trọn bộ ✅"
+                : hasPaid
+                  ? "Đã mở khóa một phần"
+                  : "Chưa mua khóa học"}
             </div>
           </div>
-          {access ? (
+          {hasPaid ? (
             <Link href="/learn">
               <Button>Vào học</Button>
             </Link>
           ) : (
-            <Link href="/checkout">
-              <Button>Mua trọn bộ</Button>
+            <Link href="/#goi">
+              <Button>Xem các gói</Button>
             </Link>
           )}
         </div>

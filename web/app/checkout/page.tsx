@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { QrCheckout } from "@/components/qr-checkout";
 import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
-import { getUser, hasAccess } from "@/lib/auth";
+import { getUser, ownsProduct } from "@/lib/auth";
 import { DEFAULT_PRODUCT, isActiveProduct, productById } from "@/lib/products";
 import { getFlashSale } from "@/lib/settings";
 
@@ -19,7 +19,7 @@ export default async function CheckoutPage({
 
   const user = await getUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/checkout?product=${productId}`)}`);
-  if (await hasAccess(user.id)) redirect("/learn");
+  if (await ownsProduct(user.id, productId)) redirect("/learn");
 
   const flash = await getFlashSale();
 

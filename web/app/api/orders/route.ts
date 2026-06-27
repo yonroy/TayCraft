@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
-import { getUser, hasAccess } from "@/lib/auth";
+import { getUser, ownsProduct } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { generateTransferCode, vietqrImageUrl, bankInfo, paymentContent } from "@/lib/vietqr";
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
   }
   const product = productById(productId)!;
 
-  // All-access bao trùm mọi khóa → đã có quyền thì khỏi mua lại.
-  if (await hasAccess(user.id)) {
+  // Đã sở hữu đủ mọi khóa của gói này → khỏi mua lại (vẫn cho nâng cấp lên gói cao hơn).
+  if (await ownsProduct(user.id, productId)) {
     return NextResponse.json({ alreadyOwned: true });
   }
 

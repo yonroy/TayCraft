@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { COURSE_ORDER, lessonsOfCourse, isFreeLesson, FREE_COURSES, type Lesson } from "@/lib/lessons";
+import {
+  COURSE_ORDER,
+  lessonsOfCourse,
+  isFreeLesson,
+  FREE_COURSES,
+  type Course,
+  type Lesson,
+} from "@/lib/lessons";
 import { COURSES, productsIncludingCourse } from "@/lib/products";
 
-function LessonCard({ lesson, access }: { lesson: Lesson; access: boolean }) {
+function LessonCard({ lesson, accessCourses }: { lesson: Lesson; accessCourses: Course[] }) {
   const free = isFreeLesson(lesson);
-  const unlocked = lesson.available && (free || access);
+  const unlocked = lesson.available && (free || accessCourses.includes(lesson.course));
   const card = (
     <div
       className={`h-full rounded-2xl border p-4 transition ${
@@ -38,8 +45,8 @@ function LessonCard({ lesson, access }: { lesson: Lesson; access: boolean }) {
   return card;
 }
 
-// Liệt kê toàn bộ lộ trình, gom theo 4 khóa (= phân chia gói). access=true → bài đã mở khóa.
-export function CourseCatalog({ access = false }: { access?: boolean }) {
+// Liệt kê toàn bộ lộ trình, gom theo 4 khóa (= phân chia gói). accessCourses = các khóa user mở được.
+export function CourseCatalog({ accessCourses = [] }: { accessCourses?: Course[] }) {
   return (
     <div className="space-y-10">
       {COURSE_ORDER.map((courseId) => {
@@ -77,7 +84,7 @@ export function CourseCatalog({ access = false }: { access?: boolean }) {
             )}
             <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {lessons.map((l) => (
-                <LessonCard key={l.no} lesson={l} access={access} />
+                <LessonCard key={l.no} lesson={l} accessCourses={accessCourses} />
               ))}
             </div>
           </section>

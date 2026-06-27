@@ -69,7 +69,7 @@ export default async function Home() {
       </section>
 
       {/* Packages */}
-      <section className="mx-auto max-w-5xl px-5 py-12">
+      <section id="goi" className="mx-auto max-w-5xl px-5 py-12 scroll-mt-20">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-2xl font-bold">Các gói khóa học</h2>
           {flash.enabled && (

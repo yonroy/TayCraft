@@ -10,6 +10,7 @@ import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
 import { TOTAL_AVAILABLE } from "@/lib/lessons";
 import { productById } from "@/lib/products";
+import { getUser, accessibleCourses } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
@@ -24,6 +25,9 @@ const FEATURES = [
 
 export default async function Home() {
   const flash = await getFlashSale();
+  // Ẩn popup khai trương cho người đã sở hữu K1 (đã nhận free / đã mua) — khỏi bị mời lại.
+  const user = await getUser();
+  const ownsK1 = user ? (await accessibleCourses(user.id)).includes("K1") : false;
   return (
     <>
       <FlashSaleBar
@@ -32,7 +36,7 @@ export default async function Home() {
         countdownMinutes={flash.countdownMinutes}
       />
       <SiteHeader />
-      <LaunchPopup />
+      {!ownsK1 && <LaunchPopup />}
 
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-5 pt-16 pb-12 text-center">

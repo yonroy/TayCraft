@@ -43,12 +43,18 @@ export function LaunchPopup() {
       setStatus((s) => (s ? { ...s, remaining: data.remaining, full: data.remaining <= 0 } : s));
       switch (data.result) {
         case "claimed":
-          setMessage("🎉 Nhận thành công! Đang mở khóa K1…");
-          setTimeout(() => router.push("/learn"), 1200);
+          setMessage("🎉 Nhận thành công! Khóa 1 đã mở — đang chuyển…");
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 1200);
           break;
         case "already":
-          setMessage("Bạn đã có Khóa 1 rồi — đang chuyển tới trang học…");
-          setTimeout(() => router.push("/learn"), 1200);
+          setMessage("Bạn đã có Khóa 1 rồi — đang chuyển…");
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 1200);
           break;
         case "full":
           setStatus((s) => (s ? { ...s, full: true, remaining: 0 } : s));

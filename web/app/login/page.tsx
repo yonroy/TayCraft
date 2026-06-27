@@ -10,7 +10,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; error?: string; reason?: string }>;
 }) {
   const { next, error, reason } = await searchParams;
-  const safeNext = next && next.startsWith("/") ? next : "/learn";
+  const safeNext = next && next.startsWith("/") ? next : "/";
 
   const user = await getUser();
   if (user) redirect(safeNext);

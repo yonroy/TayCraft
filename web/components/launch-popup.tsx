@@ -143,17 +143,32 @@ export function LaunchPopup() {
 
         <div className="px-6 pb-6 pt-8 text-center">
           <div className="mx-auto mb-3 inline-block rounded-full border border-amber-300/60 bg-amber-400/10 px-4 py-1 text-xs font-bold tracking-[0.18em] text-amber-200 uppercase">
-            🎉 Tưng bừng khai trương
+            {status.full ? `✅ Đã trao đủ ${status.limit} suất tặng` : "🎉 Tưng bừng khai trương"}
           </div>
 
-          <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
-            Tặng 100 bạn
-            <br />
-            gói Khóa 1 · Nền tảng AI
-          </h2>
-          <p className="mt-2 text-sm text-amber-100/80">
-            Quỹ học bổng giới hạn cho 100 học viên đăng ký đầu tiên.
-          </p>
+          {!status.full ? (
+            <>
+              <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+                Tặng 100 bạn
+                <br />
+                gói Khóa 1 · Nền tảng AI
+              </h2>
+              <p className="mt-2 text-sm text-amber-100/80">
+                Quỹ học bổng giới hạn cho 100 học viên đăng ký đầu tiên.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+                Đã đủ {status.limit} người
+                <br />
+                nhận Khóa 1 miễn phí 🎉
+              </h2>
+              <p className="mt-2 text-sm text-amber-100/80">
+                Bạn đến hơi muộn một chút — nhưng vẫn còn ưu đãi khai trương cho Khóa 1:
+              </p>
+            </>
+          )}
 
           {!status.full ? (
             <>
@@ -189,9 +204,16 @@ export function LaunchPopup() {
             </>
           ) : (
             <>
-              <p className="mt-5 text-sm text-amber-100/85">
-                Đã hết 100 suất miễn phí 😍 Nhưng trong dịp khai trương, bạn vẫn học trọn{" "}
-                <b>Khóa 1</b> với giá ưu đãi:
+              <div className="mt-5 rounded-2xl bg-black/20 px-4 py-3">
+                <div className="text-2xl font-extrabold text-amber-300 tabular-nums">
+                  Đã đủ {status.limit}/{status.limit} suất tặng
+                </div>
+                <div className="mt-0.5 text-xs text-amber-100/70">
+                  100% suất miễn phí đã được nhận hết 😍
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-amber-100/85">
+                Trong dịp khai trương, bạn vẫn học trọn <b>Khóa 1</b> với giá ưu đãi:
               </p>
               <div className="mt-3 text-4xl font-extrabold text-amber-300">
                 49.000đ <span className="text-lg text-amber-100/50 line-through">149.000đ</span>

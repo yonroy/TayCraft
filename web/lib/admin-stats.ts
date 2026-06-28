@@ -144,118 +144,126 @@ async function q(query: ReturnType<typeof sql>): Promise<Row[]> {
   return Array.isArray(res) ? res : [];
 }
 
+// QUAN TRỌNG: chạy các query TUẦN TỰ (await từng cái), KHÔNG Promise.all.
+// Pooler cấu hình max:1 ở chế độ transaction (Supabase) → bắn nhiều query đồng thời
+// qua 1 connection sẽ treo → Vercel 504 FUNCTION_INVOCATION_TIMEOUT. Toàn app cũng
+// theo pattern await tuần tự này. Query đã gộp tối đa để giảm round-trip.
 export async function getAdminStats(): Promise<AdminStats> {
   try {
-    const [
-      revAgg,
-      ordersStatus,
-      usersTotalRow,
-      revByProductRows,
-      paidPriceRows,
-      enrollByPkgRows,
-      k1Row,
-      payingRow,
-      freeLeadsRow,
-      pkgPerUserRows,
-      funnelRow,
-      revSeriesRows,
-      ordSeriesRows,
-      signupSeriesRows,
-      recentPaidRows,
-      recentSignupRows,
-    ] = await Promise.all([
-      q(sql`
-        SELECT
-          COALESCE(SUM(amount_vnd) FILTER (WHERE status='paid'),0)::bigint AS total,
-          COALESCE(SUM(amount_vnd) FILTER (WHERE status='pending'),0)::bigint AS pending,
-          COALESCE(AVG(amount_vnd) FILTER (WHERE status='paid'),0)::float AS aov
-        FROM orders`),
-      q(sql`SELECT status, COUNT(*)::int AS n FROM orders GROUP BY status`),
-      q(sql`SELECT COUNT(*)::int AS n FROM profiles`),
-      q(sql`
-        SELECT product, COUNT(*)::int AS n, COALESCE(SUM(amount_vnd),0)::bigint AS revenue
-        FROM orders WHERE status='paid' GROUP BY product`),
-      q(sql`
-        SELECT product, amount_vnd, COUNT(*)::int AS n
-        FROM orders WHERE status='paid' GROUP BY product, amount_vnd`),
-      q(sql`SELECT package, COUNT(*)::int AS n FROM enrollments GROUP BY package`),
-      q(sql`
-        SELECT
-          COUNT(*) FILTER (WHERE order_id IS NULL)::int AS free,
-          COUNT(*) FILTER (WHERE order_id IS NOT NULL)::int AS paid
-        FROM enrollments WHERE package='k1'`),
-      q(sql`SELECT COUNT(DISTINCT user_id)::int AS n FROM enrollments WHERE order_id IS NOT NULL`),
-      q(sql`
-        SELECT COUNT(*)::int AS n FROM (
-          SELECT user_id FROM enrollments GROUP BY user_id HAVING bool_and(order_id IS NULL)
-        ) t`),
-      q(sql`
-        SELECT c, COUNT(*)::int AS n FROM (
-          SELECT user_id, COUNT(*) AS c FROM enrollments GROUP BY user_id
-        ) t GROUP BY c`),
-      q(sql`
-        SELECT
-          (SELECT COUNT(*)::int FROM profiles) AS signups,
-          (SELECT COUNT(DISTINCT user_id)::int FROM orders) AS initiated,
-          (SELECT COUNT(DISTINCT user_id)::int FROM orders WHERE status='paid') AS paid,
-          (SELECT COUNT(*)::int FROM (
-            SELECT user_id FROM enrollments WHERE order_id IS NOT NULL
-            GROUP BY user_id HAVING COUNT(*) >= 2
-          ) u) AS upgraded`),
-      q(sql`
+    const days = last30VnDays();
+
+    // (1) Mọi số vô hướng trên bảng orders trong 1 lượt quét.
+    const oAgg =
+      (
+        await q(sql`
+          SELECT
+            COUNT(*) FILTER (WHERE status='paid')::int     AS paid_count,
+            COUNT(*) FILTER (WHERE status='pending')::int  AS pending_count,
+            COUNT(*) FILTER (WHERE status='canceled')::int AS canceled_count,
+            COALESCE(SUM(amount_vnd) FILTER (WHERE status='paid'),0)::bigint    AS rev_total,
+            COALESCE(SUM(amount_vnd) FILTER (WHERE status='pending'),0)::bigint AS rev_pending,
+            COALESCE(AVG(amount_vnd) FILTER (WHERE status='paid'),0)::float     AS aov,
+            COUNT(DISTINCT user_id)::int                            AS users_initiated,
+            COUNT(DISTINCT user_id) FILTER (WHERE status='paid')::int AS users_paid
+          FROM orders`)
+      )[0] ?? {};
+
+    // (2) Đơn paid nhóm theo (gói, số tiền) → suy ra doanh thu/gói + đếm lệch giá trong JS.
+    const paidRows = await q(sql`
+      SELECT product, amount_vnd, COUNT(*)::int AS n
+      FROM orders WHERE status='paid' GROUP BY product, amount_vnd`);
+
+    // (3) Enrollment theo gói (kèm free/paid) trong 1 query.
+    const enrRows = await q(sql`
+      SELECT package, COUNT(*)::int AS n,
+        COUNT(*) FILTER (WHERE order_id IS NULL)::int     AS free_n,
+        COUNT(*) FILTER (WHERE order_id IS NOT NULL)::int AS paid_n
+      FROM enrollments GROUP BY package`);
+
+    // (4) Phân bố theo user (paying / free-only / số gói / nâng cấp) trong 1 query.
+    const uAgg =
+      (
+        await q(sql`
+          SELECT
+            COUNT(*) FILTER (WHERE paid_pkgs >= 1)::int  AS paying,
+            COUNT(*) FILTER (WHERE paid_pkgs = 0)::int   AS free_only,
+            COUNT(*) FILTER (WHERE total_pkgs = 1)::int  AS p1,
+            COUNT(*) FILTER (WHERE total_pkgs = 2)::int  AS p2,
+            COUNT(*) FILTER (WHERE total_pkgs >= 3)::int AS p3,
+            COUNT(*) FILTER (WHERE paid_pkgs >= 2)::int  AS upgraded
+          FROM (
+            SELECT user_id,
+              COUNT(*)                                   AS total_pkgs,
+              COUNT(*) FILTER (WHERE order_id IS NOT NULL) AS paid_pkgs
+            FROM enrollments GROUP BY user_id
+          ) t`)
+      )[0] ?? {};
+
+    // (5) Tổng tài khoản.
+    const usersTotal = n((await q(sql`SELECT COUNT(*)::int AS n FROM profiles`))[0]?.n);
+
+    // (6–8) Chuỗi 30 ngày (giờ VN).
+    const revSeries = fillSeries(
+      await q(sql`
         SELECT to_char(date_trunc('day', paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COALESCE(SUM(amount_vnd),0)::bigint AS value
         FROM orders WHERE status='paid' AND paid_at >= now() - interval '30 days' GROUP BY 1`),
-      q(sql`
+      days,
+    );
+    const ordSeries = fillSeries(
+      await q(sql`
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
         FROM orders WHERE created_at >= now() - interval '30 days' GROUP BY 1`),
-      q(sql`
+      days,
+    );
+    const signupSeries = fillSeries(
+      await q(sql`
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
         FROM profiles WHERE created_at >= now() - interval '30 days' GROUP BY 1`),
-      q(sql`
-        SELECT o.transfer_code, o.product, o.amount_vnd, o.paid_at, p.email
-        FROM orders o LEFT JOIN profiles p ON p.id = o.user_id
-        WHERE o.status='paid' ORDER BY o.paid_at DESC NULLS LAST LIMIT 5`),
-      q(sql`SELECT email, full_name, created_at FROM profiles ORDER BY created_at DESC LIMIT 5`),
-    ]);
+      days,
+    );
 
-    const days = last30VnDays();
-    const revSeries = fillSeries(revSeriesRows, days);
-    const ordSeries = fillSeries(ordSeriesRows, days);
-    const signupSeries = fillSeries(signupSeriesRows, days);
+    // (9–10) Hoạt động gần đây.
+    const recentPaidRows = await q(sql`
+      SELECT o.transfer_code, o.product, o.amount_vnd, o.paid_at, p.email
+      FROM orders o LEFT JOIN profiles p ON p.id = o.user_id
+      WHERE o.status='paid' ORDER BY o.paid_at DESC NULLS LAST LIMIT 5`);
+    const recentSignupRows = await q(sql`
+      SELECT email, full_name, created_at FROM profiles ORDER BY created_at DESC LIMIT 5`);
 
-    // Đơn theo trạng thái (toàn bảng) — sửa bug đếm-trong-100.
-    let oPending = 0,
-      oPaid = 0,
-      oCanceled = 0;
-    for (const r of ordersStatus) {
-      const v = n(r.n);
-      if (r.status === "pending") oPending = v;
-      else if (r.status === "paid") oPaid = v;
-      else if (r.status === "canceled") oCanceled = v;
-    }
-    const ordersTotal = oPending + oPaid + oCanceled;
+    // ── Suy diễn trong JS ──
+    const oPaid = n(oAgg.paid_count),
+      oPending = n(oAgg.pending_count),
+      oCanceled = n(oAgg.canceled_count);
+    const ordersTotal = oPaid + oPending + oCanceled;
     const closeRate = oPaid + oCanceled > 0 ? oPaid / (oPaid + oCanceled) : 0;
 
-    // Lệch giá: so amount paid với giá gói có hiệu lực (tính trong JS theo promo state).
+    // Doanh thu/gói + lệch giá từ cùng 1 tập paidRows.
+    const revMap = new Map<string, { count: number; revenue: number }>();
     let priceMismatch = 0;
-    for (const r of paidPriceRows) {
-      const prod = productById(String(r.product));
-      if (prod && n(r.amount_vnd) !== effectivePriceVnd(prod)) priceMismatch += n(r.n);
+    for (const r of paidRows) {
+      const product = String(r.product);
+      const amount = n(r.amount_vnd);
+      const cnt = n(r.n);
+      const cur = revMap.get(product) ?? { count: 0, revenue: 0 };
+      cur.count += cnt;
+      cur.revenue += amount * cnt;
+      revMap.set(product, cur);
+      const prod = productById(product);
+      if (prod && amount !== effectivePriceVnd(prod)) priceMismatch += cnt;
     }
-
-    const revenueByProduct: ProductRevenue[] = revByProductRows
-      .map((r) => ({
-        product: String(r.product),
-        label: productById(String(r.product))?.label ?? String(r.product),
-        count: n(r.n),
-        revenue: n(r.revenue),
+    const revenueByProduct: ProductRevenue[] = [...revMap.entries()]
+      .map(([product, v]) => ({
+        product,
+        label: productById(product)?.label ?? product,
+        count: v.count,
+        revenue: v.revenue,
       }))
       .sort((a, b) => b.revenue - a.revenue);
 
-    const enrollmentsByPackage: PackageRow[] = enrollByPkgRows
+    const enrollmentsByPackage: PackageRow[] = enrRows
       .map((r) => {
         const prod = productById(String(r.package));
         return {
@@ -267,45 +275,33 @@ export async function getAdminStats(): Promise<AdminStats> {
       })
       .sort((a, b) => b.count - a.count);
 
-    // Phân bố số gói/user → 3 nhóm.
-    let p1 = 0,
-      p2 = 0,
-      p3 = 0;
-    for (const r of pkgPerUserRows) {
-      const c = n(r.c),
-        cnt = n(r.n);
-      if (c <= 1) p1 += cnt;
-      else if (c === 2) p2 += cnt;
-      else p3 += cnt;
-    }
+    const k1Row = enrRows.find((r) => String(r.package) === "k1");
+    const k1Free = n(k1Row?.free_n);
+    const k1Paid = n(k1Row?.paid_n);
+
     const packagesPerUser: PackagesPerUserRow[] = [
-      { bucket: "1 gói", count: p1 },
-      { bucket: "2 gói", count: p2 },
-      { bucket: "3+ gói", count: p3 },
+      { bucket: "1 gói", count: n(uAgg.p1) },
+      { bucket: "2 gói", count: n(uAgg.p2) },
+      { bucket: "3+ gói", count: n(uAgg.p3) },
     ];
 
-    const usersTotal = n(usersTotalRow[0]?.n);
-    const paying = n(payingRow[0]?.n);
-
-    const f = funnelRow[0] ?? {};
+    const paying = n(uAgg.paying);
     const funnel: FunnelStep[] = [
-      { label: "Tài khoản", value: n(f.signups) },
-      { label: "Tạo đơn", value: n(f.initiated) },
-      { label: "Đã trả", value: n(f.paid) },
-      { label: "Nâng cấp (≥2 gói)", value: n(f.upgraded) },
+      { label: "Tài khoản", value: usersTotal },
+      { label: "Tạo đơn", value: n(oAgg.users_initiated) },
+      { label: "Đã trả", value: n(oAgg.users_paid) },
+      { label: "Nâng cấp (≥2 gói)", value: n(uAgg.upgraded) },
     ];
-
-    const rev = revAgg[0] ?? {};
 
     return {
       ok: true,
       revenue: {
-        total: n(rev.total),
+        total: n(oAgg.rev_total),
         today: revSeries.at(-1)?.value ?? 0,
         d7: tail(revSeries, 7),
         d30: tail(revSeries, 30),
-        pending: n(rev.pending),
-        aov: Math.round(n(rev.aov)),
+        pending: n(oAgg.rev_pending),
+        aov: Math.round(n(oAgg.aov)),
       },
       revenueByProduct,
       orders: {
@@ -325,12 +321,12 @@ export async function getAdminStats(): Promise<AdminStats> {
         d7: tail(signupSeries, 7),
         d30: tail(signupSeries, 30),
         paying,
-        freeLeads: n(freeLeadsRow[0]?.n),
+        freeLeads: n(uAgg.free_only),
         signupToPaidRate: usersTotal > 0 ? paying / usersTotal : 0,
       },
       enrollmentsByPackage,
-      k1: { free: n(k1Row[0]?.free), paid: n(k1Row[0]?.paid) },
-      promo: { claimed: n(k1Row[0]?.free), limit: PROMO_FREE_LIMIT, expired: promoExpired() },
+      k1: { free: k1Free, paid: k1Paid },
+      promo: { claimed: k1Free, limit: PROMO_FREE_LIMIT, expired: promoExpired() },
       packagesPerUser,
       funnel,
       series: { revenue: revSeries, orders: ordSeries, signups: signupSeries },

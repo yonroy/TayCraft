@@ -26,25 +26,24 @@ export default async function AdminPage() {
   if (!user) redirect("/login?next=/admin");
   if (!isAdmin(user.email)) redirect("/");
 
-  const [rows, stats, flash] = await Promise.all([
-    db
-      .select({
-        id: orders.id,
-        transferCode: orders.transferCode,
-        product: orders.product,
-        amountVnd: orders.amountVnd,
-        status: orders.status,
-        createdAt: orders.createdAt,
-        paidAt: orders.paidAt,
-        email: profiles.email,
-      })
-      .from(orders)
-      .leftJoin(profiles, eq(orders.userId, profiles.id))
-      .orderBy(desc(orders.createdAt))
-      .limit(100),
-    getAdminStats(),
-    getFlashSale(),
-  ]);
+  // Tuần tự (KHÔNG Promise.all): pooler max:1 transaction-mode treo nếu chạy đồng thời → 504.
+  const stats = await getAdminStats();
+  const flash = await getFlashSale();
+  const rows = await db
+    .select({
+      id: orders.id,
+      transferCode: orders.transferCode,
+      product: orders.product,
+      amountVnd: orders.amountVnd,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      paidAt: orders.paidAt,
+      email: profiles.email,
+    })
+    .from(orders)
+    .leftJoin(profiles, eq(orders.userId, profiles.id))
+    .orderBy(desc(orders.createdAt))
+    .limit(100);
 
   return (
     <>

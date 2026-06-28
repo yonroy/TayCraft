@@ -14,7 +14,7 @@ import { getUser, accessibleCourses } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
-const PRICE = productById("all-access")!.priceVnd; // giá gói Trọn bộ
+const PRICE = productById("k3")!.priceVnd; // giá gói Pro (Trọn bộ tạm ngừng bán tới khi K4 xong)
 
 const FEATURES = [
   { t: "Không code", d: "Tự điền ma trận, nhân–cộng từng ô bằng số thật. Hiểu cơ chế tận gốc." },
@@ -52,8 +52,8 @@ export default async function Home() {
           Không thư viện, không lý thuyết suông — hiểu vì bạn tự tính.
         </p>
         <div className="mt-8 flex flex-wrap gap-3 justify-center">
-          <Link href="/checkout">
-            <Button size="lg">Mua trọn bộ · {formatVnd(PRICE)}</Button>
+          <Link href="/checkout?product=k3">
+            <Button size="lg">Mua gói Pro · {formatVnd(PRICE)}</Button>
           </Link>
           <Link href="/learn/A1-vecto-cong-tru">
             <Button size="lg" variant="outline">
@@ -113,13 +113,13 @@ export default async function Home() {
       {/* Pricing CTA */}
       <section className="mx-auto max-w-5xl px-5 py-12">
         <div className="rounded-3xl border border-line bg-paper p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold">Trọn bộ, một lần trả</h2>
+          <h2 className="text-2xl font-bold">Pro — trọn lộ trình hiện có</h2>
           <p className="mt-2 text-dim">
-            Mở khóa tất cả bài hiện có, kèm cập nhật mới miễn phí trong 12 tháng.
+            Mở khóa nền tảng → CNN/RNN → Transformer &amp; LLM (Khóa 1–3), trả một lần.
           </p>
           <div className="mt-5 text-4xl font-extrabold text-accent">{formatVnd(PRICE)}</div>
           <div className="mt-6">
-            <Link href="/checkout">
+            <Link href="/checkout?product=k3">
               <Button size="lg">Mua ngay</Button>
             </Link>
           </div>

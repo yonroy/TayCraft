@@ -4,11 +4,11 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AdminConfirmButton } from "@/components/admin-order-actions";
 import { AdminFlashSale } from "@/components/admin-flash-sale";
+import { AdminStats } from "@/components/admin-stats";
 import { getUser, isAdmin } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
+import { getAdminStats } from "@/lib/admin-stats";
 import { productById, effectivePriceVnd } from "@/lib/products";
-import { countFreeK1Claims } from "@/lib/orders";
-import { PROMO_FREE_LIMIT } from "@/lib/promo";
 import { db } from "@/lib/db";
 import { orders, profiles } from "@/lib/db/schema";
 import { formatVnd } from "@/lib/utils";
@@ -26,42 +26,48 @@ export default async function AdminPage() {
   if (!user) redirect("/login?next=/admin");
   if (!isAdmin(user.email)) redirect("/");
 
-  const rows = await db
-    .select({
-      id: orders.id,
-      transferCode: orders.transferCode,
-      product: orders.product,
-      amountVnd: orders.amountVnd,
-      status: orders.status,
-      createdAt: orders.createdAt,
-      paidAt: orders.paidAt,
-      email: profiles.email,
-    })
-    .from(orders)
-    .leftJoin(profiles, eq(orders.userId, profiles.id))
-    .orderBy(desc(orders.createdAt))
-    .limit(100);
-
-  const pending = rows.filter((r) => r.status === "pending").length;
-  const paid = rows.filter((r) => r.status === "paid").length;
-  const freeK1 = await countFreeK1Claims();
-  const flash = await getFlashSale();
+  const [rows, stats, flash] = await Promise.all([
+    db
+      .select({
+        id: orders.id,
+        transferCode: orders.transferCode,
+        product: orders.product,
+        amountVnd: orders.amountVnd,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        paidAt: orders.paidAt,
+        email: profiles.email,
+      })
+      .from(orders)
+      .leftJoin(profiles, eq(orders.userId, profiles.id))
+      .orderBy(desc(orders.createdAt))
+      .limit(100),
+    getAdminStats(),
+    getFlashSale(),
+  ]);
 
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl px-5 py-10 flex-1">
-        <h1 className="text-2xl font-bold">Quản trị đơn hàng</h1>
+      <main className="mx-auto w-full max-w-6xl px-5 py-10 flex-1">
+        <h1 className="text-2xl font-bold">Tổng quan quản trị</h1>
         <p className="text-dim mt-1">
-          {rows.length} đơn · {pending} chờ thanh toán · {paid} đã trả ·{" "}
-          <b className="text-ink">K1 free đã phát: {freeK1}/{PROMO_FREE_LIMIT}</b>
+          {stats.orders.total} đơn · {stats.orders.pending} chờ · {stats.orders.paid} đã trả ·{" "}
+          <b className="text-ink">
+            K1 free: {stats.promo.claimed}/{stats.promo.limit}
+          </b>
         </p>
 
         <div className="mt-6">
+          <AdminStats stats={stats} />
+        </div>
+
+        <div className="mt-8">
           <AdminFlashSale initial={flash} />
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
+        <h2 className="mt-8 text-lg font-semibold">100 đơn gần nhất</h2>
+        <div className="mt-3 overflow-x-auto rounded-2xl border border-line">
           <table className="w-full text-sm">
             <thead className="bg-paper text-left text-dim">
               <tr>

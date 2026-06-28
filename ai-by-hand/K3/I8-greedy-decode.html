@@ -3,20 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Greedy Decode trọn chuỗi — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài I8 — Greedy decode (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;}
-  .dtbl th{background:#f3ede0;padding:3px 8px;border:1px solid #d5c49a;font-size:11px;}
-  .dtbl td{padding:5px 10px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.lab{background:#fafafa;font-weight:700}
-  .dtbl td.mx{background:#d6f5d6;font-weight:700;color:#0a6;}
-  .seq{font-family:var(--mono);font-size:15px;line-height:2.2}
-  .tk{display:inline-block;border:1px solid #a7d3e3;background:#d6ecf6;border-radius:5px;padding:1px 9px;margin:0 3px;font-weight:700}
-  .tk.e{background:#ffe6cc;border-color:#e3a76a}
-  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:34px;text-align:center}
-  .key .ub{border:none}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -27,127 +22,177 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Greedy Decode — trọn một chuỗi</h1><span class="vi">— sinh từng token đến hết</span>
-    <span class="tag">argmax mỗi bước, nối vào, lặp · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Cách sinh đơn giản nhất: mỗi bước chọn token có <b>logit lớn nhất</b> (argmax), nối vào
-    chuỗi, đưa lại làm đầu vào, lặp đến khi gặp token kết thúc <b>⟨e⟩</b>. Không bốc thăm, không nhánh — luôn ra cùng
-    một kết quả với cùng đầu vào.
-    <div class="fm">bước t: tokenₜ = argmax logit(token kế | các token trước) → dừng khi chọn ⟨e⟩</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint">Bảng logit "token hiện tại → token kế". Đi theo ô xanh (max) mỗi hàng cho tới ⟨e⟩.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài I8</span><h1>Greedy Decode <small>— sinh trọn một chuỗi</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">BẢNG LOGIT token kế (hàng = token đang ở)</div>
-      <table class="dtbl" id="tbl1">
-        <tr><th>từ \ kế</th><th>A</th><th>B</th><th>C</th><th>⟨e⟩</th></tr>
-      </table>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Đây là vòng lặp sinh cơ bản của mọi LLM: token → mô hình → logits → chọn → nối → lặp. Greedy là cách chọn
+    đơn giản nhất (tất định); hiểu nó là hiểu "LLM viết câu thế nào".
+    <div class="formula">lặp: logitsₜ = Model(token₁…tₜ₋₁) → tokenₜ = argmax(logitsₜ) → nối → tới khi &lt;eos&gt;</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">GREEDY từ ⟨bos⟩: chọn argmax, đi tiếp</div>
-      <div class="seq">
-        ⟨bos⟩ → <span class="ub"></span> → <span class="ub"></span> → <span class="ub"></span> → <span class="ub"></span>
-        &nbsp;&nbsp; chuỗi sinh ra: <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>viết từng chữ</b>, mỗi chữ chọn "khả dĩ nhất ngay lúc đó" rồi đọc lại cả câu để viết chữ kế. Tất định: cùng đầu vào → cùng
+    đầu ra. Nhanh, nhưng thiển cận (không nhìn xa như beam — Bài G8).
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Chạy lại greedy với đúng bảng này, kết quả có đổi không? → <span class="ub" style="min-width:70px"></span></li></ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">từ điển {A, B, C} · 3 bước</span></div>
+    <div class="calc" style="font-size:13.5px">
+      logits (A, B, C) mỗi bước:<br>
+      B1: ( <span class="gv" data-q="l11">2</span>, <span class="gv" data-q="l12">1</span>, <span class="gv" data-q="l13">0</span> ) ·
+      B2: ( <span class="gv" data-q="l21">0</span>, <span class="gv" data-q="l22">3</span>, <span class="gv" data-q="l23">1</span> ) ·
+      B3: ( <span class="gv" data-q="l31">1</span>, <span class="gv" data-q="l32">0</span>, <span class="gv" data-q="l33">4</span> )
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Greedy Decode</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2><span class="tag">argmax</span></div>
+    <div class="calc">
+      argmax( <span data-q="l11">2</span>, <span data-q="l12">1</span>, <span data-q="l13">0</span> ) = token <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> chọn logit lớn nhất → token đầu của chuỗi.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Bước 2 (đầu vào: token vừa sinh)</h2><span class="tag">tự hồi quy</span></div>
+    <div class="calc">
+      argmax( <span data-q="l21">0</span>, <span data-q="l22">3</span>, <span data-q="l23">1</span> ) = token <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="hint">Token vừa sinh được nối vào, thành đầu vào để tính logits bước kế.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước 3 → chuỗi hoàn chỉnh</h2><span class="tag">tới &lt;eos&gt;</span></div>
+    <div class="calc">
+      argmax( <span data-q="l31">1</span>, <span data-q="l32">0</span>, <span data-q="l33">4</span> ) = token <span class="blk" style="min-width:40px"></span> →
+      chuỗi = <span class="blk" style="min-width:70px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> lặp đến khi mô hình phát token kết thúc (&lt;eos&gt;) thì dừng.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tất định & hạn chế</h2><span class="tag">dễ lặp</span></div>
+    <div class="note">Greedy luôn cho cùng kết quả; dễ ra câu <b>nhạt/lặp</b>. Muốn đa dạng → sampling (I2); muốn tối ưu hơn → beam (G8).</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Greedy chọn token thế nào mỗi bước? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Token vừa sinh dùng làm gì? → <span class="blk" style="min-width:140px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I8 · Greedy Decode</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Greedy Decode — trọn một chuỗi</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I8</span><h1>Greedy Decode <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Greedy = beam search với b=1 (Bài G8). Nhanh, xác định, nhưng dễ kẹt chuỗi "an toàn nhạt".</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2></div>
+    <div class="calc ans">token <span class="blk" data-q="t1">A</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">Đường đi argmax (ô xanh)</div>
-      <table class="dtbl" id="tbl2">
-        <tr><th>từ \ kế</th><th>A</th><th>B</th><th>C</th><th>⟨e⟩</th></tr>
-      </table>
-      <div class="seq" style="margin-top:8px">chuỗi sinh: <span id="seqOut"></span></div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Bước 2</h2></div>
+    <div class="calc ans">token <span class="blk" data-q="t2">B</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Không đổi</span>: greedy hoàn toàn xác định (deterministic). Muốn đa dạng phải dùng sampling (I2) với τ &gt; 0.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước 3 → chuỗi</h2></div>
+    <div class="calc ans">token <span class="blk" data-q="t3">C</span> → chuỗi = <span class="blk" data-q="seq">A B C</span></div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> Mỗi bước thực ra cũng chạy cả mô hình (attention + FFN) rồi mới có logit — KV cache (H10) giúp
-        khỏi tính lại. Muốn ép/ghìm vài token cụ thể trước khi chọn → chỉnh logit: <b>I9 repetition penalty / logit bias</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Chuỗi token nối dần (tự hồi quy)</h2><span class="tag">argmax mỗi bước</span></div>
+    <div class="figrow">
+      <svg id="figT" class="fig" viewBox="0 0 250 120" width="82mm" height="40mm" aria-label="ba ô token nối tiếp với mũi tên hồi quy quay lại làm đầu vào bước kế"></svg>
+      <div style="flex:1">
+        <div class="note">Mỗi ô = token được chọn (argmax). Mũi tên <b>cam</b> = token vừa sinh quay lại làm đầu vào bước sau → tự hồi quy.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Greedy Decode</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Chọn thế nào? → <span class="qa">argmax logits (xác suất cao nhất) mỗi bước.</span></li>
+      <li>Token vừa sinh? → <span class="qa">Làm đầu vào cho bước kế (tự hồi quy).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Greedy decode = lặp argmax + nối + hồi quy tới &lt;eos&gt;; tất định, dễ lặp. Bài tiếp (I9): giảm lặp bằng
+    <b>repetition penalty</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I8 · Greedy Decode</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var TOK=['A','B','C','⟨e⟩'];
-function buildTbl(id,rowsUsed,L,path,blank){
-  var el=document.getElementById(id);if(!el)return;while(el.children.length>1)el.removeChild(el.lastChild);
-  var rowNames=['⟨bos⟩','A','B','C'];
-  for(var r=0;r<4;r++){
-    var tr=document.createElement('tr');var html='<td class="lab">'+rowNames[r]+'</td>';
-    var mxj=L[r].indexOf(Math.max.apply(null,L[r]));
-    for(var c=0;c<4;c++){
-      var hot=(rowsUsed.indexOf(r)>=0 && c===mxj);
-      html+='<td'+(hot&&!blank?' class="mx"':'')+'>'+L[r][c]+'</td>';
-    }
-    tr.innerHTML=html;el.appendChild(tr);
-  }
-}
 function generate(){
-  // L[0]=hàng ⟨bos⟩, L[1..3] = hàng A,B,C. logit 0..9, mỗi hàng có max duy nhất
-  var L=[];
-  for(var r=0;r<4;r++){
-    var row;var ok=false;
-    while(!ok){row=[WB.randInt(0,9),WB.randInt(0,9),WB.randInt(0,9),WB.randInt(0,9)];
-      var mx=Math.max.apply(null,row);ok=row.filter(function(v){return v===mx;}).length===1;}
-    L.push(row);
+  var letters=['A','B','C'];
+  function step(){
+    var win = WB.randInt(0,2);
+    var vals=[0,0,0];
+    var pool=WB.pickDistinct([0,1,2,3],3);  // 3 giá trị phân biệt
+    // gán giá trị lớn nhất cho winner
+    pool.sort(function(a,b){return b-a;});
+    vals[win]=pool[0];
+    var k=1; for(var i=0;i<3;i++){ if(i!==win){ vals[i]=pool[k]; k++; } }
+    return {vals:vals, win:win};
   }
-  // greedy từ ⟨bos⟩ (hàng 0); token→hàng: A→1,B→2,C→3,⟨e⟩→dừng
-  var path=[]; var rowsUsed=[0]; var cur=0; var steps=0;
-  while(steps<4){
-    var mxj=L[cur].indexOf(Math.max.apply(null,L[cur]));
-    path.push(mxj); steps++;
-    if(mxj===3) break;            // ⟨e⟩
-    cur=mxj+1;                     // A(0)→hàng1 ... C(2)→hàng3
-    rowsUsed.push(cur);
-  }
-  buildTbl('tbl1',rowsUsed,L,path,true);
-  buildTbl('tbl2',rowsUsed,L,path,false);
-  // điền chuỗi đáp án
-  var seqEl=document.getElementById('seqOut');
-  if(seqEl){seqEl.innerHTML='⟨bos⟩ '+path.map(function(j){return '<span class="tk'+(j===3?' e':'')+'">'+TOK[j]+'</span>';}).join(' ');}
-  draw('sch1',path); draw('sch2',path);
+  var s1=step(), s2=step(), s3=step();
+  var t=[letters[s1.win], letters[s2.win], letters[s3.win]];
+  WB.setAll({
+    l11:String(s1.vals[0]), l12:String(s1.vals[1]), l13:String(s1.vals[2]),
+    l21:String(s2.vals[0]), l22:String(s2.vals[1]), l23:String(s2.vals[2]),
+    l31:String(s3.vals[0]), l32:String(s3.vals[1]), l33:String(s3.vals[2]),
+    t1:t[0], t2:t[1], t3:t[2], seq:t.join(' ')
+  });
+  drawChain('figT', t);
 }
-function draw(id,path){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  var toks=['⟨bos⟩'].concat(path.map(function(j){return TOK[j];}));
-  var n=Math.min(toks.length,5);var bw=30,gap=8,y=44;
-  for(var i=0;i<n;i++){var x=8+i*(bw+gap);var e=toks[i]==='⟨e⟩';var bos=toks[i]==='⟨bos⟩';
-    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="18" rx="4" fill="'+(e?'#ffe6cc':bos?'#eee':'#d6ecf6')+'" stroke="'+(e?'#e3a76a':'#a7d3e3')+'" stroke-width="1.1"/>';
-    s+='<text x="'+(x+bw/2)+'" y="'+(y+12)+'" text-anchor="middle" font-size="8.5" font-weight="700">'+toks[i]+'</text>';
-    if(i<n-1)s+='<line x1="'+(x+bw)+'" y1="'+(y+9)+'" x2="'+(x+bw+gap)+'" y2="'+(y+9)+'" stroke="#0e7490" stroke-width="1.4"/>';}
-  s+='<text x="100" y="22" text-anchor="middle" font-size="8" fill="#6b7280">sinh trái → phải, dừng ở ⟨e⟩</text>';
-  b.innerHTML='<svg viewBox="0 0 200 76" aria-label="chuỗi greedy decode">'+s+'</svg>';
+function drawChain(id, t){
+  var svg = document.getElementById(id); if(!svg) return;
+  var y=46, x0=26, bw=44, gap=70;
+  var s='';
+  for(var i=0;i<3;i++){
+    var bx=x0+i*gap;
+    s+='<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="32" rx="6" fill="#0e749022" stroke="#0e7490" stroke-width="1.6"/>';
+    s+='<text x="'+(bx+bw/2)+'" y="'+(y+21)+'" text-anchor="middle" font-size="14" font-weight="700" fill="#0e7490">'+t[i]+'</text>';
+    s+='<text x="'+(bx+bw/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="8" fill="#5b6776">B'+(i+1)+'</text>';
+    if(i<2){
+      s+='<line x1="'+(bx+bw)+'" y1="'+(y+16)+'" x2="'+(bx+gap)+'" y2="'+(y+16)+'" stroke="#5b6776" stroke-width="1.4" marker-end="url(#ae)"/>';
+      // mũi tên hồi quy cong xuống
+      s+='<path d="M'+(bx+bw/2)+','+(y+32)+' Q'+(bx+gap-10)+','+(y+58)+' '+(bx+gap+bw/2)+','+(y+32)+'" fill="none" stroke="#b45309" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#ar)"/>';
+    }
+  }
+  s+='<defs><marker id="ae" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#5b6776"/></marker>'+
+     '<marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#b45309"/></marker></defs>';
+  s+='<text x="'+(x0)+'" y="'+(y+72)+'" font-size="8.5" fill="#b45309">↩ token vừa sinh → đầu vào bước kế</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

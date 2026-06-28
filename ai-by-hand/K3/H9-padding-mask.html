@@ -3,16 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Padding Mask trong Attention — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài H9 — Padding mask (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
-  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
-  .etbl td.h{background:#f3ede0;font-weight:700;}
-  .m{ --cw:11mm; --ch:8mm; }
-  .cell{font-size:13.5px;}
-  .cell.pad{background:#e5e5e5 !important;border-color:#bbb !important;color:#888 !important;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
 </style>
 </head>
 <body>
@@ -23,122 +25,166 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Padding Mask trong Attention</h1><span class="vi">— che token đệm</span>
-    <span class="tag">đặt −∞ cột PAD → softmax = 0 · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Để gom nhiều câu dài-ngắn khác nhau vào một batch, ta <b>đệm</b> (PAD) câu ngắn cho bằng
-    độ dài. Nhưng token PAD vô nghĩa — không được để token thật chú ý vào nó. Cách làm: <b>cộng −∞</b> vào điểm ở cột
-    PAD <i>trước</i> softmax → eˣ về 0 → trọng số chú ý vào PAD = 0.
-    <div class="fm">Z′ᵢⱼ = Zᵢⱼ nếu j thật, = −∞ nếu j là PAD  →  A = softmax(Z′) theo hàng</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>−∞</td></tr>
-        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td><td>0</td></tr></table>
-      <div class="hint"><b>Xám</b> = token PAD bị che. Token thật phân phối toàn bộ chú ý cho 2 token thật.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài H9</span><h1>Padding Mask <small>— chặn ô đệm trong attention</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">① ĐIỂM Z (đã chia √d) · cột 3 = PAD</div>
-      <div class="row">
-        <div class="blk in"><span class="nm">Z (query × key)</span><div class="m c3" id="Z"></div></div>
-        <span class="op">→</span>
-        <div class="blk"><span class="nm">Z′ sau mask</span><div class="m c3" id="Zm"></div>
-          <span class="fm">cột PAD ← −∞</span></div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:6px">② SOFTMAX theo hàng → A (cột PAD = 0)</div>
-      <div class="row">
-        <div class="blk hot"><span class="nm">A = softmax(Z′)</span><div class="m c3" id="A"></div>
-          <span class="fm">mỗi hàng cộng = 1, ô PAD = 0</span></div>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Vì sao dùng −∞ chứ không phải đặt thẳng A=0 sau softmax? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:140px"></span></li></ol>
-      </div>
-    </div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Gom câu khác độ dài vào một batch → ta <b>đệm (pad)</b> cho bằng nhau. Không mask thì token thật sẽ trộn
+    thông tin từ ô đệm vô nghĩa → hỏng kết quả. Mask đặt điểm ô pad về <b>−∞</b> để softmax cho <b>0</b>.
+    <div class="formula">điểm_masked = điểm + (mask ? −∞ : 0) &nbsp;→&nbsp; softmax(−∞) = 0</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Padding Mask</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Đặt điểm của ô pad xuống <b>âm vô cùng</b> trước softmax → eˣ của nó = 0 → <b>không nhận chú ý</b>. Như "bịt tai" với những vị
+    trí không có nội dung thật.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 vị trí · 1 PAD</span></div>
+    <div class="calc" style="font-size:14px">
+      điểm thô = ( <span class="gv" data-q="s1">2</span>, <span class="gv" data-q="s2">0</span>, <span class="gv" data-q="s3">1</span>, <span class="gv">·</span> ) cho [ t₁, t₂, t₃, <b>PAD</b> ]
+    </div>
+    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+  </div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Áp mask lên ô PAD</h2><span class="tag">đặt −∞</span></div>
+    <div class="calc">
+      điểm sau mask = ( <span data-q="s1">2</span>, <span data-q="s2">0</span>, <span data-q="s3">1</span>, <span class="blk" style="min-width:36px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> chỉ ô PAD bị đặt −∞; các ô thật giữ nguyên điểm.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Mũ hóa</h2><span class="tag">eˣ</span></div>
+    <div class="calc">
+      e<sup><span data-q="s1">2</span></sup>=<span data-q="e1">7.39</span> , e<sup><span data-q="s2">0</span></sup>=<span data-q="e2">1.00</span> , e<sup><span data-q="s3">1</span></sup>=<span data-q="e3">2.72</span> , e<sup>−∞</sup> = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="hint">e mũ của −∞ là 0 → ô pad biến mất khỏi tổng.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Softmax (chỉ 3 ô thật)</h2><span class="tag">eˣ / Σ</span></div>
+    <div class="calc">
+      Σ = <span data-q="e1">7.39</span>+<span data-q="e2">1.00</span>+<span data-q="e3">2.72</span> = <span data-q="Z">11.11</span> →
+      α = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:34px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> trọng số dồn hết cho token thật; PAD = 0; tổng vẫn = 1.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Causal mask (che tương lai)</h2><span class="tag">cùng cơ chế</span></div>
+    <div class="note">GPT dùng <b>mặt nạ tam giác</b> đặt −∞ cho mọi vị trí <b>sau</b> token hiện tại → khi sinh, token chỉ thấy quá khứ (Bài 14).
+      Cùng kỹ thuật mask, khác chỗ che.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Mask đặt điểm thành gì trước softmax? → <span class="blk" style="min-width:130px"></span></li>
+      <li>Causal mask che gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Padding Mask trong Attention</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H9</span><h1>Padding Mask <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>−∞</td></tr>
-        <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td><td>0</td></tr></table>
-      <div class="hint">Khác causal mask (H3/Bài H3) che tam giác trên; padding mask che <b>cột</b> token đệm.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Sau mask</h2></div>
+    <div class="calc ans">( <span data-q="s1">2</span>, <span data-q="s2">0</span>, <span data-q="s3">1</span>, <span class="blk" data-q="pad">−∞</span> )</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">Z → Z′ (mask) → A = softmax</div>
-      <div class="row">
-        <div class="blk in"><span class="nm">Z</span><div class="m c3" id="kZ"></div></div>
-        <span class="op">→</span>
-        <div class="blk fw"><span class="nm">Z′</span><div class="m c3" id="kZm"></div></div>
-        <span class="op">→</span>
-        <div class="blk hot"><span class="nm">A</span><div class="m c3" id="kA"></div></div>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Mũ hóa</h2></div>
+    <div class="calc ans">e<sup>−∞</sup> = <span class="blk" data-q="epad">0</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Để mẫu số đúng</span>: cộng −∞ trước softmax thì PAD <i>không</i> góp vào Σeˣ → các token thật được chuẩn hóa lại đúng. Đặt A=0 sau softmax sẽ làm hàng không còn cộng = 1.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Softmax</h2></div>
+    <div class="calc ans">α = ( <span class="blk" data-q="a1">0.67</span>, <span class="blk" data-q="a2">0.09</span>, <span class="blk" data-q="a3">0.24</span>, <span class="blk" data-q="a4">0</span> )</div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> Mọi mặt nạ trong attention chỉ là cộng −∞ vào điểm trước softmax (causal, padding, hay cả hai).
-        Giờ sang sinh văn bản: tái dùng K,V đã tính để khỏi lặp → <b>H10 KV cache</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trọng số chú ý: PAD = 0</h2><span class="tag">cột xám = bị che</span></div>
+    <div class="figrow">
+      <svg id="figM" class="fig" viewBox="0 0 240 150" width="78mm" height="46mm" aria-label="bốn cột trọng số chú ý, ba token thật màu lam, ô PAD màu xám bằng không"></svg>
+      <div style="flex:1">
+        <div class="note">Ba cột <b>lam</b> = token thật (tổng = 1), cột <b>xám</b> = PAD bị mask về 0. Token thật không "nghe" ô rác.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Padding Mask</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Mask đặt điểm thành? → <span class="qa">−∞ (→ softmax cho 0).</span></li>
+      <li>Causal mask che? → <span class="qa">Các vị trí tương lai (sau token hiện tại).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Padding mask = đặt điểm ô đệm −∞ → softmax 0 → token thật không nghe ô rác; causal mask cùng cơ chế che
+    tương lai. Bài tiếp (H10): tăng tốc sinh token bằng <b>KV cache</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fill(id,M,blank,padCol){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++){var isPad=padCol&&j===2;var doBlank=blank&&!isPad;s+='<div class="cell'+(doBlank?' blank':'')+(isPad?' pad':'')+'">'+(doBlank?'':M[i][j])+'</div>';}el.innerHTML=s;}
-function f2(v){return WB.fmt2(v);}
+var EXP = {0:1, 1:2.72, 2:7.39};
 function generate(){
-  // 3 query × 3 key; cột 3 = PAD. điểm thật ∈ {0,1,2}
-  var Z=[],Zm=[],A=[];
-  for(var i=0;i<3;i++){
-    var a=WB.randInt(0,2), b=WB.randInt(0,2), c=WB.randInt(0,2);
-    Z.push([a,b,c]);
-    Zm.push([a,b,'−∞']);
-    var ea=(a===2?7.39:a===1?2.72:1), eb=(b===2?7.39:b===1?2.72:1);
-    var s=ea+eb;
-    A.push([f2(Math.round(ea/s*100)/100), f2(Math.round(eb/s*100)/100), '0']);
-  }
-  fill('Z',Z,false,false);
-  fill('Zm',Zm,true,true);
-  fill('A',A,true,true);
-  fill('kZ',Z,false,false);
-  fill('kZm',Zm,false,true);
-  fill('kA',A,false,true);
-  draw('sch1'); draw('sch2');
+  var f2 = WB.fmt2;
+  var perm = WB.pick([[2,0,1],[2,1,0],[1,2,0],[0,2,1],[1,0,2],[0,1,2]]);
+  var s1=perm[0], s2=perm[1], s3=perm[2];
+  var e1=EXP[s1], e2=EXP[s2], e3=EXP[s3];
+  var Z = Math.round((e1+e2+e3)*100)/100;
+  var a1 = Math.round(e1/(e1+e2+e3)*100)/100;
+  var a2 = Math.round(e2/(e1+e2+e3)*100)/100;
+  var a3 = Math.round((1-a1-a2)*100)/100;
+  WB.setAll({
+    s1:String(s1), s2:String(s2), s3:String(s3),
+    e1:f2(e1), e2:f2(e2), e3:f2(e3), Z:f2(Z),
+    a1:f2(a1), a2:f2(a2), a3:f2(a3), a4:'0',
+    pad:'−∞', epad:'0'
+  });
+  drawMask('figM', [a1,a2,a3,0]);
 }
-function draw(id){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  var labs=['t₁','t₂','PAD'], cols=['#fdecd2','#fdecd2','#e5e5e5'];
-  for(var i=0;i<3;i++){var x=18+i*56;s+='<rect x="'+x+'" y="20" width="42" height="22" rx="4" fill="'+cols[i]+'" stroke="#1a1a1a" stroke-width="1.2"/>';s+='<text x="'+(x+21)+'" y="34" text-anchor="middle" font-size="10" font-weight="700">'+labs[i]+'</text>';}
-  // query t1 nhìn sang t1,t2 (lam), gạch chéo sang PAD
-  s+='<defs><marker id="b'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
-  s+='<path d="M39,42 Q39,66 39,42" fill="none"/>';
-  s+='<line x1="39" y1="44" x2="39" y2="62" stroke="#0e7490" stroke-width="1.4" marker-end="url(#b'+id+')"/>';
-  s+='<line x1="40" y1="44" x2="92" y2="62" stroke="#0e7490" stroke-width="1.4" marker-end="url(#b'+id+')"/>';
-  s+='<line x1="40" y1="44" x2="148" y2="62" stroke="#bbb" stroke-width="1.4" stroke-dasharray="3 2"/>';
-  s+='<line x1="140" y1="56" x2="156" y2="68" stroke="#c00" stroke-width="1.6"/><line x1="156" y1="56" x2="140" y2="68" stroke="#c00" stroke-width="1.6"/>';
-  s+='<text x="84" y="80" text-anchor="middle" font-size="8" fill="#6b7280">PAD bị che (×) khỏi chú ý</text>';
-  b.innerHTML='<svg viewBox="0 0 178 88" aria-label="che token PAD khỏi attention">'+s+'</svg>';
+function drawMask(id, a){
+  var svg = document.getElementById(id); if(!svg) return;
+  var x0=26, base=120, H=92, gap=52, bw=30;
+  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+4*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var labs=['t₁','t₂','t₃','PAD'];
+  for(var i=0;i<4;i++){
+    var bx=x0+i*gap, h=a[i]*H, col=i<3?'#0e7490':'#9aa3ad';
+    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+col+'33" stroke="'+col+'" stroke-width="1.4"/>';
+    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-4).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+col+'">'+WB.fmt2(a[i])+'</text>';
+    s+='<text x="'+(bx+bw/2)+'" y="'+(base+13)+'" text-anchor="middle" font-size="9" fill="#5b6776">'+labs[i]+'</text>';
+  }
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

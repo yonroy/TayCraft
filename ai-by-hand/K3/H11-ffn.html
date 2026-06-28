@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · FFN trong Transformer — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài H11 — FFN trong Transformer (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
-  .etbl td{border:1px solid #d5c49a;padding:1px 5px;text-align:center;}
-  .etbl td.h{background:#f3ede0;font-weight:700;}
-  .m{ --cw:10mm; --ch:8mm; }
-  .cell{font-size:13px;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -22,144 +22,171 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>FFN trong Transformer</h1><span class="vi">— mạng truyền thẳng theo vị trí</span>
-    <span class="tag">Linear → GELU → Linear · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Sau attention (token trộn thông tin của nhau), mỗi token đi qua một <b>FFN giống hệt
-    nhau</b> để "suy nghĩ" riêng. FFN nở rộng chiều ẩn (thường ×4), phi tuyến GELU, rồi ép về chiều cũ. Đây là nơi
-    chứa phần lớn tham số của Transformer.
-    <div class="fm">FFN(x) = W₂ · GELU(W₁x + b₁) + b₂   (d=2 → ẩn 4 → d=2)</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <table class="etbl"><tr><td class="h">z</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
-        <tr><td class="h">GELU</td><td>−.05</td><td>−.16</td><td>0</td><td>.84</td><td>1.95</td><td>3.00</td></tr></table>
-      <div class="hint">GELU như ReLU "mềm": cho qua phần dương, nén nhẹ phần âm về gần 0.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài H11</span><h1>FFN trong Transformer <small>— giãn → ReLU → nén</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">① LỚP 1: z = W₁x + b₁  → ② GELU(z) = h</div>
-      <div class="row">
-        <div class="blk in"><span class="nm">x</span><div class="m c1" id="x"></div></div>
-        <div class="blk w"><span class="nm">W₁ <s>4×2</s></span><div class="m c2" id="W1"></div></div>
-        <div class="blk w"><span class="nm">b₁</span><div class="m c1" id="b1"></div></div>
-        <span class="op">→</span>
-        <div class="blk"><span class="nm">z</span><div class="m c1" id="z"></div></div>
-        <span class="op">→</span>
-        <div class="blk hot"><span class="nm">h = GELU(z)</span><div class="m c1" id="h"></div></div>
-      </div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Attention <b>trộn</b> thông tin giữa token; FFN <b>xử lý</b> thông tin trong từng token (phi tuyến, dung
+    lượng lớn). FFN chiếm phần lớn tham số mỗi lớp Transformer — nơi mô hình "suy nghĩ" trên mỗi vị trí.
+    <div class="formula">FFN(x) = W₂ · ReLU(W₁·x + b₁) + b₂&nbsp; (giãn d → 4d → d, áp cho từng token)</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">③ LỚP 2: y = W₂h + b₂</div>
-      <div class="row">
-        <div class="blk w"><span class="nm">W₂ <s>2×4</s></span><div class="m c4" id="W2"></div></div>
-        <div class="blk w"><span class="nm">b₂</span><div class="m c1" id="b2"></div></div>
-        <span class="op">→</span>
-        <div class="blk out"><span class="nm">y = FFN(x)</span><div class="m c1" id="y"></div>
-          <span class="fm">yᵢ = (hàng i của W₂)·h + b₂ᵢ</span></div>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như một <b>trạm xử lý</b> đặt ở mỗi vị trí: <b>giãn</b> vectơ ra chiều lớn hơn (4×) để có chỗ "nghĩ", lọc phi tuyến bằng ReLU, rồi
+    <b>nén</b> về chiều cũ. Cùng một FFN dùng cho mọi token (chia sẻ trọng số theo vị trí).
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>FFN xử lý mỗi token độc lập hay trộn các token? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=2 → ẩn 4 → d=2</span></div>
+    <div class="calc" style="font-size:13.5px">
+      x = ( <span class="gv" data-q="x1">1</span>, <span class="gv" data-q="x2">2</span> ) ; b₁=0, b₂=0<br>
+      W₁ cho h_pre = (x₁, x₂, x₁+x₂, x₁−x₂) ; &nbsp; W₂ hai hàng: (tổng) và (xen dấu +−+−)
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · FFN</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Giãn rộng (W₁x)</h2><span class="tag">d → 4d</span></div>
+    <div class="calc">
+      h_pre = ( <span data-q="x1">1</span>, <span data-q="x2">2</span>, <span data-q="x1">1</span>+<span data-q="x2">2</span>, <span data-q="x1">1</span>−<span data-q="x2">2</span> ) =
+      ( <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> chiều ẩn lớn cho mô hình nhiều "đặc trưng trung gian" để xử lý trước khi nén lại.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>ReLU</h2><span class="tag">cắt âm về 0</span></div>
+    <div class="calc">
+      h = ReLU(<span data-q="hp1">1</span>, <span data-q="hp2">2</span>, <span data-q="hp3">3</span>, <span data-q="hp4">−1</span>) =
+      ( <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span> )
+    </div>
+    <div class="hint">ReLU(z) = max(0, z) → giữ dương, cắt âm về 0: phi tuyến + thưa.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Nén lại (W₂h)</h2><span class="tag">4d → d</span></div>
+    <div class="calc">
+      hàng tổng: <span data-q="h1">1</span>+<span data-q="h2">2</span>+<span data-q="h3">3</span>+<span data-q="h4">0</span> = <span class="blk" style="min-width:34px"></span><br>
+      hàng xen dấu: <span data-q="h1">1</span>−<span data-q="h2">2</span>+<span data-q="h3">3</span>−<span data-q="h4">0</span> = <span class="blk" style="min-width:34px"></span> &nbsp;→&nbsp; out = ( __, __ )
+    </div>
+    <div class="why"><b>Vì sao:</b> nén về chiều cũ d để cộng residual (Bài F9) và đi tiếp lớp sau.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vị trí độc lập</h2><span class="tag">cùng FFN mọi token</span></div>
+    <div class="note">FFN áp <b>riêng từng token</b>, không trộn vị trí (việc đó là của attention). Hệ số giãn thường 4× → FFN giữ ~⅔ tham số
+      mỗi lớp Transformer.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Attention vs FFN khác vai trò gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>FFN áp theo vị trí thế nào? → <span class="blk" style="min-width:140px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H11 · FFN</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>FFN trong Transformer</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H11</span><h1>FFN trong Transformer <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <table class="etbl"><tr><td class="h">z</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
-        <tr><td class="h">GELU</td><td>−.05</td><td>−.16</td><td>0</td><td>.84</td><td>1.95</td><td>3.00</td></tr></table>
-      <div class="hint">Nhiều mô hình thay GELU bằng ReLU/SwiGLU; cùng vai trò "cổng phi tuyến".</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Giãn rộng</h2></div>
+    <div class="calc ans">h_pre = ( <span class="blk" data-q="hp1">1</span>, <span class="blk" data-q="hp2">2</span>, <span class="blk" data-q="hp3">3</span>, <span class="blk" data-q="hp4">−1</span> )</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">z = W₁x+b₁ → h = GELU(z) → y = W₂h+b₂</div>
-      <div class="row">
-        <div class="blk in"><span class="nm">x</span><div class="m c1" id="kx"></div></div>
-        <div class="blk w"><span class="nm">W₁</span><div class="m c2" id="kW1"></div></div>
-        <div class="blk w"><span class="nm">b₁</span><div class="m c1" id="kb1"></div></div>
-        <span class="op">→</span>
-        <div class="blk fw"><span class="nm">z</span><div class="m c1" id="kz"></div></div>
-        <span class="op">→</span>
-        <div class="blk hot"><span class="nm">h</span><div class="m c1" id="kh"></div></div>
-      </div>
-      <div class="row" style="margin-top:5px">
-        <div class="blk w"><span class="nm">W₂</span><div class="m c4" id="kW2"></div></div>
-        <div class="blk w"><span class="nm">b₂</span><div class="m c1" id="kb2"></div></div>
-        <span class="op">→</span>
-        <div class="blk out"><span class="nm">y = FFN(x)</span><div class="m c1" id="ky"></div></div>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>ReLU</h2></div>
+    <div class="calc ans">h = ( <span class="blk" data-q="h1">1</span>, <span class="blk" data-q="h2">2</span>, <span class="blk" data-q="h3">3</span>, <span class="blk" data-q="h4">0</span> )</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Độc lập từng token</span> ("position-wise"): cùng W₁,W₂ áp cho mọi vị trí. Việc trộn token là nhiệm vụ của attention.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Nén lại</h2></div>
+    <div class="calc ans">out = ( <span class="blk" data-q="o1">6</span>, <span class="blk" data-q="o2">2</span> )</div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> Attention (trộn token) + FFN (xử lý từng token) + residual + LayerNorm = một khối Transformer
-        (Bài H6). FFN thường chiếm ~2/3 tham số. Hết Phần H — sang <b>Phần I</b>: bên trong một LLM thật.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Luồng: x → giãn 4 → ReLU → nén 2</h2><span class="tag">trạm xử lý/token</span></div>
+    <div class="figrow">
+      <svg id="figF" class="fig" viewBox="0 0 250 150" width="80mm" height="48mm" aria-label="luồng FFN: vectơ 2 chiều giãn ra 4 chiều, qua ReLU, rồi nén về 2 chiều"></svg>
+      <div style="flex:1">
+        <div class="calc ans">out = ( <span data-q="o1">6</span>, <span data-q="o2">2</span> )</div>
+        <div class="note">Cổ phình ở giữa (4 nơ-ron) = chiều ẩn lớn; ReLU cắt âm; rồi nén về d=2 để cộng residual.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · FFN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Attention vs FFN? → <span class="qa">Attention trộn thông tin giữa token; FFN xử lý trong từng token.</span></li>
+      <li>Áp theo vị trí? → <span class="qa">Độc lập từng token (cùng một FFN, không trộn vị trí).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> FFN = giãn → ReLU → nén, áp từng token; giữ phần lớn tham số. Cùng attention + LayerNorm + residual tạo một
+    khối Transformer (Bài 13). Hết mạch attention nền; tiếp Phần I (LLM) — Bài I1: tokenization/BPE.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H11 · FFN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var GELU={'-2':-0.05,'-1':-0.16,'0':0,'1':0.84,'2':1.95,'3':3.00};
-function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
-function f2(v){return WB.fmt2(v);}
 function generate(){
-  var x,W1,b1,z; var ok=false,guard=0;
-  while(!ok && guard++<400){
-    x=[WB.randInt(0,2),WB.randInt(0,2)];
-    W1=[];for(var i=0;i<4;i++)W1.push([WB.randInt(0,1),WB.randInt(0,1)]);
-    b1=[];for(var i=0;i<4;i++)b1.push([WB.randInt(-1,1)]);
-    z=[];ok=true;
-    for(var i=0;i<4;i++){var v=W1[i][0]*x[0]+W1[i][1]*x[1]+b1[i][0];z.push(v);if(v< -2||v>3)ok=false;}
-  }
-  var h=z.map(function(v){return GELU[String(v)];});
-  var W2=[];for(var i=0;i<2;i++){var r=[];for(var j=0;j<4;j++)r.push(WB.randInt(-1,1));W2.push(r);}
-  var b2=[WB.randInt(0,1),WB.randInt(0,1)];
-  var y=[];for(var i=0;i<2;i++){var v=b2[i];for(var j=0;j<4;j++)v+=W2[i][j]*h[j];y.push(Math.round(v*100)/100);}
-  var Xc=[[x[0]],[x[1]]];
-  var Zc=z.map(function(v){return [v];});
-  var Hc=h.map(function(v){return [f2(v)];});
-  var Yc=y.map(function(v){return [f2(v)];});
-  var B1=b1, B2=[[b2[0]],[b2[1]]];
-  // ĐỀ
-  fill('x',Xc,false); fill('W1',W1,false); fill('b1',B1,false); fill('z',Zc,true); fill('h',Hc,true);
-  fill('W2',W2,false); fill('b2',B2,false); fill('y',Yc,true);
-  // ĐÁP ÁN
-  fill('kx',Xc,false); fill('kW1',W1,false); fill('kb1',B1,false); fill('kz',Zc,false); fill('kh',Hc,false);
-  fill('kW2',W2,false); fill('kb2',B2,false); fill('ky',Yc,false);
-  draw('sch1'); draw('sch2');
+  var x1 = WB.randIntNZ(-3,4), x2 = WB.randIntNZ(-3,4);
+  var hp = [x1, x2, x1+x2, x1-x2];
+  var h = hp.map(function(v){return Math.max(0,v);});
+  var o1 = h[0]+h[1]+h[2]+h[3];
+  var o2 = h[0]-h[1]+h[2]-h[3];
+  WB.setAll({
+    x1: WB.fmtInt(x1), x2: WB.fmtInt(x2),
+    hp1: WB.fmtInt(hp[0]), hp2: WB.fmtInt(hp[1]), hp3: WB.fmtInt(hp[2]), hp4: WB.fmtInt(hp[3]),
+    h1: WB.fmtInt(h[0]), h2: WB.fmtInt(h[1]), h3: WB.fmtInt(h[2]), h4: WB.fmtInt(h[3]),
+    o1: WB.fmtInt(o1), o2: WB.fmtInt(o2)
+  });
+  drawFFN('figF', h);
 }
-function draw(id){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  function box(x,y,w,h,fill,txt){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1.1"/>';s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+1)+'" text-anchor="middle" font-size="9" font-weight="700">'+txt+'</text>';}
-  function ar(x1,y1,x2,y2){s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#f'+id+')"/>';}
-  s+='<defs><marker id="f'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
-  // x(2) -> hidden(4) -> y(2) sơ đồ nở-thắt
-  for(var i=0;i<2;i++)box(8,30+i*30,22,18,'#fdecd2','x'+(i+1));
-  for(var i=0;i<4;i++)box(56,12+i*22,22,16,'#fff3b0','h'+(i+1));
-  for(var i=0;i<2;i++)box(104,30+i*30,22,18,'#d6ecf6','y'+(i+1));
-  for(var i=0;i<2;i++)for(var j=0;j<4;j++)s+='<line x1="30" y1="'+(39+i*30)+'" x2="56" y2="'+(20+j*22)+'" stroke="#e0d8c4" stroke-width="0.7"/>';
-  for(var j=0;j<4;j++)for(var i=0;i<2;i++)s+='<line x1="78" y1="'+(20+j*22)+'" x2="104" y2="'+(39+i*30)+'" stroke="#e0d8c4" stroke-width="0.7"/>';
-  s+='<text x="67" y="9" text-anchor="middle" font-size="7.5" fill="#6b7280">ẩn ×4 + GELU</text>';
-  b.innerHTML='<svg viewBox="0 0 134 110" aria-label="ffn nở rộng rồi thắt lại">'+s+'</svg>';
+function drawFFN(id, h){
+  var svg = document.getElementById(id); if(!svg) return;
+  function node(x,y,col,txt){
+    return '<circle cx="'+x+'" cy="'+y+'" r="11" fill="'+col+'22" stroke="'+col+'" stroke-width="1.5"/>'+
+      (txt!=null?'<text x="'+x+'" y="'+(y+3.5)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+col+'">'+txt+'</text>':'');
+  }
+  var s='';
+  var xin=30, xh=125, xout=220;
+  var yin=[55,95], yh=[28,66,104,142], yout=[55,95];
+  // cạnh
+  for(var i=0;i<2;i++)for(var j=0;j<4;j++) s+='<line x1="'+(xin+11)+'" y1="'+yin[i]+'" x2="'+(xh-11)+'" y2="'+yh[j]+'" stroke="#cfd6dd" stroke-width="0.8"/>';
+  for(var j=0;j<4;j++)for(var k=0;k<2;k++) s+='<line x1="'+(xh+11)+'" y1="'+yh[j]+'" x2="'+(xout-11)+'" y2="'+yout[k]+'" stroke="#cfd6dd" stroke-width="0.8"/>';
+  for(var i=0;i<2;i++) s+=node(xin,yin[i],'#0e7490',null);
+  for(var j=0;j<4;j++){var on=h[j]>0; s+=node(xh,yh[j], on?'#7c5cff':'#9aa3ad', on?WB.fmtInt(h[j]):'0');}
+  for(var k=0;k<2;k++) s+=node(xout,yout[k],'#b45309',null);
+  s+='<text x="'+xin+'" y="16" text-anchor="middle" font-size="8.5" fill="#0e7490" font-weight="700">x (d=2)</text>';
+  s+='<text x="'+xh+'" y="16" text-anchor="middle" font-size="8.5" fill="#7c5cff" font-weight="700">ẩn 4 · ReLU</text>';
+  s+='<text x="'+xout+'" y="16" text-anchor="middle" font-size="8.5" fill="#b45309" font-weight="700">out (d=2)</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

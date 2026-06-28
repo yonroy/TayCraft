@@ -7,12 +7,15 @@
 <link rel="stylesheet" href="../wb.css">
 <style>
   /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
-  .page .step{ margin-top:6px; }
+  .page .step{ margin-top:4px; }
   .page .grid2{ margin-top:2px; gap:4px 24px; }
-  .page .intro{ margin-top:6px; }
-  .page .calc{ line-height:1.65; }
-  .page .note{ margin-top:4px; }
-  .page .mtx .cell{ height:8mm; }
+  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .why{ margin-top:3px; }
+  .page .calc{ line-height:1.55; }
+  .page .note{ margin-top:3px; }
+  .page .mtx .cell{ height:7mm; }
 </style>
 </head>
 <body>
@@ -41,6 +44,12 @@
       X<sub>pos</sub> = E[token<sub>pos</sub>] <s style="color:var(--accent2)">+ PE[pos]</s>
       &nbsp;&nbsp;|&nbsp;&nbsp; PE(pos,2i)=sin(pos/10000<sup>2i/d</sup>), &nbsp;PE(pos,2i+1)=cos(…)
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Bảng embedding là <b>từ điển vectơ</b>: mỗi token một dòng. "Tra" = nhân one-hot với bảng = lấy đúng dòng đó. Token nghĩa gần nhau →
+    vectơ gần nhau. PE thêm "dấu vị trí" để mô hình phân biệt thứ tự (cùng từ ở vị trí khác → vectơ khác).
   </div>
 
   <!-- GIVEN -->
@@ -77,6 +86,7 @@
       e<sub>1</sub> (“<span data-q="w1b">yêu</span>”, hàng <span data-q="id1c">1</span>) = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
     </div>
     <div class="hint"><b>Mẹo:</b> "embedding" chỉ là <b>tra bảng</b> — chép đúng hàng, chưa tính gì.</div>
+    <div class="why"><b>Vì sao:</b> tra bảng = nhân one-hot(id)·E = lấy đúng dòng id; rẻ và <b>học được</b> (E là tham số).</div>
   </div>
 
   <!-- STEP 2 -->
@@ -87,6 +97,7 @@
       X<sub>1</sub> = e<sub>1</sub>+PE[1] = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
     </div>
     <div class="note">Cộng <b>theo từng ô</b> (element-wise). PE[0]=(0,1,0,1) nên vị trí 0 chỉ thêm 1 vào ô lẻ.</div>
+    <div class="why"><b>Vì sao:</b> PE và embedding <b>cùng chiều d</b> → cộng (không nối) là cách rẻ để hợp nhất "nghĩa" + "vị trí", khối sau không phình.</div>
   </div>
   </div><!-- /grid2 -->
 
@@ -103,10 +114,12 @@
     </div>
   </div>
 
-  <!-- FIGURE -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: tra bảng + cộng sóng vị trí</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figEmb" class="fig" viewBox="0 0 270 104" width="100mm" height="38mm" aria-label="trái: bảng nhúng E với hai hàng được chọn tô đậm, mũi tên kéo ra hai vectơ token; phải: hai sóng sin và cos, chấm lấy mẫu tại vị trí 0 và 1 minh họa dấu vị trí cộng thêm"></svg>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>"Tra embedding" tương đương phép gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao cộng PE thay vì nối? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Positional</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -144,6 +157,20 @@
         <div class="cell ans" data-q="x1_0b">1.84</div><div class="cell ans" data-q="x1_1b">2.54</div><div class="cell ans" data-q="x1_2b">−1.99</div><div class="cell ans" data-q="x1_3b">1.00</div>
       </div></div>
     <div class="note">Hai token có thể là <b>cùng một từ</b> mà vẫn ra vectơ khác nhau — đó chính là tác dụng của dấu vị trí.</div>
+  </div>
+
+  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: tra bảng + cộng sóng vị trí</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figEmb" class="fig" viewBox="0 0 270 104" width="100mm" height="38mm" aria-label="trái: bảng nhúng E với hai hàng được chọn tô đậm, mũi tên kéo ra hai vectơ token; phải: hai sóng sin và cos, chấm lấy mẫu tại vị trí 0 và 1 minh họa dấu vị trí cộng thêm"></svg>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Tra embedding? → <span class="qa">Nhân one-hot với bảng E (lấy đúng dòng id).</span></li>
+      <li>Cộng PE thay vì nối? → <span class="qa">Giữ nguyên chiều d → khối sau không phình; hợp nhất nghĩa + vị trí.</span></li>
+    </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">

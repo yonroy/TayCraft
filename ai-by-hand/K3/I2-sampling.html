@@ -3,21 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Logits → Softmax → Sampling — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài I2 — Sampling (logits → token) (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
-  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
-  .etbl td.h{background:#f3ede0;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
-  .dtbl td{padding:4px 8px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.lab{background:#fafafa;font-weight:700}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .dtbl td.keep{background:#d6f5d6;font-weight:700;color:#0a6;}
-  .dtbl td.cut{color:#bbb;text-decoration:line-through;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
 </style>
 </head>
 <body>
@@ -28,134 +25,176 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Logits → Softmax → Sampling</h1><span class="vi">— chọn token kế</span>
-    <span class="tag">nhiệt độ τ · top-k · top-p · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> LLM xuất ra <b>logit</b> cho mỗi token; ta chia cho <b>nhiệt độ τ</b> (τ cao → phẳng,
-    đa dạng; τ thấp → sắc, an toàn), softmax thành xác suất, rồi <b>cắt đuôi</b>: <b>top-k</b> giữ k token cao nhất,
-    <b>top-p</b> giữ nhóm nhỏ nhất có tổng xác suất ≥ p. Cuối cùng bốc thăm theo xác suất còn lại.
-    <div class="fm">z = logit / τ → p = softmax(z) → lọc top-k / top-p → chuẩn hóa lại → lấy mẫu</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>4</td></tr>
-        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td><td>54.6</td></tr></table>
-      <div class="hint" id="tauh1"></div>
-    </div>
+  <div class="wb-title"><span class="no">Bài I2</span><h1>Sampling <small>— logits → softmax → chọn token</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">① z = logit/τ → ② p = softmax(z)</div>
-      <table class="dtbl" id="tbl1">
-        <tr><td class="lab">token</td><td>A</td><td>B</td><td>C</td><td>D</td></tr>
-        <tr><td class="lab">logit</td><td id="L0"></td><td id="L1"></td><td id="L2"></td><td id="L3"></td></tr>
-        <tr><td class="lab">z = logit/τ</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-        <tr><td class="lab">p = softmax</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-      </table>
-
-      <div class="bandh fw" style="margin-top:6px">③ TOP-k (k=2) và TOP-p (p=0.8): đánh dấu token được GIỮ</div>
-      <div class="seq" style="font-family:var(--mono);font-size:12.5px;line-height:1.9">
-        top-2 giữ: <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:70px"></span> &nbsp;·&nbsp;
-        top-p(0.8) giữ: <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:70px"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Tăng τ làm phân phối p sắc hơn hay phẳng hơn? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:90px"></span></li></ol>
-      </div>
-    </div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Cùng một mô hình, cách <b>lấy mẫu</b> quyết định văn bản nhàm (greedy) hay đa dạng (sampling). Nhiệt độ T,
+    top-k, top-p là các "núm" điều chỉnh độ ngẫu nhiên — kỹ năng dùng LLM thực tế.
+    <div class="formula">p = softmax(z / T) &nbsp;·&nbsp; top-k: giữ k logit lớn nhất &nbsp;·&nbsp; top-p: giữ tập nhỏ nhất có Σp ≥ p</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Sampling</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    <b>Nhiệt độ T</b> như "độ liều": T nhỏ (→0) làm phân phối nhọn → gần như luôn chọn token mạnh nhất (an toàn, nhàm); T lớn làm
+    phẳng → liều hơn, đa dạng hơn. top-k/top-p <b>cắt đuôi</b> token xác suất thấp để khỏi nói linh tinh.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 token A B C</span></div>
+    <div class="calc" style="font-size:14px">
+      logits z = ( <span class="gv" data-q="z1">2</span>, <span class="gv" data-q="z2">1</span>, <span class="gv" data-q="z3">0</span> )
+    </div>
+    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>0.5</td><td>1</td><td>2</td></tr>
+      <tr><td class="h">eˣ</td><td>1.00</td><td>1.65</td><td>2.72</td><td>7.39</td></tr></table>
+  </div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Softmax T = 1</h2><span class="tag">giữ nguyên độ chênh</span></div>
+    <div class="calc">
+      e = (<span data-q="e1">7.39</span>, <span data-q="e2">2.72</span>, <span data-q="e3">1.00</span>), Σ=<span data-q="Z1">11.11</span> →
+      p = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> T=1 giữ nguyên độ chênh giữa các logit → phân phối "mặc định" của mô hình.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Nhiệt độ T = 2</h2><span class="tag">z / 2</span></div>
+    <div class="calc">
+      z/2 = (<span data-q="h1">1</span>, <span data-q="h2">0.5</span>, <span data-q="h3">0</span>) → e=(<span data-q="e1t">2.72</span>, <span data-q="e2t">1.65</span>, <span data-q="e3t">1.00</span>), Σ=<span data-q="Z2">5.37</span> →
+      p = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
+    </div>
+    <div class="hint">T lớn → các logit xích lại gần → phân phối <b>phẳng hơn</b> → đa dạng hơn.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Greedy & top-k = 1</h2><span class="tag">argmax</span></div>
+    <div class="calc">
+      token có p lớn nhất → token <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> greedy = top-1 → tất định, dễ lặp/nhàm (không liều).</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>top-p = 0.9</h2><span class="tag">cắt đuôi</span></div>
+    <div class="note">Với p(T=1) đã tính: giữ tập nhỏ nhất có Σp ≥ 0.9 (thường {token1, token2}), <b>bỏ</b> token đuôi; chuẩn hóa lại rồi lấy
+      mẫu. top-p (nucleus) giữ "khối xác suất" thay vì số token cố định → linh hoạt hơn top-k.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Tăng nhiệt độ T làm gì với phân phối? → <span class="blk" style="min-width:150px"></span></li>
+      <li>top-p khác top-k ở đâu? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I2 · Sampling</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Logits → Softmax → Sampling</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I2</span><h1>Sampling <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>4</td></tr>
-        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td><td>54.6</td></tr></table>
-      <div class="hint" id="tauh2"></div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Softmax T = 1</h2></div>
+    <div class="calc ans">p = ( <span class="blk" data-q="p1">0.67</span>, <span class="blk" data-q="p2">0.24</span>, <span class="blk" data-q="p3">0.09</span> )</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">z → p → lọc</div>
-      <table class="dtbl" id="tbl2">
-        <tr><td class="lab">token</td><td>A</td><td>B</td><td>C</td><td>D</td></tr>
-        <tr><td class="lab">logit</td><td id="kL0"></td><td id="kL1"></td><td id="kL2"></td><td id="kL3"></td></tr>
-        <tr><td class="lab">z</td><td id="z0"></td><td id="z1"></td><td id="z2"></td><td id="z3"></td></tr>
-        <tr><td class="lab">p</td><td id="p0"></td><td id="p1"></td><td id="p2"></td><td id="p3"></td></tr>
-      </table>
-      <div class="seq" style="font-family:var(--mono);font-size:12.5px;line-height:1.9;margin-top:5px">
-        top-2 giữ <b><span data-q="k2">?</span></b> &nbsp;·&nbsp; top-p(0.8) giữ <b><span data-q="tp">?</span></b>
-        (cộng tích lũy p giảm dần tới khi ≥ 0.8)
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Softmax T = 2</h2></div>
+    <div class="calc ans">p = ( <span class="blk" data-q="pt1">0.51</span>, <span class="blk" data-q="pt2">0.31</span>, <span class="blk" data-q="pt3">0.19</span> ) <span class="note" style="display:inline">— phẳng hơn</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Phẳng hơn</span>: chia logit cho τ lớn làm khoảng cách giữa các z nhỏ lại → eˣ gần nhau → p đều hơn (đa dạng, "sáng tạo" hơn nhưng dễ lạc đề).</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Greedy</h2></div>
+    <div class="calc ans">token <span class="blk" data-q="greedy">A</span> (p lớn nhất)</div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> τ điều "độ liều", top-k/top-p cắt đuôi xác suất thấp để tránh token rác. Greedy (Bài G8) là
-        trường hợp τ→0. Đo "độ ngạc nhiên" trung bình của mô hình trên văn bản → <b>I3 Perplexity</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Phân phối p: T=1 (nhọn) vs T=2 (phẳng)</h2><span class="tag">nhiệt độ</span></div>
+    <div class="figrow">
+      <svg id="figP" class="fig" viewBox="0 0 240 150" width="78mm" height="48mm" aria-label="cột xác suất ba token ở T bằng 1 nhọn và T bằng 2 phẳng hơn"></svg>
+      <div style="flex:1">
+        <div class="note">Cột <b>lam</b> = T=1 (chênh lệch lớn → nhọn), cột <b>cam</b> = T=2 (xích lại gần → phẳng). T càng cao, đầu ra càng đa dạng.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Sampling</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Tăng T? → <span class="qa">Phân phối phẳng hơn → đa dạng / ngẫu nhiên hơn.</span></li>
+      <li>top-p vs top-k? → <span class="qa">top-p giữ tập có tổng xác suất ≥ p (số token thay đổi); top-k giữ k token cố định.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Softmax(z/T) + top-k/top-p điều khiển độ sáng tạo khi sinh; T nhỏ an toàn, T lớn liều. Bài tiếp (I3): đo độ
+    "bất ngờ" của mô hình — <b>perplexity</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I2 · Sampling</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var EXP={0:1,1:2.72,2:7.39,4:54.6};
-function f2(v){return WB.fmt2(v);}
-function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
-function setCell(id,v,cls){var el=document.getElementById(id);if(!el)return;el.textContent=v;if(cls)el.className=cls;}
+var E1 = {0:1, 1:2.72, 2:7.39};         // e^z (T=1), z∈{0,1,2}
+var E2 = {0:1, 0.5:1.65, 1:2.72};       // e^(z/2), z/2∈{0,0.5,1}
 function generate(){
-  // logit chẵn ∈{0,2,4}; τ ∈{1,2}
-  var pool=[[4,2,0,0],[4,2,2,0],[4,0,0,0],[2,2,0,0]];
-  var L=WB.pick(pool).slice();
-  // xáo trộn thứ tự token
-  for(var i=L.length-1;i>0;i--){var j=WB.randInt(0,i);var t=L[i];L[i]=L[j];L[j]=t;}
-  var tau=WB.pick([1,2]);
-  var z=L.map(function(v){return v/tau;});
-  var e=z.map(function(v){return EXP[v];});
-  var sum=e[0]+e[1]+e[2]+e[3];
-  var p=e.map(function(v){return Math.round(v/sum*100)/100;});
-  // top-2: chỉ số 2 p lớn nhất
-  var idx=[0,1,2,3].sort(function(a,b){return p[b]-p[a];});
-  var top2=[idx[0],idx[1]].sort(function(a,b){return a-b;});
-  // top-p 0.8: cộng dồn theo p giảm dần
-  var cum=0, nucleus=[];
-  for(var i=0;i<4;i++){nucleus.push(idx[i]);cum+=p[idx[i]];if(cum>=0.8)break;}
-  nucleus.sort(function(a,b){return a-b;});
-  var nm=['A','B','C','D'];
-  function names(arr){return arr.map(function(i){return nm[i];}).join(', ');}
-  // điền
-  ['L0','L1','L2','L3'].forEach(function(id,i){setTxt(id,L[i]);});
-  ['kL0','kL1','kL2','kL3'].forEach(function(id,i){setTxt(id,L[i]);});
-  ['z0','z1','z2','z3'].forEach(function(id,i){setTxt(id,f2(z[i]));});
-  ['p0','p1','p2','p3'].forEach(function(id,i){var cls=nucleus.indexOf(i)>=0?'keep':'cut';setCell(id,f2(p[i]),cls);});
-  setTxt('tauh1','Lần này τ = '+tau+(tau===2?' (phẳng hơn)':' (sắc)'));
-  setTxt('tauh2','τ = '+tau);
-  WB.setAll({k2:names(top2), tp:names(nucleus)});
-  draw('sch1',p,nucleus); draw('sch2',p,nucleus);
+  var f2 = WB.fmt2;
+  var perm = WB.pick([[2,1,0],[2,0,1],[1,2,0],[0,2,1],[1,0,2],[0,1,2]]);
+  var z1=perm[0], z2=perm[1], z3=perm[2];
+  var e1=E1[z1], e2=E1[z2], e3=E1[z3], Z1=Math.round((e1+e2+e3)*100)/100;
+  var p1=Math.round(e1/(e1+e2+e3)*100)/100, p2=Math.round(e2/(e1+e2+e3)*100)/100, p3=Math.round((1-p1-p2)*100)/100;
+  var h1=z1/2, h2=z2/2, h3=z3/2;
+  var et1=E2[h1], et2=E2[h2], et3=E2[h3], Z2=Math.round((et1+et2+et3)*100)/100;
+  var pt1=Math.round(et1/(et1+et2+et3)*100)/100, pt2=Math.round(et2/(et1+et2+et3)*100)/100, pt3=Math.round((1-pt1-pt2)*100)/100;
+  var letters=['A','B','C'];
+  var gidx = z1>=z2 ? (z1>=z3?0:2) : (z2>=z3?1:2);
+  WB.setAll({
+    z1:String(z1), z2:String(z2), z3:String(z3),
+    e1:f2(e1), e2:f2(e2), e3:f2(e3), Z1:f2(Z1),
+    p1:f2(p1), p2:f2(p2), p3:f2(p3),
+    h1:String(h1), h2:String(h2), h3:String(h3),
+    e1t:f2(et1), e2t:f2(et2), e3t:f2(et3), Z2:f2(Z2),
+    pt1:f2(pt1), pt2:f2(pt2), pt3:f2(pt3),
+    greedy:letters[gidx]
+  });
+  drawDist('figP', [p1,p2,p3], [pt1,pt2,pt3]);
 }
-function draw(id,p,nucleus){
-  var b=document.getElementById(id);if(!b)return;var s='';var nm=['A','B','C','D'];
-  for(var i=0;i<4;i++){var h=Math.round(p[i]*70);var x=18+i*40;var keep=nucleus.indexOf(i)>=0;
-    s+='<rect x="'+x+'" y="'+(82-h)+'" width="26" height="'+h+'" rx="2" fill="'+(keep?'#d6f5d6':'#eee')+'" stroke="'+(keep?'#0a6':'#ccc')+'"/>';
-    s+='<text x="'+(x+13)+'" y="'+(78-h)+'" text-anchor="middle" font-size="8" fill="#555">'+f2(p[i])+'</text>';
-    s+='<text x="'+(x+13)+'" y="94" text-anchor="middle" font-size="9" font-weight="700">'+nm[i]+'</text>';}
-  s+='<line x1="12" y1="82" x2="172" y2="82" stroke="#bbb"/>';
-  s+='<text x="92" y="10" text-anchor="middle" font-size="8" fill="#0a6">xanh = token được giữ</text>';
-  b.innerHTML='<svg viewBox="0 0 184 98" aria-label="phân phối xác suất token và phần được giữ">'+s+'</svg>';
+function drawDist(id, p, pt){
+  var svg = document.getElementById(id); if(!svg) return;
+  var x0=30, base=122, H=96, gap=66, bw=20;
+  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var labs=['A','B','C'];
+  for(var i=0;i<3;i++){
+    var bx=x0+i*gap;
+    var h1=p[i]*H, h2=pt[i]*H;
+    s+='<rect x="'+bx+'" y="'+(base-h1).toFixed(1)+'" width="'+bw+'" height="'+h1.toFixed(1)+'" fill="#0e749033" stroke="#0e7490" stroke-width="1.3"/>';
+    s+='<rect x="'+(bx+bw+3)+'" y="'+(base-h2).toFixed(1)+'" width="'+bw+'" height="'+h2.toFixed(1)+'" fill="#b4530933" stroke="#b45309" stroke-width="1.3"/>';
+    s+='<text x="'+(bx+bw)+'" y="'+(base+13)+'" text-anchor="middle" font-size="9" fill="#5b6776">'+labs[i]+'</text>';
+  }
+  s+='<text x="'+(x0+4)+'" y="14" font-size="8.5" fill="#0e7490" font-weight="700">■ T=1</text>';
+  s+='<text x="'+(x0+52)+'" y="14" font-size="8.5" fill="#b45309" font-weight="700">■ T=2</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

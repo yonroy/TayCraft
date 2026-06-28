@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài J5 — Diffusion: một bước khử nhiễu (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<style>
+  /* siết khoảng cách (additive, không đụng wb.css) */
+  .page .step{ margin-top:5px; }
+  .page .grid2{ margin-top:2px; gap:4px 22px; }
+  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .why{ margin-top:3px; }
+  .page .calc{ line-height:1.55; }
+  .page .note{ margin-top:3px; }
+</style>
 </head>
 <body>
 
@@ -32,6 +43,12 @@
       x̂₀ = <span class="frac"><span class="n">x<sub>t</sub> − √(1−ᾱ<sub>t</sub>)·ε</span><span class="d">√ᾱ<sub>t</sub></span></span>
       &nbsp;&nbsp;·&nbsp;&nbsp; x<sub>t−1</sub> = √ᾱ<sub>t−1</sub>·x̂₀ + √(1−ᾱ<sub>t−1</sub>)·ε
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Forward (J4) <b>thêm</b> nhiễu; reverse <b>đoán và trừ</b> nhiễu. Mạng học "trong ảnh mờ này, đâu là nhiễu?" → gỡ ra một ít → ảnh
+    rõ hơn một chút. Lặp nhiều bước nhỏ, như <b>lau dần</b> lớp bụi để hiện bức tranh.
   </div>
 
   <!-- GIVEN -->
@@ -66,6 +83,7 @@
       cột 2: (<span data-q="xt2b">0.20</span> − 0.60·<span data-q="e2b">−1</span>)/0.80 = <span class="blk"></span>
     </div>
     <div class="hint"><b>Mẹo:</b> trừ đi phần nhiễu rồi chia √ᾱ<sub>t</sub> để "phóng" về thang ảnh gốc.</div>
+    <div class="why"><b>Vì sao:</b> đây là <b>đảo công thức forward</b> (J4) — biết nhiễu thì suy ngược ra ảnh sạch.</div>
   </div>
 
   <!-- STEP 2 -->
@@ -89,11 +107,15 @@
       x<sub>t−1</sub> gần x̂₀ hơn x<sub>t</sub>? <span class="blk" style="min-width:60px"></span>
     </div>
     <div class="note">Lặp lại hàng chục–nghìn bước, mức nhiễu về 0 → ảnh hiện rõ. Chất lượng phụ thuộc hoàn toàn vào độ chính xác của <b>ε</b> mạng đoán — thứ duy nhất được huấn luyện.</div>
+    <div class="why"><b>Vì sao:</b> lùi <b>từng bước nhỏ</b> (không nhảy thẳng về x₀) vì εθ chỉ là ước lượng — nhiều bước nhỏ chính xác & ổn định hơn.</div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: một bước tiến về ảnh sạch</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figDiff" class="fig" viewBox="0 0 270 116" width="125mm" height="54mm" aria-label="trái: mặt phẳng ảnh với x_t (nhiễu), x_{t-1} (gần hơn) và x̂₀ (sạch); phải: thước mức nhiễu tụt từ 0.6 xuống 0.28"></svg>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Mỗi bước khử nhiễu, mạng dự đoán gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao lùi từng bước nhỏ thay vì về x₀ ngay? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion (khử nhiễu)</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -140,6 +162,20 @@
       x<sub>t−1</sub> gần x̂₀ hơn: <span class="blk" data-q="closer">đúng ✓</span>
     </div>
     <div class="note" data-q="dist">Khoảng cách tới x̂₀: ‖x<sub>t</sub>−x̂₀‖ ≈ 0.85 → ‖x<sub>t−1</sub>−x̂₀‖ ≈ 0.40. Bước này kéo ảnh lại gần ảnh sạch.</div>
+  </div>
+
+  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: một bước tiến về ảnh sạch</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figDiff" class="fig" viewBox="0 0 270 116" width="125mm" height="54mm" aria-label="trái: mặt phẳng ảnh với x_t (nhiễu), x_{t-1} (gần hơn) và x̂₀ (sạch); phải: thước mức nhiễu tụt từ 0.6 xuống 0.28"></svg>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Mạng dự đoán gì? → <span class="qa">Phần nhiễu εθ trong ảnh để trừ ra.</span></li>
+      <li>Vì sao lùi từng bước nhỏ? → <span class="qa">εθ chỉ là ước lượng; nhiều bước nhỏ chính xác & ổn định hơn.</span></li>
+    </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">

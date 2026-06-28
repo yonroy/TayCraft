@@ -7,12 +7,16 @@
 <link rel="stylesheet" href="../wb.css">
 <style>
   /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
-  .page .step{ margin-top:6px; }
-  .page .grid2{ margin-top:2px; gap:4px 24px; }
-  .page .intro{ margin-top:6px; }
-  .page .calc{ line-height:1.65; }
-  .page .note{ margin-top:4px; }
-  .page .mtx .cell{ height:8mm; }
+  .page .step{ margin-top:4px; }
+  .page .grid2{ margin-top:2px; gap:4px 22px; }
+  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .why{ margin-top:3px; }
+  .page .calc{ line-height:1.5; }
+  .page .note{ margin-top:3px; }
+  .page .mtx .cell{ height:7mm; }
+  .exptab div{ font-size:10px; }
 </style>
 </head>
 <body>
@@ -42,6 +46,12 @@
       g = softmax(router) &nbsp;→&nbsp; giữ top-2, chuẩn hóa lại &nbsp;→&nbsp;
       out = Σ<sub>i∈top-2</sub> g′ᵢ · Eᵢ(x)
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>hội đồng chuyên gia</b>: router (người điều phối) xem token rồi gọi <b>vài</b> chuyên gia hợp nhất, bỏ qua số còn lại. Mỗi
+    token đi qua ít chuyên gia → rẻ; nhưng cả mô hình <b>chứa rất nhiều</b> chuyên gia → giàu kiến thức.
   </div>
 
   <!-- GIVEN -->
@@ -82,6 +92,7 @@
       eˢ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> ) · Σ = <span class="blk"></span><br>
       g = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
     </div>
+    <div class="why"><b>Vì sao:</b> router cho điểm "token này hợp expert nào" rồi softmax thành trọng số cổng.</div>
   </div>
   <!-- STEP 2 -->
   <div class="step">
@@ -107,13 +118,16 @@
       E(x) của 2 cái giữ: tính yᵢ = Wᵢ·x<br>
       out = ( <span class="blk"></span>, <span class="blk"></span> )
     </div>
+    <div class="why"><b>Vì sao:</b> kết quả = tổ hợp có trọng số đầu ra các expert được chọn (gate g′ làm trọng số).</div>
   </div>
   </div><!-- /grid2 -->
 
-  <!-- FIGURE -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: router chọn 2 trong 3 chuyên gia</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figMoE" class="fig" viewBox="0 0 270 104" width="126mm" height="48mm" aria-label="token vào router, router tỏa sang ba chuyên gia; hai chuyên gia điểm cao được tô đậm và nối tới ô tổng có trọng số, chuyên gia bị loại mờ đi"></svg>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>MoE đạt được gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Rủi ro của router? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -158,6 +172,20 @@
     </div>
   </div>
   </div><!-- /grid2 -->
+
+  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: router chọn 2 trong 3 chuyên gia</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figMoE" class="fig" viewBox="0 0 270 104" width="126mm" height="48mm" aria-label="token vào router, router tỏa sang ba chuyên gia; hai chuyên gia điểm cao được tô đậm và nối tới ô tổng có trọng số, chuyên gia bị loại mờ đi"></svg>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>MoE đạt được gì? → <span class="qa">Nhiều tham số (kiến thức) nhưng tính ít — mỗi token chỉ dùng top-k expert.</span></li>
+      <li>Rủi ro router? → <span class="qa">Dồn tải vào vài expert → cần cân bằng tải (load balancing).</span></li>
+    </ol>
+  </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> MoE tách rời <b>dung lượng</b> (tổng số tham số, rất lớn) khỏi <b>chi phí tính</b> (chỉ k chuyên gia

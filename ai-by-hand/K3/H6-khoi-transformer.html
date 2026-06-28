@@ -1,115 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài H6 — Khối Transformer (A3 · 4 trang)</title>
+<title>Làm toán AI · Bài H6 — Khối Transformer (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-/* ====== A3 PRINT-FIRST WORKSHEET ====== */
-@page{ size:A3 portrait; margin:0; }
-:root{
-  --ink:#16202e; --dim:#5b6776; --line:#c2ccd8; --accent:#0e7490; --accent2:#b45309; --v:#7c5cff;
-  --given:#eaf4f6; --givenline:#7fb4bf; --blank:#ffffff;
-  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
-  --sans:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.45;}
-.page{width:297mm;height:420mm;overflow:hidden;background:#fff;margin:10mm auto;padding:18mm 18mm 16mm;
-  box-shadow:0 2px 14px rgba(0,0,0,.18);position:relative;}
-/* ---- chrome ---- */
-.wb-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--ink);padding-bottom:8px;}
-.wb-head .brand{font-weight:800;font-size:17px;letter-spacing:.02em;}
-.wb-head .brand span{color:var(--accent);}
-.wb-head .meta{text-align:right;font-family:var(--mono);font-size:12px;color:var(--dim);}
-.wb-title{margin-top:11px;display:flex;align-items:baseline;gap:12px;}
-.wb-title .no{font-family:var(--mono);font-weight:700;color:#fff;background:var(--accent);border-radius:7px;padding:3px 10px;font-size:15px;}
-.wb-title h1{font-size:26px;font-weight:800;letter-spacing:-.01em;}
-.wb-title h1 small{font-weight:600;color:var(--dim);font-size:16px;}
-.namebar{margin-top:8px;display:flex;gap:26px;font-size:13px;color:var(--dim);font-family:var(--mono);}
-.namebar b{color:var(--ink);font-weight:600;}
-.namebar u{text-decoration:none;border-bottom:1.4px dotted var(--line);display:inline-block;min-width:120px;}
-.crumb{font-family:var(--mono);font-size:12px;color:var(--dim);}
-/* ---- intro ---- */
-.intro{margin-top:11px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;
-  background:#f7fafb;padding:11px 16px;font-size:14px;}
-.intro b{color:var(--accent);}
-.formula{margin-top:9px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:600;color:var(--ink);
-  background:#fff;border:1px dashed var(--line);border-radius:8px;padding:11px 6px;line-height:2.3;}
-.formula .lab{color:var(--accent2);}
-/* ---- steps ---- */
-.step{margin-top:16px;break-inside:avoid;}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 34px;}
-.step-h{display:flex;align-items:center;gap:11px;margin-bottom:9px;}
-.step-h .b{font-family:var(--mono);font-weight:700;font-size:14px;color:#fff;background:var(--ink);border-radius:50%;
-  width:27px;height:27px;display:grid;place-items:center;flex:none;}
-.step-h h2{font-size:17.5px;font-weight:700;}
-.step-h .tag{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line);
-  border-radius:20px;padding:2px 10px;}
-.row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
-.op{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--dim);}
-.hint{margin-top:10px;font-size:13px;color:var(--accent2);font-family:var(--mono);}
-.hint b{color:var(--accent2);}
-/* ---- matrix ---- */
-.mwrap{display:inline-flex;flex-direction:column;align-items:center;gap:5px;}
-.mlabel{font-family:var(--mono);font-size:13.5px;font-weight:700;color:var(--ink);}
-.mlabel s{color:var(--dim);font-weight:400;text-decoration:none;font-size:11.5px;}
-.mtx{display:grid;border-left:3px solid var(--ink);border-right:3px solid var(--ink);border-radius:3px;
-  padding:3px;gap:3px;background:#fff;}
-.mtx.c1{grid-template-columns:repeat(1,var(--cell,18mm));}
-.mtx.c2{grid-template-columns:repeat(2,var(--cell,18mm));}
-.mtx.c3{grid-template-columns:repeat(3,var(--cell,18mm));}
-.mtx.c4{grid-template-columns:repeat(4,var(--cell,18mm));}
-.cell{height:13mm;display:grid;place-items:center;font-family:var(--mono);font-size:17px;border:1px solid var(--line);border-radius:3px;}
-.mtx.tall .cell{height:16mm;}
-.cell.given{background:var(--given);border-color:var(--givenline);font-weight:700;}
-.cell.blank{background:var(--blank);}
-.cell.wv{background:#f1eeff;border-color:#bcb0ff;font-weight:700;color:#4a36b0;}
-.note{font-size:12.5px;color:var(--dim);margin-top:8px;}
-.lnbox{font-family:var(--mono);font-size:13px;color:var(--ink);background:#fbf5ff;border:1px solid #d8caff;
-  border-left:4px solid var(--v);border-radius:8px;padding:10px 14px;line-height:1.9;}
-.lnbox b{color:var(--v);}
-.worked{margin-top:9px;font-family:var(--mono);font-size:12.5px;color:#7a3d00;background:#fff5e9;
-  border:1px solid #e3b780;border-radius:7px;padding:7px 12px;}
-.wb-foot{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;justify-content:space-between;
-  font-family:var(--mono);font-size:11px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;}
-/* answer key accent */
-.page.key .wb-title .no{background:var(--accent2);}
-.page.key .cell.ans{background:#fff5e9;border-color:#e3b780;font-weight:700;color:#7a3d00;}
-.key-badge{font-family:var(--mono);font-size:12px;color:#fff;background:var(--accent2);border-radius:5px;padding:3px 10px;font-weight:700;}
-/* ---- TOÀN CẢNH: sơ đồ dòng chảy dọc ---- */
-.flow{margin-top:10px;}
-.stage{display:flex;align-items:center;gap:18px;border:1px solid var(--line);border-radius:12px;padding:10px 16px;background:#fff;}
-.stage.att{border-color:#7fb4bf;background:#f3fafb;}
-.stage.nrm{border-color:#cfc2ff;background:#faf7ff;}
-.stage.add{border-color:var(--line);background:#fbfcfd;border-style:dashed;}
-.stage.out{border-color:#e3b780;background:#fff7ee;}
-.stage .sL{flex:1;min-width:0;}
-.stage .sname{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px;}
-.stage .sbadge{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:var(--ink);border-radius:50%;
-  width:24px;height:24px;display:grid;place-items:center;flex:none;}
-.stage.att .sbadge{background:var(--accent);}
-.stage.nrm .sbadge{background:var(--v);}
-.stage.out .sbadge{background:var(--accent2);}
-.stage .sform{font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-top:5px;}
-.stage .sform b{color:var(--ink);}
-.mtx.mini{padding:2px;gap:2px;}
-.mtx.mini .cell{height:8mm;font-size:13px;}
-.down{display:flex;flex-direction:column;align-items:center;color:var(--dim);font-family:var(--mono);font-size:11.5px;line-height:1.15;margin:3px 0;}
-.down .ar{font-size:20px;line-height:1;color:#9fb0c0;}
-.down .res{color:var(--accent);font-weight:700;}
-.down .resv{color:var(--v);font-weight:700;}
-/* screen toolbar (không in) */
-.toolbar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:50;}
-.toolbar button,.toolbar a{font-family:var(--sans);font-size:13px;font-weight:600;border:1px solid var(--line);
-  background:#fff;color:var(--ink);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.toolbar button:hover{border-color:var(--accent);color:var(--accent);}
-@media print{
-  body{background:#fff;}
-  .page{margin:0;box-shadow:none;}
-  .page+.page{page-break-before:always;}
-  .toolbar{display:none;}
-}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -120,531 +22,179 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1/6 — TOÀN CẢNH cả khối ============ -->
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A3 · 6 trang<br>Mức: nâng cao</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
   </div>
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Toàn cảnh một khối Transformer <small>— cả pipeline trên một trang</small></h1></div>
+
+  <div class="wb-title"><span class="no">Bài H6</span><h1>Khối Transformer <small>— attention + FFN, bọc LN & residual</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
   <div class="intro">
-    <b>Cách đọc.</b> Đọc <b>từ trên xuống</b>: dữ liệu chảy qua từng chặng, số ở mỗi ma trận là <b>kết quả của chặng đó</b>.
-    Khối = <b>2 lớp con</b>: ① Self-Attention + Add&amp;Norm (viền <span style="color:var(--accent)">lam</span>),
-    ② FFN + Add&amp;Norm (viền <span style="color:var(--v)">tím</span>). Mũi tên ghi <span style="color:var(--accent)">＋residual</span> = cộng lại đầu vào.
-    Đây là <b>ví dụ đã giải</b> để hình dung; phần luyện tay (ô trống) ở các trang sau. Bấm 🎲 → mọi số ở đây cũng đổi theo.
+    <b>Vì sao quan trọng.</b> Đây là "viên gạch" lặp lại của mọi LLM. Hai nửa bổ trợ: attention <b>trộn</b> thông tin giữa token, FFN
+    <b>xử lý</b> trong token; LN + residual giữ tín hiệu/gradient ổn định để chồng được rất sâu.
+    <div class="formula">a = x + Attention(LN(x)) &nbsp;·&nbsp; out = a + FFN(LN(a)) &nbsp;(pre-norm)</div>
   </div>
 
-  <div class="flow">
-    <!-- X -->
-    <div class="stage">
-      <div class="sL"><div class="sname"><span class="sbadge">X</span> Đầu vào · 3 token × d=4</div>
-        <div class="sform">embedding của 3 token (mỗi hàng = 1 token)</div></div>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell given" data-q="x_11">2</div><div class="cell given" data-q="x_12">2</div><div class="cell given" data-q="x_13">2</div><div class="cell given" data-q="x_14">2</div>
-        <div class="cell given" data-q="x_21">3</div><div class="cell given" data-q="x_22">3</div><div class="cell given" data-q="x_23">3</div><div class="cell given" data-q="x_24">3</div>
-        <div class="cell given" data-q="x_31">2</div><div class="cell given" data-q="x_32">2</div><div class="cell given" data-q="x_33">2</div><div class="cell given" data-q="x_34">2</div>
-      </div>
-    </div>
-    <div class="down"><span class="ar">↓</span></div>
-
-    <!-- Self-Attention -->
-    <div class="stage att">
-      <div class="sL"><div class="sname"><span class="sbadge">1</span> Self-Attention &nbsp;<span style="font-weight:600;color:var(--accent);font-size:12px">(chi tiết: Bài H2)</span></div>
-        <div class="sform">Q,K,V → S=QKᵀ/√d → softmax → O = A·V. <b>O = mỗi token trộn lại theo mức chú ý.</b></div></div>
-      <svg id="figMini" viewBox="0 0 120 96" width="40mm" height="32mm" style="flex:none;background:#fff;border:1px solid var(--givenline);border-radius:6px" aria-label="heatmap chú ý"></svg>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell given" data-q="a_11">1</div><div class="cell given" data-q="a_12">−1</div><div class="cell given" data-q="a_13">1</div><div class="cell given" data-q="a_14">−1</div>
-        <div class="cell given" data-q="a_21">1</div><div class="cell given" data-q="a_22">−1</div><div class="cell given" data-q="a_23">1</div><div class="cell given" data-q="a_24">−1</div>
-        <div class="cell given" data-q="a_31">−1</div><div class="cell given" data-q="a_32">1</div><div class="cell given" data-q="a_33">−1</div><div class="cell given" data-q="a_34">1</div>
-      </div>
-    </div>
-    <div class="down"><span class="res">＋ X &nbsp;(kết nối tắt)</span><span class="ar">↓</span></div>
-
-    <!-- Add 1 -->
-    <div class="stage add">
-      <div class="sL"><div class="sname"><span class="sbadge">＋</span> Cộng tắt 1 &nbsp;Z⁰ = X + O</div>
-        <div class="sform">cộng từng ô — giữ lại thông tin gốc của token (residual)</div></div>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell" data-q="z_11">3</div><div class="cell" data-q="z_12">1</div><div class="cell" data-q="z_13">3</div><div class="cell" data-q="z_14">1</div>
-        <div class="cell" data-q="z_21">4</div><div class="cell" data-q="z_22">2</div><div class="cell" data-q="z_23">4</div><div class="cell" data-q="z_24">2</div>
-        <div class="cell" data-q="z_31">1</div><div class="cell" data-q="z_32">3</div><div class="cell" data-q="z_33">1</div><div class="cell" data-q="z_34">3</div>
-      </div>
-    </div>
-    <div class="down"><span class="ar">↓</span></div>
-
-    <!-- Norm 1 -->
-    <div class="stage nrm">
-      <div class="sL"><div class="sname"><span class="sbadge">∑</span> LayerNorm ① &nbsp;Z = LN(Z⁰)</div>
-        <div class="sform">mỗi hàng → μ=0, σ=1: x̂=(x−μ)/√σ². Số không bị "trôi".</div></div>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell" data-q="zp_11">1</div><div class="cell" data-q="zp_12">−1</div><div class="cell" data-q="zp_13">1</div><div class="cell" data-q="zp_14">−1</div>
-        <div class="cell" data-q="zp_21">1</div><div class="cell" data-q="zp_22">−1</div><div class="cell" data-q="zp_23">1</div><div class="cell" data-q="zp_24">−1</div>
-        <div class="cell" data-q="zp_31">−1</div><div class="cell" data-q="zp_32">1</div><div class="cell" data-q="zp_33">−1</div><div class="cell" data-q="zp_34">1</div>
-      </div>
-    </div>
-    <div class="down"><span class="resv">Z giữ lại để cộng ở dưới</span><span class="ar">↓</span></div>
-
-    <!-- FFN -->
-    <div class="stage nrm">
-      <div class="sL"><div class="sname"><span class="sbadge">2</span> FFN &nbsp;F = ReLU(Z·W₁)·W₂</div>
-        <div class="sform">2 lớp tuyến tính + ReLU — xử lý riêng từng token (chỗ phi tuyến).</div></div>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell" data-q="f_11">2</div><div class="cell" data-q="f_12">0</div><div class="cell" data-q="f_13">2</div><div class="cell" data-q="f_14">0</div>
-        <div class="cell" data-q="f_21">2</div><div class="cell" data-q="f_22">0</div><div class="cell" data-q="f_23">2</div><div class="cell" data-q="f_24">0</div>
-        <div class="cell" data-q="f_31">0</div><div class="cell" data-q="f_32">2</div><div class="cell" data-q="f_33">0</div><div class="cell" data-q="f_34">2</div>
-      </div>
-    </div>
-    <div class="down"><span class="resv">＋ Z &nbsp;(kết nối tắt)</span><span class="ar">↓</span></div>
-
-    <!-- Add 2 -->
-    <div class="stage add">
-      <div class="sL"><div class="sname"><span class="sbadge">＋</span> Cộng tắt 2 &nbsp;U = Z + F</div>
-        <div class="sform">cộng từng ô — gradient có "đường cao tốc" chảy thẳng</div></div>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell" data-q="u_11">3</div><div class="cell" data-q="u_12">−1</div><div class="cell" data-q="u_13">3</div><div class="cell" data-q="u_14">−1</div>
-        <div class="cell" data-q="u_21">3</div><div class="cell" data-q="u_22">−1</div><div class="cell" data-q="u_23">3</div><div class="cell" data-q="u_24">−1</div>
-        <div class="cell" data-q="u_31">−1</div><div class="cell" data-q="u_32">3</div><div class="cell" data-q="u_33">−1</div><div class="cell" data-q="u_34">3</div>
-      </div>
-    </div>
-    <div class="down"><span class="ar">↓</span></div>
-
-    <!-- Norm 2 → Y -->
-    <div class="stage out">
-      <div class="sL"><div class="sname"><span class="sbadge">∑</span> LayerNorm ② → &nbsp;Y (đầu ra khối)</div>
-        <div class="sform"><b>Y có cùng kích thước với X</b> → đưa thẳng vào khối tiếp theo. Đó là lý do xếp chồng được N khối.</div></div>
-      <div class="mtx c4 mini" style="--cell:13mm">
-        <div class="cell ans" data-q="y_11">1</div><div class="cell ans" data-q="y_12">−1</div><div class="cell ans" data-q="y_13">1</div><div class="cell ans" data-q="y_14">−1</div>
-        <div class="cell ans" data-q="y_21">1</div><div class="cell ans" data-q="y_22">−1</div><div class="cell ans" data-q="y_23">1</div><div class="cell ans" data-q="y_24">−1</div>
-        <div class="cell ans" data-q="y_31">−1</div><div class="cell ans" data-q="y_32">1</div><div class="cell ans" data-q="y_33">−1</div><div class="cell ans" data-q="y_34">1</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 1/6 · TOÀN CẢNH</span></div>
-</section>
-
-<!-- ============ TRANG 2/6 — ĐỀ · đề bài & dữ liệu ============ -->
-<section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A3 · 6 trang · tính tay<br>Mức: nâng cao</div>
-  </div>
-
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Dữ liệu &amp; sơ đồ <small>— Encoder block: Add &amp; Norm + FFN</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~35 phút</span></div>
-
-  <div class="intro">
-    <b>Mục tiêu.</b> Bài H2 đã cho đầu ra <b>Self-Attention</b>. Một <b>khối Transformer</b> bọc nó trong <b>2 lớp con</b>:
-    mỗi lớp con = <b>kết nối tắt (residual) + LayerNorm</b>; lớp con thứ hai là một <b>mạng FFN</b> (2 lớp tuyến tính, ReLU ở giữa).
-    Cho 3 token, số chiều <b>d = 4</b>. Trang này là <b>dữ liệu</b> &amp; sơ đồ — phần tính tay ở trang 2.
-    <div class="formula">
-      <span class="lab">①</span> &nbsp; Z = LayerNorm( X + SelfAttn(X) )<br>
-      <span class="lab">②</span> &nbsp; Y = LayerNorm( Z + FFN(Z) ),&nbsp;&nbsp; với &nbsp; FFN(z) = ReLU(z W<sub>1</sub> + b<sub>1</sub>) W<sub>2</sub> + b<sub>2</sub>
-    </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi khối: <b>chuẩn hóa → trộn ngữ cảnh (attention) → cộng lại chính mình</b>; rồi <b>chuẩn hóa → suy nghĩ (FFN) → cộng lại</b>. "Cộng
+    lại chính mình" (residual) cho khối chỉ cần học <b>phần thêm</b>, và mở đường cao tốc cho gradient.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn</h2><span class="tag">3 token · d = 4 · γ=1, β=0, b₁=b₂=0</span></div>
-    <div class="row" style="align-items:flex-start;gap:34px">
-      <div class="mwrap"><div class="mlabel">X <s>đầu vào · 3×4</s></div>
-        <div class="mtx c4">
-          <div class="cell given" data-q="x_11">2</div><div class="cell given" data-q="x_12">2</div><div class="cell given" data-q="x_13">2</div><div class="cell given" data-q="x_14">2</div>
-          <div class="cell given" data-q="x_21">3</div><div class="cell given" data-q="x_22">3</div><div class="cell given" data-q="x_23">3</div><div class="cell given" data-q="x_24">3</div>
-          <div class="cell given" data-q="x_31">2</div><div class="cell given" data-q="x_32">2</div><div class="cell given" data-q="x_33">2</div><div class="cell given" data-q="x_34">2</div>
-        </div></div>
-      <div class="mwrap"><div class="mlabel" style="color:var(--accent)">SelfAttn(X) <s>từ Bài H2 · 3×4</s></div>
-        <div class="mtx c4">
-          <div class="cell given" data-q="a_11">1</div><div class="cell given" data-q="a_12">−1</div><div class="cell given" data-q="a_13">1</div><div class="cell given" data-q="a_14">−1</div>
-          <div class="cell given" data-q="a_21">1</div><div class="cell given" data-q="a_22">−1</div><div class="cell given" data-q="a_23">1</div><div class="cell given" data-q="a_24">−1</div>
-          <div class="cell given" data-q="a_31">−1</div><div class="cell given" data-q="a_32">1</div><div class="cell given" data-q="a_33">−1</div><div class="cell given" data-q="a_34">1</div>
-        </div></div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 token · d nhỏ</span></div>
+    <div class="calc" style="font-size:14px">
+      x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">0</span> ) ·
+      Attention(LN(x)) = ( <span class="gv" data-q="att1">1</span>, <span class="gv" data-q="att2">1</span> ) ·
+      FFN(LN(a)) = ( <span class="gv" data-q="ffn1">0</span>, <span class="gv" data-q="ffn2">2</span> )
     </div>
-    <div class="row" style="margin-top:16px;align-items:flex-start;gap:34px">
-      <div class="mwrap"><div class="mlabel" style="color:var(--v)">W₁ <s>4×2</s></div>
-        <div class="mtx c2" style="--cell:15mm">
-          <div class="cell wv">1</div><div class="cell wv">0</div>
-          <div class="cell wv">0</div><div class="cell wv">1</div>
-          <div class="cell wv">1</div><div class="cell wv">0</div>
-          <div class="cell wv">0</div><div class="cell wv">1</div>
-        </div></div>
-      <div class="mwrap"><div class="mlabel" style="color:var(--v)">W₂ <s>2×4</s></div>
-        <div class="mtx c4" style="--cell:15mm">
-          <div class="cell wv">1</div><div class="cell wv">0</div><div class="cell wv">1</div><div class="cell wv">0</div>
-          <div class="cell wv">0</div><div class="cell wv">1</div><div class="cell wv">0</div><div class="cell wv">1</div>
-        </div></div>
-    </div>
+    <div class="note">Hai vectơ nhánh cho sẵn để tập trung vào <b>cấu trúc khối</b> (cộng residual).</div>
   </div>
 
+  <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--v)">∑</div><h2>LayerNorm — chuẩn hóa từng hàng (mỗi token tự chuẩn hóa)</h2></div>
-    <div class="lnbox">
-      μ = (Σ xᵢ)/d &nbsp;→&nbsp; σ² = (Σ(xᵢ−μ)²)/d &nbsp;→&nbsp; <b>x̂ᵢ = (xᵢ−μ) / √σ²</b> &nbsp;→&nbsp; out = γ·x̂ᵢ + β<br>
-      Vì γ=1, β=0 nên <b>out = x̂</b>. Số liệu đã chọn để √σ² luôn là số đẹp (1 hoặc 2) — bạn không cần máy tính.
+    <div class="step-h"><div class="b">1</div><h2>Nhánh attention + residual</h2><span class="tag">a = x + Attn</span></div>
+    <div class="calc">
+      a = (<span data-q="x1">2</span>,<span data-q="x2">0</span>) + (<span data-q="att1">1</span>,<span data-q="att2">1</span>) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
     </div>
+    <div class="why"><b>Vì sao:</b> cộng x giữ thông tin gốc; attention chỉ <b>bổ sung</b> ngữ cảnh.</div>
   </div>
 
+  <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--v)">▦</div><h2>Sơ đồ khối Transformer — dòng chảy dữ liệu</h2><span class="tag">2 lớp con · mỗi lớp con = sublayer + Add &amp; Norm</span></div>
-    <svg id="figBlock" viewBox="0 0 760 210" width="255mm" height="70mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="sơ đồ khối transformer encoder: input qua self-attention rồi add-norm rồi FFN rồi add-norm"></svg>
+    <div class="step-h"><div class="b">2</div><h2>Nhánh FFN + residual</h2><span class="tag">out = a + FFN</span></div>
+    <div class="calc">
+      out = (<span data-q="a1">3</span>,<span data-q="a2">1</span>) + (<span data-q="ffn1">0</span>,<span data-q="ffn2">2</span>) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
+    </div>
+    <div class="hint">Cùng kiểu "cộng lại chính mình" như nhánh trên.</div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 2/6 · ĐỀ — dữ liệu</span></div>
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Vai trò LN & residual</h2><span class="tag">ổn định</span></div>
+    <div class="why"><b>Vì sao:</b> LN giữ đầu vào mỗi nhánh <b>chuẩn hóa</b> (ổn định); residual cho gradient đường thẳng (Bài F9). Thiếu hai cái này thì khối sâu <b>không train nổi</b>.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Xếp chồng</h2><span class="tag">N khối</span></div>
+    <div class="note">Đầu ra khối này là đầu vào khối kế; chồng N khối (GPT-3: 96). Encoder/decoder khác ở mask (H3) & cross-attention (H5).</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Hai nửa của khối Transformer làm gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Residual + LayerNorm để làm gì? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2/4 — ĐỀ · phần tính tay ============ -->
-<section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta crumb">Bài H6 · Khối Transformer<br>5 bước · điền bằng bút chì</div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Phần tính tay <small>— Bước 1 → 3</small></h1></div>
-
-  <!-- STEP 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Kết nối tắt &nbsp;Z⁰ = X + SelfAttn(X)</h2><span class="tag">cộng theo từng ô</span></div>
-    <div class="mwrap"><div class="mlabel">Z⁰ <s>3×4</s></div>
-      <div class="mtx c4 tall">
-        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-      </div></div>
-    <div class="hint"><b>Cách làm:</b> Z⁰ᵢⱼ = Xᵢⱼ + Attnᵢⱼ. Cộng đúng từng vị trí.</div>
-  </div>
-
-  <!-- STEP 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>LayerNorm① → Z</h2><span class="tag">chuẩn hóa từng hàng của Z⁰</span></div>
-    <div class="row" style="gap:26px">
-      <div class="mwrap"><div class="mlabel">μ <s>3×1</s></div>
-        <div class="mtx c1 tall" style="--cell:15mm">
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-      <div class="op">→</div>
-      <div class="mwrap"><div class="mlabel">Z = x̂ <s>3×4</s></div>
-        <div class="mtx c4 tall">
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-    </div>
-    <div class="hint"><b>Cách làm:</b> mỗi hàng — tính μ (trung bình 4 số) → σ² (trung bình bình phương lệch) → mỗi ô = (xᵢ−μ)/√σ².</div>
-  </div>
-
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>FFN: &nbsp;h = ReLU(Z·W₁), &nbsp;F = h·W₂</h2><span class="tag">2 lớp tuyến tính + ReLU</span></div>
-    <div class="row" style="gap:26px">
-      <div class="mwrap"><div class="mlabel">h <s>3×2 · sau ReLU</s></div>
-        <div class="mtx c2 tall" style="--cell:17mm">
-          <div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-      <div class="op">→</div>
-      <div class="mwrap"><div class="mlabel">F <s>3×4</s></div>
-        <div class="mtx c4 tall">
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-    </div>
-    <div class="hint"><b>Cách làm:</b> Z·W₁ = (z₁+z₃, z₂+z₄) → ReLU cắt số âm về 0 → h. Rồi F = h·W₂ trải h thành 4 cột: (h₁, h₂, h₁, h₂).</div>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 3/6 · ĐỀ — tính tay (1/2)</span></div>
-</section>
-
-<!-- ============ TRANG 3/5 — ĐỀ · phần tính tay (2/2) ============ -->
-<section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta crumb">Bài H6 · Khối Transformer<br>5 bước · điền bằng bút chì</div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Phần tính tay <small>— Bước 4 → 5</small></h1></div>
-
-  <!-- STEP 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Kết nối tắt 2 &nbsp;U = Z + F</h2><span class="tag">cộng theo từng ô</span></div>
-    <div class="mwrap"><div class="mlabel">U <s>3×4</s></div>
-      <div class="mtx c4 tall">
-        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-      </div></div>
-    <div class="hint"><b>Cách làm:</b> Uᵢⱼ = Zᵢⱼ + Fᵢⱼ (Z đã chuẩn hóa ở Bước 2).</div>
-  </div>
-
-  <!-- STEP 5 -->
-  <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>LayerNorm② → Y &nbsp;(đầu ra khối)</h2><span class="tag">chuẩn hóa hàng lần 2 như Bước 2</span></div>
-    <div class="row" style="gap:26px">
-      <div class="mwrap"><div class="mlabel">μ′ <s>3×1</s></div>
-        <div class="mtx c1 tall" style="--cell:15mm">
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-      <div class="op">→</div>
-      <div class="mwrap"><div class="mlabel">Y <s>3×4</s></div>
-        <div class="mtx c4 tall">
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-    </div>
-    <div class="hint"><b>Cách làm:</b> lặp lại LayerNorm trên U. Y chính là đầu ra của cả khối — sẵn sàng cho khối Transformer tiếp theo.</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--dim)">✎</div><h2>Chỗ tính nháp</h2><span class="tag">μ · σ² · √σ² cho từng hàng</span></div>
-    <div style="border:1.4px dashed var(--line);border-radius:10px;height:110mm;background:repeating-linear-gradient(transparent,transparent 13mm,#eef2f6 13mm,#eef2f6 13.4mm)"></div>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 4/6 · ĐỀ — tính tay (2/2)</span></div>
-</section>
-
-<!-- ============ TRANG 3/4 — ĐÁP ÁN · bước 1–3 ============ -->
+<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN · 1/2</span></div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Lời giải <small>— Bước 1 → 3</small></h1></div>
+  <div class="wb-title"><span class="no">Bài H6</span><h1>Khối Transformer <small>— lời giải</small></h1></div>
 
-  <!-- Z0 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Z⁰ = X + SelfAttn(X)</h2></div>
-    <div class="mwrap"><div class="mlabel">Z⁰</div>
-      <div class="mtx c4">
-        <div class="cell ans" data-q="z_11">3</div><div class="cell ans" data-q="z_12">1</div><div class="cell ans" data-q="z_13">3</div><div class="cell ans" data-q="z_14">1</div>
-        <div class="cell ans" data-q="z_21">4</div><div class="cell ans" data-q="z_22">2</div><div class="cell ans" data-q="z_23">4</div><div class="cell ans" data-q="z_24">2</div>
-        <div class="cell ans" data-q="z_31">1</div><div class="cell ans" data-q="z_32">3</div><div class="cell ans" data-q="z_33">1</div><div class="cell ans" data-q="z_34">3</div>
-      </div></div>
-    <div class="worked" data-q="ex_z">Hàng 1: (2, 2, 2, 2) + (1, −1, 1, −1) = (3, 1, 3, 1)</div>
+    <div class="step-h"><div class="b">1</div><h2>Nhánh attention</h2></div>
+    <div class="calc ans">a = ( <span class="blk" data-q="a1">3</span>, <span class="blk" data-q="a2">1</span> )</div>
   </div>
 
-  <!-- LN1 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Z = LayerNorm(Z⁰) — chuẩn hóa từng hàng</h2></div>
-    <div class="row" style="gap:26px">
-      <div class="mwrap"><div class="mlabel">μ</div>
-        <div class="mtx c1" style="--cell:15mm">
-          <div class="cell ans" data-q="mu_1">2</div><div class="cell ans" data-q="mu_2">3</div><div class="cell ans" data-q="mu_3">2</div>
-        </div></div>
-      <div class="op">→</div>
-      <div class="mwrap"><div class="mlabel">Z = x̂</div>
-        <div class="mtx c4">
-          <div class="cell ans" data-q="zp_11">1</div><div class="cell ans" data-q="zp_12">−1</div><div class="cell ans" data-q="zp_13">1</div><div class="cell ans" data-q="zp_14">−1</div>
-          <div class="cell ans" data-q="zp_21">1</div><div class="cell ans" data-q="zp_22">−1</div><div class="cell ans" data-q="zp_23">1</div><div class="cell ans" data-q="zp_24">−1</div>
-          <div class="cell ans" data-q="zp_31">−1</div><div class="cell ans" data-q="zp_32">1</div><div class="cell ans" data-q="zp_33">−1</div><div class="cell ans" data-q="zp_34">1</div>
-        </div></div>
+    <div class="step-h"><div class="b">2</div><h2>Nhánh FFN</h2></div>
+    <div class="calc ans">out = ( <span class="blk" data-q="o1">3</span>, <span class="blk" data-q="o2">3</span> )</div>
+  </div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Luồng: x → LN→Attn→⊕ → LN→FFN→⊕ → out</h2><span class="tag">pre-norm</span></div>
+    <div class="figrow">
+      <svg id="figT" class="fig" viewBox="0 0 250 130" width="82mm" height="42mm" aria-label="luồng khối transformer: x qua LN attention cộng residual, rồi LN FFN cộng residual ra out"></svg>
+      <div style="flex:1">
+        <div class="note">Hai nhánh giống nhau: chuẩn hóa (LN) → biến đổi (Attn/FFN) → <b>cộng lại đầu vào</b> (⊕ residual). Đường residual (xám nhạt) là "cao tốc" cho gradient.</div>
+      </div>
     </div>
-    <div class="worked" data-q="ex_ln1">Hàng 1: μ=2, σ²=(1+1+1+1)/4=1, √σ²=1 → Z=(1, −1, 1, −1)</div>
-    <div class="note">σ² mỗi hàng = 1 (4 lệch đều bằng ±1) nên chia 1. Mỗi hàng sau chuẩn hóa có trung bình 0.</div>
   </div>
 
-  <!-- FFN -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>FFN: h = ReLU(Z·W₁), &nbsp;F = h·W₂</h2></div>
-    <div class="row" style="gap:26px">
-      <div class="mwrap"><div class="mlabel">h</div>
-        <div class="mtx c2" style="--cell:17mm">
-          <div class="cell ans" data-q="h_11">2</div><div class="cell ans" data-q="h_12">0</div>
-          <div class="cell ans" data-q="h_21">2</div><div class="cell ans" data-q="h_22">0</div>
-          <div class="cell ans" data-q="h_31">0</div><div class="cell ans" data-q="h_32">2</div>
-        </div></div>
-      <div class="op">→</div>
-      <div class="mwrap"><div class="mlabel">F</div>
-        <div class="mtx c4">
-          <div class="cell ans" data-q="f_11">2</div><div class="cell ans" data-q="f_12">0</div><div class="cell ans" data-q="f_13">2</div><div class="cell ans" data-q="f_14">0</div>
-          <div class="cell ans" data-q="f_21">2</div><div class="cell ans" data-q="f_22">0</div><div class="cell ans" data-q="f_23">2</div><div class="cell ans" data-q="f_24">0</div>
-          <div class="cell ans" data-q="f_31">0</div><div class="cell ans" data-q="f_32">2</div><div class="cell ans" data-q="f_33">0</div><div class="cell ans" data-q="f_34">2</div>
-        </div></div>
-    </div>
-    <div class="worked" data-q="ex_ffn">Hàng 1: Z·W₁=(2, −2) →ReLU→ h=(2, 0) → F=(2, 0, 2, 0)</div>
-    <div class="note">W₁ gộp cột (1,3) và (2,4); ReLU cắt số âm về 0 (đây là chỗ phi tuyến duy nhất). W₂ trải h₁,h₂ thành (h₁,h₂,h₁,h₂).</div>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 5/6 · ĐÁP ÁN</span></div>
-</section>
-
-<!-- ============ TRANG 4/4 — ĐÁP ÁN · bước 4–5 + rút ra ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN · 2/2</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Lời giải <small>— Bước 4 → 5 &amp; ý nghĩa</small></h1></div>
-
-  <!-- U -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>U = Z + F</h2></div>
-    <div class="mwrap"><div class="mlabel">U</div>
-      <div class="mtx c4">
-        <div class="cell ans" data-q="u_11">3</div><div class="cell ans" data-q="u_12">−1</div><div class="cell ans" data-q="u_13">3</div><div class="cell ans" data-q="u_14">−1</div>
-        <div class="cell ans" data-q="u_21">3</div><div class="cell ans" data-q="u_22">−1</div><div class="cell ans" data-q="u_23">3</div><div class="cell ans" data-q="u_24">−1</div>
-        <div class="cell ans" data-q="u_31">−1</div><div class="cell ans" data-q="u_32">3</div><div class="cell ans" data-q="u_33">−1</div><div class="cell ans" data-q="u_34">3</div>
-      </div></div>
-    <div class="worked" data-q="ex_u">Hàng 1: (1, −1, 1, −1) + (2, 0, 2, 0) = (3, −1, 3, −1)</div>
-  </div>
-
-  <!-- LN2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Y = LayerNorm(U) — đầu ra khối</h2></div>
-    <div class="row" style="gap:26px">
-      <div class="mwrap"><div class="mlabel">μ′</div>
-        <div class="mtx c1" style="--cell:15mm">
-          <div class="cell ans" data-q="muU_1">1</div><div class="cell ans" data-q="muU_2">1</div><div class="cell ans" data-q="muU_3">1</div>
-        </div></div>
-      <div class="op">→</div>
-      <div class="mwrap"><div class="mlabel">Y</div>
-        <div class="mtx c4">
-          <div class="cell ans" data-q="y_11">1</div><div class="cell ans" data-q="y_12">−1</div><div class="cell ans" data-q="y_13">1</div><div class="cell ans" data-q="y_14">−1</div>
-          <div class="cell ans" data-q="y_21">1</div><div class="cell ans" data-q="y_22">−1</div><div class="cell ans" data-q="y_23">1</div><div class="cell ans" data-q="y_24">−1</div>
-          <div class="cell ans" data-q="y_31">−1</div><div class="cell ans" data-q="y_32">1</div><div class="cell ans" data-q="y_33">−1</div><div class="cell ans" data-q="y_34">1</div>
-        </div></div>
-    </div>
-    <div class="worked" data-q="ex_ln2">Hàng 1: μ′=1, σ²=(4+4+4+4)/4=4, √σ²=2 → Y=(1, −1, 1, −1)</div>
-    <div class="note">Mỗi hàng U có σ²=4 nên chia 2. Đầu ra Y lại nằm gọn quanh 0 — đúng mục tiêu của LayerNorm.</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--v)">▦</div><h2>Vì sao "Add &amp; Norm" + xếp chồng khối</h2></div>
-    <svg id="figStack" viewBox="0 0 460 188" width="185mm" height="76mm" style="background:#fff;border:1px solid var(--line);border-radius:8px" aria-label="xếp chồng nhiều khối transformer và vai trò residual"></svg>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Hai nửa? → <span class="qa">Attention trộn giữa token; FFN xử lý trong token.</span></li>
+      <li>Residual + LN? → <span class="qa">Giữ tín hiệu/gradient ổn định → chồng được rất sâu.</span></li>
+    </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Một khối Transformer = <b>Self-Attention</b> (Bài H2) → <b>Add &amp; Norm</b> → <b>FFN</b> → <b>Add &amp; Norm</b>.
-    <b>Residual</b> (X + sublayer) cho gradient chảy thẳng qua hàng chục lớp; <b>LayerNorm</b> kéo mỗi token về μ=0, σ=1 để số không "trôi".
-    GPT/BERT chỉ là <b>xếp chồng N khối y hệt</b> — bạn vừa tính tay đúng một viên gạch của chúng.
-    Bước tiếp: dùng đầu ra cho <b>softmax + cross-entropy</b> (Bài H3 sắp tới).
+    <b style="color:var(--accent2)">Rút ra.</b> Khối = (LN→Attention→+x) rồi (LN→FFN→+a); chồng N khối thành mô hình. Bài tiếp (H3): thêm causal mask → khối GPT.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 6/6 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var PAT_A = [1,-1,1,-1], PAT_B = [-1,1,-1,1];
-function vec(a){ return a.map(WB.fmtInt).join(', '); }
-
 function generate(){
-  var mu  = [WB.randInt(1,4), WB.randInt(1,4), WB.randInt(1,4)];
-  var pat = [WB.pick([PAT_A,PAT_B]), WB.pick([PAT_A,PAT_B]), WB.pick([PAT_A,PAT_B])];
-  var map = {};
-
-  for (var r=0;r<3;r++){
-    var p = pat[r], m = mu[r];
-    var X  = [m,m,m,m];
-    var A  = p.slice();
-    var Z0 = [X[0]+A[0], X[1]+A[1], X[2]+A[2], X[3]+A[3]]; // = m ± 1
-    var Zp = p.slice();                                    // LN①: μ=m, σ²=1
-    var pre = [Zp[0]+Zp[2], Zp[1]+Zp[3]];                  // Z·W₁
-    var h  = [Math.max(0,pre[0]), Math.max(0,pre[1])];     // ReLU
-    var F  = [h[0], h[1], h[0], h[1]];                     // h·W₂
-    var U  = [Zp[0]+F[0], Zp[1]+F[1], Zp[2]+F[2], Zp[3]+F[3]];
-    var Y  = p.slice();                                    // LN②: μ′=1, σ²=4
-
-    for (var c=0;c<4;c++){
-      var rc = (r+1) + '' + (c+1);
-      map['x_'+rc]=WB.fmtInt(X[c]); map['a_'+rc]=WB.fmtInt(A[c]);
-      map['z_'+rc]=WB.fmtInt(Z0[c]); map['zp_'+rc]=WB.fmtInt(Zp[c]);
-      map['f_'+rc]=WB.fmtInt(F[c]); map['u_'+rc]=WB.fmtInt(U[c]); map['y_'+rc]=WB.fmtInt(Y[c]);
-    }
-    map['h_'+(r+1)+'1']=WB.fmtInt(h[0]); map['h_'+(r+1)+'2']=WB.fmtInt(h[1]);
-    map['mu_'+(r+1)]=WB.fmtInt(m); map['muU_'+(r+1)]=WB.fmtInt(1);
-
-    if (r===0){
-      map['ex_z']   = 'Hàng 1: ('+vec(X)+') + ('+vec(A)+') = ('+vec(Z0)+')';
-      map['ex_ln1'] = 'Hàng 1: μ='+WB.fmtInt(m)+', σ²=(1+1+1+1)/4=1, √σ²=1 → Z=('+vec(Zp)+')';
-      map['ex_ffn'] = 'Hàng 1: Z·W₁=('+vec(pre)+') →ReLU→ h=('+vec(h)+') → F=('+vec(F)+')';
-      map['ex_u']   = 'Hàng 1: ('+vec(Zp)+') + ('+vec(F)+') = ('+vec(U)+')';
-      map['ex_ln2'] = 'Hàng 1: μ′=1, σ²=(4+4+4+4)/4=4, √σ²=2 → Y=('+vec(Y)+')';
-    }
-  }
-  WB.setAll(map);
+  var x1=WB.randInt(0,3), x2=WB.randInt(0,3);
+  var att1=WB.randInt(0,2), att2=WB.randInt(0,2);
+  var ffn1=WB.randInt(0,2), ffn2=WB.randInt(0,3);
+  var a1=x1+att1, a2=x2+att2;
+  var o1=a1+ffn1, o2=a2+ffn2;
+  WB.setAll({
+    x1:String(x1), x2:String(x2), att1:String(att1), att2:String(att2),
+    ffn1:String(ffn1), ffn2:String(ffn2),
+    a1:String(a1), a2:String(a2), o1:String(o1), o2:String(o2)
+  });
+  drawBlock('figT');
 }
-
-// Sơ đồ khối: Input → (+ ← Self-Attn) → LN → (+ ← FFN) → LN → Output
-function drawBlock(){
-  var svg = document.getElementById('figBlock'); if(!svg) return;
-  var s = '';
-  s += '<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">'
-     + '<path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
-  var y = 100, h = 38;
-  function box(x,w,fill,stroke,label){
-    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.4"/>'
-      + '<text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" style="font-size:11.5px" font-weight="700" fill="#16202e">'+label+'</text>';
+function drawBlock(id){
+  var svg = document.getElementById(id); if(!svg) return;
+  function box(x,txt,col){
+    return '<rect x="'+x+'" y="48" width="30" height="26" rx="5" fill="'+col+'22" stroke="'+col+'" stroke-width="1.3"/>'+
+      '<text x="'+(x+15)+'" y="64" text-anchor="middle" font-size="8.5" font-weight="700" fill="'+col+'">'+txt+'</text>';
   }
-  function arrow(x1,x2){ return '<line x1="'+x1+'" y1="'+(y+h/2)+'" x2="'+(x2-3)+'" y2="'+(y+h/2)+'" stroke="#5b6776" stroke-width="1.6" marker-end="url(#ah)"/>'; }
-  function plus(cx){ return '<circle cx="'+cx+'" cy="'+(y+h/2)+'" r="12" fill="#fff" stroke="#5b6776" stroke-width="1.4"/>'
-      + '<text x="'+cx+'" y="'+(y+h/2+5)+'" text-anchor="middle" style="font-size:16px" font-weight="700" fill="#5b6776">+</text>'; }
-  s += box(14,70,'#eaf4f6','#7fb4bf','Input X');
-  s += arrow(84,118);
-  s += box(118,108,'#eaf4f6','#0e7490','Self-Attention');
-  s += arrow(226,255);
-  s += plus(267);
-  s += '<path d="M100,'+y+' C100,46 267,46 267,'+(y-12)+'" fill="none" stroke="#0e7490" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ah)"/>';
-  s += '<text x="183" y="40" text-anchor="middle" style="font-size:9.5px" fill="#0e7490">kết nối tắt (residual)</text>';
-  s += arrow(279,300);
-  s += box(300,86,'#fbf5ff','#7c5cff','LayerNorm');
-  s += arrow(386,416);
-  s += box(416,86,'#fbf5ff','#7c5cff','FFN (ReLU)');
-  s += arrow(502,531);
-  s += plus(543);
-  s += '<path d="M398,'+y+' C398,46 543,46 543,'+(y-12)+'" fill="none" stroke="#7c5cff" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ah)"/>';
-  s += '<text x="470" y="40" text-anchor="middle" style="font-size:9.5px" fill="#7c5cff">kết nối tắt (residual)</text>';
-  s += arrow(555,576);
-  s += box(576,86,'#fbf5ff','#7c5cff','LayerNorm');
-  s += arrow(662,692);
-  s += box(692,56,'#fff5e9','#e3b780','Y');
-  s += '<text x="200" y="'+(y+h+26)+'" text-anchor="middle" style="font-size:10px" fill="#5b6776">— lớp con 1: Attention + Add &amp; Norm —</text>';
-  s += '<text x="500" y="'+(y+h+26)+'" text-anchor="middle" style="font-size:10px" fill="#5b6776">— lớp con 2: FFN + Add &amp; Norm —</text>';
-  svg.innerHTML = s;
-}
-
-// Xếp chồng N khối + residual (đường cao tốc gradient)
-function drawStack(){
-  var svg = document.getElementById('figStack'); if(!svg) return;
-  var s = '<defs><marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
-  var bx=80, bw=170, bh=26, gap=11, y0=14;
-  for (var i=0;i<4;i++){
-    var yy = y0 + i*(bh+gap);
-    var lab = i<3 ? ('Khối Transformer #'+(3-i)) : '⋮  (lặp N khối)';
-    var fill = i<3 ? '#f1eeff' : '#fff';
-    s += '<rect x="'+bx+'" y="'+yy+'" width="'+bw+'" height="'+bh+'" rx="6" fill="'+fill+'" stroke="#7c5cff" stroke-width="1.2"/>';
-    s += '<text x="'+(bx+bw/2)+'" y="'+(yy+bh/2+4)+'" text-anchor="middle" style="font-size:10px" font-weight="700" fill="#4a36b0">'+lab+'</text>';
-    if (i<3) s += '<line x1="'+(bx+bw/2)+'" y1="'+(yy+bh)+'" x2="'+(bx+bw/2)+'" y2="'+(yy+bh+gap)+'" stroke="#5b6776" stroke-width="1.4" marker-end="url(#ah2)"/>';
+  function plus(x){
+    return '<circle cx="'+(x+8)+'" cy="61" r="9" fill="#fff" stroke="#5b6776" stroke-width="1.3"/>'+
+      '<text x="'+(x+8)+'" y="65" text-anchor="middle" font-size="11" fill="#5b6776">+</text>';
   }
-  var hx = bx+bw+30;
-  s += '<line x1="'+hx+'" y1="'+y0+'" x2="'+hx+'" y2="'+(y0+3*(bh+gap))+'" stroke="#0e7490" stroke-width="2.2" stroke-dasharray="6 3" marker-end="url(#ah2)"/>';
-  s += '<text x="'+(hx+8)+'" y="'+(y0+34)+'" style="font-size:9.5px" fill="#0e7490" transform="rotate(90 '+(hx+8)+' '+(y0+34)+')">residual = đường cao tốc gradient</text>';
-  s += '<text x="'+bx+'" y="'+(y0+4*(bh+gap)+14)+'" style="font-size:10px" fill="#16202e">GPT-3: 96 khối · BERT-base: 12 khối — cùng một viên gạch lặp lại.</text>';
-  svg.innerHTML = s;
-}
-
-// Heatmap chú ý mini (toàn cảnh) — minh họa token nào nhìn token nào (số Bài H2)
-function drawMini(){
-  var svg = document.getElementById('figMini'); if(!svg) return;
-  var A = [[0.67,0.09,0.24],[0.09,0.67,0.24],[0.33,0.33,0.33]];
-  var cs=22, ox=34, oy=18, s='';
-  s += '<text x="'+(ox+1.5*cs)+'" y="11" text-anchor="middle" style="font-size:7px" fill="#0e7490" font-weight="700">được chú ý →</text>';
-  for(var r=0;r<3;r++){
-    s += '<text x="'+(ox-5)+'" y="'+(oy+r*cs+cs/2+2.5)+'" text-anchor="end" style="font-size:7px" fill="#5b6776">t'+(r+1)+'</text>';
-    for(var c=0;c<3;c++){
-      var w=A[r][c];
-      s += '<rect x="'+(ox+c*cs)+'" y="'+(oy+r*cs)+'" width="'+cs+'" height="'+cs+'" fill="#0e7490" fill-opacity="'+w+'" stroke="#9fb0c0" stroke-width="0.6"/>';
-      s += '<text x="'+(ox+c*cs+cs/2)+'" y="'+(oy+r*cs+cs/2+2.5)+'" text-anchor="middle" style="font-size:7px" font-weight="700" fill="'+(w>0.5?'#fff':'#16202e')+'">'+w.toFixed(2)+'</text>';
-    }
+  var s='<defs><marker id="at" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6Z" fill="#5b6776"/></marker></defs>';
+  var xs=[6, 44, 86, 128, 162, 204];
+  s+=box(xs[0],'x','#5b6776');
+  s+=box(xs[1],'LN','#9aa3ad');
+  s+=box(xs[2],'Attn','#0e7490');
+  s+=plus(xs[3]);
+  s+=box(xs[4],'LN','#9aa3ad');
+  s+=box(xs[4]+34,'FFN','#7c5cff');  // overlap-safe: place FFN
+  s+=plus(xs[5]+18);
+  // simpler: redo linear chain
+  svg.innerHTML='';
+  s='<defs><marker id="at" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6Z" fill="#5b6776"/></marker></defs>';
+  var seq=[['x','#5b6776'],['LN','#9aa3ad'],['Attn','#0e7490'],['⊕','#16202e'],['LN','#9aa3ad'],['FFN','#7c5cff'],['⊕','#16202e'],['out','#b45309']];
+  var x=6, w=26, gap=30;
+  var cx=[];
+  for(var i=0;i<seq.length;i++){
+    s+='<rect x="'+x+'" y="48" width="'+w+'" height="26" rx="5" fill="'+seq[i][1]+'22" stroke="'+seq[i][1]+'" stroke-width="1.3"/>';
+    s+='<text x="'+(x+w/2)+'" y="64" text-anchor="middle" font-size="8" font-weight="700" fill="'+seq[i][1]+'">'+seq[i][0]+'</text>';
+    cx.push(x+w/2);
+    if(i<seq.length-1) s+='<line x1="'+(x+w)+'" y1="61" x2="'+(x+gap)+'" y2="61" stroke="#5b6776" stroke-width="1.1" marker-end="url(#at)"/>';
+    x+=gap;
   }
-  s += '<text x="60" y="92" text-anchor="middle" style="font-size:6.5px" fill="#16202e">A = trọng số chú ý · tổng mỗi hàng = 1</text>';
-  svg.innerHTML = s;
+  // residual arcs: x→⊕(idx3), ⊕(idx3)→⊕(idx6)
+  s+='<path d="M'+cx[0]+',48 Q'+((cx[0]+cx[3])/2)+',16 '+cx[3]+',48" fill="none" stroke="#cfd6dd" stroke-width="1.4"/>';
+  s+='<path d="M'+cx[3]+',48 Q'+((cx[3]+cx[6])/2)+',12 '+cx[6]+',48" fill="none" stroke="#cfd6dd" stroke-width="1.4"/>';
+  s+='<text x="125" y="100" text-anchor="middle" font-size="8.5" fill="#5b6776">cung trên = kết nối tắt (residual)</text>';
+  svg.innerHTML=s;
 }
-
 WB.wire(generate);
-drawMini();
-drawBlock();
-drawStack();
+generate();
 </script>
 </body>
 </html>

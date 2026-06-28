@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Quantization int8 — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài I6 — Quantization int8 (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
-  .dtbl td{padding:5px 9px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -23,115 +22,180 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Quantization int8</h1><span class="vi">— lượng tử hóa về số nguyên</span>
-    <span class="tag">scale → làm tròn → khử lượng tử · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Trọng số float32 ngốn bộ nhớ. Int8 nén 4 lần: chọn <b>scale</b> = absmax/127, chia &
-    <b>làm tròn</b> về số nguyên −127..127, lưu int8. Khi dùng thì nhân lại scale (khử lượng tử). Sai số làm tròn nhỏ
-    nhưng mô hình vẫn chạy gần như cũ.
-    <div class="fm">scale = max|w| / 127 · q = round(w / scale) · ŵ = q · scale · sai số = w − ŵ</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint">Mỗi giá trị thật "rơi" về điểm lưới gần nhất (× = đã làm tròn). Khoảng cách = sai số.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài I6</span><h1>Quantization int8 <small>— nén trọng số xuống 8-bit</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">absmax = <span id="amx1" style="color:var(--dim)"></span> → scale = absmax/127 = <b>0.1</b></div>
-      <table class="dtbl" id="tbl1">
-        <tr><td class="lab">trọng số w</td><td id="W0"></td><td id="W1"></td><td id="W2"></td><td id="W3"></td></tr>
-        <tr><td class="lab">q = round(w/0.1)</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-        <tr><td class="lab">ŵ = q · 0.1</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-        <tr><td class="lab">sai số = w − ŵ</td><td class="blank"></td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-      </table>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Mô hình tỉ tham số không vừa bộ nhớ/tốc độ. int8 giảm <b>4× dung lượng</b>, tăng tốc, chỉ mất chút độ chính
+    xác — cách chạy LLM lớn trên phần cứng nhỏ.
+    <div class="formula">scale = absmax(x) / 127 &nbsp;·&nbsp; q = round(x / scale) ∈ [−127, 127] &nbsp;·&nbsp; x̂ = q · scale</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Một trọng số bất thường rất lớn (outlier) ảnh hưởng gì tới scale và độ chính xác? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>đổi đơn vị đo</b>: tìm giá trị lớn nhất (absmax), chia thang đó thành 255 nấc nguyên. Mỗi số float "rơi" vào nấc gần nhất
+    (làm tròn). Khi dùng, nhân nấc với độ-lớn-một-nấc (scale) để về xấp xỉ giá trị gốc.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 trọng số float</span></div>
+    <div class="calc" style="font-size:14px">
+      x = ( <span class="gv" data-q="x1">5</span>, <span class="gv" data-q="x2">−12.7</span>, <span class="gv" data-q="x3">3.14</span>, <span class="gv" data-q="x4">10</span> )
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Quantization int8</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Hệ số tỉ lệ (scale)</h2><span class="tag">absmax / 127</span></div>
+    <div class="calc">
+      absmax = <span data-q="absmax">12.7</span> → scale = <span data-q="absmax">12.7</span> / 127 = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> chọn theo giá trị lớn nhất để dùng hết dải [−127, 127], không tràn.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Lượng tử hóa (q)</h2><span class="tag">round(x / scale)</span></div>
+    <div class="calc">
+      q = round(x / <span data-q="scale">0.1</span>) = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )
+    </div>
+    <div class="hint">q là <b>số nguyên 8-bit</b> — phần thực sự được lưu (1 byte mỗi số).</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Giải lượng tử (x̂)</h2><span class="tag">q · scale</span></div>
+    <div class="calc">
+      x̂ = q · <span data-q="scale">0.1</span> = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )
+    </div>
+    <div class="why"><b>Vì sao:</b> x̂ ≈ x; sai số chỉ ở chỗ làm tròn (vd 3.14 → 3.1).</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Sai số & dung lượng</h2><span class="tag">4× nhỏ hơn</span></div>
+    <div class="calc">
+      sai số tại x₃: | <span data-q="x3">3.14</span> − <span data-q="dq3">3.1</span> | = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="note">int8 = 1 byte vs float32 = 4 byte → giảm 4×. Trọng số có outlier lớn → scale lớn → mất chính xác (cần per-channel / nhóm).</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>scale chọn theo gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Sai số lượng tử lớn nhất cỡ bao nhiêu? → <span class="blk" style="min-width:140px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I6 · Quantization int8</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Quantization int8</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I6</span><h1>Quantization int8 <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">int8 = 1 byte/trọng số (so với 4 byte float32) → mô hình nhẹ 4×, chạy nhanh hơn.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>scale</h2></div>
+    <div class="calc ans">scale = <span data-q="absmax">12.7</span> / 127 = <span class="blk" data-q="scale">0.1</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">q = round(w/scale) → ŵ = q·scale</div>
-      <table class="dtbl" id="tbl2">
-        <tr><td class="lab">w</td><td id="kW0"></td><td id="kW1"></td><td id="kW2"></td><td id="kW3"></td></tr>
-        <tr><td class="lab">q (int8)</td><td id="Q0"></td><td id="Q1"></td><td id="Q2"></td><td id="Q3"></td></tr>
-        <tr><td class="lab">ŵ = q·0.1</td><td id="H0"></td><td id="H1"></td><td id="H2"></td><td id="H3"></td></tr>
-        <tr><td class="lab">sai số</td><td id="E0"></td><td id="E1"></td><td id="E2"></td><td id="E3"></td></tr>
-      </table>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Lượng tử hóa</h2></div>
+    <div class="calc ans">q = ( <span class="blk" data-q="q1">50</span>, <span class="blk" data-q="q2">−127</span>, <span class="blk" data-q="q3">31</span>, <span class="blk" data-q="q4">100</span> )</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Scale phình to</span>: một outlier đẩy absmax lên → scale lớn → các trọng số nhỏ bị làm tròn thô (mất chính xác). Vì vậy thực tế hay lượng tử hóa theo nhóm / tách riêng outlier.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Giải lượng tử</h2></div>
+    <div class="calc ans">x̂ = ( <span class="blk" data-q="dq1">5</span>, <span class="blk" data-q="dq2">−12.7</span>, <span class="blk" data-q="dq3">3.1</span>, <span class="blk" data-q="dq4">10</span> )</div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> Lượng tử hóa = nén có mất mát: đổi chút sai số lấy 4× bộ nhớ & tốc độ. Kết hợp LoRA (I5) +
-        int8 cho phép chạy LLM lớn trên máy nhỏ. Tiếp theo: tìm tài liệu liên quan bằng embedding → <b>I7 RAG</b>.
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Sai số tại x₃</h2></div>
+    <div class="calc ans">| <span data-q="x3">3.14</span> − <span data-q="dq3">3.1</span> | = <span class="blk" data-q="err">0.04</span> (≤ nửa nấc)</div>
+  </div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trục số chia nấc, x rơi vào nấc</h2><span class="tag">làm tròn</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 240 120" width="80mm" height="40mm" aria-label="trục số từ âm absmax tới dương absmax, các trọng số x rơi vào nấc nguyên gần nhất"></svg>
+      <div style="flex:1">
+        <div class="note">Dải [−absmax, +absmax] chia thành các nấc đều (scale). Mỗi x (lam) làm tròn về nấc gần nhất (cam) → đó là x̂.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Quantization int8</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>scale? → <span class="qa">absmax / 127 (giá trị lớn nhất chia mức nguyên).</span></li>
+      <li>Sai số lớn nhất? → <span class="qa">Nửa nấc (½·scale) — do làm tròn.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> int8 = scale + làm tròn + nhân lại; giảm 4× bộ nhớ, mất ít chính xác. Bài tiếp (I7): truy hồi tài liệu bằng
+    cosine — <b>RAG</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I6 · Quantization int8</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
-function f2(v){return WB.fmt2(v);}
 function generate(){
-  // absmax = 12.7 → scale 0.1; 1 trọng số = ±12.7 (q=±127, sai số 0), 3 trọng số khác
-  var scale=0.1;
-  var sign=WB.pick([1,-1]);
-  var W=[sign*12.7];           // absmax đúng → scale = 12.7/127 = 0.1
-  for(var i=0;i<3;i++){
-    var q=WB.randIntNZ(-120,120);
-    var delta=WB.pick([-0.04,-0.03,0.03,0.04]);   // |delta|<0.05 → làm tròn về đúng q (không nhập nhằng .5)
-    W.push(Math.round((q*0.1+delta)*100)/100);
-  }
-  // xáo trộn để max không luôn ở cột 0
-  for(var i=W.length-1;i>0;i--){var j=WB.randInt(0,i);var t=W[i];W[i]=W[j];W[j]=t;}
-  var Q=W.map(function(w){return Math.round(w/scale);});
-  var H=Q.map(function(q){return Math.round(q*scale*100)/100;});
-  var E=W.map(function(w,i){return Math.round((w-H[i])*100)/100;});
-  ['W0','W1','W2','W3'].forEach(function(id,i){setTxt(id,f2(W[i]));});
-  ['kW0','kW1','kW2','kW3'].forEach(function(id,i){setTxt(id,f2(W[i]));});
-  ['Q0','Q1','Q2','Q3'].forEach(function(id,i){setTxt(id,Q[i]);});
-  ['H0','H1','H2','H3'].forEach(function(id,i){setTxt(id,f2(H[i]));});
-  ['E0','E1','E2','E3'].forEach(function(id,i){setTxt(id,f2(E[i]));});
-  setTxt('amx1','12.7');
-  draw('sch1',W,H); draw('sch2',W,H);
+  var f2 = WB.fmt2;
+  // x₂ = −12.7 (absmax, scale=0.1); x₃ = 3.14 (giá trị lẻ minh họa sai số)
+  var x1 = WB.pick([5, 6, 9, -4, -8]);
+  var x4 = WB.pick([10, 7, 4, -10, -6]);
+  var x2 = -12.7, x3 = 3.14;
+  var absmax = 12.7, scale = 0.1;
+  function q(v){return Math.round(v/scale);}
+  var q1=q(x1), q2=q(x2), q3=q(x3), q4=q(x4);
+  function dq(qq){return Math.round(qq*scale*100)/100;}
+  var dq1=dq(q1), dq2=dq(q2), dq3=dq(q3), dq4=dq(q4);
+  var err = Math.round(Math.abs(x3-dq3)*100)/100;
+  WB.setAll({
+    x1:f2(x1).replace('.00',''), x2:f2(x2), x3:f2(x3), x4:f2(x4).replace('.00',''),
+    absmax:f2(absmax), scale:'0.1',
+    q1:String(q1).replace('-','−'), q2:String(q2).replace('-','−'), q3:String(q3).replace('-','−'), q4:String(q4).replace('-','−'),
+    dq1:f2(dq1).replace('.00',''), dq2:f2(dq2), dq3:f2(dq3), dq4:f2(dq4).replace('.00',''),
+    err:f2(err)
+  });
+  drawAxis('figQ', [x1,x2,x3,x4], [dq1,dq2,dq3,dq4]);
 }
-function draw(id,W,H){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  var x0=14,x1=176,y=46;
-  s+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="#bbb"/>';
-  // lưới điểm (mỗi 0.5 đơn vị ~ vài vạch)
-  for(var g=-12;g<=12;g+=2){var x=95+g*(x1-x0)/26;s+='<line x1="'+x+'" y1="'+(y-4)+'" x2="'+x+'" y2="'+(y+4)+'" stroke="#ddd"/>';}
-  s+='<text x="95" y="'+(y+18)+'" text-anchor="middle" font-size="7.5" fill="#999">0</text>';
-  for(var i=0;i<4;i++){var xw=95+W[i]*(x1-x0)/26, xh=95+H[i]*(x1-x0)/26;
-    s+='<circle cx="'+xw+'" cy="'+(y-14)+'" r="2.4" fill="#0e7490"/>';
-    s+='<line x1="'+xw+'" y1="'+(y-14)+'" x2="'+xh+'" y2="'+(y-4)+'" stroke="#b45309" stroke-width="1"/>';
-    s+='<text x="'+xh+'" y="'+(y-1)+'" text-anchor="middle" font-size="9" fill="#b45309">×</text>';}
-  s+='<text x="95" y="14" text-anchor="middle" font-size="8" fill="#0e7490">● w thật → × điểm lưới int8</text>';
-  b.innerHTML='<svg viewBox="0 0 190 70" aria-label="giá trị thật snap về lưới int8">'+s+'</svg>';
+function drawAxis(id, x, dq){
+  var svg = document.getElementById(id); if(!svg) return;
+  var x0=20, x1=220, cy=60, A=12.7;
+  function px(v){return x0 + (v+A)/(2*A)*(x1-x0);}
+  var s='<line x1="'+x0+'" y1="'+cy+'" x2="'+x1+'" y2="'+cy+'" stroke="#9aa3ad" stroke-width="1.2"/>';
+  // vài vạch nấc
+  for(var t=-12;t<=12;t+=4){ var xx=px(t); s+='<line x1="'+xx.toFixed(1)+'" y1="'+(cy-3)+'" x2="'+xx.toFixed(1)+'" y2="'+(cy+3)+'" stroke="#cfd6dd" stroke-width="1"/>'; }
+  s+='<text x="'+px(-A).toFixed(1)+'" y="'+(cy+16)+'" text-anchor="middle" font-size="8" fill="#5b6776">−12.7</text>';
+  s+='<text x="'+px(A).toFixed(1)+'" y="'+(cy+16)+'" text-anchor="middle" font-size="8" fill="#5b6776">+12.7</text>';
+  for(var i=0;i<4;i++){
+    var ax=px(x[i]), dxp=px(dq[i]);
+    s+='<circle cx="'+ax.toFixed(1)+'" cy="'+(cy-12)+'" r="3" fill="#0e7490"/>';
+    s+='<line x1="'+ax.toFixed(1)+'" y1="'+(cy-12)+'" x2="'+dxp.toFixed(1)+'" y2="'+cy+'" stroke="#b45309" stroke-width="1" stroke-dasharray="2 2"/>';
+    s+='<circle cx="'+dxp.toFixed(1)+'" cy="'+cy+'" r="2.6" fill="#b45309"/>';
+    s+='<text x="'+ax.toFixed(1)+'" y="'+(cy-18)+'" text-anchor="middle" font-size="7.5" fill="#0e7490">x'+(i+1)+'</text>';
+  }
+  s+='<text x="'+x0+'" y="18" font-size="8.5" fill="#0e7490" font-weight="700">● x (float)</text>';
+  s+='<text x="'+(x0+78)+'" y="18" font-size="8.5" fill="#b45309" font-weight="700">● x̂ (nấc gần nhất)</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

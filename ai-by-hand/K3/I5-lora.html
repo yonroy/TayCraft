@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · LoRA — cập nhật hạng thấp — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài I5 — LoRA cập nhật hạng thấp (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .m{ --cw:10mm; --ch:8mm; }
-  .cell{font-size:13.5px;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -19,118 +22,167 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>LoRA — cập nhật hạng thấp</h1><span class="vi">— Low-Rank Adaptation</span>
-    <span class="tag">ΔW = B·A (hạng nhỏ) · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Tinh chỉnh cả ma trận W khổng lồ rất tốn. LoRA <b>đóng băng W</b> và chỉ học một
-    "nhánh phụ" hạng thấp ΔW = B·A: B gầy (d×r), A dẹt (r×k), r rất nhỏ. Số tham số học tụt từ d·k xuống r(d+k).
-    <div class="fm">W′ = W + ΔW = W + B·A   (ở đây r = 1 → ΔW là tích ngoài của 1 cột × 1 hàng)</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Xám</b> = W đóng băng (không học) · <b>tím</b> = B, A nhỏ (học được) · cộng vào thành W′.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài I5</span><h1>LoRA <small>— cập nhật hạng thấp, fine-tune rẻ</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">① ΔW = B·A  (tích ngoài: ΔWᵢⱼ = Bᵢ · Aⱼ)</div>
-      <div class="row">
-        <div class="blk w"><span class="nm">B <s>3×1</s></span><div class="m c1" id="B"></div></div>
-        <span class="op">·</span>
-        <div class="blk w"><span class="nm">A <s>1×3</s></span><div class="m c3" id="A"></div></div>
-        <span class="op">=</span>
-        <div class="blk hot"><span class="nm">ΔW <s>3×3</s></span><div class="m c3" id="dW"></div></div>
-      </div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Fine-tune cả tỉ tham số rất tốn. LoRA giả định cập nhật cần thiết là <b>hạng thấp</b> → chỉ học hai ma trận
+    nhỏ B, A (đóng băng W gốc). Giảm tham số huấn luyện hàng trăm lần, lưu nhiều "adapter" cho nhiều việc.
+    <div class="formula">W' = W + ΔW, &nbsp; ΔW = B·A &nbsp;(B: d×r, A: r×d, r ≪ d) &nbsp; · &nbsp; tham số học: 2·d·r (thay vì d²)</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">② W′ = W + ΔW</div>
-      <div class="row">
-        <div class="blk in"><span class="nm">W (đóng băng)</span><div class="m c3" id="W"></div></div>
-        <span class="op">+ΔW=</span>
-        <div class="blk out"><span class="nm">W′</span><div class="m c3" id="Wp"></div></div>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Thay vì viết lại cả cuốn sách (W), LoRA dán một <b>tờ ghi chú mỏng</b> (B·A hạng r) lên trên. Vì cú "điều chỉnh" thường đơn giản
+    (hạng thấp), tờ ghi chú nhỏ là đủ — và gỡ ra/đổi tờ khác dễ dàng.
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>W là 100×100. Full fine-tune học 10000 số; LoRA r=2 học bao nhiêu? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:80px"></span></li></ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=4, r=1</span></div>
+    <div class="calc" style="font-size:14px">
+      B = ( <span class="gv" data-q="b0">1</span>, <span class="gv" data-q="b1">0</span>, <span class="gv" data-q="b2">2</span>, <span class="gv" data-q="b3">1</span> )ᵀ &nbsp;(4×1) ;
+      A = ( <span class="gv" data-q="a0">1</span>, <span class="gv" data-q="a1">0</span>, <span class="gv" data-q="a2">1</span>, <span class="gv" data-q="a3">0</span> ) &nbsp;(1×4) ; W gốc đóng băng.
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · LoRA</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Một phần tử ΔW = B·A</h2><span class="tag">tích ngoài</span></div>
+    <div class="calc">
+      ΔW[i][j] = B[i]·A[j]:&nbsp;
+      ΔW[0][0] = <span data-q="b0">1</span>·<span data-q="a0">1</span> = <span class="blk" style="min-width:30px"></span> ;
+      ΔW[2][0] = <span data-q="b2">2</span>·<span data-q="a0">1</span> = <span class="blk" style="min-width:30px"></span> ;
+      ΔW[0][1] = <span data-q="b0">1</span>·<span data-q="a1">0</span> = <span class="blk" style="min-width:30px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> ΔW là tích ngoài B·A → mọi hàng là bội của A → <b>hạng 1</b> (chỉ 1 hướng cập nhật).</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Đếm tham số</h2><span class="tag">2·d·r vs d²</span></div>
+    <div class="calc">
+      LoRA: 2·d·r = 2·4·1 = <span class="blk" style="min-width:34px"></span> ; &nbsp; full: d² = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="hint">Tỉ lệ 8/16; với d lớn (vd 4096) tỉ lệ giảm cực mạnh (2·4096·r ≪ 4096²).</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Áp dụng</h2><span class="tag">W' = W + ΔW</span></div>
+    <div class="note">Lúc suy luận <b>gộp</b> ΔW vào W (không thêm chi phí). W gốc nguyên vẹn → đổi adapter khác là đổi việc khác, không phá mô hình nền.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao hạng thấp đủ</h2><span class="tag">r ≪ d</span></div>
+    <div class="note">Nghiên cứu cho thấy cập nhật fine-tune nằm trong không gian <b>chiều thấp</b> → r nhỏ (4–64) đủ. Tiết kiệm bộ nhớ huấn luyện & lưu trữ.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>LoRA học gì, giữ gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao tiết kiệm tham số? → <span class="blk" style="min-width:140px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I5 · LoRA</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>LoRA — cập nhật hạng thấp</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I5</span><h1>LoRA <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Mỗi tác vụ chỉ cần lưu một cặp (B,A) bé tí → một mô hình gốc, nhiều "adapter".</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Phần tử ΔW</h2></div>
+    <div class="calc ans">ΔW[0][0] = <span class="blk" data-q="dw00">1</span> ; ΔW[2][0] = <span class="blk" data-q="dw20">2</span> ; ΔW[0][1] = <span class="blk" data-q="dw01">0</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">ΔW = B·A → W′ = W + ΔW</div>
-      <div class="row">
-        <div class="blk w"><span class="nm">B</span><div class="m c1" id="kB"></div></div>
-        <span class="op">·</span>
-        <div class="blk w"><span class="nm">A</span><div class="m c3" id="kA"></div></div>
-        <span class="op">=</span>
-        <div class="blk hot"><span class="nm">ΔW</span><div class="m c3" id="kdW"></div></div>
-      </div>
-      <div class="row" style="margin-top:5px">
-        <div class="blk in"><span class="nm">W</span><div class="m c3" id="kW"></div></div>
-        <span class="op">+=</span>
-        <div class="blk out"><span class="nm">W′ = W + ΔW</span><div class="m c3" id="kWp"></div></div>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Đếm tham số</h2></div>
+    <div class="calc ans">LoRA = <span class="blk" data-q="loraP">8</span> ; full = <span class="blk" data-q="fullP">16</span> &nbsp;<span class="note" style="display:inline">(tỉ lệ ½ ở d=4; nhỏ dần khi d lớn)</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">r(d+k) = 2·(100+100) = 400</span> số (so với 10000) → giảm ~96% tham số học.</li></ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> ΔW hạng thấp đủ để "lái" mô hình sang việc mới vì cập nhật fine-tune thường nằm trong không gian
-        chiều thấp. Khi suy luận có thể gộp B·A vào W (không thêm độ trễ). Nén mô hình theo hướng khác: <b>I6 lượng tử hóa int8</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>W lớn + (B cột)×(A hàng) mỏng</h2><span class="tag">hạng 1</span></div>
+    <div class="figrow">
+      <svg id="figW" class="fig" viewBox="0 0 250 130" width="82mm" height="42mm" aria-label="ma trận W lớn đóng băng cộng tích ngoài cột B nhân hàng A tạo delta W hạng thấp"></svg>
+      <div style="flex:1">
+        <div class="note">Khối <b>xám</b> = W (đóng băng, không học). Cột <b>lam</b> B × hàng <b>cam</b> A = ΔW — chỉ 2·d·r ô cần học, ít hơn hẳn d² ô của W.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · LoRA</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Học gì, giữ gì? → <span class="qa">Học B, A hạng thấp; giữ (đóng băng) W gốc.</span></li>
+      <li>Vì sao tiết kiệm? → <span class="qa">2·d·r ≪ d² khi r nhỏ.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> LoRA = W + B·A hạng thấp, đóng băng W → fine-tune rẻ, adapter gọn. Bài tiếp (I6): nén mô hình bằng
+    <b>quantization int8</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I5 · LoRA</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':WB.fmtInt(M[i][j]))+'</div>';el.innerHTML=s;}
 function generate(){
-  var B=[[WB.randIntNZ(-2,2)],[WB.randIntNZ(-2,2)],[WB.randIntNZ(-2,2)]];
-  var A=[[WB.randIntNZ(-2,2),WB.randIntNZ(-2,2),WB.randIntNZ(-2,2)]];
-  var W=[];for(var i=0;i<3;i++){var r=[];for(var j=0;j<3;j++)r.push(WB.randInt(-3,3));W.push(r);}
-  var dW=[],Wp=[];
-  for(var i=0;i<3;i++){var rd=[],rp=[];for(var j=0;j<3;j++){var d=B[i][0]*A[0][j];rd.push(d);rp.push(W[i][j]+d);}dW.push(rd);Wp.push(rp);}
-  fill('B',B,false); fill('A',A,false); fill('dW',dW,true); fill('W',W,false); fill('Wp',Wp,true);
-  fill('kB',B,false); fill('kA',A,false); fill('kdW',dW,false); fill('kW',W,false); fill('kWp',Wp,false);
-  draw('sch1'); draw('sch2');
+  var B = [WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2)];
+  var A = [WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2)];
+  if(B[0]===0) B[0]=1; if(A[0]===0) A[0]=1;     // để dw00 ≠ 0 cho rõ
+  var dw00=B[0]*A[0], dw20=B[2]*A[0], dw01=B[0]*A[1];
+  WB.setAll({
+    b0:String(B[0]), b1:String(B[1]), b2:String(B[2]), b3:String(B[3]),
+    a0:String(A[0]), a1:String(A[1]), a2:String(A[2]), a3:String(A[3]),
+    dw00:String(dw00), dw20:String(dw20), dw01:String(dw01),
+    loraP:'8', fullP:'16'
+  });
+  drawLoRA('figW', B, A);
 }
-function draw(id){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  // W lớn (xám) + nhánh B->A (tím) cộng vào
-  s+='<rect x="44" y="20" width="48" height="48" rx="4" fill="#eee" stroke="#999" stroke-width="1.2"/>';
-  s+='<text x="68" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#777">W</text>';
-  s+='<text x="68" y="14" text-anchor="middle" font-size="7.5" fill="#999">đóng băng (d×k)</text>';
-  // nhánh hạng thấp dưới
-  s+='<rect x="20" y="84" width="18" height="30" rx="3" fill="#ece2ff" stroke="#c3b1f5"/><text x="29" y="102" text-anchor="middle" font-size="9" font-weight="700" fill="#5b3fd6">B</text>';
-  s+='<rect x="58" y="92" width="14" height="14" rx="2" fill="#fff3b0" stroke="#e6cf6a"/><text x="65" y="103" text-anchor="middle" font-size="8">r</text>';
-  s+='<rect x="86" y="84" width="34" height="14" rx="3" fill="#ece2ff" stroke="#c3b1f5"/><text x="103" y="95" text-anchor="middle" font-size="9" font-weight="700" fill="#5b3fd6">A</text>';
-  s+='<defs><marker id="l'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#7c5cff"/></marker></defs>';
-  s+='<line x1="38" y1="99" x2="56" y2="99" stroke="#7c5cff" stroke-width="1.4" marker-end="url(#l'+id+')"/>';
-  s+='<line x1="72" y1="99" x2="84" y2="91" stroke="#7c5cff" stroke-width="1.4" marker-end="url(#l'+id+')"/>';
-  s+='<line x1="103" y1="84" x2="80" y2="68" stroke="#7c5cff" stroke-width="1.4" marker-end="url(#l'+id+')"/>';
-  s+='<text x="124" y="92" font-size="9" font-weight="700" fill="#0a6">+</text>';
-  s+='<text x="68" y="128" text-anchor="middle" font-size="7.5" fill="#5b3fd6">ΔW = B·A (hạng r)</text>';
-  b.innerHTML='<svg viewBox="0 0 140 132" aria-label="LoRA: W đóng băng + nhánh B·A hạng thấp">'+s+'</svg>';
+function drawLoRA(id, B, A){
+  var svg = document.getElementById(id); if(!svg) return;
+  var s='';
+  // W lớn 4x4 xám
+  var wx=18, wy=20, c=18;
+  for(var i=0;i<4;i++)for(var j=0;j<4;j++)
+    s+='<rect x="'+(wx+j*c)+'" y="'+(wy+i*c)+'" width="'+(c-2)+'" height="'+(c-2)+'" fill="#9aa3ad22" stroke="#9aa3ad" stroke-width="0.8"/>';
+  s+='<text x="'+(wx+2*c)+'" y="'+(wy-5)+'" text-anchor="middle" font-size="9" fill="#5b6776" font-weight="700">W (d² ô, đóng băng)</text>';
+  s+='<text x="'+(wx+2*c)+'" y="'+(wy+4*c+12)+'" text-anchor="middle" font-size="20" fill="#5b6776">+</text>';
+  // B cột (4x1) lam
+  var bx=120, by=20;
+  for(var i=0;i<4;i++){
+    s+='<rect x="'+bx+'" y="'+(by+i*c)+'" width="'+(c-2)+'" height="'+(c-2)+'" fill="#0e749022" stroke="#0e7490" stroke-width="1.1"/>';
+    s+='<text x="'+(bx+c/2-1)+'" y="'+(by+i*c+13)+'" text-anchor="middle" font-size="9" fill="#0e7490" font-weight="700">'+B[i]+'</text>';
+  }
+  s+='<text x="'+(bx+c/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="9" fill="#0e7490" font-weight="700">B</text>';
+  s+='<text x="'+(bx+c+6)+'" y="'+(by+2*c)+'" font-size="13" fill="#5b6776">×</text>';
+  // A hàng (1x4) cam
+  var ax=152, ay=20;
+  for(var j=0;j<4;j++){
+    s+='<rect x="'+(ax+j*c)+'" y="'+ay+'" width="'+(c-2)+'" height="'+(c-2)+'" fill="#b4530922" stroke="#b45309" stroke-width="1.1"/>';
+    s+='<text x="'+(ax+j*c+c/2-1)+'" y="'+(ay+13)+'" text-anchor="middle" font-size="9" fill="#b45309" font-weight="700">'+A[j]+'</text>';
+  }
+  s+='<text x="'+(ax+2*c)+'" y="'+(ay-5)+'" text-anchor="middle" font-size="9" fill="#b45309" font-weight="700">A</text>';
+  s+='<text x="'+(ax+2*c)+'" y="'+(ay+c+22)+'" text-anchor="middle" font-size="9" fill="#7c5cff" font-weight="700">= ΔW (hạng 1)</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

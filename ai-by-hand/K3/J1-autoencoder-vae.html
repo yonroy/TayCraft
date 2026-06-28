@@ -7,12 +7,15 @@
 <link rel="stylesheet" href="../wb.css">
 <style>
   /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
-  .page .step{ margin-top:6px; }
-  .page .grid2{ margin-top:2px; gap:4px 24px; }
-  .page .intro{ margin-top:6px; }
-  .page .calc{ line-height:1.65; }
-  .page .note{ margin-top:4px; }
-  .page .mtx .cell{ height:8mm; }
+  .page .step{ margin-top:4px; }
+  .page .grid2{ margin-top:2px; gap:4px 22px; }
+  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
+  .page .why{ margin-top:3px; }
+  .page .calc{ line-height:1.5; }
+  .page .note{ margin-top:3px; }
+  .page .mtx .cell{ height:7mm; }
 </style>
 </head>
 <body>
@@ -42,6 +45,12 @@
       z = W<sub>enc</sub>·x &nbsp;→&nbsp; x̂ = W<sub>dec</sub>·z &nbsp;|&nbsp;
       ℒ = mean((x − x̂)²) &nbsp;<s style="color:var(--accent2)">VAE: z = μ + σ⊙ε</s>
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>tóm tắt rồi viết lại</b>: encoder nén bài thành vài ý (z), decoder dựng lại bài từ ý đó. Cổ chai càng hẹp càng buộc giữ ý
+    <b>cốt lõi</b>. VAE: ý được mô tả bằng "khoảng" (μ, σ) thay vì điểm → vùng ẩn liền mạch để <b>bịa ra</b> mẫu mới.
   </div>
 
   <!-- GIVEN -->
@@ -74,6 +83,7 @@
       z = ( <span class="blk"></span>, <span class="blk"></span> )
     </div>
     <div class="hint"><b>Mẹo:</b> z là toàn bộ những gì giải mã được biết — 4 số đã rút còn 2.</div>
+    <div class="why"><b>Vì sao:</b> cổ chai 2 &lt; 4 → buộc mạng bỏ thông tin dư, giữ <b>đặc trưng chính</b>.</div>
   </div>
 
   <!-- STEP 2 -->
@@ -93,6 +103,7 @@
       ℒ = Σ(·)² ÷ 4 = <span class="blk"></span>
     </div>
     <div class="note">ℒ &gt; 0 là bình thường: cổ chai 2D không thể giữ trọn 4 chiều — đó là "phí nén".</div>
+    <div class="why"><b>Vì sao:</b> tối thiểu ℒ → mã ẩn z giữ được <b>nhiều thông tin nhất</b> có thể qua cổ chai.</div>
   </div>
 
   <!-- STEP 4 -->
@@ -106,10 +117,12 @@
   </div>
   </div><!-- /grid2 -->
 
-  <!-- FIGURE -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: đồng hồ cát mã hóa–giải mã</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figAE" class="fig" viewBox="0 0 270 104" width="150mm" height="58mm" aria-label="bốn nút đầu vào x thu về hai nút cổ chai z rồi mở lại bốn nút x mũ; cổ chai được tô đậm thể hiện nơi nén thông tin"></svg>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Cổ chai (bottleneck) buộc mạng làm gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>VAE thêm gì so với AE để sinh được? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder / VAE</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -151,6 +164,20 @@
     </div>
   </div>
   </div><!-- /grid2 -->
+
+  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: đồng hồ cát mã hóa–giải mã</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figAE" class="fig" viewBox="0 0 270 104" width="150mm" height="58mm" aria-label="bốn nút đầu vào x thu về hai nút cổ chai z rồi mở lại bốn nút x mũ; cổ chai được tô đậm thể hiện nơi nén thông tin"></svg>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Cổ chai buộc làm gì? → <span class="qa">Giữ lại đặc trưng quan trọng nhất (nén thông tin).</span></li>
+      <li>VAE thêm gì? → <span class="qa">Phân phối (μ,σ) + KL → vùng ẩn liền mạch để lấy mẫu.</span></li>
+    </ol>
+  </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
     <b style="color:var(--accent2)">Rút ra.</b> Autoencoder học <b>nén</b> không cần nhãn (tự giám sát): mã z chính là biểu diễn dùng lại cho tìm kiếm,

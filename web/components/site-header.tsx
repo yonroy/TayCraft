@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getUser, isAdmin } from "@/lib/auth";
-import { LogoutButton } from "@/components/logout-button";
+import { ProfileMenu } from "@/components/profile-menu";
 import { Button } from "@/components/ui/button";
 
 export async function SiteHeader() {
@@ -31,22 +31,12 @@ export async function SiteHeader() {
                   Admin
                 </Link>
               )}
-              <Link href="/account" title="Tài khoản" className="flex items-center" aria-label="Tài khoản">
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={avatarUrl}
-                    alt="Ảnh đại diện"
-                    referrerPolicy="no-referrer"
-                    className="h-8 w-8 rounded-full border border-line object-cover"
-                  />
-                ) : (
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/15 text-accent text-sm font-bold">
-                    {initial}
-                  </span>
-                )}
-              </Link>
-              <LogoutButton />
+              <ProfileMenu
+                avatarUrl={avatarUrl}
+                displayName={displayName}
+                email={user.email}
+                initial={initial}
+              />
             </>
           ) : (
             <Link href="/login">

@@ -1,10 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D13 — Adam một bước (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+</style>
 </head>
 <body>
 
@@ -18,86 +26,65 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: huấn luyện · tối ưu thích nghi</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D13</span><h1>Adam một bước <small>— bộ tối ưu "tự chỉnh tốc độ"</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
+  <div class="wb-title"><span class="no">Bài D13</span><h1>Adam — một bước cập nhật <small>— Adam optimizer</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
   <div class="intro">
-    <b>SGD (Bài D5) đi bước tỉ lệ với gradient — Adam thì không.</b> Adam giữ hai trung bình động: <b>m</b> (hướng đi,
-    làm mượt gradient) và <b>v</b> (độ lớn gradient bình phương). Vì khởi đầu m, v = 0 nên chúng bị lệch về 0 →
-    phải <b>hiệu chỉnh bias</b>. Cuối cùng bước đi được chia cho √v̂: chiều nào gradient hay lớn thì bước nhỏ lại, chiều
-    nào gradient bé thì bước to lên — <b>mỗi tham số một tốc độ riêng</b>. Ta chạy <b>bước đầu tiên (t = 1)</b> cho 2 tham số.
+    <b>Vì sao quan trọng.</b> Adam gộp hai ý hay: nhớ hướng (m) và tự chỉnh học suất từng tham số (v). Ổn định, ít phải dò η, hợp mọi loại
+    mạng. Hiểu một bước Adam là hiểu vì sao nó "vừa nhanh vừa êm".
     <div class="formula">
-      m = β₁m₋ + (1−β₁)g &nbsp; v = β₂v₋ + (1−β₂)g² &nbsp;|&nbsp;
-      m̂ = <span class="frac"><span class="n">m</span><span class="d">1−β₁ᵗ</span></span>
-      v̂ = <span class="frac"><span class="n">v</span><span class="d">1−β₂ᵗ</span></span>
-      <s style="color:var(--accent2)">θ ← θ − η·m̂/√v̂</s>
+      m ← β₁m + (1−β₁)g · v ← β₂v + (1−β₂)g² · m̂ = m/(1−β₁ᵗ) · v̂ = v/(1−β₂ᵗ) · w ← w − η·m̂/(√v̂ + ε)
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Adam lái xe vừa <b>giữ đà</b> (m — hướng trung bình gần đây) vừa <b>tự chỉnh ga riêng từng bánh</b> (v — độ rung). Hiệu chỉnh thiên lệch bù
+    việc m, v khởi tạo 0 nên bị "kéo về 0" ở các bước đầu.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: 2 tham số, gradient, siêu tham số</h2><span class="tag">t = 1 · m₋=v₋=0</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">θ <s>hiện tại</s></div>
-        <div class="mtx c1" style="--cell:16mm">
-          <div class="cell given" data-q="th1">0.50</div><div class="cell given" data-q="th2">0.50</div></div></div>
-      <div class="mwrap"><div class="mlabel">g <s>gradient</s></div>
-        <div class="mtx c1" style="--cell:16mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="g1">8</div>
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="g2">1</div></div></div>
-      <div class="note" style="margin-top:0;align-self:center;max-width:120mm">
-        Tốc độ học <b>η = 0.1</b> &nbsp;·&nbsp; β₁ = 0.9 &nbsp;·&nbsp; β₂ = 0.999.<br>
-        Hệ số hiệu chỉnh ở t=1: <b>1−β₁¹ = 0.1</b>, &nbsp;<b>1−β₂¹ = 0.001</b>.<br>
-        Tham số ① có gradient <b>rất lớn</b>, ② <b>rất nhỏ</b> — hãy để ý bước cuối!
-      </div>
-    </div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">β₁=0.9, β₂=0.999, η=<span data-q="eta">0.1</span></span></div>
+    <div class="calc" style="font-size:14px">w₀ = <span class="gv" data-q="w0">1.0</span>; gradient bước 1: g = <span class="gv" data-q="g">2</span>; m₀ = v₀ = 0; ε bỏ qua; t = 1.</div>
   </div>
 
-  <div class="grid2">
-  <!-- STEP 1 -->
+  <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Trung bình động m (mômen 1)</h2><span class="tag">0.1·g</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Hai mô-men (chưa hiệu chỉnh)</h2><span class="tag">m₁, v₁</span></div>
     <div class="calc">
-      m = 0.9·0 + 0.1·g<br>
-      m = ( <span class="blk"></span>, <span class="blk"></span> )
+      m₁ = 0.9·0 + 0.1·<span data-q="g">2</span> = <span class="blk" style="min-width:44px"></span> · v₁ = 0.999·0 + 0.001·<span data-q="g">2</span>² = <span class="blk" style="min-width:54px"></span>
     </div>
+    <div class="why"><b>Vì sao:</b> m là đà gradient (momentum), v là độ rung (RMSProp) — Adam gộp hai kỹ thuật làm một.</div>
   </div>
-  <!-- STEP 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trung bình động v (mômen 2)</h2><span class="tag">0.001·g²</span></div>
-    <div class="calc">
-      v = 0.999·0 + 0.001·g²<br>
-      v = ( <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-  </div>
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Hiệu chỉnh bias</h2><span class="tag">÷ 0.1 và ÷ 0.001</span></div>
-    <div class="calc">
-      m̂ = m ÷ 0.1 = ( <span class="blk"></span>, <span class="blk"></span> )<br>
-      v̂ = v ÷ 0.001 = ( <span class="blk"></span>, <span class="blk"></span> )<br>
-      √v̂ = ( <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="hint"><b>Nhận ra:</b> sau hiệu chỉnh, m̂ = g và v̂ = g² — bias bị "tháo" hết.</div>
-  </div>
-  <!-- STEP 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Cập nhật θ</h2><span class="tag">θ − η·m̂/√v̂</span></div>
-    <div class="calc">
-      bước = −0.1 · m̂/√v̂ = ( <span class="blk"></span>, <span class="blk"></span> )<br>
-      θ<sub>mới</sub> = ( <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="note">m̂/√v̂ = g/|g| = ±1 → <b>bước = ±η</b> cho cả hai, dù |g| khác nhau một trời một vực.</div>
-  </div>
-  </div><!-- /grid2 -->
 
-  <!-- FIGURE -->
+  <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: |g| khác nhau → bước Adam bằng nhau</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figAdam" class="fig" viewBox="0 0 270 100" width="150mm" height="56mm" aria-label="trái: hai cột độ lớn gradient rất chênh lệch; phải: SGD cho bước tỉ lệ gradient nên chênh lệch, còn Adam cho hai bước bằng nhau bằng η"></svg>
+    <div class="step-h"><div class="b">2</div><h2>Hiệu chỉnh thiên lệch (t=1)</h2><span class="tag">÷(1−βᵗ)</span></div>
+    <div class="calc">
+      m̂ = m₁/(1−0.9) = <span data-q="m1">0.2</span>/0.1 = <span class="blk" style="min-width:44px"></span> · v̂ = v₁/(1−0.999) = <span data-q="v1">0.004</span>/0.001 = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="hint">chia (1−βᵗ) "thổi phồng" lại giá trị bị kéo về 0 ở bước đầu.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước cập nhật</h2><span class="tag">w − η·m̂/√v̂</span></div>
+    <div class="calc">
+      √v̂ = <span class="blk" style="min-width:36px"></span> · w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·m̂/√v̂ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·(<span class="blk" style="min-width:36px"></span>) = <span class="blk" style="min-width:46px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> m̂/√v̂ ≈ ±1 ở bước đầu → bước đầu của Adam ≈ η theo <b>dấu</b> gradient, không phụ thuộc độ lớn g.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Adam gộp hai bộ tối ưu nào? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Hiệu chỉnh thiên lệch để làm gì? → <span class="blk" style="min-width:170px"></span></li>
+    </ol>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D13 · Adam một bước</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -109,50 +96,46 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D13</span><h1>Adam một bước <small>— lời giải &amp; kiểm tra</small></h1></div>
-
-  <div class="grid2">
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mômen 1</h2></div>
-    <div class="calc ans">
-      m = 0.1·(<span data-q="g1b">8</span>, <span data-q="g2b">1</span>) = ( <span class="blk" data-q="m1">0.80</span>, <span class="blk" data-q="m2">0.10</span> )
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Mômen 2</h2></div>
-    <div class="calc ans">
-      v = 0.001·(<span data-q="g1sq">64</span>, <span data-q="g2sq">1</span>) = ( <span class="blk" data-q="v1">0.064</span>, <span class="blk" data-q="v2">0.001</span> )
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Hiệu chỉnh bias</h2></div>
-    <div class="calc ans">
-      m̂ = ( <span data-q="mh1">8</span>, <span data-q="mh2">1</span> ) &nbsp; v̂ = ( <span data-q="vh1">64</span>, <span data-q="vh2">1</span> )<br>
-      √v̂ = ( <span class="blk" data-q="rvh1">8</span>, <span class="blk" data-q="rvh2">1</span> )
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Cập nhật</h2></div>
-    <div class="calc ans">
-      bước = −0.1·(<span data-q="ratio1">8/8</span>, <span data-q="ratio2">1/1</span>) = ( <span class="blk" data-q="st1">−0.10</span>, <span class="blk" data-q="st2">−0.10</span> )<br>
-      θ<sub>mới</sub> = ( <span class="blk" data-q="nw1">0.40</span>, <span class="blk" data-q="nw2">0.40</span> )
-    </div>
-  </div>
-  </div><!-- /grid2 -->
+  <div class="wb-title"><span class="no">Bài D13</span><h1>Adam — một bước cập nhật <small>— lời giải</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b" style="background:#7c5cff">≠</div><h2>So với SGD (Bài D5)</h2></div>
-    <div class="calc ans">
-      bước SGD = −η·g = −0.1·(<span data-q="g1c">8</span>, <span data-q="g2c">1</span>) = ( <span data-q="sgd1">−0.80</span>, <span data-q="sgd2">−0.10</span> )
-      &nbsp;→ chênh nhau <b data-q="ratioTxt">8×</b>; Adam: <b>bằng nhau</b>.
+    <div class="step-h"><div class="b">1</div><h2>Hai mô-men</h2></div>
+    <div class="calc ans">m₁ = 0.1·<span data-q="g">2</span> = <span class="blk" data-q="m1">0.2</span> · v₁ = 0.001·<span data-q="g">2</span>² = <span class="blk" data-q="v1">0.004</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Hiệu chỉnh</h2></div>
+    <div class="calc ans">m̂ = <span data-q="m1">0.2</span>/0.1 = <span class="blk" data-q="mh">2</span> · v̂ = <span data-q="v1">0.004</span>/0.001 = <span class="blk" data-q="vh">4</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước cập nhật</h2></div>
+    <div class="calc ans">√v̂ = <span class="blk" data-q="sqvh">2</span> · w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="mh">2</span>/<span data-q="sqvh">2</span> = <span data-q="w0">1.0</span> − <span data-q="stepv">0.1</span> = <span class="blk" data-q="w1">0.9</span></div>
+  </div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>m (đà) + v (thích nghi) → bước</h2><span class="tag">Adam = 2 nhánh</span></div>
+    <div class="figrow">
+      <svg id="figAdam" class="fig" viewBox="0 0 230 110" width="72mm" height="34mm" aria-label="gradient tách thành nhánh m và v rồi hợp thành bước cập nhật"></svg>
+      <div style="flex:1">
+        <div class="note">Hướng nhất quán → m lớn → đi nhanh; chiều gradient lớn → v lớn → tự giảm bước. Bước đầu m̂/√v̂ ≈ ±1 → ≈ η theo dấu g.
+          AdamW (Bài D14) thêm weight decay tách rời.</div>
+      </div>
     </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Adam gộp gì? → <span class="qa">Momentum (m) + RMSProp (v).</span></li>
+      <li>Hiệu chỉnh thiên lệch? → <span class="qa">Bù việc m, v khởi tạo 0 bị kéo nhỏ ở các bước đầu.</span></li>
+    </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Phép chia cho √v̂ khiến Adam <b>chuẩn hóa</b> bước theo từng tham số: tham số có gradient lớn không
-    "nhảy quá đà", tham số gradient bé vẫn tiến đều. Đó là lý do Adam ít phải dò η và hội tụ nhanh trên đa số mạng sâu —
-    bộ tối ưu mặc định để huấn luyện <b>Transformer (Bài H6)</b>. (Ở các bước sau t&gt;1, m và v tích lũy lịch sử nên
-    m̂/√v̂ không còn đúng ±1, nhưng cơ chế "mỗi chiều một tốc độ" vẫn giữ nguyên.)
+    <b style="color:var(--accent2)">Rút ra.</b> Adam = đà + thích nghi + hiệu chỉnh thiên lệch; bước đầu ≈ η theo dấu gradient.
+    Bài tiếp <b style="color:var(--accent2)">D14</b>: AdamW — tách weight decay khỏi gradient.
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D13 · Adam một bước</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
@@ -161,68 +144,43 @@
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  // g1 rất lớn, g2 rất nhỏ — để bật ý "bước bằng nhau". θ trong (0,1).
-  var s1 = WB.pick([-1,1]), s2 = WB.pick([-1,1]);
-  var g1 = s1*WB.randInt(5,9), g2 = s2*WB.randInt(1,2);
-  var th1 = WB.randInt(2,7)/10, th2 = WB.randInt(2,7)/10;
-  var m1 = 0.1*g1, m2 = 0.1*g2;
-  var v1 = 0.001*g1*g1, v2 = 0.001*g2*g2;
-  var mh1 = g1, mh2 = g2, vh1 = g1*g1, vh2 = g2*g2;
-  var rvh1 = Math.abs(g1), rvh2 = Math.abs(g2);
-  var st1 = -0.1*mh1/rvh1, st2 = -0.1*mh2/rvh2; // = ∓0.1
-  var nw1 = th1+st1, nw2 = th2+st2;
-  function f3(x){ var v=Math.round(x*1000)/1000; return (v<0?'−':'')+Math.abs(v).toFixed(3).replace(/0+$/,'').replace(/\.$/,'')||'0'; }
-
+  var fT=WB.fmtTrim;
+  var w0=WB.pick([1.0,0.5,2.0]), g=WB.pick([2,3,4,-2]), eta=0.1;
+  var m1=0.1*g, v1=0.001*g*g;
+  var mh=m1/0.1, vh=v1/0.001;          // = g, g²
+  var sqvh=Math.sqrt(vh);              // = |g|
+  var stepv=Math.round(eta*mh/sqvh*1000)/1000;
+  var w1=Math.round((w0-stepv)*1000)/1000;
+  function f3(v){ return (Math.round(v*1000)/1000).toString(); }   // giữ 3 chữ số để 0.016/0.001=16 khớp
   WB.setAll({
-    th1:WB.fmt2(th1), th2:WB.fmt2(th2),
-    g1:WB.fmtInt(g1), g2:WB.fmtInt(g2), g1b:WB.fmtInt(g1), g2b:WB.fmtInt(g2), g1c:WB.fmtInt(g1), g2c:WB.fmtInt(g2),
-    g1sq:String(g1*g1), g2sq:String(g2*g2),
-    m1:WB.fmt2(m1), m2:WB.fmt2(m2), v1:f3(v1), v2:f3(v2),
-    mh1:WB.fmtInt(mh1), mh2:WB.fmtInt(mh2), vh1:String(vh1), vh2:String(vh2),
-    rvh1:WB.fmtInt(rvh1), rvh2:WB.fmtInt(rvh2),
-    ratio1:WB.fmtInt(mh1)+'/'+rvh1, ratio2:WB.fmtInt(mh2)+'/'+rvh2,
-    st1:WB.fmt2(st1), st2:WB.fmt2(st2), nw1:WB.fmt2(nw1), nw2:WB.fmt2(nw2),
-    sgd1:WB.fmt2(-0.1*g1), sgd2:WB.fmt2(-0.1*g2),
-    ratioTxt: Math.round(Math.abs(g1/g2))+'×'
+    w0:fT(w0), g:fT(g), eta:fT(eta),
+    m1:f3(m1), v1:f3(v1),
+    mh:fT(mh), vh:fT(vh), sqvh:fT(sqvh), stepv:fT(stepv), w1:fT(w1)
   });
-  drawAdam(g1, g2);
+  drawAdam(g);
 }
 
-function drawAdam(g1, g2){
-  var svg = document.getElementById('figAdam'); if (!svg) return;
+function drawAdam(g){
+  var svg=document.getElementById('figAdam'); if(!svg) return;
+  var defs='<defs><marker id="aAd" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
   var s='';
-  var a1=Math.abs(g1), a2=Math.abs(g2), mx=Math.max(a1,a2);
-  // --- trái: |g| ---
-  var bx=20, base=82, sc=58/mx, bw=16;
-  s += '<text x="48" y="14" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">độ lớn |g|</text>';
-  s += '<line x1="12" y1="'+base+'" x2="84" y2="'+base+'" stroke="#c2ccd8" stroke-width="1"/>';
-  [a1,a2].forEach(function(v,i){
-    var h=v*sc, X=bx+i*30;
-    s += '<rect x="'+X+'" y="'+(base-h)+'" width="'+bw+'" height="'+h+'" fill="#b45309" opacity="0.85"/>';
-    s += '<text x="'+(X+bw/2)+'" y="'+(base-h-2)+'" text-anchor="middle" style="font-size:8px" fill="#16202e" font-weight="700">'+v+'</text>';
-    s += '<text x="'+(X+bw/2)+'" y="'+(base+9)+'" text-anchor="middle" style="font-size:7.5px" fill="#5b6776">θ'+(i===0?'①':'②')+'</text>';
-  });
-  // --- phải: bước SGD vs Adam ---
-  var ox=110, oy=82;
-  s += '<line x1="'+ox+'" y1="'+oy+'" x2="262" y2="'+oy+'" stroke="#c2ccd8" stroke-width="1"/>';
-  s += '<text x="186" y="14" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">độ lớn bước đi</text>';
-  // SGD bars (∝|g|, scaled by 0.1) and Adam bars (=0.1) — dùng cùng thang
-  var sc2 = 58/(0.1*mx), bw2=11;
-  function group(x0, label, vals, col){
-    s += '<text x="'+(x0+22)+'" y="'+(oy+20)+'" text-anchor="middle" style="font-size:8px" fill="'+col+'" font-weight="700">'+label+'</text>';
-    vals.forEach(function(v,i){
-      var h=v*sc2, X=x0+i*(bw2+5);
-      s += '<rect x="'+X+'" y="'+(oy-h)+'" width="'+bw2+'" height="'+h+'" fill="'+col+'" opacity="'+(i===0?0.9:0.55)+'"/>';
-      s += '<text x="'+(X+bw2/2)+'" y="'+(oy-h-2)+'" text-anchor="middle" style="font-size:6.5px" fill="#16202e">'+v.toFixed(2)+'</text>';
-    });
-  }
-  group(ox+6, 'SGD: ∝|g|', [0.1*a1, 0.1*a2], '#9aa7b4');
-  group(ox+78, 'Adam: =η', [0.1, 0.1], '#0e7490');
-  s += '<text x="186" y="98" text-anchor="middle" style="font-size:7.5px" fill="#5b6776">Adam cào bằng hai bước về η = 0.1</text>';
-  svg.innerHTML = s;
+  // g node
+  s += '<circle cx="26" cy="55" r="13" fill="#fff" stroke="#1a1a1a"/><text x="26" y="59" text-anchor="middle" font-size="11" font-weight="700">g</text>';
+  // m branch
+  s += '<rect x="80" y="22" width="60" height="24" rx="4" fill="#d6ecf6" stroke="#0e7490"/><text x="110" y="38" text-anchor="middle" style="font-size:9px" fill="#0c4a5e">m: đà</text>';
+  // v branch
+  s += '<rect x="80" y="64" width="60" height="24" rx="4" fill="#ffe6cc" stroke="#b45309"/><text x="110" y="80" text-anchor="middle" style="font-size:9px" fill="#7a3d00">v: thích nghi</text>';
+  s += '<line x1="39" y1="50" x2="79" y2="34" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aAd)"/>';
+  s += '<line x1="39" y1="60" x2="79" y2="76" stroke="#b45309" stroke-width="1.4" marker-end="url(#aAd)"/>';
+  // combine → step
+  s += '<circle cx="178" cy="55" r="14" fill="#fff3b0" stroke="#e6cf6a"/><text x="178" y="52" text-anchor="middle" style="font-size:8px">m̂/√v̂</text><text x="178" y="63" text-anchor="middle" style="font-size:8px" font-weight="700">bước</text>';
+  s += '<line x1="140" y1="34" x2="165" y2="49" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aAd)"/>';
+  s += '<line x1="140" y1="76" x2="165" y2="61" stroke="#b45309" stroke-width="1.4" marker-end="url(#aAd)"/>';
+  s += '<text x="115" y="14" text-anchor="middle" style="font-size:8px" fill="#6b7280">Adam = đà (m) + thích nghi (v)</text>';
+  svg.innerHTML=defs+s;
 }
 WB.wire(generate);
-drawAdam(8, 1);
+generate();
 </script>
 </body>
 </html>

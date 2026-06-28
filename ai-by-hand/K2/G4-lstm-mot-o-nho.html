@@ -1,21 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài G4 — LSTM một ô nhớ (A4 ngang in được)</title>
+<title>Làm toán AI · Bài G4 — LSTM một ô nhớ (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
 <style>
-  @page{ size:A4 landscape; }
-  /* siết chiều cao cho A4 ngang (additive, không đụng wb.css) */
-  .page .step{ margin-top:6px; }
-  .page .grid2{ margin-top:3px; gap:4px 24px; }
-  .page .intro{ margin-top:6px; }
-  .page .calc{ line-height:1.6; }
-  .page .note{ margin-top:3px; }
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+.tanhtab{font-family:var(--mono);font-size:12px;background:var(--given);border:1px solid var(--givenline);border-radius:5px;padding:3px 8px;display:inline-block;}
 </style>
 </head>
-<body class="landscape">
+<body>
 
 <div class="toolbar">
   <a href="../index.html">← Mục lục</a>
@@ -27,106 +27,66 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 (ngang) · tính tay<br>Mức: nâng cao · ký ức dài hạn</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM một ô nhớ <small>— ba cổng điều khiển dòng ký ức</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~22 phút</span></div>
+  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM — một ô nhớ <small>— Long Short-Term Memory</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
   <div class="intro">
-    <b>RNN hay quên — LSTM thêm "băng chuyền ký ức".</b> Ngoài trạng thái ẩn h, LSTM giữ thêm một <b>trạng thái ô c</b>
-    chạy thẳng qua thời gian, ít bị bóp méo. Ba <b>cổng</b> (mỗi cổng là một sigmoid cho ra số trong (0,1) — "mở bao nhiêu phần"):
-    <b>quên f</b> xóa bớt c cũ, <b>vào i</b> cho ứng viên mới g (tanh) ghi vào, <b>ra o</b> quyết định lộ bao nhiêu c ra h.
-    Ta chạy <b>một ô vô hướng, một bước</b> bằng số thật.
+    <b>Vì sao quan trọng.</b> RNN trơn quên nhanh (gradient teo). LSTM cho <b>đường ô nhớ c gần như tuyến tính</b> (cổng quên ≈ 1 → giữ nguyên)
+    → gradient chảy xa không teo, nhớ phụ thuộc dài hạn. Thống trị NLP/seq trước Transformer.
     <div class="formula">
-      f,i,o = σ(W·xₜ + U·hₜ₋₁ + b) &nbsp;·&nbsp; g = tanh(…) &nbsp;|&nbsp;
-      cₜ = f·cₜ₋₁ + i·g &nbsp;·&nbsp; hₜ = o·tanh(cₜ)
+      f, i, o = σ(…) (cổng quên/vào/ra) · c̃ = tanh(…) (ứng viên) · c<sub>t</sub> = f⊙c<sub>t−1</sub> + i⊙c̃ · h<sub>t</sub> = o⊙tanh(c<sub>t</sub>)
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Ô nhớ c như <b>băng ghi nhớ chạy thẳng</b>. Cổng <b>quên f</b> quyết bôi bao nhiêu băng cũ; cổng <b>vào i</b> quyết ghi thêm bao nhiêu cái mới;
+    cổng <b>ra o</b> quyết đọc ra bao nhiêu cho trạng thái h. f≈1, i≈0 → giữ trí nhớ nguyên vẹn qua nhiều bước.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: đầu vào, trạng thái cũ, tham số 4 cổng</h2><span class="tag">ô vô hướng</span></div>
-    <div class="row" style="gap:22px">
-      <div class="mwrap"><div class="mlabel">xₜ</div><div class="mtx c1" style="--cell:14mm"><div class="cell given" data-q="xt">2</div></div></div>
-      <div class="mwrap"><div class="mlabel">hₜ₋₁</div><div class="mtx c1" style="--cell:14mm"><div class="cell given" data-q="hp">1</div></div></div>
-      <div class="mwrap"><div class="mlabel">cₜ₋₁ <s>ký ức cũ</s></div><div class="mtx c1" style="--cell:14mm"><div class="cell given" data-q="cp">2</div></div></div>
-
-      <table style="border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-left:6px">
-        <tr style="color:var(--dim)"><th style="padding:2px 10px">cổng</th><th style="padding:2px 10px">W</th><th style="padding:2px 10px">U</th><th style="padding:2px 10px">b</th><th style="padding:2px 10px">hàm</th></tr>
-        <tr><td style="padding:2px 10px;color:var(--accent2)"><b>f</b> quên</td><td style="text-align:center" data-q="Wf">1</td><td style="text-align:center" data-q="Uf">0</td><td style="text-align:center" data-q="bf">0</td><td style="text-align:center">σ</td></tr>
-        <tr><td style="padding:2px 10px;color:var(--accent2)"><b>i</b> vào</td><td style="text-align:center" data-q="Wi">1</td><td style="text-align:center" data-q="Ui">1</td><td style="text-align:center" data-q="bi">-1</td><td style="text-align:center">σ</td></tr>
-        <tr><td style="padding:2px 10px;color:#7c5cff"><b>g</b> ứng viên</td><td style="text-align:center" data-q="Wg">1</td><td style="text-align:center" data-q="Ug">0</td><td style="text-align:center" data-q="bg">0</td><td style="text-align:center">tanh</td></tr>
-        <tr><td style="padding:2px 10px;color:var(--accent2)"><b>o</b> ra</td><td style="text-align:center" data-q="Wo">0</td><td style="text-align:center" data-q="Uo">1</td><td style="text-align:center" data-q="bo">1</td><td style="text-align:center">σ</td></tr>
-      </table>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 ô · scalar (cổng đã tính)</span></div>
+    <div class="calc" style="font-size:14px">
+      cổng f = <span class="gv" data-q="f">0.7</span> (quên), i = <span class="gv" data-q="i">0.6</span> (vào), o = <span class="gv" data-q="o">0.8</span> (ra); ứng viên c̃ = <span class="gv" data-q="ctil">0.5</span>; ô nhớ cũ c<sub>prev</sub> = <span class="gv" data-q="cprev">0.4</span>.
     </div>
-    <div class="row" style="margin-top:10px;gap:30px">
-      <div class="note" style="margin-top:0">Bảng <b>σ</b>: <span class="exptab" style="font-size:11px"><div>−2<b>0.12</b></div><div>−1<b>0.27</b></div><div>0<b>0.50</b></div><div>1<b>0.73</b></div><div>2<b>0.88</b></div></span></div>
-      <div class="note" style="margin-top:0">Bảng <b>tanh</b> (bước 0.5): <span class="exptab" style="font-size:10.5px"><div>±0<b>0.00</b></div><div>0.5<b>0.46</b></div><div>1.0<b>0.76</b></div><div>1.5<b>0.91</b></div><div>2.0<b>0.96</b></div></span> <span style="color:var(--dim)">(số âm → đổi dấu)</span></div>
-    </div>
+    <div class="tanhtab">Bảng: tanh(c<sub>t</sub>) = <span data-q="tanhc">0.52</span> (cho c<sub>t</sub> tính ở bước 1)</div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 1/3 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐỀ (bốn bước + sơ đồ) ============ -->
-<section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 (ngang) · tính tay<br>Bài G4 · LSTM (tiếp)</div>
-  </div>
-  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM một ô nhớ <small>— bốn bước tính &amp; sơ đồ</small></h1>
-    <span style="margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim)">cho sẵn: xₜ=<b data-q="xt">2</b> · hₜ₋₁=<b data-q="hp">1</b> · cₜ₋₁=<b data-q="cp">2</b></span></div>
-
-  <div class="grid2">
-  <!-- STEP 1 -->
+  <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tổng trước kích hoạt từng cổng</h2><span class="tag">W·x + U·h + b</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Cập nhật ô nhớ</h2><span class="tag">c = f·c_prev + i·c̃</span></div>
     <div class="calc">
-      z<sub>f</sub> = <span class="blk"></span> &nbsp; z<sub>i</sub> = <span class="blk"></span><br>
-      z<sub>g</sub> = <span class="blk"></span> &nbsp; z<sub>o</sub> = <span class="blk"></span>
+      c<sub>t</sub> = f·c<sub>prev</sub> + i·c̃ = <span data-q="f">0.7</span>·<span data-q="cprev">0.4</span> + <span data-q="i">0.6</span>·<span data-q="ctil">0.5</span> = <span data-q="t1">0.28</span> + <span data-q="t2">0.30</span> = <span class="blk" style="min-width:50px"></span>
     </div>
-    <div class="note">Đề chọn số nguyên trong [−2, 2] để tra bảng được.</div>
+    <div class="why"><b>Vì sao:</b> trộn "giữ băng cũ" (f) với "ghi cái mới" (i) — <b>cộng</b> chứ không ghi đè → trí nhớ tích lũy.</div>
   </div>
 
-  <!-- STEP 2 -->
+  <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Áp hàm cổng (tra bảng)</h2><span class="tag">σ / tanh</span></div>
-    <div class="calc">
-      f = σ(z<sub>f</sub>) = <span class="blk"></span> &nbsp; i = σ(z<sub>i</sub>) = <span class="blk"></span><br>
-      g = tanh(z<sub>g</sub>) = <span class="blk"></span> &nbsp; o = σ(z<sub>o</sub>) = <span class="blk"></span>
-    </div>
-    <div class="hint"><b>Đọc nghĩa:</b> f, i, o ∈ (0,1) là "van"; g ∈ (−1,1) là nội dung muốn ghi.</div>
+    <div class="step-h"><div class="b">2</div><h2>Trạng thái ẩn</h2><span class="tag">h = o·tanh(c)</span></div>
+    <div class="calc">h<sub>t</sub> = o·tanh(c<sub>t</sub>) = <span data-q="o">0.8</span>·<span data-q="tanhc">0.52</span> = <span class="blk" style="min-width:50px"></span></div>
+    <div class="hint">cổng ra o lọc xem <b>đọc</b> bao nhiêu ô nhớ ra ngoài thành h.</div>
   </div>
 
-  <!-- STEP 3 -->
+  <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Cập nhật ô nhớ cₜ</h2><span class="tag">f·cₜ₋₁ + i·g</span></div>
-    <div class="calc">
-      cₜ = <span class="blk" style="min-width:54px"></span>·<span data-q="cpb">2</span> + <span class="blk" style="min-width:54px"></span>·<span class="blk" style="min-width:54px"></span><br>
-      cₜ = <span class="blk" style="min-width:60px"></span>
-    </div>
-    <div class="note">Giữ lại f phần ký ức cũ, ghi thêm i phần ứng viên mới.</div>
+    <div class="step-h"><div class="b">3</div><h2>Giữ trí nhớ dài</h2><span class="tag">f≈1, i≈0</span></div>
+    <div class="note">Nếu f≈1, i≈0 thì c<sub>t</sub> ≈ c<sub>prev</sub> → ô nhớ <b>không đổi</b> qua nhiều bước. Đường c gần như cộng/đồng nhất → gradient không teo (khác RNN thường) → <b>nhớ xa</b>.</div>
   </div>
 
-  <!-- STEP 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Trạng thái ẩn hₜ</h2><span class="tag">o·tanh(cₜ)</span></div>
-    <div class="calc">
-      cₜ ≈ <span class="blk" style="min-width:50px"></span> <span style="color:var(--dim)">(làm tròn 0.5 để tra)</span><br>
-      tanh(cₜ) = <span class="blk"></span><br>
-      hₜ = o·tanh(cₜ) = <span class="blk" style="min-width:60px"></span>
-    </div>
-  </div>
-  </div><!-- /grid2 -->
-
-  <!-- FIGURE -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: băng chuyền ký ức &amp; ba cổng</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figLSTM" class="fig" viewBox="0 0 360 130" width="185mm" height="67mm" aria-label="băng chuyền trạng thái ô c chạy ngang trên cùng; cổng quên nhân vào c, cổng vào nhân ứng viên rồi cộng vào c, cổng ra nhân tanh của c để cho h"></svg>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Cổng quên f ≈ 1 nghĩa là gì? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao LSTM chống vanishing? → <span class="blk" style="min-width:160px"></span></li>
+    </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 2/3 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -135,146 +95,90 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM một ô nhớ <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM — một ô nhớ <small>— lời giải</small></h1></div>
 
-  <div class="grid2">
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tổng trước kích hoạt</h2></div>
-    <div class="calc ans">
-      z<sub>f</sub> = <span data-q="zfe">1·2 + 0·1 + 0</span> = <span class="blk" data-q="zf">2</span><br>
-      z<sub>i</sub> = <span data-q="zie">1·2 + 1·1 − 1</span> = <span class="blk" data-q="zi">2</span><br>
-      z<sub>g</sub> = <span data-q="zge">1·2 + 0·1 + 0</span> = <span class="blk" data-q="zg">2</span><br>
-      z<sub>o</sub> = <span data-q="zoe">0·2 + 1·1 + 1</span> = <span class="blk" data-q="zo">2</span>
+    <div class="step-h"><div class="b">1</div><h2>Cập nhật ô nhớ</h2></div>
+    <div class="calc ans">c<sub>t</sub> = <span data-q="t1">0.28</span> + <span data-q="t2">0.30</span> = <span class="blk" data-q="c">0.58</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Trạng thái ẩn</h2></div>
+    <div class="calc ans">h<sub>t</sub> = <span data-q="o">0.8</span>·tanh(<span data-q="c">0.58</span>) = <span data-q="o">0.8</span>·<span data-q="tanhc">0.52</span> = <span class="blk" data-q="h">0.42</span></div>
+  </div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Băng ô nhớ c chạy ngang + 3 cổng</h2><span class="tag">f · i · o</span></div>
+    <div class="figrow">
+      <svg id="figLSTM" class="fig" viewBox="0 0 240 110" width="76mm" height="35mm" aria-label="ô LSTM với băng ô nhớ chạy ngang và ba cổng quên vào ra"></svg>
+      <div style="flex:1">
+        <div class="note">Băng c chạy ngang gần như tuyến tính (f điều tiết giữ/bôi). LSTM tách <b>c (nhớ)</b> và <b>h (đầu ra)</b>, 3 cổng; GRU gộp lại, 2 cổng → gọn hơn
+          (Bài G5).</div>
+      </div>
     </div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Áp hàm cổng</h2></div>
-    <div class="calc ans">
-      f = σ(<span data-q="zfb">2</span>) = <span class="blk" data-q="fv">0.88</span><br>
-      i = σ(<span data-q="zib">2</span>) = <span class="blk" data-q="iv">0.88</span><br>
-      g = tanh(<span data-q="zgb">2</span>) = <span class="blk" data-q="gv">0.96</span><br>
-      o = σ(<span data-q="zob">2</span>) = <span class="blk" data-q="ov">0.88</span>
-    </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>f ≈ 1? → <span class="qa">Giữ gần như nguyên ô nhớ cũ → nhớ lâu.</span></li>
+      <li>Vì sao chống vanishing? → <span class="qa">Đường ô nhớ c gần tuyến tính → gradient chảy xa không teo.</span></li>
+    </ol>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Ô nhớ cₜ</h2></div>
-    <div class="calc ans">
-      cₜ = <span data-q="fv2">0.88</span>·<span data-q="cpc">2</span> + <span data-q="iv2">0.88</span>·<span data-q="gv2">0.96</span><br>
-      = <span data-q="fc">1.76</span> + <span data-q="ig">0.84</span> = <span class="blk" data-q="ct">2.60</span>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Trạng thái ẩn hₜ</h2></div>
-    <div class="calc ans">
-      cₜ ≈ <span data-q="ctr">2.5</span> → tanh = <span data-q="thc">0.99</span><br>
-      hₜ = <span data-q="ov2">0.88</span>·<span data-q="thc2">0.99</span> = <span class="blk" data-q="ht">0.87</span>
-    </div>
-  </div>
-  </div><!-- /grid2 -->
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Mấu chốt là <b>cₜ = f·cₜ₋₁ + i·g</b>: khi cổng quên f ≈ 1 và cổng vào i ≈ 0, ký ức cũ
-    <b>đi thẳng qua gần như nguyên vẹn</b> — gradient không tiêu biến như RNN trơn (Bài G2), nên LSTM nhớ được phụ thuộc xa.
-    Đây cũng là tinh thần "đường tắt cộng thẳng" của <b>residual trong Transformer (Bài H6)</b>. GRU là biến thể gộp cổng cho rẻ hơn.
+    <b style="color:var(--accent2)">Rút ra.</b> LSTM = ô nhớ c + 3 cổng; f≈1 giữ trí nhớ dài, chống vanishing.
+    Bài tiếp <b style="color:var(--accent2)">G5</b>: GRU — phiên bản gọn 2 cổng.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var SIG = {'-2':0.12,'-1':0.27,'0':0.50,'1':0.73,'2':0.88};
-var TANHI = {'-2':-0.96,'-1':-0.76,'0':0.00,'1':0.76,'2':0.96};
-// tanh bước 0.5 cho cₜ (làm tròn về bội 0.5, kẹp ±2)
-function tanhHalf(c){
-  var r = Math.max(-2, Math.min(2, Math.round(c*2)/2));
-  return { r:r, v: Math.round(Math.tanh(r)*100)/100 };
-}
-
 function generate(){
-  var xt,hp,cp,P,z,guard=0;
-  function preact(W,U,b){ return W*xt + U*hp + b; }
-  do{
-    xt = WB.randIntNZ(-2,2); hp = WB.randIntNZ(-2,2); cp = WB.randIntNZ(-2,2);
-    P = {
-      f:[WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1)],
-      i:[WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1)],
-      g:[WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1)],
-      o:[WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1)]
-    };
-    z = {};
-    ['f','i','g','o'].forEach(function(k){ z[k]=preact(P[k][0],P[k][1],P[k][2]); });
-    guard++;
-  } while (['f','i','g','o'].some(function(k){ return Math.abs(z[k])>2; }) && guard<300);
-
-  var f=SIG[String(z.f)], i=SIG[String(z.i)], o=SIG[String(z.o)], g=TANHI[String(z.g)];
-  var ct = f*cp + i*g;
-  var th = tanhHalf(ct);
-  var ht = o*th.v;
-
-  function lin(p){
-    return WB.fmtInt(p[0])+'·'+WB.wrap(WB.fmtInt(xt))+' '+sgn(p[1])+' '+WB.fmtInt(Math.abs(p[1]))+'·'+WB.wrap(WB.fmtInt(hp))+' '+sgn(p[2])+' '+WB.fmtInt(Math.abs(p[2]));
-  }
-  function sgn(v){ return v<0?'−':'+'; }
-
-  var map = {
-    xt:WB.fmtInt(xt), hp:WB.fmtInt(hp), cp:WB.fmtInt(cp), cpb:WB.fmtInt(cp), cpc:WB.fmtInt(cp),
-    Wf:WB.fmtInt(P.f[0]),Uf:WB.fmtInt(P.f[1]),bf:WB.fmtInt(P.f[2]),
-    Wi:WB.fmtInt(P.i[0]),Ui:WB.fmtInt(P.i[1]),bi:WB.fmtInt(P.i[2]),
-    Wg:WB.fmtInt(P.g[0]),Ug:WB.fmtInt(P.g[1]),bg:WB.fmtInt(P.g[2]),
-    Wo:WB.fmtInt(P.o[0]),Uo:WB.fmtInt(P.o[1]),bo:WB.fmtInt(P.o[2]),
-    zfe:lin(P.f), zie:lin(P.i), zge:lin(P.g), zoe:lin(P.o),
-    zf:WB.fmtInt(z.f), zi:WB.fmtInt(z.i), zg:WB.fmtInt(z.g), zo:WB.fmtInt(z.o),
-    zfb:WB.fmtInt(z.f), zib:WB.fmtInt(z.i), zgb:WB.fmtInt(z.g), zob:WB.fmtInt(z.o),
-    fv:WB.fmt2(f), iv:WB.fmt2(i), gv:WB.fmt2(g), ov:WB.fmt2(o),
-    fv2:WB.fmt2(f), iv2:WB.fmt2(i), gv2:WB.fmt2(g), ov2:WB.fmt2(o),
-    fc:WB.fmt2(f*cp), ig:WB.fmt2(i*g), ct:WB.fmt2(ct),
-    ctr:WB.fmtTrim(th.r), thc:WB.fmt2(th.v), thc2:WB.fmt2(th.v), ht:WB.fmt2(ht)
-  };
-  WB.setAll(map);
-  drawLSTM(f,i,o,g,cp,ct,ht);
+  var f2=WB.fmt2, fT=WB.fmtTrim;
+  function r2(v){ return Math.round(v*100)/100; }
+  var f=WB.pick([0.6,0.7,0.8]), i=WB.pick([0.4,0.5,0.6]), o=WB.pick([0.7,0.8,0.9]);
+  var ctil=WB.pick([0.4,0.5,0.6]), cprev=WB.pick([0.3,0.4,0.5]);
+  var t1=r2(f*cprev), t2=r2(i*ctil), c=r2(t1+t2);
+  var tanhc=r2(Math.tanh(c)), h=r2(o*tanhc);
+  WB.setAll({
+    f:fT(f), i:fT(i), o:fT(o), ctil:fT(ctil), cprev:fT(cprev),
+    t1:f2(t1), t2:f2(t2), c:f2(c), tanhc:f2(tanhc), h:f2(h)
+  });
+  drawLSTM();
 }
 
-function drawLSTM(f,i,o,g,cp,ct,ht){
-  var svg = document.getElementById('figLSTM'); if (!svg) return;
-  var s = '<defs><marker id="als" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
-  // băng chuyền c (trên cùng)
-  var ytop=24;
-  s += '<line x1="6" y1="'+ytop+'" x2="354" y2="'+ytop+'" stroke="#0e7490" stroke-width="3" marker-end="url(#als)"/>';
-  s += '<text x="14" y="'+(ytop-5)+'" style="font-size:9px" fill="#0e7490" font-weight="700">cₜ₋₁='+WB.fmtInt(cp)+'</text>';
-  s += '<text x="320" y="'+(ytop-5)+'" style="font-size:9px" fill="#0e7490" font-weight="700">cₜ='+WB.fmt2(ct)+'</text>';
-  // toán tử ⊗ (quên) và ⊕ (vào) trên băng chuyền
-  function gate(x,sym,col){ s += '<circle cx="'+x+'" cy="'+ytop+'" r="7" fill="#fff" stroke="'+col+'" stroke-width="1.6"/><text x="'+x+'" y="'+(ytop+3.5)+'" text-anchor="middle" style="font-size:11px" fill="'+col+'" font-weight="700">'+sym+'</text>'; }
-  gate(110,'×','#b45309'); gate(190,'+','#b45309');
-  // cổng f
-  function box(x,y,lab,val,col){
-    s += '<rect x="'+(x-22)+'" y="'+y+'" width="44" height="22" rx="5" fill="#fff5e9" stroke="'+col+'" stroke-width="1.3"/>';
-    s += '<text x="'+x+'" y="'+(y+9)+'" text-anchor="middle" style="font-size:8.5px" fill="'+col+'" font-weight="700">'+lab+'</text>';
-    s += '<text x="'+x+'" y="'+(y+19)+'" text-anchor="middle" style="font-size:8.5px" fill="#16202e">'+val+'</text>';
+function drawLSTM(){
+  var svg=document.getElementById('figLSTM'); if(!svg) return;
+  var defs='<defs><marker id="aLS" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
+  var s='';
+  // băng c chạy ngang (trên)
+  s += '<line x1="14" y1="30" x2="226" y2="30" stroke="#0a8a3a" stroke-width="3"/>';
+  s += '<text x="20" y="24" style="font-size:8px" fill="#0a8a3a">băng ô nhớ c (chạy thẳng)</text>';
+  // ô LSTM
+  s += '<rect x="80" y="44" width="80" height="40" rx="6" fill="#ece2ff" stroke="#7c5cff"/>';
+  // 3 cổng
+  var gx=[100,120,140], gl=['f','i','o'], gc=['#b45309','#0e7490','#7c5cff'];
+  for(var k=0;k<3;k++){
+    s += '<circle cx="'+gx[k]+'" cy="64" r="9" fill="#fff3b0" stroke="#e6cf6a"/><text x="'+gx[k]+'" y="68" text-anchor="middle" style="font-size:9px" font-weight="700" fill="'+gc[k]+'">'+gl[k]+'</text>';
   }
-  box(110,70,'quên f',WB.fmt2(f),'#b45309'); s+='<line x1="110" y1="70" x2="110" y2="'+(ytop+8)+'" stroke="#b45309" stroke-width="1.2" marker-end="url(#als)"/>';
-  box(165,90,'vào i',WB.fmt2(i),'#b45309');
-  box(220,90,'ứng viên g',WB.fmt2(g),'#7c5cff');
-  // i × g cộng vào băng chuyền
-  s += '<circle cx="190" cy="62" r="7" fill="#fff" stroke="#7c5cff" stroke-width="1.4"/><text x="190" y="65.5" text-anchor="middle" style="font-size:11px" fill="#7c5cff" font-weight="700">×</text>';
-  s += '<line x1="165" y1="90" x2="183" y2="68" stroke="#b45309" stroke-width="1.1"/>';
-  s += '<line x1="220" y1="90" x2="197" y2="68" stroke="#7c5cff" stroke-width="1.1"/>';
-  s += '<line x1="190" y1="55" x2="190" y2="'+(ytop+8)+'" stroke="#7c5cff" stroke-width="1.2" marker-end="url(#als)"/>';
-  // cổng ra o và tanh(c) → h
-  box(300,70,'ra o',WB.fmt2(o),'#b45309');
-  s += '<circle cx="300" cy="46" r="9" fill="#f3f0ff" stroke="#7c5cff" stroke-width="1.3"/><text x="300" y="49" text-anchor="middle" style="font-size:8px" fill="#5b3ed6">tanh</text>';
-  s += '<line x1="300" y1="'+(ytop)+'" x2="300" y2="37" stroke="#0e7490" stroke-width="1.2"/>';
-  s += '<line x1="300" y1="55" x2="300" y2="70" stroke="#7c5cff" stroke-width="1.2"/>';
-  s += '<circle cx="300" cy="100" r="7" fill="#fff" stroke="#b45309" stroke-width="1.4"/><text x="300" y="103.5" text-anchor="middle" style="font-size:11px" fill="#b45309" font-weight="700">×</text>';
-  s += '<line x1="300" y1="92" x2="300" y2="93" stroke="#b45309" stroke-width="1"/>';
-  s += '<line x1="307" y1="100" x2="350" y2="100" stroke="#b45309" stroke-width="1.8" marker-end="url(#als)"/>';
-  s += '<text x="340" y="95" text-anchor="middle" style="font-size:9px" fill="#b45309" font-weight="700">hₜ='+WB.fmt2(ht)+'</text>';
-  // chú thích đầu vào chung
-  s += '<text x="180" y="126" text-anchor="middle" style="font-size:8px" fill="#5b6776">mọi cổng cùng nhìn (xₜ, hₜ₋₁); ⊗ = nhân theo phần tử, ⊕ = cộng</text>';
-  svg.innerHTML = s;
+  // f tác động lên băng c
+  s += '<line x1="100" y1="55" x2="100" y2="33" stroke="#b45309" stroke-width="1.2" marker-end="url(#aLS)"/>';
+  s += '<line x1="120" y1="55" x2="120" y2="33" stroke="#0e7490" stroke-width="1.2" marker-end="url(#aLS)"/>';
+  // x,h vào
+  s += '<text x="20" y="68" style="font-size:9px" fill="#5b6776">x,h</text>';
+  s += '<line x1="40" y1="64" x2="79" y2="64" stroke="#777" stroke-width="1.3" marker-end="url(#aLS)"/>';
+  // h ra
+  s += '<text x="196" y="84" style="font-size:9px" fill="#7c5cff">h_t</text>';
+  s += '<line x1="160" y1="74" x2="194" y2="80" stroke="#7c5cff" stroke-width="1.3" marker-end="url(#aLS)"/>';
+  s += '<text x="120" y="100" text-anchor="middle" style="font-size:8px" fill="#6b7280">3 cổng f·i·o điều tiết băng c & đầu ra h</text>';
+  svg.innerHTML=defs+s;
 }
 WB.wire(generate);
-drawLSTM(0.88,0.88,0.88,0.96,2,2.60,0.87);
+generate();
 </script>
 </body>
 </html>

@@ -3,18 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Seq2seq — Encoder → Decoder</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài G7 — Seq2seq encoder → decoder (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:3px;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 5px;border:1px solid #d5c49a;text-align:center;font-size:11px;}
-  .dtbl td{padding:4px 6px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .ublk{display:inline-block;min-width:32px;text-align:center;border-bottom:1.6px dashed #b9b9b9;line-height:1.3;}
-  .key .ublk{border-bottom-color:var(--accent2);color:#7a3d00;font-weight:700;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -25,149 +22,155 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Seq2seq</h1><span class="vi">— Encoder → Decoder</span>
-    <span class="tag">nén chuỗi → context c → giải mã</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Dịch máy, tóm tắt… cần biến một chuỗi thành chuỗi khác. Seq2seq dùng <b>encoder</b> đọc
-    hết câu vào, nén thành <b>một vectơ ngữ cảnh c</b> (trạng thái ẩn cuối), rồi <b>decoder</b> sinh từng token đầu ra
-    từ c. Đơn giản nhưng c là <b>nút thắt cổ chai</b> — động lực ra đời attention.
-    <div class="fm">encoder: hₜ = hₜ₋₁ + xₜ → c = h cuối &nbsp;·&nbsp; decoder: sₜ = ½·sₜ₋₁, s₀ = c (ở đây w_enc=1, w_dec=½)</div>
+  <div class="wb-title"><span class="no">Bài G7</span><h1>Seq2seq encoder → decoder <small>— Sequence to sequence</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Dịch/tóm tắt = ánh xạ <b>chuỗi → chuỗi</b> độ dài khác nhau. Seq2seq tách "hiểu" (encoder) khỏi "sinh" (decoder).
+    Điểm yếu — nhồi cả câu vào <b>một</b> vectơ c — chính là động lực ra đời <b>attention</b> (Phần H).
+    <div class="formula">
+      Encoder: c = h<sub>n</sub> (trạng thái cuối sau khi đọc x₁…x<sub>n</sub>) &nbsp;·&nbsp; Decoder: s₀ = c; s<sub>t</sub> = RNN(y<sub>t−1</sub>, s<sub>t−1</sub>)
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Encoder "đọc xong rồi gói gọn" toàn bộ câu vào một con số/vectơ c; decoder "mở gói" để viết câu ra. Mọi thông
-    tin đầu vào phải lọt qua c — câu càng dài, c càng quá tải (nút thắt).
+    Encoder như người <b>đọc xong cả câu rồi tóm tắt vào một mẩu giấy</b> (c). Decoder cầm mẩu giấy đó <b>viết ra câu dịch</b>, từng từ một,
+    mỗi từ dựa trên giấy tóm tắt + từ vừa viết. (Lấy w<sub>enc</sub>=1, w<sub>dec</sub>=½ cho gọn.)
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Lam</b> = encoder nén dần · <b>c</b> = nút thắt (vectơ ngữ cảnh) · <b>cam</b> = decoder bung ra.</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">ENCODER (w=1): hₜ = hₜ₋₁ + xₜ</div>
-      <table class="dtbl" id="qtbl">
-        <tr><th>t</th><th>xₜ</th><th>hₜ (encoder)</th></tr>
-      </table>
-      <div class="expr">context c = h cuối = <span class="ublk" id="cB"></span></div>
-
-      <div class="bandh bw" style="margin-top:6px">DECODER (w=½): sₜ = ½·sₜ₋₁, s₀ = c</div>
-      <div class="expr">
-        s₁ = ½·c = <span class="ublk" id="s1B"></span> &nbsp;·&nbsp; s₂ = ½·s₁ = <span class="ublk" id="s2B"></span>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Toàn bộ câu vào bị nén qua mấy vectơ trước khi decode? → <span class="ublk" style="min-width:30px"></span></li>
-        </ol>
-      </div>
-    </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">encoder 3 bước</span></div>
+    <div class="calc" style="font-size:15px">Encoder đọc x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">3</span>, <span class="gv" data-q="x3">4</span> ), h<sub>t</sub> = h<sub>t−1</sub> + x<sub>t</sub>. Decoder: s₀ = c, s<sub>t</sub> = ½·s<sub>t−1</sub>.</div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Seq2seq</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Encoder nén thành ngữ cảnh c</h2><span class="tag">c = h cuối</span></div>
+    <div class="calc">
+      h₁ = <span data-q="x1">2</span> · h₂ = h₁ + <span data-q="x2">3</span> = <span data-q="h2">5</span> · h₃ = h₂ + <span data-q="x3">4</span> = <span class="blk" style="min-width:40px"></span> &nbsp;→&nbsp; c = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> c là "bản tóm tắt" cố định độ dài, <b>bất kể câu dài ngắn</b> — toàn bộ câu vào dồn vào một vectơ.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Decoder bước 1</h2><span class="tag">s₀ = c</span></div>
+    <div class="calc">s₁ = ½·s₀ = ½·c = <span class="blk" style="min-width:46px"></span></div>
+    <div class="hint">decoder là RNN khác, khởi tạo bằng c rồi sinh y₁ = softmax(W·s₁).</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Sinh tiếp (tự hồi quy)</h2><span class="tag">đến &lt;eos&gt;</span></div>
+    <div class="calc">s₂ = ½·s₁ = <span class="blk" style="min-width:46px"></span> &nbsp;→&nbsp; y₂ dựa trên y₁ vừa sinh & s₁; lặp tới khi gặp &lt;eos&gt;.</div>
+    <div class="why"><b>Vì sao:</b> tự hồi quy — từ trước làm đầu vào cho từ sau; mọi token ra đều bắt nguồn từ <b>một</b> c.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Vectơ ngữ cảnh c là gì? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Điểm yếu của seq2seq cơ bản? → <span class="blk" style="min-width:160px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Seq2seq</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài G7</span><h1>Seq2seq encoder → decoder <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Attention (Bài H5) cho decoder "nhìn lại MỌI hₜ của encoder" thay vì chỉ c → phá nút thắt.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Encoder → c</h2></div>
+    <div class="calc ans">h₁=<span data-q="x1">2</span> · h₂=<span data-q="h2">5</span> · h₃=<span data-q="h2">5</span>+<span data-q="x3">4</span>=<span class="blk" data-q="c">9</span> → c = <span data-q="c">9</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">ENCODER</div>
-      <table class="dtbl" id="ktbl">
-        <tr><th>t</th><th>xₜ</th><th>hₜ</th></tr>
-      </table>
-      <div class="expr">context c = <b><span data-q="kc">?</span></b></div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Decoder bước 1</h2></div>
+    <div class="calc ans">s₁ = ½·c = ½·<span data-q="c">9</span> = <span class="blk" data-q="s1">4.5</span></div>
+  </div>
 
-      <div class="bandh bw" style="margin-top:6px">DECODER</div>
-      <div class="expr">
-        s₁ = ½·c = <b><span data-q="ks1">?</span></b> · s₂ = ½·s₁ = <b><span data-q="ks2">?</span></b>
-        → mọi token ra đều bắt nguồn từ <b>một</b> c
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Sinh tiếp</h2></div>
+    <div class="calc ans">s₂ = ½·s₁ = <span class="blk" data-q="s2">2.25</span> (lặp tự hồi quy tới &lt;eos&gt;)</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>Cả câu nén qua <span class="qa">1</span> vectơ c → nút thắt; câu dài → mất thông tin.</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Seq2seq = encoder nén → c → decoder sinh. Nút thắt c là lý do attention ra đời: cho decoder
-        truy cập trực tiếp mọi trạng thái encoder. Đây là cây cầu sang Transformer (K3).
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>encoder → c (nút thắt) → decoder</h2><span class="tag">→ attention</span></div>
+    <div class="figrow">
+      <svg id="figS2S" class="fig" viewBox="0 0 230 110" width="74mm" height="35mm" aria-label="seq2seq encoder nén thành c rồi decoder bung ra"></svg>
+      <div style="flex:1">
+        <div class="note">Nhồi câu dài vào <b>một</b> c → mất chi tiết, dịch kém ở câu dài. <b>Attention</b> (Phần H, Bài H5) cho decoder nhìn lại <b>mọi</b>
+          trạng thái encoder thay vì chỉ c → cú nhảy vọt dẫn tới Transformer.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Seq2seq</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>c là gì? → <span class="qa">Bản tóm tắt cố định-độ-dài của cả chuỗi vào (trạng thái cuối encoder).</span></li>
+      <li>Điểm yếu? → <span class="qa">Nhồi cả câu vào một c → mất thông tin câu dài (→ cần attention).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Seq2seq = encoder nén → c → decoder sinh tự hồi quy; nút thắt c dẫn tới attention.
+    Bài tiếp <b style="color:var(--accent2)">G8</b>: chọn token khi sinh — Greedy vs Beam search.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-function fT(v){return WB.fmtTrim(v);}
-
 function generate(){
-  var x=[WB.randInt(2,4),WB.randInt(2,4),WB.randInt(2,4)];
-  var h=[x[0], x[0]+x[1], x[0]+x[1]+x[2]];
-  var c=h[2];
+  var fI=WB.fmtInt, fT=WB.fmtTrim;
+  var x1=WB.randInt(2,4), x2=WB.randInt(2,4), x3=WB.randInt(2,4);
+  var h2=x1+x2, c=h2+x3;
   var s1=c/2, s2=s1/2;
-
-  buildTbl('qtbl',x,h,true); buildTbl('ktbl',x,h,false);
-  ['cB','s1B','s2B'].forEach(function(id){var el=document.getElementById(id); if(el) el.textContent='';});
-  WB.setAll({ kc:fI(c), ks1:fT(s1), ks2:fT(s2) });
-
-  drawS2S('sch1'); drawS2S('sch2');
-}
-
-function buildTbl(id,x,h,blank){
-  var el=document.getElementById(id); if(!el) return;
-  while(el.children.length>1) el.removeChild(el.lastChild);
-  for(var t=0;t<3;t++){
-    var tr=document.createElement('tr');
-    var c=[String(t+1), fI(x[t]), fI(h[t])];
-    c.forEach(function(v,j){
-      var td=document.createElement('td'); td.textContent=v;
-      if(blank && j===2) td.className='blank';
-      tr.appendChild(td);
-    });
-    el.appendChild(tr);
-  }
+  WB.setAll({
+    x1:fI(x1), x2:fI(x2), x3:fI(x3), h2:fI(h2), c:fI(c),
+    s1:fT(s1), s2:fT(s2)
+  });
+  drawS2S('figS2S');
 }
 
 function drawS2S(id){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=120;
-  var ex=[18,44,70], dx=[120,150], y=56;
-  var s='<defs><marker id="aa'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 Z" fill="#888"/></marker></defs>';
+  var svg=document.getElementById(id); if(!svg) return;
+  var defs='<defs><marker id="aS7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
+  var ex=[22,52,82], dx=[158,196], y=58;
+  var s='';
   for(var i=0;i<3;i++){
-    s+='<circle cx="'+ex[i]+'" cy="'+y+'" r="9" fill="#d6ecf6" stroke="#0e7490"/><text x="'+ex[i]+'" y="'+(y+3)+'" text-anchor="middle" font-size="7.5">h'+(i+1)+'</text>';
-    if(i<2) s+='<line x1="'+(ex[i]+9)+'" y1="'+y+'" x2="'+(ex[i+1]-9)+'" y2="'+y+'" stroke="#0e7490" stroke-width="1.3" marker-end="url(#aa'+id+')"/>';
+    s += '<circle cx="'+ex[i]+'" cy="'+y+'" r="11" fill="#d6ecf6" stroke="#0e7490"/><text x="'+ex[i]+'" y="'+(y+3)+'" text-anchor="middle" style="font-size:8px">h'+(i+1)+'</text>';
+    if(i<2) s += '<line x1="'+(ex[i]+11)+'" y1="'+y+'" x2="'+(ex[i+1]-11)+'" y2="'+y+'" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aS7)"/>';
   }
   // context node
-  s+='<rect x="84" y="46" width="24" height="20" rx="4" fill="#fff3b0" stroke="#e6cf6a" stroke-width="1.5"/><text x="96" y="59" text-anchor="middle" font-size="10" font-weight="700">c</text>';
-  s+='<line x1="79" y1="'+y+'" x2="83" y2="'+y+'" stroke="#0e7490" stroke-width="1.3"/>';
-  // decoder
-  for(var d=0;d<2;d++){
-    s+='<circle cx="'+dx[d]+'" cy="'+y+'" r="9" fill="#ffe6cc" stroke="#b45309"/><text x="'+dx[d]+'" y="'+(y+3)+'" text-anchor="middle" font-size="7.5">s'+(d+1)+'</text>';
-  }
-  s+='<line x1="108" y1="'+y+'" x2="'+(dx[0]-9)+'" y2="'+y+'" stroke="#b45309" stroke-width="1.3" marker-end="url(#aa'+id+')"/>';
-  s+='<line x1="'+(dx[0]+9)+'" y1="'+y+'" x2="'+(dx[1]-9)+'" y2="'+y+'" stroke="#b45309" stroke-width="1.3" marker-end="url(#aa'+id+')"/>';
-  s+='<text x="44" y="22" text-anchor="middle" font-size="8" fill="#0e7490">encoder</text>';
-  s+='<text x="135" y="22" text-anchor="middle" font-size="8" fill="#b45309">decoder</text>';
-  s+='<text x="96" y="84" text-anchor="middle" font-size="7.5" fill="#8a6d00">nút thắt</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="seq2seq encoder nén thành c rồi decoder bung ra">'+s+'</svg>';
+  s += '<rect x="108" y="46" width="28" height="24" rx="5" fill="#fff3b0" stroke="#e6cf6a" stroke-width="1.6"/><text x="122" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="#8a6d00">c</text>';
+  s += '<line x1="93" y1="'+y+'" x2="107" y2="'+y+'" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aS7)"/>';
+  for(var d=0;d<2;d++) s += '<circle cx="'+dx[d]+'" cy="'+y+'" r="11" fill="#ffe6cc" stroke="#b45309"/><text x="'+dx[d]+'" y="'+(y+3)+'" text-anchor="middle" style="font-size:8px">s'+(d+1)+'</text>';
+  s += '<line x1="136" y1="'+y+'" x2="'+(dx[0]-11)+'" y2="'+y+'" stroke="#b45309" stroke-width="1.4" marker-end="url(#aS7)"/>';
+  s += '<line x1="'+(dx[0]+11)+'" y1="'+y+'" x2="'+(dx[1]-11)+'" y2="'+y+'" stroke="#b45309" stroke-width="1.4" marker-end="url(#aS7)"/>';
+  s += '<text x="52" y="22" text-anchor="middle" style="font-size:8px" fill="#0e7490">encoder</text>';
+  s += '<text x="177" y="22" text-anchor="middle" style="font-size:8px" fill="#b45309">decoder</text>';
+  s += '<text x="122" y="86" text-anchor="middle" style="font-size:8px" fill="#8a6d00">nút thắt cổ chai</text>';
+  svg.innerHTML=defs+s;
 }
-
 WB.wire(generate);
 generate();
 </script>

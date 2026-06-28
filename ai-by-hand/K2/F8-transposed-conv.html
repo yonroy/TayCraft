@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Transposed Conv — upsampling</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài F8 — Transposed conv (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:1.9;margin-top:3px;}
-  .crow{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;}
-  .clab{font-family:var(--mono);font-size:12px;font-weight:700;}
-  .m .cell{--cw:9mm;--ch:7.5mm;font-size:13px;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -21,140 +22,164 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Transposed Conv</h1><span class="vi">— upsampling</span>
-    <span class="tag">mỗi ô vào · kernel → một khối ra (stride 2)</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Conv thường <b>thu nhỏ</b> ảnh; nhiều việc (segmentation, sinh ảnh, decoder của
-    autoencoder/U-Net) cần <b>phóng to</b> trở lại. Transposed conv (deconv) làm ngược: mỗi giá trị đầu vào <b>nhân</b>
-    kernel rồi <b>đặt</b> vào một khối ở lưới lớn hơn — học được cách upsample.
-    <div class="fm">stride 2, kernel 2×2: out[khối (i,j)] = x[i,j] · kernel &nbsp;→&nbsp; 2×2 nở thành 4×4</div>
+  <div class="wb-title"><span class="no">Bài F8</span><h1>Transposed conv <small>— upsampling (conv ngược, phóng to)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Bộ giải mã (decoder) của U-Net, GAN, autoencoder cần <b>tăng độ phân giải</b> từ đặc trưng nhỏ về ảnh lớn.
+    Transposed conv làm việc đó <b>có học được</b> (khác nội suy cố định) — học cách "vẽ thêm chi tiết".
+    <div class="formula">
+      out = ⊕ (x<sub>i</sub> · kernel) đặt theo stride (overlap-add) &nbsp;·&nbsp; out_size = (in−1)·S − 2P + K
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Ngược với conv (nhiều ô → một số), transposed conv biến <b>một số → nhiều ô</b>: tô kernel với cường độ bằng
-    giá trị đầu vào lên một mảng con. stride quyết định khoảng cách giữa các khối.
+    Conv thường: nhiều pixel → một số (thu nhỏ). Transposed: <b>một pixel → một mảng</b> (kernel nhân giá trị pixel), trượt theo stride và
+    <b>cộng chỗ chồng lấn</b>. Như "tô vết" rộng ra rồi đắp các vết lên nhau.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Mỗi ô vào</b> (2×2) → một <b>khối 2×2</b> ở đầu ra 4×4 = ô đó × kernel. stride 2 = các khối kề nhau.</div>
-    </div>
-
-    <div class="work">
-      <div class="crow">
-        <div><div class="clab">vào 2×2</div><div class="m c2 in" id="x"></div></div>
-        <div><div class="clab" style="color:#7c5cff">kernel 2×2</div><div class="m c2 w" id="k"></div></div>
-      </div>
-
-      <div class="bandh fw" style="margin-top:8px">ĐẦU RA 4×4 (= ghép 4 khối)</div>
-      <div class="crow"><div class="m c4 out" id="o"></div></div>
-      <div class="expr">khối góc trên-trái = x₁₁ · kernel = <span class="ublk" id="bkB" style="display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:80px"></span></div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Đầu vào 2×2, stride 2, kernel 2×2 → đầu ra cỡ <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span></li>
-        </ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (1D cho gọn)</h2><span class="tag">stride 2</span></div>
+    <div class="calc" style="font-size:15px">
+      Đầu vào x = (<span class="gv" data-q="x0">2</span>, <span class="gv" data-q="x1">3</span>) &nbsp;·&nbsp; kernel k = (<span class="gv" data-q="k0">1</span>, <span class="gv" data-q="k1">1</span>) &nbsp;·&nbsp; stride S = 2.
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Transposed Conv</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="grid2">
+    <!-- BƯỚC 1 -->
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Rải pixel x₀</h2><span class="tag">vị trí 0–1</span></div>
+      <div class="calc">x₀·k = <span data-q="x0">2</span>·(<span data-q="k0">1</span>,<span data-q="k1">1</span>) = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )</div>
+      <div class="why"><b>Vì sao:</b> mỗi giá trị vào nhân toàn bộ kernel → "nở" thành một mảng.</div>
+    </div>
+
+    <!-- BƯỚC 2 -->
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Rải pixel x₁</h2><span class="tag">lệch stride → vị trí 2–3</span></div>
+      <div class="calc">x₁·k = <span data-q="x1">3</span>·(<span data-q="k0">1</span>,<span data-q="k1">1</span>) = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )</div>
+      <div class="hint">stride quyết định khoảng cách giữa các vết rải.</div>
+    </div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Cộng dồn (overlap-add)</h2><span class="tag">ghép theo vị trí</span></div>
+    <div class="calc">
+      out = ( <span class="blk" style="min-width:110px"></span> ) &nbsp;·&nbsp; độ dài = (in−1)·S + K = (2−1)·2 + 2 = <span class="blk" style="min-width:40px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> đầu vào dài 2 → đầu ra dài 4 (phóng to ×2); chỗ các vết chồng lên nhau thì cộng lại.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Transposed conv làm gì với kích thước? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao có hiện tượng "checkerboard"? → <span class="blk" style="min-width:170px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F8 · Transposed conv</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Transposed Conv</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài F8</span><h1>Transposed conv <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Khi stride &lt; kernel, các khối chồng nhau → các ô giao nhau được CỘNG dồn (hay gây "checkerboard").</div>
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Rải x₀</h2></div>
+      <div class="calc ans">x₀·k = ( <span class="blk" data-q="o0">2</span>, <span class="blk" data-q="o1">2</span> ) @ 0–1</div>
     </div>
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Rải x₁</h2></div>
+      <div class="calc ans">x₁·k = ( <span class="blk" data-q="o2">3</span>, <span class="blk" data-q="o3">3</span> ) @ 2–3</div>
+    </div>
+  </div>
 
-    <div class="work">
-      <div class="crow">
-        <div><div class="clab">vào 2×2</div><div class="m c2 in" id="kx"></div></div>
-        <div><div class="clab" style="color:#7c5cff">kernel</div><div class="m c2 w" id="kk"></div></div>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Cộng dồn</h2></div>
+    <div class="calc ans">out = ( <span data-q="o0">2</span>, <span data-q="o1">2</span>, <span data-q="o2">3</span>, <span data-q="o3">3</span> ) · độ dài = <span class="blk" data-q="osz">4</span> (phóng to ×2)</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:8px">ĐẦU RA 4×4</div>
-      <div class="crow"><div class="m c4 out" id="ko"></div></div>
-      <div class="expr">mỗi khối 2×2 = (ô vào) × kernel; ghép 4 khối thành 4×4 → đã <b>phóng to gấp đôi</b>.</div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>2×2, stride 2, kernel 2×2 → <span class="qa">4×4</span> (gấp đôi mỗi chiều).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Transposed conv = upsample học được, dùng trong decoder (autoencoder Bài J1, U-Net, GAN).
-        Để tránh checkerboard, nhiều mạng dùng "upsample + conv thường" thay cho transposed conv.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>2 pixel rải kernel → 4 ô</h2><span class="tag">overlap-add</span></div>
+    <div class="figrow">
+      <svg id="figUp" class="fig" viewBox="0 0 230 120" width="72mm" height="38mm" aria-label="hai pixel rải kernel thành bốn ô đầu ra"></svg>
+      <div style="flex:1">
+        <div class="note">Khi stride &lt; kernel, các vết chồng nhau → ô giao được <b>cộng dồn</b> (dễ gây "checkerboard" lốm đốm). Khắc phục: chọn K chia hết S,
+          hoặc dùng <b>upsample + conv</b> thường thay thế.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Transposed Conv</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Với kích thước? → <span class="qa">Phóng to (upsample) feature map.</span></li>
+      <li>Checkerboard? → <span class="qa">Vết kernel chồng không đều khi K không chia hết stride.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Transposed conv = rải kernel theo pixel + overlap-add → upsample có học được (decoder autoencoder J1, U-Net, GAN).
+    Bài tiếp <b style="color:var(--accent2)">F9</b>: đường tắt residual giúp mạng rất sâu học được.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F8 · Transposed conv</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-function fill(id,arr,blank){
-  var el=document.getElementById(id); if(!el) return; var s='';
-  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fI(arr[i]))+'</div>';
-  el.innerHTML=s;
+function generate(){
+  var fI=WB.fmtInt;
+  var x0=WB.randInt(1,4), x1=WB.randInt(1,4);
+  var k0=WB.pick([1,2]), k1=WB.pick([1,2]);
+  var o0=x0*k0, o1=x0*k1, o2=x1*k0, o3=x1*k1;
+  var osz=(2-1)*2+2;
+  WB.setAll({
+    x0:fI(x0), x1:fI(x1), k0:fI(k0), k1:fI(k1),
+    o0:fI(o0), o1:fI(o1), o2:fI(o2), o3:fI(o3), osz:fI(osz)
+  });
+  drawUp('figUp', [o0,o1,o2,o3], [x0,x1], [k0,k1]);
 }
 
-function generate(){
-  var x=[WB.randInt(1,3),WB.randInt(1,3),WB.randInt(1,3),WB.randInt(1,3)];   // 2×2: x11,x12,x21,x22
-  var k=[WB.randIntNZ(-1,2),WB.pick([1,2]),WB.pick([0,1]),WB.pick([1,2])];   // 2×2 kernel
-  // out 4×4: khối (I,J) = x[I,J] * k
-  var out=new Array(F1);
-  function setBlock(bi,bj,val){
-    for(var a=0;a<2;a++) for(var b=0;b<2;b++){
-      var r=bi*2+a, c=bj*2+b;
-      out[r*4+c]=val*k[a*2+b];
+// 2 pixel vào → rải kernel → 4 ô ra
+function drawUp(id, out, x, k){
+  var svg=document.getElementById(id); if(!svg) return;
+  var s='';
+  // 2 pixel vào
+  for(var i=0;i<2;i++){
+    s += '<rect x="'+(14+i*26)+'" y="44" width="22" height="22" fill="#fdecd2" stroke="#e3c489"/>';
+    s += '<text x="'+(25+i*26)+'" y="59" text-anchor="middle" font-size="11" fill="#3a2a08">'+x[i]+'</text>';
+  }
+  s += '<text x="16" y="38" style="font-size:8px" fill="#3a2a08">vào (2)</text>';
+  s += '<text x="76" y="58" font-size="11" fill="#7c5cff">·k→</text>';
+  // 4 ô ra (2 khối màu)
+  var ox=108, oc=24, bc=['#d6ecf6','#bfdded'];
+  for(var b=0;b<2;b++){
+    for(var j=0;j<2;j++){
+      var idx=b*2+j;
+      s += '<rect x="'+(ox+idx*oc)+'" y="40" width="'+oc+'" height="'+oc+'" fill="'+bc[b]+'" stroke="#0e7490"/>';
+      s += '<text x="'+(ox+idx*oc+oc/2)+'" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#0a5b70">'+out[idx]+'</text>';
     }
   }
-  setBlock(0,0,x[0]); setBlock(0,1,x[1]); setBlock(1,0,x[2]); setBlock(1,1,x[3]);
-
-  fill('x',x); fill('k',k); fill('o',out,true);
-  fill('kx',x); fill('kk',k); fill('ko',out);
-  var bb=document.getElementById('bkB'); if(bb) bb.textContent='';
-  WB.setAll({});
-
-  drawUp('sch1'); drawUp('sch2');
+  s += '<text x="'+ox+'" y="34" style="font-size:8px" fill="#0e7490">ra (4) = phóng to ×2</text>';
+  svg.innerHTML=s;
 }
-
-function drawUp(id){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=132, cell=14;
-  var s='';
-  // vào 2×2
-  var ix=20, iy=50;
-  for(var i=0;i<2;i++) for(var j=0;j<2;j++)
-    s+='<rect x="'+(ix+j*cell)+'" y="'+(iy+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="#fdecd2" stroke="#e3c489"/>';
-  s+='<text x="'+ix+'" y="'+(iy-4)+'" font-size="8" fill="#3a2a08">vào 2×2</text>';
-  // mũi tên
-  s+='<text x="68" y="64" font-size="12" fill="#7c5cff">⊗k→</text>';
-  // ra 4×4 chia 4 khối màu
-  var ox=104, oy=30, oc=16;
-  var bc=['#d6ecf6','#cfe7f2','#c7e2ef','#bfdded'];
-  for(var I=0;I<2;I++) for(var J=0;J<2;J++){
-    for(var a=0;a<2;a++) for(var b=0;b<2;b++)
-      s+='<rect x="'+(ox+(J*2+b)*oc)+'" y="'+(oy+(I*2+a)*oc)+'" width="'+oc+'" height="'+oc+'" fill="'+bc[I*2+J]+'" stroke="#0e7490"/>';
-    s+='<rect x="'+(ox+J*2*oc)+'" y="'+(oy+I*2*oc)+'" width="'+(2*oc)+'" height="'+(2*oc)+'" fill="none" stroke="#0e7490" stroke-width="1.6"/>';
-  }
-  s+='<text x="'+ox+'" y="'+(oy-4)+'" font-size="8" fill="#0e7490">ra 4×4 (4 khối)</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="2x2 vào nở thành 4x4 ra qua transposed conv">'+s+'</svg>';
-}
-
 WB.wire(generate);
 generate();
 </script>

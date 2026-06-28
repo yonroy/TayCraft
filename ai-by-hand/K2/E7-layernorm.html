@@ -1,10 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E7 — LayerNorm / RMSNorm (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+</style>
 </head>
 <body>
 
@@ -18,101 +26,71 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · ổn định huấn luyện</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— chuẩn hóa một vectơ theo hàng</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— chuẩn hóa trong một mẫu</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
   <div class="intro">
-    <b>Giữ con số "không quá to, không quá nhỏ".</b> Sau mỗi lớp, giá trị có thể trôi đi rất xa khiến mạng khó học.
-    LayerNorm <b>kéo từng hàng về cùng thang đo</b>: trừ trung bình μ, chia độ lệch chuẩn σ (giờ mean 0, std 1),
-    rồi cho mạng tự co giãn lại bằng <b>γ</b> và dịch bằng <b>β</b> (hai tham số học được). Đây là chất keo của khối
-    Transformer (Bài H6).
+    <b>Vì sao quan trọng.</b> BatchNorm cần batch lớn & cố định → kẹt với chuỗi độ dài thay đổi (NLP). LayerNorm chuẩn hóa <b>mỗi token tự thân</b>
+    → hoạt động với batch=1, độ dài bất kỳ. Mọi Transformer đều dùng nó để train ổn định, sâu.
     <div class="formula">
-      x̂ = <span class="frac"><span class="n">x − μ</span><span class="d">σ</span></span>
-      &nbsp;,&nbsp; y = γ ⊙ x̂ + β
-      &nbsp;&nbsp;|&nbsp;&nbsp; μ = mean(x), &nbsp;σ = √(mean((x−μ)²))
+      μ, σ trên các ĐẶC TRƯNG của một mẫu · x̂ = (x − μ)/√(σ²+ε) · y = γ·x̂ + β &nbsp;·&nbsp; RMSNorm: y = γ·x/√(mean(x²)+ε)
     </div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Với <b>từng token</b>, đặt lại thước: kéo vectơ đặc trưng về trung bình 0, độ trải 1, rồi cho γ, β chỉnh lại. Khác BatchNorm (so các mẫu
+    với nhau), LayerNorm <b>chỉ nhìn bên trong một mẫu</b> → không lệ thuộc bạn cùng batch.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: vectơ x &amp; tham số γ, β</h2><span class="tag">d = 4</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">x <s>đầu vào (1 hàng)</s></div>
-        <div class="mtx c4" style="--cell:15mm">
-          <div class="cell given" data-q="x0">3</div><div class="cell given" data-q="x1">7</div><div class="cell given" data-q="x2">3</div><div class="cell given" data-q="x3">7</div>
-        </div></div>
-      <div class="mwrap" style="margin-left:4px"><div class="mlabel">γ <s>co giãn</s></div>
-        <div class="mtx c4" style="--cell:13mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="g0">2</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="g1">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="g2">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="g3">2</div>
-        </div></div>
-      <div class="mwrap" style="margin-left:4px"><div class="mlabel">β <s>dịch</s></div>
-        <div class="mtx c4" style="--cell:13mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="b0">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="b1">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="b2">-1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="b3">0</div>
-        </div></div>
-    </div>
-    <div class="note" style="max-width:165mm">Tra sẵn căn: <span class="exptab" style="font-size:11px"><span style="padding:2px 8px">√<span data-q="varLab">4</span> = <b data-q="sigLab" style="color:var(--accent)">2.00</b></span></span> &nbsp; (để khỏi bấm máy ở bước 2).</div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=2 đặc trưng</span></div>
+    <div class="calc" style="font-size:15px">Một mẫu x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">4</span> ); γ = (<span class="gv" data-q="g1">1</span>, <span class="gv" data-q="g2">1</span>), β = (<span class="gv" data-q="b1">0</span>, <span class="gv" data-q="b2">0</span>); ε bỏ qua.</div>
   </div>
 
-  <div class="grid2">
-  <!-- STEP 1 -->
+  <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Trung bình μ</h2><span class="tag">Σx ÷ 4</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Trung bình & độ lệch (qua đặc trưng)</h2><span class="tag">μ, σ</span></div>
     <div class="calc">
-      μ = (<span data-q="xsum">3 + 7 + 3 + 7</span>) ÷ 4<br>
-      μ = <span class="blk"></span> ÷ 4 = <span class="blk"></span>
+      μ = (<span data-q="x1">2</span>+<span data-q="x2">4</span>)/2 = <span class="blk" style="min-width:34px"></span> · σ² = ((x₁−μ)²+(x₂−μ)²)/2 = <span class="blk" style="min-width:34px"></span> → σ = <span class="blk" style="min-width:34px"></span>
     </div>
-    <div class="hint"><b>Mẹo:</b> μ là "tâm" của hàng — bước sau ta dời tâm này về 0.</div>
+    <div class="why"><b>Vì sao:</b> thống kê <b>trên 2 đặc trưng của chính mẫu này</b>, không liên quan mẫu khác (≠ BatchNorm).</div>
   </div>
 
-  <!-- STEP 2 -->
+  <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Độ lệch &amp; σ</h2><span class="tag">var → √</span></div>
-    <div class="calc">
-      x−μ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
-      var = Σ(x−μ)² ÷ 4 = <span class="blk"></span><br>
-      σ = √var = <span class="blk"></span> <span style="color:var(--dim)">(tra bảng)</span>
-    </div>
+    <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa</h2><span class="tag">x̂ = (x−μ)/σ</span></div>
+    <div class="calc">x̂ = (x − <span data-q="mu">3</span>)/<span data-q="sigma">1</span> = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )</div>
+    <div class="hint">chọn d=2 → x̂ luôn ra ±1 (mẹo tính tay).</div>
   </div>
 
-  <!-- STEP 3 -->
+  <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chuẩn hóa x̂</h2><span class="tag">(x−μ)/σ</span></div>
-    <div class="calc">
-      x̂ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="note">Giờ x̂ có mean = 0 và std = 1 — luôn vậy với <b>mọi</b> đầu vào.</div>
+    <div class="step-h"><div class="b">3</div><h2>Co & dịch</h2><span class="tag">y = γ·x̂ + β</span></div>
+    <div class="calc">y = γ·x̂ + β = (<span data-q="g1">1</span>·x̂₁+<span data-q="b1">0</span>, <span data-q="g2">1</span>·x̂₂+<span data-q="b2">0</span>) = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )</div>
+    <div class="why"><b>Vì sao:</b> γ, β học được cho mạng quyền chỉnh lại phân phối sau chuẩn hóa (nếu cần độ trải/độ dịch khác).</div>
   </div>
 
-  <!-- STEP 4 -->
+  <!-- BƯỚC 4 -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Co giãn + dịch: y = γ⊙x̂ + β</h2><span class="tag">đầu ra</span></div>
-    <div class="calc">
-      y = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="hint"><b>Mẫu:</b> y<sub>i</sub> = γ<sub>i</sub>·x̂<sub>i</sub> + β<sub>i</sub>. Nếu γ=1, β=0 thì y = x̂ (chuẩn hóa thuần).</div>
-  </div>
-  </div><!-- /grid2 -->
-
-  <!-- RMSNorm + FIGURE -->
-  <div class="row" style="align-items:flex-start;gap:10px">
-    <div class="step" style="flex:1;min-width:78mm">
-      <div class="step-h"><div class="b" style="background:#7c5cff">R</div><h2>RMSNorm (rẻ hơn — dùng trong LLaMA)</h2><span class="tag">bỏ trừ mean</span></div>
-      <div class="calc">
-        rms = √(mean(x²)) = √<span class="blk"></span> = <span class="blk"></span><br>
-        x/rms = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
-      </div>
-      <div class="note">RMSNorm <b>không trừ μ</b>, chỉ chia độ lớn → ít phép tính hơn, kết quả gần tương đương khi mean ≈ 0.</div>
-    </div>
-    <div class="step" style="flex:1;min-width:72mm">
-      <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: dời tâm + co thang</h2><span class="tag">🎲</span></div>
-      <svg id="figLN" class="fig" viewBox="0 0 200 110" width="92mm" height="50mm" aria-label="trái: cột x với đường trung bình μ; phải: cột x chuẩn hóa quanh trục 0, biên độ thu về cỡ 1"></svg>
-    </div>
+    <div class="step-h"><div class="b">4</div><h2>RMSNorm (biến thể gọn)</h2><span class="tag">bỏ trừ μ</span></div>
+    <div class="calc">mean(x²) = (<span data-q="x1">2</span>²+<span data-q="x2">4</span>²)/2 = <span class="blk" style="min-width:36px"></span> → √ = <span class="blk" style="min-width:40px"></span> · y = x/√ = ( <span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:44px"></span> )</div>
+    <div class="note">RMSNorm <b>bỏ bước trừ μ</b> (chỉ chia RMS) → rẻ hơn, dùng trong LLaMA.</div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>LayerNorm tính μ, σ theo chiều nào? → <span class="blk" style="min-width:170px"></span></li>
+      <li>RMSNorm khác LayerNorm ở đâu? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm / RMSNorm</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
@@ -121,135 +99,100 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— lời giải &amp; kiểm tra</small></h1></div>
-
-  <div class="grid2">
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Trung bình</h2></div>
-    <div class="calc ans">
-      μ = (<span data-q="xsum2">3 + 7 + 3 + 7</span>) ÷ 4 = <span data-q="xsumv">20</span> ÷ 4 = <span class="blk" data-q="mu">5</span>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Độ lệch &amp; σ</h2></div>
-    <div class="calc ans">
-      x−μ = ( <span data-q="dev0">−2</span>, <span data-q="dev1">2</span>, <span data-q="dev2">−2</span>, <span data-q="dev3">2</span> )<br>
-      var = (<span data-q="sqExpr">4 + 4 + 4 + 4</span>) ÷ 4 = <span class="blk" data-q="var">4</span><br>
-      σ = √<span data-q="var2">4</span> = <span class="blk" data-q="sigma">2.00</span>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chuẩn hóa</h2></div>
-    <div class="calc ans">
-      x̂ = ( <span data-q="xh0">−1.00</span>, <span data-q="xh1">1.00</span>, <span data-q="xh2">−1.00</span>, <span data-q="xh3">1.00</span> )
-    </div>
-    <div class="note">Kiểm: tổng x̂ = 0 ✓</div>
-  </div>
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>γ⊙x̂ + β</h2></div>
-    <div class="calc ans">
-      y = ( <span data-q="y0">−2.00</span>, <span data-q="y1">2.00</span>, <span data-q="y2">−2.00</span>, <span data-q="y3">2.00</span> )
-    </div>
-  </div>
-  </div><!-- /grid2 -->
+  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— lời giải</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b" style="background:#7c5cff">R</div><h2>RMSNorm</h2></div>
-    <div class="calc ans">
-      rms = √(mean(x²)) = √<span data-q="msq">29</span> = <span data-q="rms">5.39</span> &nbsp;|&nbsp;
-      x/rms = ( <span data-q="rn0">0.56</span>, <span data-q="rn1">1.30</span>, <span data-q="rn2">0.56</span>, <span data-q="rn3">1.30</span> )
+    <div class="step-h"><div class="b">1</div><h2>μ, σ</h2></div>
+    <div class="calc ans">μ = (<span data-q="x1">2</span>+<span data-q="x2">4</span>)/2 = <span class="blk" data-q="mu">3</span> · σ² = <span class="blk" data-q="var">1</span> → σ = <span class="blk" data-q="sigma">1</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa</h2></div>
+    <div class="calc ans">x̂ = ( <span class="blk" data-q="xh1">−1</span>, <span class="blk" data-q="xh2">1</span> )</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Co & dịch</h2></div>
+    <div class="calc ans">y = ( <span class="blk" data-q="y1">−1</span>, <span class="blk" data-q="y2">1</span> )</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>RMSNorm</h2></div>
+    <div class="calc ans">mean(x²) = <span class="blk" data-q="msq">10</span> → √ = <span class="blk" data-q="rms">3.16</span> · y = ( <span class="blk" data-q="ry1">0.63</span>, <span class="blk" data-q="ry2">1.27</span> )</div>
+  </div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Vectơ đặc trưng → chuẩn hóa</h2><span class="tag">về μ=0, σ=1</span></div>
+    <div class="figrow">
+      <svg id="figLN" class="fig" viewBox="0 0 220 110" width="70mm" height="34mm" aria-label="vectơ đặc trưng lệch được kéo về trung bình 0 độ trải 1"></svg>
+      <div style="flex:1">
+        <div class="note">Trái = x gốc (lệch quanh μ); phải = x̂ quanh 0 (một ô xuống, một ô lên). γ, β co/dịch lại nếu cần. RMSNorm bỏ bước trừ μ → chỉ
+          chia RMS, giữ hướng vectơ.</div>
+      </div>
     </div>
-    <div class="note">So với LayerNorm: RMSNorm giữ dấu &amp; tỉ lệ độ lớn nhưng <b>không</b> dời về tâm 0 (vì không trừ μ).</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>μ, σ theo chiều nào? → <span class="qa">Qua các đặc trưng của MỘT mẫu (không theo batch).</span></li>
+      <li>RMSNorm khác? → <span class="qa">Bỏ trừ trung bình, chỉ chia RMS → gọn hơn.</span></li>
+    </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Chuẩn hóa = <b>dời tâm về 0</b> rồi <b>co thang về 1</b>, sau đó trả quyền điều chỉnh lại cho
-    mạng qua γ, β. Nhờ vậy gradient không bị "nổ" hay "tắt" khi xếp chồng nhiều lớp — chính là lý do
-    <b>Khối Transformer (Bài H6)</b> kẹp LayerNorm quanh Attention và FFN. RMSNorm là phiên bản tiết kiệm dùng trong
-    các LLM hiện đại (LLaMA, Mistral).
+    <b style="color:var(--accent2)">Rút ra.</b> LayerNorm chuẩn hóa trong một mẫu → hợp seq/Transformer, batch-độc-lập; RMSNorm gọn hơn.
+    Bài tiếp <b style="color:var(--accent2)">E8</b>: lịch học suất (learning-rate schedule).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm / RMSNorm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-// Bộ mẫu độ lệch (tổng 0) với σ "đẹp tra bảng". x = μ + (hoán vị của dev).
-var DEVSETS = [
-  {dev:[-2,-2,2,2], varv:4},
-  {dev:[-3,-1,1,3], varv:5},
-  {dev:[-1,-1,1,1], varv:1},
-  {dev:[-3,1,1,1], varv:3},
-  {dev:[-2,0,0,2], varv:2},
-  {dev:[-4,0,0,4], varv:8}
-];
-function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t;} return a; }
-
 function generate(){
-  var ds = WB.pick(DEVSETS);
-  var dev = shuffle(ds.dev);
-  var mu = WB.randInt(2,6);
-  var x = dev.map(function(d){ return mu + d; });
-  var varv = ds.varv, sigma = Math.sqrt(varv);
-  var xhat = dev.map(function(d){ return d/sigma; });
-  var g = [WB.randInt(1,2),WB.randInt(1,2),WB.randInt(1,2),WB.randInt(1,2)];
-  var b = [WB.randIntNZ(-1,1),WB.randIntNZ(-1,1),WB.randIntNZ(-1,1),WB.randIntNZ(-1,1)];
-  var y = xhat.map(function(v,i){ return g[i]*v + b[i]; });
-  // RMSNorm
-  var msq = x.reduce(function(s,v){ return s+v*v; },0)/4;
-  var rms = Math.sqrt(msq);
-  var rn = x.map(function(v){ return v/rms; });
-
-  var sumx = x[0]+x[1]+x[2]+x[3];
-  var map = {
-    varLab: String(varv), sigLab: WB.fmt2(sigma),
-    xsum: x.map(WB.fmtInt).join(' + ').replace(/\+ −/g,'− '),
-    xsum2: x.map(WB.fmtInt).join(' + ').replace(/\+ −/g,'− '), xsumv: WB.fmtInt(sumx), mu: WB.fmtInt(mu),
-    sqExpr: dev.map(function(d){ return d*d; }).join(' + '),
-    var: WB.fmtInt(varv), var2: String(varv), sigma: WB.fmt2(sigma),
-    msq: WB.fmtTrim(msq), rms: WB.fmt2(rms)
-  };
-  for (var i=0;i<4;i++){
-    map['x'+i]=WB.fmtInt(x[i]); map['g'+i]=WB.fmtInt(g[i]); map['b'+i]=WB.fmtInt(b[i]);
-    map['dev'+i]=WB.fmtInt(dev[i]); map['xh'+i]=WB.fmt2(xhat[i]); map['y'+i]=WB.fmt2(y[i]); map['rn'+i]=WB.fmt2(rn[i]);
-  }
-  WB.setAll(map);
-  drawLN(x, mu, xhat);
+  var fT=WB.fmtTrim, f2=WB.fmt2;
+  // d=2, x1−x2 chẵn để σ nguyên, x̂=±1
+  var pairs=[[2,4],[1,5],[3,1],[6,2],[2,6],[5,1]];
+  var x=WB.pick(pairs), a=x[0], b=x[1];
+  var mu=(a+b)/2, varr=(Math.pow(a-mu,2)+Math.pow(b-mu,2))/2, sigma=Math.sqrt(varr);
+  var xh1=(a-mu)/sigma, xh2=(b-mu)/sigma;
+  var g1=1,g2=1,b1=0,b2=0;
+  var y1=g1*xh1+b1, y2=g2*xh2+b2;
+  var msq=(a*a+b*b)/2, rms=Math.sqrt(msq);
+  var ry1=a/rms, ry2=b/rms;
+  WB.setAll({
+    x1:fT(a), x2:fT(b), g1:fT(g1), g2:fT(g2), b1:fT(b1), b2:fT(b2),
+    mu:fT(mu), var:fT(varr), sigma:fT(sigma),
+    xh1:fT(xh1), xh2:fT(xh2), y1:fT(y1), y2:fT(y2),
+    msq:fT(msq), rms:f2(rms), ry1:f2(ry1), ry2:f2(ry2)
+  });
+  drawLN(a, b, mu, xh1, xh2);
 }
 
-// Trái: cột x quanh μ. Phải: cột x̂ quanh trục 0 (biên độ ~1).
-function drawLN(x, mu, xhat){
-  var svg = document.getElementById('figLN'); if (!svg) return;
+function drawLN(a, b, mu, xh1, xh2){
+  var svg=document.getElementById('figLN'); if(!svg) return;
+  var defs='<defs><marker id="aLN" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
   var s='';
-  // --- panel x ---
-  var bx=14, by=86, bw=12, gap=6, sc=6, base=mu; // vẽ quanh μ
-  s += '<text x="50" y="12" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">x (tâm μ=' + mu + ')</text>';
-  var muY = by - (mu-0)*0; // dùng đường μ ở giữa
-  var midY = 50;
-  s += '<line x1="8" y1="'+midY+'" x2="92" y2="'+midY+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
-  s += '<text x="92" y="'+(midY-2)+'" text-anchor="end" style="font-size:7px" fill="#b45309">μ</text>';
-  x.forEach(function(v,i){
-    var h=(v-mu)*sc; var X=bx+i*(bw+gap);
-    s += '<rect x="'+X+'" y="'+Math.min(midY,midY-h)+'" width="'+bw+'" height="'+Math.abs(h)+'" fill="#0e7490" opacity="0.85"/>';
-    s += '<text x="'+(X+bw/2)+'" y="'+(h>=0?midY-h-2:midY-h+7)+'" text-anchor="middle" style="font-size:7px" fill="#16202e">'+v+'</text>';
-  });
-  // --- panel x̂ ---
-  var ox=112, mid2=50, sc2=14;
-  s += '<text x="152" y="12" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">x̂ (tâm 0, std 1)</text>';
-  s += '<line x1="106" y1="'+mid2+'" x2="194" y2="'+mid2+'" stroke="#c2ccd8" stroke-width="1"/>';
-  s += '<line x1="106" y1="'+(mid2-sc2)+'" x2="194" y2="'+(mid2-sc2)+'" stroke="#eef2f6" stroke-width="0.8"/>';
-  s += '<line x1="106" y1="'+(mid2+sc2)+'" x2="194" y2="'+(mid2+sc2)+'" stroke="#eef2f6" stroke-width="0.8"/>';
-  s += '<text x="194" y="'+(mid2-sc2)+'" text-anchor="end" style="font-size:6.5px" fill="#9fb0c0">+1</text>';
-  s += '<text x="194" y="'+(mid2+sc2+5)+'" text-anchor="end" style="font-size:6.5px" fill="#9fb0c0">−1</text>';
-  xhat.forEach(function(v,i){
-    var h=v*sc2; var X=ox+i*(bw+gap);
-    s += '<rect x="'+X+'" y="'+Math.min(mid2,mid2-h)+'" width="'+bw+'" height="'+Math.abs(h)+'" fill="#b45309" opacity="0.85"/>';
-    s += '<text x="'+(X+bw/2)+'" y="'+(h>=0?mid2-h-2:mid2-h+7)+'" text-anchor="middle" style="font-size:6.5px" fill="#16202e">'+v.toFixed(2)+'</text>';
-  });
-  svg.innerHTML = s;
+  // trái: x gốc (2 cột lam) trên baseline
+  var bx=[18,40], base=78, sc=10;
+  var mx=Math.max(a,b,1);
+  s += '<line x1="10" y1="'+base+'" x2="64" y2="'+base+'" stroke="#c2ccd8" stroke-width="1"/>';
+  [a,b].forEach(function(v,i){ var h=v/mx*52; s += '<rect x="'+bx[i]+'" y="'+(base-h)+'" width="14" height="'+h+'" fill="#d6ecf6" stroke="#0e7490"/><text x="'+(bx[i]+7)+'" y="'+(base-h-2)+'" text-anchor="middle" style="font-size:8px" fill="#0c4a5e">'+v+'</text>'; });
+  s += '<text x="34" y="'+(base+11)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">x gốc (μ='+mu+')</text>';
+  // mũi tên
+  s += '<line x1="74" y1="55" x2="110" y2="55" stroke="#777" stroke-width="1.4" marker-end="url(#aLN)"/>';
+  s += '<text x="92" y="50" text-anchor="middle" style="font-size:8px" fill="#5b6776">(x−μ)/σ</text>';
+  // phải: x̂ quanh 0
+  var cx=[140,166], zero=55, sc2=20;
+  s += '<line x1="120" y1="'+zero+'" x2="200" y2="'+zero+'" stroke="#c2ccd8" stroke-width="1"/>';
+  [xh1,xh2].forEach(function(v,i){ var h=v*sc2; var top=v>=0?zero-h:zero; var hh=Math.abs(h); s += '<rect x="'+cx[i]+'" y="'+top+'" width="14" height="'+hh+'" fill="#ffe6cc" stroke="#b45309"/><text x="'+(cx[i]+7)+'" y="'+(v>=0?top-2:top+hh+9)+'" text-anchor="middle" style="font-size:8px" fill="#7a3d00">'+v+'</text>'; });
+  s += '<text x="160" y="'+(zero+22)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">x̂ quanh 0 (±1)</text>';
+  svg.innerHTML=defs+s;
 }
 WB.wire(generate);
-drawLN([3,7,3,7], 5, [-1,1,-1,1]);
+generate();
 </script>
 </body>
 </html>

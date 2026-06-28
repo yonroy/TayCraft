@@ -3,14 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Pooling — Max / Average</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài F5 — Pooling (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .expr{font-family:var(--mono);font-size:13px;line-height:1.9;margin-top:3px;}
-  .crow{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;}
-  .clab{font-family:var(--mono);font-size:12px;font-weight:700;}
-  .m .cell{--cw:10mm;--ch:8mm;font-size:14px;}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.8;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
+.poolrow{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;margin-top:4px;}
+.poolrow .lab{font-family:var(--mono);font-size:12px;font-weight:700;margin-bottom:3px;}
 </style>
 </head>
 <body>
@@ -21,138 +24,170 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Pooling</h1><span class="vi">— Max / Average</span>
-    <span class="tag">2×2, stride 2 · max hoặc trung bình mỗi cửa sổ</span></div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
+  </div>
 
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Sau conv, pooling <b>thu nhỏ</b> feature map: gộp mỗi cửa sổ 2×2 thành một số. Giảm
-    kích thước → ít tính toán, đồng thời cho mạng bất biến nhẹ với dịch chuyển. <b>Max</b> giữ đặc trưng mạnh nhất;
-    <b>Average</b> lấy trung bình mượt.
-    <div class="fm">max-pool: lấy giá trị lớn nhất mỗi cửa sổ &nbsp;·&nbsp; avg-pool: lấy trung bình &nbsp;·&nbsp; 4×4 → 2×2</div>
+  <div class="wb-title"><span class="no">Bài F5</span><h1>Pooling <small>— Max / Average pooling</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Sau khi dò đặc trưng, ta không cần biết <b>chính xác từng pixel</b> — chỉ cần "có đặc trưng đó quanh đây".
+    Pooling nén vùng → giảm kích thước, giảm tham số lớp sau, và làm mạng <b>ít nhạy với dịch chuyển nhỏ</b>.
+    <div class="formula">
+      Max pool: out = max(cửa sổ) &nbsp;·&nbsp; Avg pool: out = trung bình(cửa sổ) &nbsp;·&nbsp; (thường 2×2, stride 2)
+    </div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Mỗi 2×2 ô gộp thành 1: max = "có đặc trưng đó ở đâu đó trong vùng?"; average = "độ mạnh trung bình của vùng".
-    Không có tham số học — chỉ là phép gộp cố định.
+    Max pooling = "<b>vùng này có thấy đặc trưng mạnh không?</b>" → giữ tín hiệu mạnh nhất, bỏ vị trí chính xác. Average pooling = "<b>trung
+    bình vùng</b>" → mượt hơn. Cả hai <b>thu nhỏ</b> ảnh và làm mạng bền với dịch chuyển nhỏ.
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>4 cửa sổ màu</b> trên ảnh 4×4 → mỗi cửa sổ thành 1 ô ở bản đồ 2×2 (max hoặc avg).</div>
-    </div>
-
-    <div class="work">
-      <div class="bandh fw">FEATURE MAP 4×4</div>
-      <div class="crow"><div class="m c4 in" id="x"></div></div>
-
-      <div class="crow" style="margin-top:8px">
-        <div><div class="clab" style="color:#b45309">MAX-POOL → 2×2</div><div class="m c2 out" id="mx"></div></div>
-        <div><div class="clab" style="color:#7c5cff">AVG-POOL → 2×2</div><div class="m c2 w" id="av"></div></div>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol>
-          <li>Pooling 2×2 stride 2 trên ảnh 4×4 cho ra cỡ <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:40px"></span></li>
-          <li>Pooling có tham số học không? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:50px"></span></li>
-        </ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4×4 → 2×2 · cửa sổ 2×2, stride 2</span></div>
+    <div class="poolrow">
+      <div><div class="lab">FEATURE MAP 4×4</div><div class="mtx c4" id="x" style="--cell:9mm"></div></div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Pooling</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <div class="grid2">
+    <!-- BƯỚC 1 -->
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Max pool ô trái-trên</h2><span class="tag">max</span></div>
+      <div class="calc">max(<span class="gv" data-q="w0">1,3,2,0</span>) = <span class="blk" style="min-width:44px"></span></div>
+      <div class="why"><b>Vì sao:</b> giữ phản hồi mạnh nhất → "đặc trưng có ở vùng này".</div>
+    </div>
+
+    <!-- BƯỚC 2 -->
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Avg pool cùng ô</h2><span class="tag">trung bình</span></div>
+      <div class="calc">(<span class="gv" data-q="w0s">1+3+2+0</span>)/4 = <span class="blk" style="min-width:44px"></span></div>
+      <div class="hint">max nhạy đỉnh, avg mượt nhiễu.</div>
+    </div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Hoàn tất max pool 2×2</h2><span class="tag">4 cửa sổ</span></div>
+    <div class="poolrow">
+      <div><div class="lab" style="color:#b45309">MAX-POOL → 2×2</div><div class="mtx c2" id="mx" style="--cell:11mm"></div></div>
+    </div>
+    <div class="why"><b>Vì sao:</b> ảnh 4×4 → 2×2, giảm ¾ số phần tử mà giữ "điểm nóng" đặc trưng.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Max vs average pooling khác gì? → <span class="blk" style="min-width:180px"></span></li>
+      <li>Pooling có tham số học không? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Pooling</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài F5</span><h1>Pooling <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Backward của max-pool: gradient chỉ chảy về ô đạt max; avg-pool: chia đều cho 4 ô.</div>
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Max ô TL</h2></div>
+      <div class="calc ans">max = <span class="blk" data-q="m0">3</span></div>
     </div>
-
-    <div class="work">
-      <div class="bandh fw">FEATURE MAP 4×4</div>
-      <div class="crow"><div class="m c4 in" id="kx"></div></div>
-
-      <div class="crow" style="margin-top:8px">
-        <div><div class="clab" style="color:#b45309">MAX-POOL</div><div class="m c2 out" id="kmx"></div></div>
-        <div><div class="clab" style="color:#7c5cff">AVG-POOL</div><div class="m c2 w" id="kav"></div></div>
-      </div>
-
-      <div class="expr" style="margin-top:5px">
-        cửa sổ trên-trái: max = <b><span data-q="m0">?</span></b>, avg = (Σ4)/4 = <b><span data-q="a0">?</span></b>
-      </div>
-
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol>
-          <li>4×4, pool 2×2 stride 2 → <span class="qa">2×2</span>.</li>
-          <li>Pooling <span class="qa">không</span> có tham số học (phép gộp cố định).</li>
-        </ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Pooling = giảm cỡ không tham số. Max-pool phổ biến trong CNN cổ điển; nhiều mạng hiện đại thay
-        bằng conv stride 2 (học được). Sau vài tầng conv+pool, không gian co nhỏ rồi nối FC để phân loại.
-      </div>
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Avg ô TL</h2></div>
+      <div class="calc ans">(Σ4)/4 = <span class="blk" data-q="a0">1.5</span></div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Pooling</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Max-pool & Avg-pool 2×2</h2></div>
+    <div class="poolrow">
+      <div><div class="lab" style="color:#b45309">MAX-POOL</div><div class="mtx c2" id="kmx" style="--cell:11mm"></div></div>
+      <div><div class="lab" style="color:#7c5cff">AVG-POOL</div><div class="mtx c2" id="kav" style="--cell:11mm"></div></div>
+      <svg id="figPool" class="fig" viewBox="0 0 120 120" width="34mm" height="34mm" aria-label="ảnh 4x4 chia 4 cửa sổ pooling"></svg>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Max vs avg? → <span class="qa">Max giữ giá trị mạnh nhất; average lấy trung bình (mượt hơn).</span></li>
+      <li>Tham số học? → <span class="qa">Không — chỉ là phép tóm tắt cố định.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Pooling tóm tắt cửa sổ → thu nhỏ + bất biến dịch nhẹ, không tham số (backward max-pool: gradient chỉ
+    về ô đạt max; avg-pool: chia đều). Nhiều mạng hiện đại thay bằng conv stride-2 (học được). Bài tiếp <b style="color:var(--accent2)">F6</b>: tầm
+    nhìn của một nơ-ron sâu — receptive field.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function fI(v){return WB.fmtInt(v);}
-function fT(v){return WB.fmtTrim(v);}
-function fill(id,arr,fmt,blank){
-  var el=document.getElementById(id); if(!el) return; var s='';
-  for(var i=0;i<arr.length;i++) s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':fmt(arr[i]))+'</div>';
+function fillG(id, arr, fmt){
+  var el=document.getElementById(id); if(!el) return;
+  var s=''; for(var i=0;i<arr.length;i++) s += '<div class="cell given">'+fmt(arr[i])+'</div>';
   el.innerHTML=s;
 }
-
+function fillA(id, arr, fmt){
+  var el=document.getElementById(id); if(!el) return;
+  var s=''; for(var i=0;i<arr.length;i++) s += '<div class="cell ans">'+fmt(arr[i])+'</div>';
+  el.innerHTML=s;
+}
 function win(g,r,c){ return [g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]; }
 
 function generate(){
-  var g=[];
-  for(var i=0;i<4;i++){ var row=[]; for(var j=0;j<4;j++) row.push(WB.randInt(0,9)); g.push(row); }
+  var fI=WB.fmtInt, fT=WB.fmtTrim;
+  var g=[]; for(var i=0;i<4;i++){ var row=[]; for(var j=0;j<4;j++) row.push(WB.randInt(0,9)); g.push(row); }
   var flat=[]; for(var a=0;a<4;a++) for(var b=0;b<4;b++) flat.push(g[a][b]);
   var wins=[win(g,0,0),win(g,0,2),win(g,2,0),win(g,2,2)];
   var mx=wins.map(function(w){return Math.max.apply(null,w);});
   var av=wins.map(function(w){return w.reduce(function(s,v){return s+v;},0)/4;});
+  var w0=wins[0];
 
-  fill('x',flat,fI,false); fill('kx',flat,fI,false);
-  fill('mx',mx,fI,true); fill('av',av,fT,true);
-  fill('kmx',mx,fI,false); fill('kav',av,fT,false);
-  WB.setAll({ m0:fI(mx[0]), a0:fT(av[0]) });
+  fillG('x',flat,fI);
+  fillA('kmx',mx,fI); fillA('kav',av,fT);
+  // max-pool ĐỀ: bỏ trống để học sinh điền
+  var mxEl=document.getElementById('mx'); if(mxEl){ var s=''; for(var k=0;k<4;k++) s+='<div class="cell blank"></div>'; mxEl.innerHTML=s; }
 
-  drawPool('sch1',g,false); drawPool('sch2',g,true);
+  WB.setAll({
+    w0: w0.join(','), w0s: w0.join('+'),
+    m0: fI(mx[0]), a0: fT(av[0])
+  });
+  drawPool('figPool', g);
 }
 
-function drawPool(id,g,show){
-  var box=document.getElementById(id); if(!box) return;
-  var W=178,H=132, cell=20, x0=40, y0=20;
+function drawPool(id, g){
+  var svg=document.getElementById(id); if(!svg) return;
+  var cell=24, x0=8, y0=12;
   var winc=['#ffe6cc','#e6f0ff','#e6ffe9','#fff0d6'];
   var s='';
   for(var i=0;i<4;i++) for(var j=0;j<4;j++){
     var wi=(i<2?0:2)+(j<2?0:1);
-    s+='<rect x="'+(x0+j*cell)+'" y="'+(y0+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+winc[wi]+'" stroke="#ccc"/>';
-    if(show) s+='<text x="'+(x0+j*cell+cell/2)+'" y="'+(y0+i*cell+cell/2+3)+'" text-anchor="middle" font-size="9" fill="#444">'+g[i][j]+'</text>';
+    s += '<rect x="'+(x0+j*cell)+'" y="'+(y0+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+winc[wi]+'" stroke="#ccc"/>';
+    s += '<text x="'+(x0+j*cell+cell/2)+'" y="'+(y0+i*cell+cell/2+4)+'" text-anchor="middle" font-size="11" fill="#444">'+g[i][j]+'</text>';
   }
-  // viền 4 cửa sổ
   for(var k=0;k<4;k++){
     var cx=x0+(k%2)*2*cell, cy=y0+Math.floor(k/2)*2*cell;
-    s+='<rect x="'+cx+'" y="'+cy+'" width="'+(2*cell)+'" height="'+(2*cell)+'" fill="none" stroke="#b45309" stroke-width="1.6"/>';
+    s += '<rect x="'+cx+'" y="'+cy+'" width="'+(2*cell)+'" height="'+(2*cell)+'" fill="none" stroke="#b45309" stroke-width="1.8"/>';
   }
-  s+='<text x="'+x0+'" y="'+(y0-4)+'" font-size="8" fill="#6b7280">4×4 → 4 cửa sổ 2×2</text>';
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" aria-label="ảnh 4x4 chia 4 cửa sổ pooling">'+s+'</svg>';
+  svg.innerHTML=s;
 }
-
 WB.wire(generate);
 generate();
 </script>

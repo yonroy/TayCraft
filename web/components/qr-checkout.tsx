@@ -25,7 +25,7 @@ interface OrderData {
   bank: { bank: string; account: string; accountName: string };
 }
 
-export function QrCheckout({ product }: { product?: string }) {
+export function QrCheckout({ product, productLabel }: { product?: string; productLabel?: string }) {
   const router = useRouter();
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,10 +70,11 @@ export function QrCheckout({ product }: { product?: string }) {
       if (status === "paid") {
         setPaid(true);
         if (pollRef.current) clearInterval(pollRef.current);
+        // Để khách kịp đọc lời chúc; vẫn tự dẫn vào khu học nếu họ không bấm nút.
         setTimeout(() => {
           router.push("/learn");
           router.refresh();
-        }, 1500);
+        }, 6000);
       }
     }, 4000);
     return () => {
@@ -101,9 +102,24 @@ export function QrCheckout({ product }: { product?: string }) {
   if (paid) {
     return (
       <div className="text-center rounded-3xl border border-accent bg-paper p-10">
-        <div className="text-5xl">✅</div>
-        <h2 className="mt-3 text-xl font-bold">Thanh toán thành công!</h2>
-        <p className="mt-2 text-dim">Đang mở khóa trọn bộ cho bạn…</p>
+        <div className="text-6xl">🎉</div>
+        <h2 className="mt-3 text-2xl font-extrabold">Chúc mừng bạn!</h2>
+        <p className="mt-2 text-dim">
+          Bạn đã mở khóa <b className="text-ink">{productLabel ?? "gói học"}</b> — chúc bạn học thật
+          vui và hiểu AI tới tận con số ✍️
+        </p>
+        <div className="mt-6">
+          <Button
+            size="lg"
+            onClick={() => {
+              router.push("/learn");
+              router.refresh();
+            }}
+          >
+            Vào học ngay →
+          </Button>
+        </div>
+        <p className="mt-3 text-xs text-dim">Tự động chuyển vào khu học sau vài giây…</p>
       </div>
     );
   }

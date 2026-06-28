@@ -38,7 +38,7 @@ export default async function CheckoutPage({
             <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang thanh toán" />
           </div>
         )}
-        <QrCheckout product={productId} />
+        <QrCheckout product={productId} productLabel={meta?.label} />
       </main>
       <SiteFooter />
     </>

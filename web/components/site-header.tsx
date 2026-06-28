@@ -17,7 +17,7 @@ export async function SiteHeader() {
       <div className="mx-auto max-w-5xl px-5 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-extrabold tracking-tight">
-            Làm toán <span className="text-accent">bằng tay</span> ✍️
+            Làm toán <span className="text-accent">AI</span> ✍️
           </span>
         </Link>
         <nav className="flex items-center gap-2 sm:gap-4 text-[15px]">

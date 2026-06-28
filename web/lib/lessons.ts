@@ -193,37 +193,37 @@ export const LESSONS: Lesson[] = [
   { no: "J7", slug: "J7-ddpm-ddim", title: "Sampling DDPM vs DDIM", english: "DDPM/DDIM", blurb: "So hai cách lấy mẫu khi sinh ảnh.", part: "J", course: "K3", available: true, isFree: false },
 
   // ── PHẦN K · Học tăng cường / RL (K4) ───────────────────────────────────
-  { no: "K1", slug: "K1-return-discount", title: "Phần thưởng & chiết khấu", english: "Return", blurb: "Return G = Σ γᵏ rₖ — cộng thưởng có chiết khấu.", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K2", slug: "K2-bellman", title: "Phương trình Bellman", english: "Bellman", blurb: "V(s) ← r + γ V(s').", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K3", slug: "K3-q-learning", title: "Q-learning — một cập nhật", english: "Q-learning", blurb: "Q ← Q + α[r + γ max Q' − Q].", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K4", slug: "K4-sarsa", title: "SARSA", english: "SARSA", blurb: "Cập nhật theo hành động thực sự đã đi.", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K5", slug: "K5-epsilon-greedy", title: "Chính sách ε-greedy", english: "ε-greedy", blurb: "Cân giữa khám phá ngẫu nhiên và khai thác tham lam.", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K6", slug: "K6-policy-gradient", title: "Policy Gradient (REINFORCE)", english: "REINFORCE", blurb: "∇ log π · G, một bước cập nhật chính sách.", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K7", slug: "K7-advantage", title: "Advantage / baseline", english: "Advantage", blurb: "A = G − V để giảm phương sai.", part: "K", course: "K4", available: true, isFree: false },
-  { no: "K8", slug: "K8-ppo-clip", title: "PPO — ý tưởng cắt (clip)", english: "PPO", blurb: "Kẹp tỉ lệ xác suất để bước cập nhật an toàn.", part: "K", course: "K4", available: true, isFree: false },
+  { no: "K1", slug: "K1-return-discount", title: "Phần thưởng & chiết khấu", english: "Return", blurb: "Return G = Σ γᵏ rₖ — cộng thưởng có chiết khấu.", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K2", slug: "K2-bellman", title: "Phương trình Bellman", english: "Bellman", blurb: "V(s) ← r + γ V(s').", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K3", slug: "K3-q-learning", title: "Q-learning — một cập nhật", english: "Q-learning", blurb: "Q ← Q + α[r + γ max Q' − Q].", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K4", slug: "K4-sarsa", title: "SARSA", english: "SARSA", blurb: "Cập nhật theo hành động thực sự đã đi.", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K5", slug: "K5-epsilon-greedy", title: "Chính sách ε-greedy", english: "ε-greedy", blurb: "Cân giữa khám phá ngẫu nhiên và khai thác tham lam.", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K6", slug: "K6-policy-gradient", title: "Policy Gradient (REINFORCE)", english: "REINFORCE", blurb: "∇ log π · G, một bước cập nhật chính sách.", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K7", slug: "K7-advantage", title: "Advantage / baseline", english: "Advantage", blurb: "A = G − V để giảm phương sai.", part: "K", course: "K4", available: false, isFree: false },
+  { no: "K8", slug: "K8-ppo-clip", title: "PPO — ý tưởng cắt (clip)", english: "PPO", blurb: "Kẹp tỉ lệ xác suất để bước cập nhật an toàn.", part: "K", course: "K4", available: false, isFree: false },
 
   // ── PHẦN L · Đánh giá & đo lường (K4) ───────────────────────────────────
-  { no: "L1", slug: "L1-confusion-matrix", title: "Ma trận nhầm lẫn → Acc/P/R/F1", english: "Metrics", blurb: "Đếm TP/FP/FN/TN → Accuracy, Precision, Recall, F1.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L2", slug: "L2-roc-auc", title: "ROC & AUC", english: "ROC/AUC", blurb: "Vẽ điểm theo ngưỡng, tính diện tích hình thang.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L3", slug: "L3-cosine-eval", title: "Cosine similarity (đo embedding)", english: "Cosine eval", blurb: "So hai vectơ biểu diễn bằng cosine.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L4", slug: "L4-bleu", title: "BLEU — n-gram", english: "BLEU", blurb: "Đếm n-gram trùng + brevity penalty.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L5", slug: "L5-topk-accuracy", title: "Top-k accuracy", english: "Top-k acc", blurb: "Đúng nếu nhãn nằm trong top-k dự đoán.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L6", slug: "L6-calibration", title: "Calibration (độ tin cậy)", english: "Calibration", blurb: "So xác suất dự đoán với tần suất thực tế.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L7", slug: "L7-flops", title: "FLOPs — đếm phép tính một lớp", english: "FLOPs", blurb: "Đếm nhân–cộng của matmul / conv.", part: "L", course: "K4", available: true, isFree: false },
-  { no: "L8", slug: "L8-latency-throughput", title: "Độ trễ & thông lượng (ý tưởng)", english: "Latency", blurb: "Ước lượng thời gian chạy và throughput.", part: "L", course: "K4", available: true, isFree: false },
+  { no: "L1", slug: "L1-confusion-matrix", title: "Ma trận nhầm lẫn → Acc/P/R/F1", english: "Metrics", blurb: "Đếm TP/FP/FN/TN → Accuracy, Precision, Recall, F1.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L2", slug: "L2-roc-auc", title: "ROC & AUC", english: "ROC/AUC", blurb: "Vẽ điểm theo ngưỡng, tính diện tích hình thang.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L3", slug: "L3-cosine-eval", title: "Cosine similarity (đo embedding)", english: "Cosine eval", blurb: "So hai vectơ biểu diễn bằng cosine.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L4", slug: "L4-bleu", title: "BLEU — n-gram", english: "BLEU", blurb: "Đếm n-gram trùng + brevity penalty.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L5", slug: "L5-topk-accuracy", title: "Top-k accuracy", english: "Top-k acc", blurb: "Đúng nếu nhãn nằm trong top-k dự đoán.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L6", slug: "L6-calibration", title: "Calibration (độ tin cậy)", english: "Calibration", blurb: "So xác suất dự đoán với tần suất thực tế.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L7", slug: "L7-flops", title: "FLOPs — đếm phép tính một lớp", english: "FLOPs", blurb: "Đếm nhân–cộng của matmul / conv.", part: "L", course: "K4", available: false, isFree: false },
+  { no: "L8", slug: "L8-latency-throughput", title: "Độ trễ & thông lượng (ý tưởng)", english: "Latency", blurb: "Ước lượng thời gian chạy và throughput.", part: "L", course: "K4", available: false, isFree: false },
 
   // ── PHẦN M · Nâng cao / tùy chọn (K4) ───────────────────────────────────
-  { no: "M1", slug: "M1-gnn-message-passing", title: "GNN — message passing một bước", english: "GNN", blurb: "Gộp tin nhắn từ các đỉnh hàng xóm.", part: "M", course: "K4", available: true, isFree: false },
-  { no: "M2", slug: "M2-contrastive-infonce", title: "Contrastive learning (InfoNCE)", english: "Contrastive", blurb: "Kéo cặp dương lại, đẩy cặp âm ra.", part: "M", course: "K4", available: true, isFree: false },
-  { no: "M3", slug: "M3-triplet-loss", title: "Triplet loss", english: "Triplet", blurb: "anchor – positive – negative.", part: "M", course: "K4", available: true, isFree: false },
-  { no: "M4", slug: "M4-clip", title: "Multi-modal (CLIP)", english: "CLIP", blurb: "Cosine ảnh × chữ trong cùng không gian.", part: "M", course: "K4", available: true, isFree: false },
-  { no: "M5", slug: "M5-knowledge-distillation", title: "Knowledge distillation", english: "Distillation", blurb: "Học từ nhãn mềm của mô hình thầy.", part: "M", course: "K4", available: true, isFree: false },
+  { no: "M1", slug: "M1-gnn-message-passing", title: "GNN — message passing một bước", english: "GNN", blurb: "Gộp tin nhắn từ các đỉnh hàng xóm.", part: "M", course: "K4", available: false, isFree: false },
+  { no: "M2", slug: "M2-contrastive-infonce", title: "Contrastive learning (InfoNCE)", english: "Contrastive", blurb: "Kéo cặp dương lại, đẩy cặp âm ra.", part: "M", course: "K4", available: false, isFree: false },
+  { no: "M3", slug: "M3-triplet-loss", title: "Triplet loss", english: "Triplet", blurb: "anchor – positive – negative.", part: "M", course: "K4", available: false, isFree: false },
+  { no: "M4", slug: "M4-clip", title: "Multi-modal (CLIP)", english: "CLIP", blurb: "Cosine ảnh × chữ trong cùng không gian.", part: "M", course: "K4", available: false, isFree: false },
+  { no: "M5", slug: "M5-knowledge-distillation", title: "Knowledge distillation", english: "Distillation", blurb: "Học từ nhãn mềm của mô hình thầy.", part: "M", course: "K4", available: false, isFree: false },
 
   // ── PHẦN N · Dự án tổng kết / Capstone (K4) ─────────────────────────────
-  { no: "N1", slug: "N1-mlp-capstone", title: "MLP phân loại điểm 2D — đủ vòng", english: "MLP capstone", blurb: "forward → loss → backward → cập nhật, trọn một vòng.", part: "N", course: "K4", available: true, isFree: false },
-  { no: "N2", slug: "N2-mini-cnn", title: "Mini-CNN nhận chữ số", english: "Mini-CNN", blurb: "conv → pool → FC → softmax.", part: "N", course: "K4", available: true, isFree: false },
-  { no: "N3", slug: "N3-mini-gpt", title: "Mini-GPT: 2 token, sinh 1 token", english: "Mini-GPT", blurb: "embedding → attention → FFN → logits.", part: "N", course: "K4", available: true, isFree: false },
-  { no: "N4", slug: "N4-logistic-convergence", title: "Logistic regression hội tụ", english: "LR converge", blurb: "Lặp vài vòng đến khi loss giảm rõ.", part: "N", course: "K4", available: true, isFree: false },
+  { no: "N1", slug: "N1-mlp-capstone", title: "MLP phân loại điểm 2D — đủ vòng", english: "MLP capstone", blurb: "forward → loss → backward → cập nhật, trọn một vòng.", part: "N", course: "K4", available: false, isFree: false },
+  { no: "N2", slug: "N2-mini-cnn", title: "Mini-CNN nhận chữ số", english: "Mini-CNN", blurb: "conv → pool → FC → softmax.", part: "N", course: "K4", available: false, isFree: false },
+  { no: "N3", slug: "N3-mini-gpt", title: "Mini-GPT: 2 token, sinh 1 token", english: "Mini-GPT", blurb: "embedding → attention → FFN → logits.", part: "N", course: "K4", available: false, isFree: false },
+  { no: "N4", slug: "N4-logistic-convergence", title: "Logistic regression hội tụ", english: "LR converge", blurb: "Lặp vài vòng đến khi loss giảm rõ.", part: "N", course: "K4", available: false, isFree: false },
 ];
 
 export const COURSE_ORDER: Course[] = ["K1", "K2", "K3", "K4"];

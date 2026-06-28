@@ -10,14 +10,14 @@ export function Paywall({ title }: { title: string }) {
       <div className="text-4xl">🔒</div>
       <h2 className="mt-3 text-xl font-bold">{title}</h2>
       <p className="mt-2 text-dim text-sm">
-        Bài này nằm trong gói trọn bộ. Mua một lần để mở khóa tất cả {""}
+        Bài này nằm trong gói trả phí. Mua một lần để mở khóa tất cả {""}
         bài hiện có và bài ra trong tương lai.
       </p>
       <div className="mt-5 text-3xl font-extrabold text-accent">{formatVnd(PRICE)}</div>
       <div className="mt-5 flex flex-col gap-2">
         <Link href="/checkout">
           <Button size="lg" className="w-full">
-            Mua trọn bộ
+            Mua gói
           </Button>
         </Link>
         <Link href="/learn/01-tich-vo-huong">

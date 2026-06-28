@@ -86,11 +86,12 @@ export const PRODUCTS: Product[] = [
       "Bonus: dự án capstone + cộng đồng",
     ],
     badge: "Đầy đủ nhất",
-    active: true,
+    active: false, // K4 đang hoàn thiện (giảng-giải) → tạm ngừng bán Trọn bộ; bật lại khi K4 xong.
   },
 ];
 
-export const DEFAULT_PRODUCT: ProductId = "all-access";
+// Trong lúc Trọn bộ (all-access) tạm ngừng bán, mặc định rơi vào Pro (gói active cao nhất).
+export const DEFAULT_PRODUCT: ProductId = "k3";
 
 export function productById(id: string): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);

@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { enrollments, profiles } from "@/lib/db/schema";
 import { isFreeSlug, courseOf, FREE_COURSES, type Course } from "@/lib/lessons";
-import { packagesGrantingCourse, coursesOfProduct, productById } from "@/lib/products";
+import { packagesGrantingCourse, coursesOfProduct, productById, COURSES } from "@/lib/products";
 
 export async function getUser(): Promise<User | null> {
   const supabase = await createSupabaseServerClient();
@@ -34,6 +34,9 @@ export async function hasAccess(userId: string, slug?: string): Promise<boolean>
   // Bài thuộc khóa miễn phí (K1) mở cho mọi người — khỏi truy DB.
   if (slug && (isFreeSlug(slug) || FREE_COURSES.includes(courseOf(slug)!))) return true;
 
+  // Admin (ADMIN_EMAILS) mở mọi bài để tiện kiểm tra nội dung.
+  if (await isAdminUser(userId)) return true;
+
   const rows = await db
     .select({ package: enrollments.package })
     .from(enrollments)
@@ -50,8 +53,9 @@ export async function hasAccess(userId: string, slug?: string): Promise<boolean>
   return packagesGrantingCourse(course).some((p) => owned.has(p));
 }
 
-// Tập khóa user xem được (luôn gồm khóa free). Đọc DB 1 lần — dùng để gate per-khóa ở catalog.
-export async function accessibleCourses(userId: string): Promise<Course[]> {
+// Khóa user THỰC SỰ sở hữu qua enrollment (luôn gồm khóa free). KHÔNG tính admin-override —
+// dùng cho kiểm tra mua lại/nâng cấp để admin vẫn test được luồng thanh toán.
+async function ownedCourses(userId: string): Promise<Course[]> {
   const rows = await db
     .select({ package: enrollments.package })
     .from(enrollments)
@@ -64,12 +68,28 @@ export async function accessibleCourses(userId: string): Promise<Course[]> {
   return [...set];
 }
 
+// Tài khoản admin (theo ADMIN_EMAILS) — được mở mọi khóa để tiện kiểm tra nội dung.
+async function isAdminUser(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ email: profiles.email })
+    .from(profiles)
+    .where(eq(profiles.id, userId));
+  return isAdmin(row?.email);
+}
+
+// Tập khóa user xem được (luôn gồm khóa free; admin mở TẤT CẢ). Dùng để gate per-khóa ở catalog.
+export async function accessibleCourses(userId: string): Promise<Course[]> {
+  if (await isAdminUser(userId)) return COURSES.map((c) => c.id);
+  return ownedCourses(userId);
+}
+
 // User đã sở hữu đủ MỌI khóa của gói này chưa (gồm grandfather all-access). Dùng để chặn mua lại
-// nhưng vẫn cho NÂNG CẤP lên gói cao hơn.
+// nhưng vẫn cho NÂNG CẤP lên gói cao hơn. Dựa trên sở hữu THẬT (không tính admin) để admin vẫn
+// test được luồng thanh toán.
 export async function ownsProduct(userId: string, productId: string): Promise<boolean> {
   const product = productById(productId);
   if (!product) return false;
-  const owned = new Set(await accessibleCourses(userId));
+  const owned = new Set(await ownedCourses(userId));
   return coursesOfProduct(product).every((c) => owned.has(c));
 }
 

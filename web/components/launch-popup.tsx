@@ -23,6 +23,7 @@ export function LaunchPopup() {
   const [status, setStatus] = useState<Status | null>(null);
   const [open, setOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const autoClaimed = useRef(false);
@@ -41,18 +42,13 @@ export function LaunchPopup() {
       setStatus((s) => (s ? { ...s, remaining: data.remaining, full: data.remaining <= 0 } : s));
       switch (data.result) {
         case "claimed":
-          setMessage("🎉 Nhận thành công! Khóa 1 đã mở — đang chuyển…");
-          setTimeout(() => {
-            router.push("/");
-            router.refresh();
-          }, 1200);
-          break;
         case "already":
-          setMessage("Bạn đã có Khóa 1 rồi — đang chuyển…");
+          // Hiện màn chúc mừng đầy đủ rồi tự dẫn vào khu học sau vài giây.
+          setClaimed(true);
           setTimeout(() => {
-            router.push("/");
+            router.push("/learn");
             router.refresh();
-          }, 1200);
+          }, 2800);
           break;
         case "full":
           setStatus((s) => (s ? { ...s, full: true, remaining: 0 } : s));
@@ -142,6 +138,31 @@ export function LaunchPopup() {
         </button>
 
         <div className="px-6 pb-6 pt-8 text-center">
+          {claimed ? (
+            <>
+              <div className="text-6xl">🎉</div>
+              <h2 className="mt-3 bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+                Chúc mừng bạn!
+              </h2>
+              <p className="mt-3 text-sm text-amber-100/85">
+                Bạn đã nhận trọn <b className="text-white">Khóa 1 · Nền tảng AI</b> miễn phí — chúc bạn
+                học thật vui và hiểu AI tới tận con số ✍️
+              </p>
+              <button
+                onClick={() => {
+                  router.push("/learn");
+                  router.refresh();
+                }}
+                className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
+              >
+                Vào học ngay →
+              </button>
+              <p className="mt-3 text-xs text-amber-100/60">
+                Tự động chuyển vào khu học sau vài giây…
+              </p>
+            </>
+          ) : (
+          <>
           <div className="mx-auto mb-3 inline-block rounded-full border border-amber-300/60 bg-amber-400/10 px-4 py-1 text-xs font-bold tracking-[0.18em] text-amber-200 uppercase">
             {status.full ? `✅ Đã trao đủ ${status.limit} suất tặng` : "🎉 Tưng bừng khai trương"}
           </div>
@@ -225,6 +246,8 @@ export function LaunchPopup() {
                 Học Khóa 1 chỉ 49.000đ →
               </a>
             </>
+          )}
+          </>
           )}
         </div>
       </div>

@@ -8,7 +8,7 @@ import { Reviews } from "@/components/reviews";
 import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
-import { TOTAL_AVAILABLE } from "@/lib/lessons";
+import { TOTAL_AVAILABLE, FREE_COURSES } from "@/lib/lessons";
 import { productById } from "@/lib/products";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
@@ -26,8 +26,10 @@ const FEATURES = [
 export default async function Home() {
   const flash = await getFlashSale();
   // Ẩn popup khai trương cho người đã sở hữu K1 (đã nhận free / đã mua) — khỏi bị mời lại.
+  // Đồng thời truyền danh sách khóa mở được xuống catalog để hiển thị đúng trạng thái khóa/mở.
   const user = await getUser();
-  const ownsK1 = user ? (await accessibleCourses(user.id)).includes("K1") : false;
+  const access = user ? await accessibleCourses(user.id) : [...FREE_COURSES];
+  const ownsK1 = access.includes("K1");
   return (
     <>
       <FlashSaleBar
@@ -103,7 +105,7 @@ export default async function Home() {
           {TOTAL_AVAILABLE} bài đã có, ra thêm liên tục — học theo thứ tự từ nền tảng đến chuyên sâu.
         </p>
         <div className="mt-8">
-          <CourseCatalog />
+          <CourseCatalog accessCourses={access} />
         </div>
       </section>
 

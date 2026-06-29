@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Advantage / Baseline — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài K7 — Advantage / baseline (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
-  .dtbl td{padding:6px 8px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
-  .dtbl td.pos{color:#0a6;font-weight:700} .dtbl td.neg{color:#c00;font-weight:700}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -24,102 +22,156 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Advantage / Baseline</h1><span class="vi">— giảm phương sai</span>
-    <span class="tag">A = G − V · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> REINFORCE (K6) dùng return G thô nên dao động mạnh → học chậm. Trừ đi một <b>mốc
-    baseline V</b> (giá trị kỳ vọng của trạng thái): <b>advantage A = G − V</b> nói "hành động này tốt hơn hay tệ
-    hơn <i>trung bình</i> bao nhiêu". Cùng kỳ vọng cập nhật nhưng phương sai nhỏ hơn nhiều.
-    <div class="fm">A(s,a) = G − V(s)   →   θ ← θ + α·A·(onehot − π)</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b>Đường ngang</b> = baseline V. Advantage = khoảng cách return tới baseline (trên/dưới).</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài K7</span><h1>Advantage <small>— baseline giảm phương sai</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">Baseline V(s) = <b id="v1"></b> (giá trị kỳ vọng của trạng thái)</div>
-      <table class="dtbl" id="tbl1">
-        <tr><td class="lab">lượt / hành động</td><td>a₀</td><td>a₁</td><td>a₂</td></tr>
-        <tr><td class="lab">return G</td><td id="G0"></td><td id="G1"></td><td id="G2"></td></tr>
-        <tr><td class="lab">A = G − V</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-      </table>
-      <div class="hint" style="margin-top:4px">A &gt; 0 → tốt hơn trung bình (tăng xác suất) · A &lt; 0 → tệ hơn (giảm).</div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Return thô G dao động lớn (lúc cao lúc thấp tùy may rủi) → gradient nhiễu. Trừ một <b>baseline</b> V(s) cho biết
+    "hành động hơn/kém kỳ vọng" → tín hiệu sạch hơn, học nhanh &amp; ổn định. Lõi của A2C, PPO (GAE).
+    <div class="formula">A(s,a) = Q(s,a) − V(s) ≈ r + γ·V(s') − V(s) &nbsp;&nbsp; ∇J = E[ ∇log π · A ]</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Nếu mọi return đều = +100 (lớn nhưng giống nhau), advantage giúp gì? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:120px"></span></li></ol>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Không hỏi "hành động này được bao nhiêu điểm" (G — phụ thuộc cả ngữ cảnh), mà hỏi "<b>hơn mức bình thường</b> ở đây bao nhiêu" (A). Trừ
+    đi "điểm nền" V(s) → chỉ còn phần <b>do hành động</b> tạo ra → tín hiệu học bớt nhiễu.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">γ = <span data-q="gamma">0.9</span></span></div>
+    <div class="calc" style="font-size:14px">
+      r = <span class="gv" data-q="r">1</span> ; V(s) = <span class="gv" data-q="Vs">9</span> ; sang s' có V(s') = <span class="gv" data-q="Vnext">10</span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Advantage</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Ước lượng giá trị hành động</h2><span class="tag">r + γ·V(s')</span></div>
+    <div class="calc">
+      r + γ·V(s') = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="Vnext">10</span> = <span class="blk" style="min-width:44px"></span> &nbsp;(≈ Q)
+    </div>
+    <div class="why"><b>Vì sao:</b> đây là "thực nhận" sau một bước (TD target) — ước lượng Q từ trải nghiệm.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Advantage</h2><span class="tag">(r+γV') − V(s)</span></div>
+    <div class="calc">
+      A = <span data-q="target">10</span> − <span data-q="Vs">9</span> = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="hint">A &gt; 0 → hành động <b>trên</b> kỳ vọng; A &lt; 0 → dưới.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Dùng trong cập nhật</h2><span class="tag">thay G bằng A</span></div>
+    <div class="calc">θ ← θ + α·<b>A</b>·∇log π &nbsp;(trước đây là α·G·∇log π)</div>
+    <div class="why"><b>Vì sao:</b> baseline V(s) <b>không đổi kỳ vọng</b> gradient (không thiên lệch) nhưng <b>giảm phương sai</b> → học ổn.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao không thiên lệch</h2><span class="tag">baseline an toàn</span></div>
+    <div class="note">Vì E[∇log π · V(s)] = 0 (V(s) không phụ thuộc a), trừ V(s) chỉ bớt nhiễu, không lệch nghiệm.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Advantage A đo gì? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Trừ baseline ảnh hưởng kỳ vọng gradient không? → <span class="blk" style="min-width:120px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K7 · Advantage</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Advantage / Baseline</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K7</span><h1>Advantage <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">Baseline tốt nhất ≈ V(s). Actor-Critic học V cùng lúc để làm baseline động.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>TD target (≈ Q)</h2></div>
+    <div class="calc ans">r + γ·V(s') = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="Vnext">10</span> = <span class="blk" data-q="target">10</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">A = G − V</div>
-      <table class="dtbl" id="tbl2">
-        <tr><td class="lab">a</td><td>a₀</td><td>a₁</td><td>a₂</td></tr>
-        <tr><td class="lab">G</td><td id="kG0"></td><td id="kG1"></td><td id="kG2"></td></tr>
-        <tr><td class="lab">A = G − V</td><td id="A0"></td><td id="A1"></td><td id="A2"></td></tr>
-      </table>
-      <div class="hint" style="color:var(--dim);margin-top:5px">V = <span data-q="ve">?</span>. Hành động trên baseline được củng cố, dưới baseline bị giảm.</div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Advantage</h2></div>
+    <div class="calc ans">A = <span data-q="target">10</span> − <span data-q="Vs">9</span> = <span class="blk" data-q="A">1</span> &nbsp;<span class="note" style="display:inline">(A &gt; 0 → trên kỳ vọng)</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">A ≈ 0 cho mọi hành động</span>: không có nước nào "hơn trung bình" → không đẩy nhầm. Return thô +100 sẽ tăng <i>mọi</i> hành động vô ích; advantage tránh điều đó.</li></ol>
-      </div>
-
-      <div class="rutra">
-        <b>Rút ra.</b> Baseline không đổi kỳ vọng gradient nhưng cắt nhiễu → học ổn định hơn. Bước an toàn hơn nữa:
-        kẹp tỉ lệ thay đổi chính sách → <b>K8 PPO</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>G dao động rộng vs A quanh 0</h2><span class="tag">bớt nhiễu</span></div>
+    <div class="figrow">
+      <svg id="figA" class="fig" viewBox="0 0 250 120" width="82mm" height="39mm" aria-label="hai chuỗi điểm: return G dao động rộng, advantage A gom quanh 0"></svg>
+      <div style="flex:1">
+        <div class="note">Chấm lam (G) văng rộng quanh giá trị nền; chấm cam (A = G − baseline) gom <b>quanh 0</b> → cùng hướng trung bình nhưng ít nhiễu hơn → gradient ổn định.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Advantage</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>A đo gì? → <span class="qa">Hành động tốt hơn mức trung bình (baseline) bao nhiêu = Q − V.</span></li>
+      <li>Ảnh hưởng kỳ vọng? → <span class="qa">Không (không thiên lệch) — chỉ giảm phương sai.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> A = Q − V ≈ r+γV'−V; thay G bằng A → gradient bớt nhiễu, không lệch. Bài tiếp (K8): cập nhật an toàn bằng
+    <b style="color:var(--accent2)">PPO clip</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K7 · Advantage</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
-function setCell(id,v){var el=document.getElementById(id);if(!el)return;el.textContent=v;var n=parseFloat(v);el.className=n>0?'pos':(n<0?'neg':'');}
 function generate(){
-  var V=WB.randInt(1,6);
-  var G=[V+WB.randIntNZ(-4,4),V+WB.randIntNZ(-4,4),V+WB.randIntNZ(-4,4)];
-  var A=G.map(function(g){return g-V;});
-  ['G0','G1','G2'].forEach(function(id,i){setTxt(id,G[i]);});
-  ['kG0','kG1','kG2'].forEach(function(id,i){setTxt(id,G[i]);});
-  ['A0','A1','A2'].forEach(function(id,i){setCell(id,WB.fmtInt(A[i]));});
-  setTxt('v1',V);
-  WB.setAll({ve:V});
-  draw('sch1',G,V); draw('sch2',G,V);
+  var f = WB.fmtTrim;
+  var gamma = WB.pick([0.9, 0.8]);
+  var r = WB.randInt(1,3);
+  var Vnext = WB.pick([10,8,12]);
+  var target = Math.round((r + gamma*Vnext)*100)/100;
+  var Vs = Math.round(target) - WB.randInt(1,2);   // baseline BELOW target → A > 0
+  var A = Math.round((target - Vs)*100)/100;
+  WB.setAll({
+    gamma:f(gamma), r:String(r), Vnext:String(Vnext), Vs:String(Vs),
+    target:f(target), A:f(A)
+  });
+  drawAdv('figA', A);
 }
-function draw(id,G,V){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  var base=46, sc=5;
-  s+='<line x1="14" y1="'+base+'" x2="180" y2="'+base+'" stroke="#b45309" stroke-width="1.4" stroke-dasharray="4 3"/>';
-  s+='<text x="183" y="'+(base+3)+'" font-size="8" fill="#b45309">V</text>';
-  for(var i=0;i<3;i++){var x=40+i*48;var y=base-(G[i]-V)*sc;
-    s+='<line x1="'+x+'" y1="'+base+'" x2="'+x+'" y2="'+y+'" stroke="'+(G[i]>=V?'#0a6':'#c00')+'" stroke-width="1.4"/>';
-    s+='<circle cx="'+x+'" cy="'+y+'" r="3" fill="'+(G[i]>=V?'#0a6':'#c00')+'"/>';
-    s+='<text x="'+x+'" y="'+(y+(G[i]>=V?-6:14))+'" text-anchor="middle" font-size="8" fill="#333">G='+G[i]+'</text>';
-    s+='<text x="'+x+'" y="86" text-anchor="middle" font-size="8" font-weight="700">a'+i+'</text>';}
-  s+='<text x="96" y="12" text-anchor="middle" font-size="8" fill="#6b7280">advantage = độ lệch khỏi baseline</text>';
-  b.innerHTML='<svg viewBox="0 0 196 92" aria-label="return so với baseline">'+s+'</svg>';
+function drawAdv(id, A){
+  var svg = document.getElementById(id); if(!svg) return;
+  var x0=24, x1=180, mid=58, H=34;
+  var s='<line x1="'+x0+'" y1="'+mid+'" x2="'+x1+'" y2="'+mid+'" stroke="#9aa3ad" stroke-width="1" stroke-dasharray="3 3"/>';
+  // G points: wide scatter around a nonzero baseline (shifted up)
+  var gBase=-22; // visual offset upward (G centered above 0-line)
+  var gs=[ -16, 18, -10, 26, -22, 12 ];
+  var as=[ -7, 9, -5, 11, -10, 4 ];
+  for(var k=0;k<6;k++){
+    var gx=x0+10+k*26;
+    s+='<circle cx="'+gx+'" cy="'+(mid+gBase+gs[k]).toFixed(1)+'" r="3.4" fill="#0e7490"/>';
+    s+='<circle cx="'+(gx+4)+'" cy="'+(mid+as[k]).toFixed(1)+'" r="3.4" fill="#b45309"/>';
+  }
+  s+='<text x="'+(x1+6)+'" y="'+(mid-26)+'" font-size="8.5" fill="#0e7490">G</text>';
+  s+='<text x="'+(x1+6)+'" y="'+(mid+4)+'" font-size="8.5" fill="#b45309">A</text>';
+  s+='<text x="'+x0+'" y="'+(mid+18)+'" font-size="8" fill="#9aa3ad">0</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

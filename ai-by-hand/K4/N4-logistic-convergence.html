@@ -3,19 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Logistic Regression hội tụ — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài N4 — Logistic hội tụ (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
-  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
-  .etbl td.h{background:#f3ede0;font-weight:700;}
-  .dtbl{border-collapse:collapse;font-family:var(--mono);font-size:13px;width:100%;}
-  .dtbl th{background:#f3ede0;padding:3px 6px;border:1px solid #d5c49a;font-size:11px;}
-  .dtbl td{padding:6px 8px;border:1px solid #e2d5b5;text-align:center;}
-  .dtbl td.lab{background:#fafafa;font-weight:700;text-align:left}
-  .dtbl td.blank{background:#fff;border-bottom:1.5px dashed #b9b9b9;color:transparent;}
-  .key .dtbl td.blank{background:#fff3b0;color:#7a3d00;font-weight:700;}
+.page .step{margin-top:5px;}
+.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
+.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
+.page .calc{line-height:1.6;}
+.page .why{margin-top:4px;}
+.page .note{margin-top:3px;}
 </style>
 </head>
 <body>
@@ -26,116 +22,185 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Logistic Regression hội tụ</h1><span class="vi">— lặp vài vòng, loss giảm</span>
-    <span class="tag">σ(wx+b) → cập nhật → loss ↓ · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Phiếu khép trọn bộ: chạy <b>nhiều bước</b> gradient descent trên hồi quy logistic và
-    <b>thấy loss giảm dần</b> — bằng chứng "máy đang học". Mỗi vòng: dự đoán p = σ(wx+b), so nhãn y, cập nhật w,b theo
-    gradient (o−y)x, p tiến gần y, loss tụt xuống.
-    <div class="fm">p = σ(wx+b) · gradient = (p−y)·x · w ← w − η·grad · loss = −ln p (khi y=1)</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần N</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <table class="etbl"><tr><td class="h">z</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td></tr>
-        <tr><td class="h">σ(z)</td><td>.12</td><td>.27</td><td>.5</td><td>.73</td><td>.88</td></tr>
-        <tr><td class="h">−ln σ</td><td>2.12</td><td>1.31</td><td>.69</td><td>.31</td><td>.13</td></tr></table>
-      <div class="hint">Mỗi vòng z dịch về phía nhãn → p tiến tới y → loss (cột) thấp dần.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài N4</span><h1>Logistic regression hội tụ <small>— nhiều bước GD</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">x = 1, nhãn y = <b id="y1"></b> · qua 3 vòng cập nhật (z = wx+b dịch dần)</div>
-      <table class="dtbl" id="tbl1">
-        <tr><td class="lab">vòng</td><td>1</td><td>2</td><td>3</td></tr>
-        <tr><td class="lab">z = wx + b</td><td id="Z0"></td><td id="Z1"></td><td id="Z2"></td></tr>
-        <tr><td class="lab">p = σ(z)</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-        <tr><td class="lab">loss</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>
-      </table>
-      <div class="hint" style="margin-top:4px">loss = −ln p nếu y=1, = −ln(1−p) nếu y=0. So loss vòng 1 vs vòng 3.</div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Một bước (B3) chỉ là lát cắt; <b>chuỗi bước</b> mới cho thấy mô hình <b>học</b>: loss đi xuống, xác suất đúng tăng,
+    trọng số ổn định. Đây là "đường cong huấn luyện" mà ai làm ML cũng nhìn mỗi ngày.
+    <div class="formula">z=wx+b, p=σ(z), L=−ln(p_đúng) &nbsp;&nbsp; w ← w − η·(p−y)·x &nbsp;(lặp)</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Loss đi xuống chứng tỏ điều gì? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:130px"></span></li></ol>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi bước nhích w theo gradient <b>(p−y)x</b> → p tiến về nhãn → loss <b>−ln(p_đúng)</b> giảm. Vẽ loss theo bước ra <b>đường cong đi xuống</b>,
+    thoải dần khi gần đáy (gradient nhỏ lại). "Hội tụ" = loss gần như không giảm nữa.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng σ</h2><span class="tag">η=1, x=1, y=<span data-q="y">1</span></span></div>
+    <div class="calc" style="font-size:13px">
+      w₀ = 0 · σ(0)=0.5, σ(0.5)=0.62, σ(0.9)=0.71 &nbsp;(σ(−z)=1−σ(z)) · −ln0.5=0.69, −ln0.62=0.48, −ln0.71=0.34
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Logistic hội tụ</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2><span class="tag">z=0</span></div>
+    <div class="calc">
+      p=σ(0)=<span data-q="p1">0.5</span> → L₁=−ln(<span data-q="pc1">0.5</span>)=<span class="blk" style="min-width:34px"></span> ;
+      grad=(p−y)x=<span data-q="g1">−0.5</span> → w₁ = 0 − <span data-q="g1w">(−0.5)</span> = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> p chưa khớp nhãn → loss cao → bước kéo w về phía đúng.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Bước 2</h2><span class="tag">z=w₁</span></div>
+    <div class="calc">
+      z=<span data-q="z2">0.5</span> → p=<span data-q="p2">0.62</span> → L₂=−ln(<span data-q="pc2">0.62</span>)=<span class="blk" style="min-width:34px"></span> ;
+      w₂ = <span data-q="w1">0.5</span> − <span data-q="g2w">(−0.38)</span> = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="hint">Loss đã giảm 0.69 → 0.48; w tiếp tục đổi theo hướng đúng.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước 3</h2><span class="tag">z≈w₂</span></div>
+    <div class="calc">
+      z≈<span data-q="z3">0.9</span> → p=<span data-q="p3">0.71</span> → L₃=−ln(<span data-q="pc3">0.71</span>)=<span class="blk" style="min-width:34px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> loss tiếp tục giảm nhưng <b>chậm dần</b> (gradient |p−y| nhỏ lại) → dấu hiệu sắp hội tụ.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đường cong &amp; hội tụ</h2><span class="tag">loss ↓ thoải</span></div>
+    <div class="note">Vẽ L theo bước (0.69 → 0.48 → 0.34 → …) → đi xuống, thoải dần. η quá lớn → dao động; quá nhỏ → bò chậm.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>"Hội tụ" thể hiện thế nào trên đường loss? → <span class="blk" style="min-width:140px"></span></li>
+      <li>Vì sao bước sau đổi w càng ít? → <span class="blk" style="min-width:130px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N4 · Logistic hội tụ</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Logistic Regression hội tụ</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N4</span><h1>Logistic hội tụ <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <table class="etbl"><tr><td class="h">z</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td></tr>
-        <tr><td class="h">σ(z)</td><td>.12</td><td>.27</td><td>.5</td><td>.73</td><td>.88</td></tr>
-        <tr><td class="h">−ln σ</td><td>2.12</td><td>1.31</td><td>.69</td><td>.31</td><td>.13</td></tr></table>
-      <div class="hint">Đường loss đi xuống = "đang học". Hội tụ khi loss gần như phẳng.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2></div>
+    <div class="calc ans">L₁ = <span class="blk" data-q="L1">0.69</span> ; w₁ = <span class="blk" data-q="w1">0.5</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">p = σ(z) · loss giảm dần</div>
-      <table class="dtbl" id="tbl2">
-        <tr><td class="lab">vòng</td><td>1</td><td>2</td><td>3</td></tr>
-        <tr><td class="lab">z</td><td id="kZ0"></td><td id="kZ1"></td><td id="kZ2"></td></tr>
-        <tr><td class="lab">p = σ(z)</td><td id="P0"></td><td id="P1"></td><td id="P2"></td></tr>
-        <tr><td class="lab">loss</td><td id="L0"></td><td id="L1"></td><td id="L2"></td></tr>
-      </table>
-      <div class="hint" style="color:var(--dim);margin-top:5px">loss: <span data-q="l0">?</span> → <span data-q="l1">?</span> → <span data-q="l2">?</span> (giảm dần → mô hình đang hội tụ).</div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Bước 2</h2></div>
+    <div class="calc ans">L₂ = <span class="blk" data-q="L2">0.48</span> ; w₂ = <span class="blk" data-q="w2">0.88</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Mô hình đang học đúng</span>: dự đoán p ngày càng gần nhãn y → sai số giảm. Đó chính là "huấn luyện" — lặp cho tới khi loss không giảm nữa.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước 3</h2></div>
+    <div class="calc ans">L₃ = <span class="blk" data-q="L3">0.34</span> &nbsp;<span class="note" style="display:inline">(giảm chậm dần → sắp hội tụ)</span></div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> 🎉 Phiếu cuối của trọn bộ! Từ tích vô hướng (Bài A3) tới một vòng huấn luyện hội tụ — bạn đã
-        tính tay mọi mảnh của AI hiện đại. Giờ ghép chúng lại trong dự án thật của riêng bạn.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Đường cong loss giảm dần</h2><span class="tag">hội tụ</span></div>
+    <div class="figrow">
+      <svg id="figL" class="fig" viewBox="0 0 250 120" width="78mm" height="39mm" aria-label="đường cong loss giảm dần qua các bước rồi thoải ra"></svg>
+      <div style="flex:1">
+        <div class="note">Loss theo bước: 0.69 → 0.48 → 0.34 → … <b>đi xuống &amp; thoải dần</b>. Khoảng giảm nhỏ lại mỗi bước (gradient teo) → đường gần phẳng = hội tụ.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Logistic hội tụ</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>"Hội tụ"? → <span class="qa">Loss giảm dần rồi gần như không đổi (phẳng).</span></li>
+      <li>Bước sau đổi w ít? → <span class="qa">Gradient (p−y) nhỏ dần khi p tiến về nhãn.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Lặp gradient descent → loss giảm dần → hội tụ; đó là "huấn luyện". <b>Hết Phần N &amp; khóa K4 — trọn bộ lộ trình.</b>
+    Bạn đã đi từ tích vô hướng (Bài 01) tới một mô hình học hoàn chỉnh, tất cả bằng số thật trên giấy. 🎉
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N4 · Logistic hội tụ</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var SIG={'-2':0.12,'-1':0.27,'0':0.5,'1':0.73,'2':0.88};
-var NLN={0.12:2.12,0.27:1.31,0.5:0.69,0.73:0.31,0.88:0.13};
-function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
-function f2(v){return WB.fmt2(v);}
+var SG = {0:0.5, 0.5:0.62, 0.9:0.71};
+function sigma(z){ var a=Math.abs(z), v=SG[a]; return z>=0 ? v : Math.round((1-v)*100)/100; }
 function generate(){
-  var y=WB.pick([0,1]);
-  var Z;
-  if(y===1){ var z0=WB.pick([-2,-1,0]); Z=[z0,z0+1,z0+2]; }
-  else { var z0=WB.pick([2,1,0]); Z=[z0,z0-1,z0-2]; }
-  var P=Z.map(function(z){return SIG[String(z)];});
-  var L=Z.map(function(z,i){var p=P[i]; var q=(y===1)?p:Math.round((1-p)*100)/100; return NLN[q];});
-  ['Z0','Z1','Z2'].forEach(function(id,i){setTxt(id,Z[i]);});
-  ['kZ0','kZ1','kZ2'].forEach(function(id,i){setTxt(id,Z[i]);});
-  ['P0','P1','P2'].forEach(function(id,i){setTxt(id,f2(P[i]));});
-  ['L0','L1','L2'].forEach(function(id,i){setTxt(id,f2(L[i]));});
-  setTxt('y1',y);
-  WB.setAll({l0:f2(L[0]), l1:f2(L[1]), l2:f2(L[2])});
-  draw('sch1',L); draw('sch2',L);
+  var f = WB.fmtTrim, W=WB.wrap;
+  var y = WB.pick([0,1]);
+  var x=1, eta=1, w0=0;
+  // step 1
+  var z1=0, p1=sigma(0);
+  var pc1 = y===1 ? p1 : Math.round((1-p1)*100)/100;
+  var L1 = Math.round(-Math.log(pc1)*100)/100;
+  var g1 = Math.round((p1-y)*100)/100;
+  var w1 = Math.round((w0 - eta*g1*x)*100)/100;
+  // step 2
+  var z2 = Math.round(w1*x*100)/100;          // ±0.5
+  var p2 = sigma(z2);
+  var pc2 = y===1 ? p2 : Math.round((1-p2)*100)/100;
+  var L2 = Math.round(-Math.log(pc2)*100)/100;
+  var g2 = Math.round((p2-y)*100)/100;
+  var w2 = Math.round((w1 - eta*g2*x)*100)/100; // ±0.88
+  // step 3 (z ≈ ±0.9)
+  var z3 = w2>=0 ? 0.9 : -0.9;
+  var p3 = sigma(z3);
+  var pc3 = y===1 ? p3 : Math.round((1-p3)*100)/100;
+  var L3 = Math.round(-Math.log(pc3)*100)/100;
+  WB.setAll({
+    y:String(y),
+    p1:f(p1), pc1:f(pc1), L1:f(L1), g1:f(g1), g1w:W(g1), w1:f(w1),
+    z2:f(z2), p2:f(p2), pc2:f(pc2), L2:f(L2), g2w:W(g2), w2:f(w2),
+    z3:f(z3), p3:f(p3), pc3:f(pc3), L3:f(L3)
+  });
+  drawLoss('figL', [L1,L2,L3]);
 }
-function draw(id,L){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  var x0=20,y0=72;
-  s+='<line x1="'+x0+'" y1="'+y0+'" x2="170" y2="'+y0+'" stroke="#bbb"/>';
-  s+='<line x1="'+x0+'" y1="14" x2="'+x0+'" y2="'+y0+'" stroke="#bbb"/>';
-  var d='';for(var i=0;i<3;i++){var x=x0+20+i*46;var yv=y0-L[i]*24;d+=(i===0?'M':'L')+x+','+yv+' ';
-    s+='<circle cx="'+x+'" cy="'+yv+'" r="3" fill="#b45309"/>';
-    s+='<text x="'+x+'" y="'+(yv-6)+'" text-anchor="middle" font-size="8" fill="#b45309">'+WB.fmt2(L[i])+'</text>';
-    s+='<text x="'+x+'" y="'+(y0+12)+'" text-anchor="middle" font-size="8" fill="#999">'+(i+1)+'</text>';}
-  s+='<path d="'+d+'" fill="none" stroke="#b45309" stroke-width="1.6"/>';
-  s+='<text x="95" y="12" text-anchor="middle" font-size="8" fill="#6b7280">loss giảm theo vòng → hội tụ</text>';
-  b.innerHTML='<svg viewBox="0 0 180 88" aria-label="đường loss giảm dần qua các vòng">'+s+'</svg>';
+function drawLoss(id, Ls){
+  var svg = document.getElementById(id); if(!svg) return;
+  var x0=30, y0=14, base=100, W=190, H=84, maxL=0.8, steps=5;
+  var s='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+W)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  // extend curve with a few extrapolated flattening points
+  var ext = Ls.concat([Math.round((Ls[2]-0.06)*100)/100, Math.round((Ls[2]-0.09)*100)/100]);
+  var pts='';
+  for(var k=0;k<ext.length;k++){
+    var X=x0 + (k/(ext.length-1))*W;
+    var Y=base - (ext[k]/maxL)*H;
+    pts += X.toFixed(1)+','+Y.toFixed(1)+' ';
+    s+='<circle cx="'+X.toFixed(1)+'" cy="'+Y.toFixed(1)+'" r="'+(k<3?3:2)+'" fill="'+(k<3?'#b45309':'#cbd5e1')+'"/>';
+    if(k<3) s+='<text x="'+X.toFixed(1)+'" y="'+(Y-6).toFixed(1)+'" text-anchor="middle" font-size="7.5" fill="#b45309">'+WB.fmtTrim(ext[k])+'</text>';
+  }
+  s+='<polyline points="'+pts.trim()+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
+  s+='<text x="'+(x0+W/2)+'" y="'+(base+14)+'" text-anchor="middle" font-size="8" fill="#5b6776">bước →</text>';
+  s+='<text x="'+(x0-4)+'" y="'+(y0+4)+'" text-anchor="end" font-size="8" fill="#5b6776">L</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

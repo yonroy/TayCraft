@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · FLOPs — đếm phép tính — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài L7 — FLOPs một lớp (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .big{font-family:var(--mono);font-size:14px;line-height:2.1;margin-top:5px}
-  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:54px;text-align:center}
-  .key .ub{border:none;font-weight:700;color:#7a3d00}
-  .note{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -21,104 +22,161 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>FLOPs — đếm phép tính</h1><span class="vi">— chi phí tính toán một lớp</span>
-    <span class="tag">matmul 2·m·n·k · conv · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> FLOPs (số phép nhân–cộng dấu phẩy động) ước lượng mô hình "nặng" cỡ nào → thời gian
-    chạy, điện, chi phí. Mỗi phần tử kết quả của matmul cần k phép nhân + k phép cộng ≈ <b>2k</b> FLOP. Đếm tay được
-    cho mọi lớp tuyến tính / tích chập.
-    <div class="fm">matmul (m×k)·(k×n): FLOPs = 2·m·n·k · conv: FLOPs = 2·Hₒ·Wₒ·Cₒ·(K·K·Cᵢ)</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint">Mỗi ô của C = một tích vô hướng dài k → 2k FLOP. Có m·n ô.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài L7</span><h1>FLOPs <small>— đếm phép tính một lớp</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">① LỚP TUYẾN TÍNH: C = A·B, A(<span id="m1"></span>×<span id="k1"></span>), B(<span id="k1b"></span>×<span id="n1"></span>)</div>
-      <div class="big">
-        số ô kết quả = m·n = <span class="ub" style="min-width:36px"></span> · mỗi ô = 2k = <span class="ub" style="min-width:36px"></span> FLOP<br>
-        FLOPs = 2·m·n·k = <span class="ub" style="min-width:70px"></span>
-      </div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Tham số = bộ nhớ; FLOPs = <b>tốc độ/điện</b>. Hai thứ khác nhau (conv ít tham số nhưng nhiều FLOPs). Ước lượng
+    FLOPs giúp dự đoán độ trễ, chọn kiến trúc vừa phần cứng, so chi phí mô hình.
+    <div class="formula">Lớp tuyến tính (in → out): MAC = in·out &nbsp; FLOPs ≈ 2·in·out &nbsp;(mỗi MAC = 1 nhân + 1 cộng)</div>
+  </div>
 
-      <div class="bandh fw" style="margin-top:6px">② LỚP CONV: ra Hₒ×Wₒ=<span id="hw1"></span>, Cₒ=<span id="co1"></span> bộ lọc, kernel <span id="kk1"></span>, Cᵢ=<span id="ci1"></span></div>
-      <div class="big">FLOPs = 2·(Hₒ·Wₒ·Cₒ)·(K·K·Cᵢ) = <span class="ub" style="min-width:80px"></span></div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi đầu ra là một <b>tích vô hướng</b> dài <i>in</i> → <i>in</i> phép nhân + <i>in</i> phép cộng. Có <i>out</i> đầu ra → nhân lên. Một
+    "MAC" (nhân-rồi-cộng) tính là 2 FLOPs. Cứ thế cộng qua các lớp ra tổng chi phí.
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Tăng gấp đôi cả m và n thì FLOPs matmul tăng mấy lần? → <span class="ub" style="min-width:40px"></span></li></ol>
-      </div>
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">lớp <span data-q="nin">4</span> → <span data-q="nout">8</span></span></div>
+    <div class="calc" style="font-size:14px">
+      đầu vào <span class="gv" data-q="nin">4</span> chiều, đầu ra <span class="gv" data-q="nout">8</span> nơ-ron, một mẫu
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · FLOPs</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Số MAC</h2><span class="tag">in·out</span></div>
+    <div class="calc">
+      MAC = <span data-q="nin">4</span>·<span data-q="nout">8</span> = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> mỗi trong <span data-q="nout">8</span> nơ-ron làm một tích vô hướng dài <span data-q="nin">4</span> → in×out phép nhân-cộng.</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>FLOPs</h2><span class="tag">2·MAC</span></div>
+    <div class="calc">
+      FLOPs = 2·<span data-q="mac">32</span> = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="hint">Nhân 2 vì mỗi MAC = 1 nhân + 1 cộng (cộng bias thêm ~<span data-q="nout">8</span> không đáng kể).</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Theo batch</h2><span class="tag">×<span data-q="batch">16</span> mẫu</span></div>
+    <div class="calc">
+      <span data-q="flops">64</span>·<span data-q="batch">16</span> = <span class="blk" style="min-width:56px"></span> FLOPs
+    </div>
+    <div class="why"><b>Vì sao:</b> FLOPs nhân tuyến tính theo số mẫu; tham số <b>không đổi</b> theo batch.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tham số ≠ FLOPs</h2><span class="tag">bộ nhớ vs tốc độ</span></div>
+    <div class="note">Conv chia sẻ trọng số → <b>ít tham số</b> nhưng trượt khắp ảnh → <b>nhiều FLOPs</b>. Tối ưu triển khai phải nhìn cả hai.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Vì sao FLOPs ≈ 2·in·out? → <span class="blk" style="min-width:140px"></span></li>
+      <li>Tham số và FLOPs khác nhau thế nào? → <span class="blk" style="min-width:130px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L7 · FLOPs</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>FLOPs — đếm phép tính</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L7</span><h1>FLOPs <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">LLM ~ hàng tỉ FLOP/token; biết FLOPs giúp chọn phần cứng & ước chi phí suy luận.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>MAC</h2></div>
+    <div class="calc ans">MAC = <span data-q="nin">4</span>·<span data-q="nout">8</span> = <span class="blk" data-q="mac">32</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">① matmul</div>
-      <div class="big">
-        m·n = <span data-q="mn">?</span> ô · 2k = <span data-q="k2">?</span> FLOP/ô<br>
-        FLOPs = 2·m·n·k = <b><span data-q="mm">?</span></b>
-      </div>
-      <div class="bandh fw" style="margin-top:6px">② conv</div>
-      <div class="big">FLOPs = 2·<span data-q="hwco">?</span>·<span data-q="kkci">?</span> = <b><span data-q="conv">?</span></b></div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>FLOPs / mẫu</h2></div>
+    <div class="calc ans">FLOPs = 2·<span data-q="mac">32</span> = <span class="blk" data-q="flops">64</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">×4</span>: FLOPs tỉ lệ với m·n → nhân đôi mỗi cái = ×2·×2 = ×4. (Chi phí ma trận phình theo tích các chiều.)</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Theo batch</h2></div>
+    <div class="calc ans"><span data-q="flops">64</span>·<span data-q="batch">16</span> = <span class="blk" data-q="flopsBatch">1024</span> FLOPs</div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> FLOPs đo "công việc"; thời gian thực còn phụ thuộc phần cứng & bộ nhớ → <b>L8 độ trễ &amp;
-        thông lượng</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Lớp in→out: mỗi dây = 1 MAC</h2><span class="tag">in·out dây</span></div>
+    <div class="figrow">
+      <svg id="figF" class="fig" viewBox="0 0 250 130" width="74mm" height="42mm" aria-label="lớp tuyến tính nối in nút đầu vào tới out nút đầu ra, mỗi dây là một MAC"></svg>
+      <div style="flex:1">
+        <div class="note">Mỗi nút ra (cam) nối tới <b>mọi</b> nút vào (lam) → tổng số dây = in·out = số MAC. FLOPs gấp đôi (mỗi dây = 1 nhân + 1 cộng).</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · FLOPs</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>FLOPs ≈ 2·in·out? → <span class="qa">Mỗi MAC = 1 nhân + 1 cộng = 2 phép.</span></li>
+      <li>Tham số vs FLOPs? → <span class="qa">Tham số = bộ nhớ (không đổi theo batch); FLOPs = tốc độ (nhân theo batch).</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> FLOPs ≈ 2·in·out mỗi lớp, ×batch; khác số tham số. Bài tiếp (L8): từ FLOPs sang thời gian thực — <b style="color:var(--accent2)">độ trễ &amp; thông lượng</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L7 · FLOPs</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
 function generate(){
-  var m=WB.randInt(2,5), k=WB.randInt(3,6), n=WB.randInt(2,5);
-  var mm=2*m*n*k;
-  var Ho=WB.randInt(2,4), Wo=Ho, Co=WB.randInt(2,4), K=WB.pick([2,3]), Ci=WB.randInt(2,4);
-  var conv=2*(Ho*Wo*Co)*(K*K*Ci);
-  ['m1'].forEach(function(){}); setTxt('m1',m); setTxt('k1',k); setTxt('k1b',k); setTxt('n1',n);
-  setTxt('hw1',Ho+'×'+Wo); setTxt('co1',Co); setTxt('kk1',K+'×'+K); setTxt('ci1',Ci);
+  var nin = WB.pick([3,4,5]);
+  var nout = WB.pick([6,8,10]);
+  var batch = WB.pick([8,16,32]);
+  var mac = nin*nout;
+  var flops = 2*mac;
+  var flopsBatch = flops*batch;
   WB.setAll({
-    mn:m*n, k2:2*k, mm:mm,
-    hwco:(Ho*Wo*Co)+' (='+Ho+'·'+Wo+'·'+Co+')', kkci:(K*K*Ci)+' (='+K+'·'+K+'·'+Ci+')', conv:conv
+    nin:String(nin), nout:String(nout), batch:String(batch),
+    mac:String(mac), flops:String(flops), flopsBatch:String(flopsBatch)
   });
-  draw('sch1',m,k,n); draw('sch2',m,k,n);
+  drawLayer('figF', nin, nout);
 }
-function draw(id,m,k,n){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  // bậc thang matmul: B trên, A trái, C giao
-  var u=11, x0=58, y0=40;
-  function grid(x,y,rows,cols,fill){for(var i=0;i<rows;i++)for(var j=0;j<cols;j++)s+='<rect x="'+(x+j*u)+'" y="'+(y+i*u)+'" width="'+(u-1)+'" height="'+(u-1)+'" fill="'+fill+'" stroke="#cbb"/>';}
-  grid(x0,8,k,n,'#fdecd2');                 // B (k×n)
-  grid(8,y0,m,k,'#ece2ff');                 // A (m×k)
-  grid(x0,y0,m,n,'#d6ecf6');                // C (m×n)
-  s+='<text x="'+(x0+n*u/2)+'" y="6" text-anchor="middle" font-size="8" fill="#7a3d00">B '+k+'×'+n+'</text>';
-  s+='<text x="6" y="'+(y0-3)+'" font-size="8" fill="#5b3fd6">A '+m+'×'+k+'</text>';
-  s+='<text x="'+(x0+n*u/2)+'" y="'+(y0+m*u+10)+'" text-anchor="middle" font-size="8" fill="#0c4a5e">C = A·B ('+m+'×'+n+')</text>';
-  b.innerHTML='<svg viewBox="0 0 '+(x0+n*u+10)+' '+(y0+m*u+16)+'" aria-label="bậc thang matmul đếm FLOPs">'+s+'</svg>';
+function drawLayer(id, nin, nout){
+  var svg = document.getElementById(id); if(!svg) return;
+  var xL=44, xR=196, top=18, H=104;
+  function yPos(i,n){ return top + (n===1? H/2 : i*(H/(n-1))); }
+  var s='';
+  // edges first
+  for(var i=0;i<nin;i++){
+    for(var j=0;j<nout;j++){
+      s+='<line x1="'+xL+'" y1="'+yPos(i,nin).toFixed(1)+'" x2="'+xR+'" y2="'+yPos(j,nout).toFixed(1)+'" stroke="#9aa3ad" stroke-width="0.4" opacity="0.6"/>';
+    }
+  }
+  for(var i2=0;i2<nin;i2++) s+='<circle cx="'+xL+'" cy="'+yPos(i2,nin).toFixed(1)+'" r="4.5" fill="#0e749033" stroke="#0e7490" stroke-width="1.3"/>';
+  for(var j2=0;j2<nout;j2++) s+='<circle cx="'+xR+'" cy="'+yPos(j2,nout).toFixed(1)+'" r="4.5" fill="#b4530933" stroke="#b45309" stroke-width="1.3"/>';
+  s+='<text x="'+xL+'" y="12" text-anchor="middle" font-size="8.5" fill="#0e7490">in='+nin+'</text>';
+  s+='<text x="'+xR+'" y="12" text-anchor="middle" font-size="8.5" fill="#b45309">out='+nout+'</text>';
+  s+='<text x="120" y="128" text-anchor="middle" font-size="8.5" fill="#5b6776">'+nin+'×'+nout+' = '+(nin*nout)+' dây (MAC)</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

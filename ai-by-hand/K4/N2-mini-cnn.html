@@ -3,18 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Mini-CNN nhận chữ số — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài N2 — Mini-CNN nhận chữ số (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .etbl{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-top:3px;}
-  .etbl td{border:1px solid #d5c49a;padding:1px 6px;text-align:center;}
-  .etbl td.h{background:#f3ede0;font-weight:700;}
-  .m{ --cw:8mm; --ch:7.5mm; }
-  .cell{font-size:12.5px;}
-  .big{font-family:var(--mono);font-size:13px;line-height:1.95;margin-top:5px}
-  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:40px;text-align:center}
-  .key .ub{border:none;font-weight:700;color:#7a3d00}
+.page .step{margin-top:5px;}
+.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
+.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
+.page .calc{line-height:1.6;}
+.page .why{margin-top:4px;}
+.page .note{margin-top:3px;}
 </style>
 </head>
 <body>
@@ -25,134 +22,175 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>Mini-CNN nhận chữ số</h1><span class="vi">— conv → pool → softmax</span>
-    <span class="tag">2 bộ lọc · 2 lớp · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> Ráp CNN thành một bộ phân loại tí hon: ảnh 4×4 → hai bộ lọc 3×3 dò nét → hai feature
-    map 2×2 → ReLU → max-pool lấy phản hồi mạnh nhất mỗi map → hai điểm số → softmax → đoán lớp (0 hay 1). Cả pipeline
-    thị giác trên một trang.
-    <div class="fm">map = conv(ảnh, kernel) · ReLU · pool = max · logit = pool · softmax → lớp</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần N</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
-        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td><td>20.1</td></tr></table>
-      <div class="hint">Mỗi bộ lọc = một "máy dò nét". Pool giữ phản hồi mạnh nhất → điểm số của lớp đó.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài N2</span><h1>Mini-CNN nhận chữ số <small>— capstone forward</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">Ảnh 4×4 (nhị phân) + 2 bộ lọc 3×3</div>
-      <div class="row">
-        <div class="blk in"><span class="nm">ảnh</span><div class="m c4" id="IMG"></div></div>
-        <div class="blk w"><span class="nm">K₀ (lớp 0)</span><div class="m c3" id="K0"></div></div>
-        <div class="blk w"><span class="nm">K₁ (lớp 1)</span><div class="m c3" id="K1"></div></div>
-      </div>
-      <div class="bandh fw">conv (valid) → map 2×2 → ReLU → max-pool</div>
-      <div class="row">
-        <div class="blk fw"><span class="nm">map₀ (ReLU)</span><div class="m c2" id="M0"></div></div>
-        <div class="blk fw"><span class="nm">map₁ (ReLU)</span><div class="m c2" id="M1"></div></div>
-        <div class="blk hot"><span class="nm">logit=[max₀,max₁]</span><div class="m c2" id="LOG" style="--cw:11mm"></div></div>
-      </div>
-      <div class="big">softmax([logit₀, logit₁]) = <span class="ub" style="min-width:90px"></span> → đoán lớp <span class="ub" style="min-width:30px"></span></div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> "CNN tối giản" làm tay được từ pixel tới điểm lớp. Thấy rõ chuỗi: <b>dò đặc trưng</b> (conv) → <b>phi tuyến</b>
+    (ReLU) → <b>thu nhỏ</b> (pool) → <b>quyết định</b> (FC). Hiểu nó là hiểu mọi CNN nhận diện ảnh.
+    <div class="formula">ảnh → Conv → ReLU → Pool → flatten → Linear → logit (→ softmax)</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Mỗi bộ lọc đảm nhiệm việc gì trong bộ phân loại này? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:110px"></span></li></ol>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Từng tầng <b>rút gọn &amp; trừu tượng</b>: conv tìm cạnh/đốm, ReLU giữ tín hiệu mạnh, pool tóm vùng, flatten duỗi thành vectơ, lớp cuối
+    <b>chấm điểm lớp</b>. Ảnh to → vài con số đặc trưng → một quyết định.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ảnh 3×3 · kernel chéo</span></div>
+    <div class="calc" style="font-size:13px">
+      X = [[<span class="gv" data-q="x00">1</span>,<span class="gv" data-q="x01">2</span>,<span class="gv" data-q="x02">0</span>],[<span class="gv" data-q="x10">3</span>,<span class="gv" data-q="x11">4</span>,<span class="gv" data-q="x12">1</span>],[<span class="gv" data-q="x20">0</span>,<span class="gv" data-q="x21">1</span>,<span class="gv" data-q="x22">2</span>]]
+      &nbsp;·&nbsp; K=[[1,0],[0,1]] · b=0
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Mini-CNN</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Conv (bản đồ 2×2)</h2><span class="tag">kernel·vùng</span></div>
+    <div class="calc">
+      góc trên-trái = <span data-q="x00">1</span>·1+<span data-q="x11">4</span>·1 = <span data-q="c11">5</span> ; trượt → [[<span data-q="c11">5</span>,<span data-q="c12">3</span>],[ <span class="blk" style="min-width:26px"></span> , <span class="blk" style="min-width:26px"></span> ]]
+    </div>
+    <div class="why"><b>Vì sao:</b> mỗi ô = tích vô hướng kernel · vùng ảnh (Bài 16 / C-conv).</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>ReLU</h2><span class="tag">giữ ≥ 0</span></div>
+    <div class="calc">
+      feature map ≥ 0 → giữ nguyên [[<span data-q="c11">5</span>,<span data-q="c12">3</span>],[<span data-q="c21">7</span>,<span data-q="c22">6</span>]]
+    </div>
+    <div class="hint">Ở đây không có giá trị âm nên ReLU không đổi.</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Max-pool 2×2</h2><span class="tag">phản hồi mạnh nhất</span></div>
+    <div class="calc">
+      max(<span data-q="c11">5</span>,<span data-q="c12">3</span>,<span data-q="c21">7</span>,<span data-q="c22">6</span>) = <span class="blk" style="min-width:30px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> giữ phản hồi mạnh nhất → "đặc trưng có xuất hiện", thu về 1 giá trị.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Flatten → FC → logit</h2><span class="tag">phân loại</span></div>
+    <div class="calc">
+      flatten = (<span data-q="pool">7</span>) ; logit = w·pool+b = <span data-q="w">1</span>·<span data-q="pool">7</span>+<span data-q="bw">(−2)</span> = <span class="blk" style="min-width:34px"></span> → softmax/argmax ra lớp
+    </div>
+    <div class="note">CNN thật nhiều kênh &amp; lớp, nhưng <b>đúng luồng này</b> lặp lại.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Thứ tự các tầng CNN nhận ảnh? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Pooling làm gì với feature map? → <span class="blk" style="min-width:140px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N2 · Mini-CNN</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>Mini-CNN nhận chữ số</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N2</span><h1>Mini-CNN <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <table class="etbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
-        <tr><td class="h">eˣ</td><td>1.0</td><td>2.72</td><td>7.39</td><td>20.1</td></tr></table>
-      <div class="hint">CNN thật chỉ là cái này nhân lên: nhiều lọc, nhiều lớp, ảnh lớn. Cơ chế y hệt.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Conv 2×2</h2></div>
+    <div class="calc ans">feature map = [[<span data-q="c11">5</span>,<span data-q="c12">3</span>],[ <span class="blk" data-q="c21">7</span> , <span class="blk" data-q="c22">6</span> ]]</div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">map₀, map₁ (ReLU) → pool → softmax</div>
-      <div class="row">
-        <div class="blk fw"><span class="nm">map₀</span><div class="m c2" id="kM0"></div></div>
-        <div class="blk fw"><span class="nm">map₁</span><div class="m c2" id="kM1"></div></div>
-        <div class="blk hot"><span class="nm">logit</span><div class="m c2" id="kLOG" style="--cw:11mm"></div></div>
-      </div>
-      <div class="big">
-        max₀ = <span data-q="m0">?</span> · max₁ = <span data-q="m1">?</span><br>
-        softmax = [<b><span data-q="p0">?</span></b>, <b><span data-q="p1">?</span></b>] → đoán lớp <b><span data-q="cls">?</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Max-pool</h2></div>
+    <div class="calc ans">max = <span class="blk" data-q="pool">7</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Mỗi lọc dò nét của một lớp</span>: K₀ dò đặc trưng của "0", K₁ của "1". Lọc nào phản hồi mạnh hơn → lớp đó thắng.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Logit</h2></div>
+    <div class="calc ans">logit = <span data-q="w">1</span>·<span data-q="pool">7</span>+<span data-q="bw">(−2)</span> = <span class="blk" data-q="logit">5</span></div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> Thị giác xong. Phần ngôn ngữ: ráp embedding + attention + FFN thành bộ sinh token → <b>N3
-        Mini-GPT</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Luồng: ảnh → conv → pool → logit</h2><span class="tag">rút gọn</span></div>
+    <div class="figrow">
+      <svg id="figC" class="fig" viewBox="0 0 250 120" width="82mm" height="39mm" aria-label="pipeline: ảnh 3x3 tới feature map 2x2 tới một số pool tới logit"></svg>
+      <div style="flex:1">
+        <div class="note">Ảnh 3×3 (9 số) → conv ra 2×2 (4 số) → max-pool còn 1 số → lớp tuyến tính ra logit. Mỗi tầng <b>ít số hơn, trừu tượng hơn</b>.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · Mini-CNN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Thứ tự tầng? → <span class="qa">Conv → ReLU → Pool → flatten → Linear.</span></li>
+      <li>Pooling? → <span class="qa">Thu nhỏ (tóm tắt vùng) → ít số hơn, bền dịch chuyển nhẹ.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Mini-CNN = conv → ReLU → pool → flatten → FC; rút gọn ảnh thành quyết định. Bài tiếp (N3): ráp một
+    <b style="color:var(--accent2)">mini-GPT</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N2 · Mini-CNN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var EXP={0:1,1:2.72,2:7.39,3:20.1};
-function fill(id,M,blank){var el=document.getElementById(id);if(!el)return;var s='';for(var i=0;i<M.length;i++)for(var j=0;j<M[i].length;j++)s+='<div class="cell'+(blank?' blank':'')+'">'+(blank?'':M[i][j])+'</div>';el.innerHTML=s;}
-function f2(v){return WB.fmt2(v);}
-function conv(img,K){ // 4x4 * 3x3 valid -> 2x2
-  var out=[];for(var r=0;r<2;r++){var row=[];for(var c=0;c<2;c++){var sum=0;for(var i=0;i<3;i++)for(var j=0;j<3;j++)sum+=img[r+i][c+j]*K[i][j];row.push(Math.max(0,sum));}out.push(row);}return out;
-}
 function generate(){
-  var img,K0,K1,m0,m1,max0,max1,ok=false,guard=0;
-  while(!ok && guard++<800){
-    img=[];for(var i=0;i<4;i++){var r=[];for(var j=0;j<4;j++)r.push(WB.pick([0,1]));img.push(r);}
-    K0=sparseK(); K1=sparseK();
-    m0=conv(img,K0); m1=conv(img,K1);
-    max0=Math.max(m0[0][0],m0[0][1],m0[1][0],m0[1][1]);
-    max1=Math.max(m1[0][0],m1[0][1],m1[1][0],m1[1][1]);
-    if(max0<=3&&max1<=3&&(max0!==max1)){ok=true;}
+  var F=WB.fmtInt, W=WB.wrap;
+  var X=[[0,0,0],[0,0,0],[0,0,0]];
+  for(var i=0;i<3;i++) for(var j=0;j<3;j++) X[i][j]=WB.randInt(0,4);
+  // conv with kernel [[1,0],[0,1]] → X[i][j]+X[i+1][j+1]
+  var c11=X[0][0]+X[1][1], c12=X[0][1]+X[1][2], c21=X[1][0]+X[2][1], c22=X[1][1]+X[2][2];
+  var pool=Math.max(c11,c12,c21,c22);
+  var w=WB.pick([1,2]), b=WB.pick([-1,-2]);
+  var logit=w*pool+b;
+  var o={x00:X[0][0],x01:X[0][1],x02:X[0][2],x10:X[1][0],x11:X[1][1],x12:X[1][2],x20:X[2][0],x21:X[2][1],x22:X[2][2]};
+  for(var k in o) o[k]=String(o[k]);
+  o.c11=String(c11); o.c12=String(c12); o.c21=String(c21); o.c22=String(c22);
+  o.pool=String(pool); o.w=String(w); o.bw=W(b); o.logit=F(logit);
+  WB.setAll(o);
+  drawPipe('figC', X, [[c11,c12],[c21,c22]], pool, logit);
+}
+function drawPipe(id, X, C, pool, logit){
+  var svg = document.getElementById(id); if(!svg) return;
+  var s='';
+  function grid(x0,y0,cs,M,n,col){
+    var t='';
+    for(var i=0;i<n;i++) for(var j=0;j<n;j++){
+      t+='<rect x="'+(x0+j*cs)+'" y="'+(y0+i*cs)+'" width="'+cs+'" height="'+cs+'" fill="'+col+'18" stroke="'+col+'" stroke-width="0.9"/>';
+      t+='<text x="'+(x0+j*cs+cs/2)+'" y="'+(y0+i*cs+cs/2+3)+'" text-anchor="middle" font-size="8" fill="#1f2937">'+M[i][j]+'</text>';
+    }
+    return t;
   }
-  var e0=EXP[max0], e1=EXP[max1]; var sum=e0+e1;
-  var p0=Math.round(e0/sum*100)/100, p1=Math.round(e1/sum*100)/100;
-  var cls=max0>max1?0:1;
-  fill('IMG',img,false); fill('K0',K0,false); fill('K1',K1,false);
-  fill('M0',m0,true); fill('M1',m1,true); fill('LOG',[[max0,max1]],true);
-  fill('kM0',m0,false); fill('kM1',m1,false); fill('kLOG',[[max0,max1]],false);
-  WB.setAll({m0:max0, m1:max1, p0:f2(p0), p1:f2(p1), cls:cls});
-  draw('sch1'); draw('sch2');
-}
-function sparseK(){
-  var K=[[0,0,0],[0,0,0],[0,0,0]];
-  var n=WB.randInt(2,3);
-  for(var t=0;t<n;t++){var i=WB.randInt(0,2),j=WB.randInt(0,2);K[i][j]=WB.pick([1,1,-1]);}
-  return K;
-}
-function draw(id){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  function box(x,y,w,h,fill,txt){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'" stroke="#1a1a1a" stroke-width="1"/>';s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="8" font-weight="700">'+txt+'</text>';}
-  function ar(x1,y1,x2,y2){s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#0e7490" stroke-width="1.3" marker-end="url(#cn'+id+')"/>';}
-  s+='<defs><marker id="cn'+id+'" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0L5,2.5L0,5Z" fill="#0e7490"/></marker></defs>';
-  box(8,38,26,26,'#fdecd2','ảnh'); ar(34,51,46,40); ar(34,51,46,62);
-  box(48,22,26,18,'#d6ecf6','map₀'); box(48,62,26,18,'#d6ecf6','map₁');
-  ar(74,31,86,38); ar(74,71,86,54);
-  box(88,38,24,18,'#fff3b0','pool');
-  ar(112,47,124,47);
-  box(126,38,26,18,'#ece2ff','soft');
-  s+='<text x="80" y="12" text-anchor="middle" font-size="8" fill="#6b7280">conv → ReLU → pool → softmax</text>';
-  b.innerHTML='<svg viewBox="0 0 158 92" aria-label="pipeline mini-CNN">'+s+'</svg>';
+  s+=grid(10,24,18,X,3,'#0e7490');
+  s+='<text x="34" y="20" text-anchor="middle" font-size="8" fill="#0e7490">ảnh 3×3</text>';
+  s+='<text x="76" y="56" font-size="13" fill="#9aa3ad">→</text>';
+  s+=grid(90,33,18,C,2,'#7c5cff');
+  s+='<text x="108" y="20" text-anchor="middle" font-size="8" fill="#7c5cff">conv 2×2</text>';
+  s+='<text x="132" y="56" font-size="13" fill="#9aa3ad">→</text>';
+  s+='<rect x="150" y="42" width="22" height="22" fill="#16a34a18" stroke="#16a34a" stroke-width="1"/><text x="161" y="57" text-anchor="middle" font-size="9" fill="#16a34a">'+pool+'</text>';
+  s+='<text x="161" y="34" text-anchor="middle" font-size="8" fill="#16a34a">pool</text>';
+  s+='<text x="180" y="56" font-size="13" fill="#9aa3ad">→</text>';
+  s+='<rect x="196" y="42" width="34" height="22" fill="#b4530918" stroke="#b45309" stroke-width="1"/><text x="213" y="57" text-anchor="middle" font-size="9" fill="#b45309">'+logit+'</text>';
+  s+='<text x="213" y="34" text-anchor="middle" font-size="8" fill="#b45309">logit</text>';
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

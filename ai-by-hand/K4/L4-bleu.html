@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · BLEU n-gram — canvas (A4 ngang)</title>
-<link rel="stylesheet" href="../wb-canvas.css">
+<title>Làm toán AI · Bài L4 — BLEU n-gram (A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
 <style>
-  .schema svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e2dccb;border-radius:8px;}
-  .seq{font-family:var(--mono);font-size:15px;letter-spacing:2px;margin:3px 0}
-  .tk{display:inline-block;border:1px solid #ccc;border-radius:4px;padding:1px 7px;margin:1px 2px}
-  .tk.hit{background:#d6f5d6;border-color:#9ad8a0;color:#0a6;font-weight:700}
-  .tk.miss{background:#ffe0e0;border-color:#e3a7a7;color:#c00}
-  .big{font-family:var(--mono);font-size:14px;line-height:2.1;margin-top:5px}
-  .ub{display:inline-block;border-bottom:1.6px dashed #b9b9b9;min-width:48px;text-align:center}
-  .key .ub{border:none;font-weight:700;color:#7a3d00}
+.page .step{margin-top:6px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .calc{line-height:1.7;}
+.page .why{margin-top:5px;}
+.page .note{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -24,109 +22,170 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ ============ -->
-<section class="sheet">
-  <div class="ttl"><h1>BLEU — n-gram</h1><span class="vi">— chấm điểm bản dịch/sinh</span>
-    <span class="tag">đếm n-gram trùng · brevity penalty · điền ô trắng</span></div>
-
-  <div class="scaf">
-    <b>Vì sao quan trọng.</b> BLEU so câu máy sinh với câu tham chiếu bằng <b>tỉ lệ n-gram trùng</b> (unigram, bigram…),
-    có <b>clip</b> (không tính trùng quá số lần xuất hiện ở tham chiếu) và phạt câu quá ngắn (<b>brevity penalty</b>).
-    Là thước đo kinh điển cho dịch máy / sinh văn bản.
-    <div class="fm">p₁ = (unigram trùng)/(độ dài câu sinh) · BLEU₁ = BP · p₁  (ở đây cùng độ dài → BP = 1)</div>
+<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
   </div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch1"></div>
-      <div class="hint"><b style="color:#0a6">Xanh</b> = token có trong tham chiếu (trùng) · <b style="color:#c00">đỏ</b> = không trùng.</div>
-    </div>
+  <div class="wb-title"><span class="no">Bài L4</span><h1>BLEU <small>— độ trùng n-gram</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
 
-    <div class="work">
-      <div class="bandh fw">Tham chiếu &amp; câu sinh (5 token)</div>
-      <div class="seq">ref: <span id="ref1"></span></div>
-      <div class="seq">sinh: <span id="cand1"></span></div>
-      <div class="big">
-        unigram trùng = <span class="ub" style="min-width:30px"></span>/5 → p₁ = <span class="ub"></span><br>
-        bigram trùng = <span class="ub" style="min-width:30px"></span>/4 → p₂ = <span class="ub"></span> · BLEU₁ = BP·p₁ = <span class="ub" style="min-width:50px"></span>
-      </div>
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Không thể chấm tay hàng triệu câu dịch. BLEU tự động đo "câu máy trùng bao nhiêu cụm với câu người" → so sánh
+    mô hình dịch/sinh. Không hoàn hảo (bỏ qua ngữ nghĩa) nhưng nhanh &amp; chuẩn ngành.
+    <div class="formula">pₙ = (n-gram trùng)/(n-gram câu máy) &nbsp; BP = min(1, exp(1 − ref/cand)) &nbsp; BLEU = BP·exp((1/N)Σln pₙ)</div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra</div>
-        <ol><li>Câu sinh chỉ 1 token "the" (có trong ref) → p₁ = 1.0. Vì sao BLEU vẫn thấp? → <span style="border-bottom:1.6px dashed #b9b9b9;display:inline-block;min-width:110px"></span></li></ol>
-      </div>
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Đếm xem các <b>cụm từ</b> (1-gram, 2-gram…) của câu máy có xuất hiện trong câu tham chiếu không → tỉ lệ trùng cao = giống người. Phạt câu
+    <b>quá ngắn</b> (gian lận: chỉ ghi vài từ chắc đúng) bằng brevity penalty.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ</h2><span class="tag">chỉ 1-gram</span></div>
+    <div class="calc" style="font-size:14px">
+      câu máy = "<span class="gv" data-q="cand">the cat sat</span>" (<span data-q="lc">3</span> từ) ;
+      tham chiếu = "<span class="gv" data-q="ref">the cat sat down</span>" (<span data-q="lr">4</span> từ)
+      &nbsp;·&nbsp; bảng: e<sup><span data-q="earg">−0.33</span></sup> = <span class="gv" data-q="eval">0.72</span>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · BLEU</span><span>Trang 1/2 · ĐỀ</span></div>
+
+  <!-- BƯỚC 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Precision 1-gram</h2><span class="tag">trùng / số từ máy</span></div>
+    <div class="calc">
+      số từ máy có trong tham chiếu = <span data-q="matched">3</span> → p₁ = <span data-q="matched">3</span>/<span data-q="lc">3</span> = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> đo tỉ lệ từ vựng câu máy khớp tham chiếu (trùng cụm = giống người).</div>
+  </div>
+
+  <!-- BƯỚC 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Brevity penalty</h2><span class="tag">exp(1 − ref/cand)</span></div>
+    <div class="calc">
+      BP = exp(1 − <span data-q="lr">4</span>/<span data-q="lc">3</span>) = exp(<span data-q="earg">−0.33</span>) = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="hint">BP &lt; 1 phạt vì câu máy <b>ngắn hơn</b> tham chiếu (thiếu từ).</div>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>BLEU (chỉ 1-gram)</h2><span class="tag">BP·p₁</span></div>
+    <div class="calc">
+      BLEU = BP·p₁ = <span data-q="eval">0.72</span> · <span data-q="p1">1.0</span> = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> dù trùng từ cao, điểm bị kéo xuống nếu câu <b>quá ngắn</b> → tránh gian lận độ dài.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hạn chế</h2><span class="tag">không hiểu nghĩa</span></div>
+    <div class="note">BLEU đếm trùng bề mặt → phạt oan câu <b>diễn đạt khác mà đúng nghĩa</b>. Thực tế dùng nhiều n-gram (1–4) + nhiều tham chiếu; bổ sung bằng chỉ số ngữ nghĩa.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Brevity penalty phạt cái gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Hạn chế chính của BLEU? → <span class="blk" style="min-width:150px"></span></li>
+    </ol>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L4 · BLEU</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
 <!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="sheet key">
-  <div class="ttl"><h1>BLEU — n-gram</h1><span class="vi">— lời giải</span><span class="badge">ĐÁP ÁN</span></div>
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L4</span><h1>BLEU <small>— lời giải</small></h1></div>
 
-  <div class="canvas">
-    <div class="schema">
-      <div id="sch2"></div>
-      <div class="hint">BLEU thực gộp p₁..p₄ bằng trung bình nhân + BP. Clip tránh "spam" một từ đúng nhiều lần.</div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Precision 1-gram</h2></div>
+    <div class="calc ans">p₁ = <span data-q="matched">3</span>/<span data-q="lc">3</span> = <span class="blk" data-q="p1">1.0</span></div>
+  </div>
 
-    <div class="work">
-      <div class="bandh fw">đếm trùng → tỉ lệ</div>
-      <div class="seq">ref: <span id="ref2"></span></div>
-      <div class="seq">sinh: <span id="cand2"></span></div>
-      <div class="big">
-        unigram trùng = <b><span data-q="u">?</span></b>/5 → p₁ = <b><span data-q="p1">?</span></b><br>
-        bigram trùng = <b><span data-q="b">?</span></b>/4 → p₂ = <b><span data-q="p2">?</span></b> · BLEU₁ = 1·p₁ = <b><span data-q="bleu">?</span></b>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Brevity penalty</h2></div>
+    <div class="calc ans">BP = exp(<span data-q="earg">−0.33</span>) = <span class="blk" data-q="bp">0.72</span></div>
+  </div>
 
-      <div class="quiz">
-        <div class="qh">✎ Tự kiểm tra — đáp án</div>
-        <ol><li><span class="qa">Brevity penalty</span>: câu quá ngắn so với ref bị BP = exp(1−r/c) &lt; 1 nhân vào → kéo BLEU xuống. Tránh "ăn gian" bằng câu cụt.</li></ol>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>BLEU</h2></div>
+    <div class="calc ans">BLEU = <span data-q="bp">0.72</span>·<span data-q="p1">1.0</span> = <span class="blk" data-q="bleu">0.72</span></div>
+  </div>
 
-      <div class="rutra">
-        <b>Rút ra.</b> BLEU đếm trùng bề mặt, không hiểu nghĩa (khác cosine embedding L3). Một thước đo khác cho phân
-        loại nhiều lớp: nhãn đúng có nằm trong top-k không → <b>L5 Top-k accuracy</b>.
+  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Câu máy — từ trùng tô xanh</h2><span class="tag">1-gram</span></div>
+    <div class="figrow">
+      <svg id="figW" class="fig" viewBox="0 0 250 96" width="78mm" height="31mm" aria-label="câu máy với từ trùng tham chiếu tô xanh, từ không trùng tô xám"></svg>
+      <div style="flex:1">
+        <div class="note">Mỗi từ câu máy: <b style="color:#16a34a">xanh</b> nếu có trong tham chiếu, xám nếu không. p₁ = số từ xanh / tổng từ máy. BP phạt riêng vì câu máy ngắn hơn.</div>
       </div>
     </div>
   </div>
-  <div class="foot"><span>Làm toán AI ✍️ · BLEU</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>BP phạt gì? → <span class="qa">Câu máy quá ngắn so với tham chiếu.</span></li>
+      <li>Hạn chế BLEU? → <span class="qa">Đếm trùng bề mặt — không hiểu nghĩa / diễn đạt khác.</span></li>
+    </ol>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> BLEU = precision n-gram × brevity penalty; nhanh nhưng đếm bề mặt. Bài tiếp (L5): chấm xếp hạng nhiều lớp
+    bằng <b style="color:var(--accent2)">top-k accuracy</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L4 · BLEU</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function f2(v){return WB.fmt2(v);}
-function bigrams(arr){var r=[];for(var i=0;i<arr.length-1;i++)r.push(arr[i]+arr[i+1]);return r;}
-function renderSeq(id,arr,refSet){
-  var el=document.getElementById(id);if(!el)return;
-  el.innerHTML=arr.map(function(t){var cls=refSet?(refSet[t]?'hit':'miss'):'';return '<span class="tk '+cls+'">'+t+'</span>';}).join('');
-}
+var SC = [
+  {c:['the','cat','sat'],   r:['the','cat','sat','down'],          earg:'−0.33', ev:0.72},
+  {c:['a','dog','ran'],     r:['a','dog','ran','very','fast'],     earg:'−0.67', ev:0.51},
+  {c:['big','red','car'],   r:['the','big','red','car'],           earg:'−0.33', ev:0.72},
+  {c:['the','cat','ran'],   r:['the','cat','sat','down'],          earg:'−0.33', ev:0.72},
+  {c:['the','sun','set'],   r:['the','sun','set','slowly','now'],  earg:'−0.67', ev:0.51}
+];
 function generate(){
-  var vocab=['the','cat','sat','on','mat','dog','ran','hat','red','big'];
-  var ref=WB.pickDistinct(vocab,5);
-  // cand = ref với k token bị thay (k=1..3)
-  var cand=ref.slice();
-  var nSwap=WB.randInt(1,3);
-  var idxs=WB.pickDistinct([0,1,2,3,4],nSwap);
-  idxs.forEach(function(i){var others=vocab.filter(function(v){return ref.indexOf(v)<0;});cand[i]=WB.pick(others);});
-  var refSet={}; ref.forEach(function(t){refSet[t]=true;});
-  var refBi={}; bigrams(ref).forEach(function(g){refBi[g]=true;});
-  var uHit=cand.filter(function(t){return refSet[t];}).length;
-  var bHit=bigrams(cand).filter(function(g){return refBi[g];}).length;
-  var p1=Math.round(uHit/5*100)/100, p2=Math.round(bHit/4*100)/100;
-  renderSeq('ref1',ref,null); renderSeq('cand1',cand,refSet);
-  renderSeq('ref2',ref,null); renderSeq('cand2',cand,refSet);
-  WB.setAll({u:uHit, p1:f2(p1), b:bHit, p2:f2(p2), bleu:f2(p1)});
-  draw('sch1',uHit); draw('sch2',uHit);
+  var f = WB.fmtTrim;
+  var sc = WB.pick(SC);
+  var inRef={}; sc.r.forEach(function(w){inRef[w]=true;});
+  var matched=0; sc.c.forEach(function(w){ if(inRef[w]) matched++; });
+  var lc=sc.c.length, lr=sc.r.length;
+  var p1 = Math.round(matched/lc*100)/100;
+  var bp = sc.ev;
+  var bleu = Math.round(bp*p1*100)/100;
+  WB.setAll({
+    cand:sc.c.join(' '), ref:sc.r.join(' '), lc:String(lc), lr:String(lr),
+    earg:sc.earg, eval:f(bp), matched:String(matched),
+    p1:f(p1), bp:f(bp), bleu:f(bleu)
+  });
+  drawWords('figW', sc.c, inRef);
 }
-function draw(id,uHit){
-  var b=document.getElementById(id);if(!b)return;var s='';
-  for(var i=0;i<5;i++){var x=20+i*32;var hit=i<uHit;
-    s+='<rect x="'+x+'" y="30" width="24" height="24" rx="4" fill="'+(hit?'#d6f5d6':'#ffe0e0')+'" stroke="'+(hit?'#0a6':'#c00')+'"/>';
-    s+='<text x="'+(x+12)+'" y="46" text-anchor="middle" font-size="11" fill="'+(hit?'#0a6':'#c00')+'">'+(hit?'✓':'✗')+'</text>';}
-  s+='<text x="96" y="20" text-anchor="middle" font-size="8" fill="#6b7280">'+uHit+'/5 unigram trùng</text>';
-  s+='<text x="96" y="70" text-anchor="middle" font-size="8" fill="#6b7280">p₁ = số trùng / độ dài</text>';
-  b.innerHTML='<svg viewBox="0 0 192 80" aria-label="số unigram trùng với tham chiếu">'+s+'</svg>';
+function drawWords(id, cand, inRef){
+  var svg = document.getElementById(id); if(!svg) return;
+  var x=14, y=44, s='';
+  s+='<text x="14" y="24" font-size="9" fill="#5b6776">câu máy:</text>';
+  cand.forEach(function(w){
+    var hit=!!inRef[w];
+    var col = hit ? '#16a34a' : '#9aa3ad';
+    var bw = 16 + w.length*7.2;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+bw.toFixed(1)+'" height="22" rx="4" fill="'+col+'22" stroke="'+col+'" stroke-width="1.2"/>';
+    s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y+15)+'" text-anchor="middle" font-size="9.5" fill="'+col+'">'+w+'</text>';
+    x += bw + 8;
+  });
+  svg.innerHTML=s;
 }
 WB.wire(generate);
 generate();

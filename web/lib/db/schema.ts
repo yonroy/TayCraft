@@ -47,6 +47,21 @@ export const flashSale = pgTable("flash_sale", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Đánh giá của học viên — chỉ người có ≥1 enrollment được gửi; 1 người 1 review
+// (gửi lại = sửa và chờ duyệt lại). Trang chủ chỉ hiện approved=true (admin duyệt).
+export const reviews = pgTable("reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().unique(),
+  name: text("name").notNull(), // tên hiển thị (user tự nhập)
+  role: text("role"), // nghề/vai trò, tùy chọn
+  rating: integer("rating").notNull(), // 1..5
+  comment: text("comment").notNull(),
+  approved: boolean("approved").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type Order = typeof orders.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type FlashSale = typeof flashSale.$inferSelect;
+export type Review = typeof reviews.$inferSelect;

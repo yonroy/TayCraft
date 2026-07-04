@@ -11,6 +11,7 @@ import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
 import { HeroClaimButton } from "@/components/hero-claim-button";
 import { promoExpired } from "@/lib/promo";
+import { getApprovedReviews } from "@/lib/reviews";
 import { TOTAL_AVAILABLE, FREE_COURSES } from "@/lib/lessons";
 import { productById } from "@/lib/products";
 import { getUser, accessibleCourses } from "@/lib/auth";
@@ -34,6 +35,7 @@ export default async function Home() {
   const access = user ? await accessibleCourses(user.id) : [...FREE_COURSES];
   const ownsK1 = access.includes("K1");
   const launchActive = !promoExpired(); // hết dịp khai trương → hero về CTA mua gói Pro
+  const reviewRows = await getApprovedReviews(); // tuần tự — pooler max:1, không Promise.all
   return (
     <>
       <FlashSaleBar
@@ -175,7 +177,7 @@ export default async function Home() {
       </section>
 
       {/* Reviews */}
-      <Reviews />
+      <Reviews reviews={reviewRows} />
 
       {/* Pricing CTA */}
       <section className="mx-auto max-w-5xl px-5 py-12">

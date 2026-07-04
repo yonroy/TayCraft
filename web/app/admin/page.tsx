@@ -3,6 +3,8 @@ import { desc, eq } from "drizzle-orm";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AdminConfirmButton } from "@/components/admin-order-actions";
+import { AdminReviewActions } from "@/components/admin-review-actions";
+import { getReviewsForAdmin } from "@/lib/reviews";
 import { AdminFlashSale } from "@/components/admin-flash-sale";
 import { AdminStats } from "@/components/admin-stats";
 import { getUser, isAdmin } from "@/lib/auth";
@@ -29,6 +31,7 @@ export default async function AdminPage() {
   // Tuần tự (KHÔNG Promise.all): pooler max:1 transaction-mode treo nếu chạy đồng thời → 504.
   const stats = await getAdminStats();
   const flash = await getFlashSale();
+  const reviewRows = await getReviewsForAdmin();
   const rows = await db
     .select({
       id: orders.id,
@@ -63,6 +66,60 @@ export default async function AdminPage() {
 
         <div className="mt-8">
           <AdminFlashSale initial={flash} />
+        </div>
+
+        <h2 className="mt-8 text-lg font-semibold">
+          Đánh giá học viên{" "}
+          <span className="font-normal text-dim">
+            ({reviewRows.filter((r) => !r.approved).length} chờ duyệt)
+          </span>
+        </h2>
+        <div className="mt-3 overflow-x-auto rounded-2xl border border-line">
+          <table className="w-full text-sm">
+            <thead className="bg-paper text-left text-dim">
+              <tr>
+                <th className="px-4 py-3 font-medium">Tên</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Sao</th>
+                <th className="px-4 py-3 font-medium">Cảm nhận</th>
+                <th className="px-4 py-3 font-medium">Trạng thái</th>
+                <th className="px-4 py-3 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviewRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-dim">
+                    Chưa có đánh giá nào.
+                  </td>
+                </tr>
+              ) : (
+                reviewRows.map((r) => (
+                  <tr key={r.id} className="border-t border-line align-top">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold">{r.name}</div>
+                      {r.role && <div className="text-xs text-dim">{r.role}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-dim">{r.email ?? "—"}</td>
+                    <td className="px-4 py-3 text-accent-2 whitespace-nowrap">
+                      {"★".repeat(r.rating)}
+                    </td>
+                    <td className="px-4 py-3 text-dim max-w-md">{r.comment}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {r.approved ? (
+                        <span className="text-accent font-semibold">Đang hiện</span>
+                      ) : (
+                        <span className="text-accent-2">Chờ duyệt</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <AdminReviewActions id={r.id} approved={r.approved} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         <h2 className="mt-8 text-lg font-semibold">100 đơn gần nhất</h2>

@@ -38,6 +38,19 @@ export default async function LearnPage() {
         <div className="mt-8">
           <CourseCatalog accessCourses={courses} />
         </div>
+
+        {user && (
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-paper px-5 py-4">
+            <p className="text-sm text-dim">
+              💬 Thấy phiếu hữu ích? Để lại cảm nhận cho người học sau nhé.
+            </p>
+            <Link href="/danh-gia">
+              <Button size="sm" variant="outline">
+                Viết đánh giá →
+              </Button>
+            </Link>
+          </div>
+        )}
       </main>
       <SiteFooter />
     </>

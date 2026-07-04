@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài M2 — Contrastive InfoNCE (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần M · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài M2</span><h1>Contrastive — InfoNCE <small>— học biểu diễn không nhãn (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Dữ liệu có nhãn đắt; contrastive học từ <b>dữ liệu thô</b> bằng cách tự tạo cặp dương (augment) và coi phần còn
+    lại là âm. Nền của SimCLR, MoCo, và phần text–image của CLIP (M4). InfoNCE = cross-entropy chọn đúng cặp dương giữa nhiều âm.
+    <div class="formula">L = −ln [ exp(sim(a,p)/τ) / Σ_x exp(sim(a,x)/τ) ] (x gồm p và các âm n)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">neo a</b> (lam) · <b class="cvv">cặp dương p (kéo gần)</b> (tím) · <b class="ckk">cặp âm n (đẩy xa)</b> (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Một <b>trò chọn đúng</b>: cho điểm tương đồng giữa neo a và mọi ứng viên; loss ép <b>cặp dương</b> có điểm cao <b>nhất</b> giữa đám âm. Như
+    bài softmax "đâu là bạn thật của a?" — kéo bạn lại gần, đẩy người lạ ra xa.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ, −ln</h2><span class="tag">1 dương, 2 âm · τ=1</span></div>
+    <div class="calc" style="font-size:14px">
+      sim(a,p) = <span class="gv" data-q="sp">2</span> ; sim(a,n₁) = <span class="gv" data-q="sn1">0</span> ; sim(a,n₂) = <span class="gv" data-q="sn2">1</span>
+    </div>
+    <table class="extbl" style="display:inline-table;margin-right:10px"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr><tr><td class="h">eˣ</td><td>1</td><td>2.72</td><td>7.39</td></tr></table>
+    <table class="extbl" style="display:inline-table"><tr><td class="h">p</td><td>0.79</td><td>0.67</td><td>0.58</td></tr><tr><td class="h">−ln p</td><td>0.24</td><td>0.40</td><td>0.54</td></tr></table>
+  </div>
+
+  <!-- CỤM 1 — MŨ HÓA -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Mũ hóa điểm = exp(sim/τ) (τ=1)</h2><span class="tag">tra bảng eˣ</span></div>
+    <div class="figwrap">
+      <svg id="figNCE" class="fig" viewBox="0 0 250 120" width="74mm" height="38mm" aria-label="neo a lam ở giữa, cặp dương p tím gần được kéo vào, hai âm cam ở xa bị đẩy ra"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> neo a (lam). Dương p (tím) sim cao → <b>kéo gần</b>; âm n₁,n₂ (cam) sim thấp → <b>đẩy xa</b>. Tra eˣ cho từng điểm.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — mũ hóa (tra bảng eˣ)</span><br>
+      e^sim(a,p) = e^<span data-q="sp">2</span> = <span class="blk" style="min-width:34px"></span> &nbsp;;&nbsp;
+      e^<span data-q="sn1">0</span> = <span class="blk" style="min-width:26px"></span> &nbsp;;&nbsp;
+      e^<span data-q="sn2">1</span> = <span class="blk" style="min-width:34px"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Điểm nào có eˣ lớn nhất — dương hay âm? → <span class="blk" style="min-width:70px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M2 · InfoNCE (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần M<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M2</span><h1>InfoNCE <small>— xác suất cặp dương &amp; loss</small></h1></div>
+
+  <!-- CỤM 2 — XÁC SUẤT -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Xác suất cặp dương = exp(p) / Σ</h2><span class="tag">softmax</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — Σ &amp; p(dương) (eˣ từ Bước 1)</span><br>
+      Σ = <span class="blk" style="min-width:28px"></span> + <span class="blk" style="min-width:26px"></span> + <span class="blk" style="min-width:28px"></span> = <span class="blk" style="min-width:40px"></span><br>
+      p(dương) = e^sim(a,p) / Σ = <span class="blk"></span> (tra bảng p ở trang 1)
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> p(dương) chiếm phần lớn hay nhỏ trong tổng? Vì sao? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — LOSS -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Loss InfoNCE = −ln p(dương)</h2><span class="tag">tra bảng −ln</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — L (tra bảng −ln, p từ Bước 2)</span><br>
+      L = −ln( p(dương) ) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Giảm L nghĩa là đẩy p(dương) về đâu → kéo/đẩy gì? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — τ -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vai trò τ &amp; nhiều âm</h2><span class="tag">nhiệt độ</span></div>
+    <div class="note">τ <b>nhỏ</b> làm phân phối <b>nhọn</b> (phạt mạnh âm gần); càng <b>nhiều âm</b>, biểu diễn càng phân biệt tốt (trò "chọn đúng" khó hơn).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> InfoNCE giống loss nào đã học? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: InfoNCE kéo/đẩy cái gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M2 · InfoNCE (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M2</span><h1>InfoNCE <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — mũ hóa</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> e^p = <span class="mono" data-q="ep">7.39</span> ; e^n₁ = <span class="mono" data-q="en1">1</span> ; e^n₂ = <span class="mono" data-q="en2">2.72</span>.</li>
+      <li><span class="lab">Quan sát</span> Dương (sim cao nhất) có eˣ lớn nhất → chiếm phần lớn softmax.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — xác suất dương</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> Σ = <span class="mono" data-q="sum">11.11</span> ; p(dương) = 7.39/Σ = <span class="mono" data-q="pPos">0.67</span>.</li>
+      <li><span class="lab">Quan sát</span> Chiếm phần lớn (dương sim cao nhất giữa đám âm).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — loss</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> L = −ln(<span data-q="pPos">0.67</span>) = <span class="mono" data-q="loss">0.40</span>.</li>
+      <li><span class="lab">Vì sao</span> Giảm L → p(dương)→1 → kéo dương gần, đẩy âm xa.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — τ &amp; âm</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> Giống <b>cross-entropy</b> (chọn đúng cặp dương giữa các âm).</li>
+      <li><span class="lab">Tóm tắt</span> Kéo cặp dương lại gần, đẩy cặp âm ra xa; τ nhỏ & nhiều âm → phân biệt tốt hơn.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Contrastive = softmax chọn cặp dương giữa âm (InfoNCE); học biểu diễn không nhãn. Bài tiếp (M3): một dạng
+    khác — <b style="color:var(--accent2)">triplet loss</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M2 · InfoNCE (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CA='#0e7490', CP='#7c5cff', CN='#b45309', GRY='#5b6776';
+var EXP={0:1, 1:2.72, 2:7.39};
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① neo a + dương gần + âm xa (TĨNH) */
+function drawNCE(){
+  var svg=el('figNCE'); if(!svg) return;
+  var a=[128,60];
+  var s='<defs><marker id="pull" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="'+CP+'"/></marker>'+
+    '<marker id="push" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="'+CN+'"/></marker></defs>';
+  s+='<circle cx="'+a[0]+'" cy="'+a[1]+'" r="14" fill="'+CA+'22" stroke="'+CA+'" stroke-width="1.6"/>'+ctxt(a[0], a[1]+4, 'a', CA, 11, 700);
+  var p=[a[0]+44,a[1]-4];
+  s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="11" fill="'+CP+'22" stroke="'+CP+'" stroke-width="1.4"/>'+ctxt(p[0], p[1]+4, 'p', CP, 9, 700);
+  s+='<line x1="'+(p[0]-11)+'" y1="'+p[1]+'" x2="'+(a[0]+16)+'" y2="'+a[1]+'" stroke="'+CP+'" stroke-width="1.5" marker-end="url(#pull)"/>';
+  s+=ctxt(p[0]+2, p[1]-14, 'kéo gần', CP, 7.5, 700);
+  var ns=[[30,22],[36,104]];
+  ['n₁','n₂'].forEach(function(lab,i){
+    var n=ns[i];
+    s+='<circle cx="'+n[0]+'" cy="'+n[1]+'" r="11" fill="'+CN+'22" stroke="'+CN+'" stroke-width="1.4"/>'+ctxt(n[0], n[1]+4, lab, CN, 8.5, 700);
+    s+='<line x1="'+(a[0]-15)+'" y1="'+a[1]+'" x2="'+(n[0]+12)+'" y2="'+n[1]+'" stroke="'+CN+'" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#push)"/>';
+  });
+  s+=ctxt(60, 60, 'đẩy xa', CN, 7.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var sp=2;
+  var negPair=WB.pick([[0,1],[1,1],[0,0]]);
+  var sn1=negPair[0], sn2=negPair[1];
+  var ep=EXP[sp], en1=EXP[sn1], en2=EXP[sn2];
+  var sum=Math.round((ep+en1+en2)*100)/100;
+  var pPos=Math.round(ep/sum*100)/100;
+  var loss=Math.round(-Math.log(pPos)*100)/100;
+  WB.setAll({
+    sp:String(sp), sn1:String(sn1), sn2:String(sn2),
+    ep:f(ep), en1:f(en1), en2:f(en2), sum:f(sum), pPos:f(pPos), loss:f(loss)
+  });
+}
+WB.wire(generate);
+generate();
+drawNCE();
+</script>
+</body>
+</html>

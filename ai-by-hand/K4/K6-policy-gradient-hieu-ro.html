@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài K6 — Policy Gradient (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài K6</span><h1>Policy Gradient <small>— REINFORCE: làm nhiều hành động tốt (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Nhiều bài toán có <b>không gian hành động liên tục/rất lớn</b> → bảng Q bất khả. Policy gradient tối ưu thẳng
+    tham số chính sách bằng gradient ascent trên return kỳ vọng. Nền của REINFORCE, A2C, PPO.
+    <div class="formula">∇J = E[ ∇θ log π(a|s) · G ] · θ ← θ + α·G·∇θ log π(a|s)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">π (chính sách)</b> (lam) · <b class="ckk">gradient·G &amp; cập nhật</b> (cam) · <b class="cvv">return G (thưởng/phạt)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    "Hành động nào dẫn tới <b>kết quả tốt</b> (G cao) thì <b>làm thường xuyên hơn</b>." Gradient của log π chỉ hướng "tăng xác suất hành động
+    đã chọn"; nhân với G (có dấu) → nâng nếu G dương, hạ nếu G âm. Đó là "thử–thưởng/phạt".
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 hành động · α = <span data-q="alpha">0.1</span></span></div>
+    <div class="calc" style="font-size:14px">
+      chính sách softmax: π(a₁) = <span class="gv" data-q="pi1">0.6</span>, π(a₂) = <span class="gv" data-q="pi2">0.4</span> ;
+      agent đã chọn <b>a₁</b>, nhận return G = <span class="gv" data-q="G">2</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — GRADIENT LOG-PROB -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Gradient log-prob của a₁ = 1 − π(a₁)</h2><span class="tag">hướng "tăng xác suất a₁"</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — ∇ log π(a₁)</span><br>
+      ∂ log π(a₁)/∂z₁ = 1 − π(a₁) = 1 − <span data-q="pi1">0.6</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Gradient này luôn <b>dương</b> (khi π&lt;1) — nó chỉ hướng làm gì với xác suất a₁? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-see">Quan sát</span> Nếu π(a₁) đã gần 1, gradient lớn hay nhỏ? → <span class="blk" style="min-width:70px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 2 — NHÂN G (G>0) -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Nhân với return: G·∇ (G &gt; 0 → nâng)</h2><span class="tag">làm lại hành động tốt</span></div>
+    <div class="figwrap">
+      <svg id="figPi" class="fig" viewBox="0 0 250 120" width="80mm" height="38mm" aria-label="cột xác suất a1 a2 trước tím và sau cam, a1 tăng a2 giảm khi G dương"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cột <b>trước</b> (tím) vs <b>sau</b> cập nhật (cam). G &gt; 0 &amp; đã chọn a₁ → π(a₁) <b>tăng</b>, π(a₂) giảm (tổng = 1). "Làm lại hành động tốt".</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — G·∇ (∇ lấy từ Bước 1)</span><br>
+      G·∇ = <span data-q="G">2</span>·<span class="blk" style="min-width:30px"></span> = <span class="blk"></span> &nbsp;→&nbsp; z₁ ← z₁ + α·(G·∇) (dương → nâng a₁)
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> G·∇ dương hay âm ở đây? Điều đó nâng hay hạ a₁? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K6 · Policy Gradient (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần K<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K6</span><h1>Policy Gradient <small>— G âm &amp; phương sai</small></h1></div>
+
+  <!-- CỤM 3 — G ÂM -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Nếu G âm (G = <span data-q="Gneg">−2</span>) → hạ a₁</h2><span class="tag">phạt hành động tệ</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — G·∇ với G âm (∇ từ Bước 1)</span><br>
+      G·∇ = <span data-q="Gnegw">(−2)</span>·<span class="blk" style="min-width:30px"></span> = <span class="blk"></span> &nbsp;→&nbsp; z₁ ← z₁ + α·(âm) → <span class="blk" style="min-width:50px"></span> a₁
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Cùng hành động a₁ nhưng G âm → cập nhật <b>ngược hướng</b>. Vì sao? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> G càng âm mạnh → mức hạ a₁ càng lớn hay nhỏ? → <span class="blk" style="min-width:70px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — PHƯƠNG SAI -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Phương sai cao → cần baseline</h2><span class="tag">nối K7</span></div>
+    <div class="note">G thô dao động mạnh (mỗi lần chơi ra một số khác) → gradient <b>nhiễu</b>, học chậm. Trừ một <b>baseline</b> (giá trị trung bình) → dùng <b>advantage</b> thay G (K7) → giảm phương sai, học ổn định.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Policy gradient nâng/hạ xác suất theo <b>gì</b>? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: nhược điểm chính của REINFORCE (G thô)? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K6 · Policy Gradient (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K6</span><h1>Policy Gradient <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — gradient log-prob</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> ∇ log π(a₁) = 1 − 0.6 = <span class="mono" data-q="grad">0.4</span>.</li>
+      <li><span class="lab">Vì sao</span> Dương → hướng <b>tăng</b> xác suất a₁ (tăng logit z₁).</li>
+      <li><span class="lab">Quan sát</span> π(a₁) gần 1 → gradient nhỏ (gần bão hòa, khó tăng thêm).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — nhân G (dương)</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> G·∇ = 2·0.4 = <span class="mono" data-q="upd">0.8</span> (&gt; 0 → nâng a₁).</li>
+      <li><span class="lab">Quan sát</span> Dương → π(a₁) tăng, π(a₂) giảm (tổng = 1).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — G âm</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> G·∇ = (−2)·0.4 = <span class="mono" data-q="updNeg">−0.8</span> (&lt; 0 → hạ a₁).</li>
+      <li><span class="lab">Vì sao</span> Hành động dẫn tới kết quả tệ → giảm xác suất chọn lại.</li>
+      <li><span class="lab">Dự đoán</span> G càng âm → mức hạ càng lớn (tỉ lệ với |G|).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — phương sai</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> Nâng/hạ theo <b>return G</b> (có dấu): G dương nâng, âm hạ.</li>
+      <li><span class="lab">Tóm tắt</span> REINFORCE phương sai gradient <b>cao</b> → cần baseline/advantage (K7).</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Policy gradient: θ ← θ + α·G·∇log π; làm nhiều hành động return cao. Bài tiếp (K7): giảm phương sai
+    bằng <b style="color:var(--accent2)">advantage/baseline</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K6 · Policy Gradient (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CPI='#0e7490', CUPD='#b45309', CG='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ② π trước/sau (ĐỘNG) */
+function drawPi(pi1, pi2, grad, alpha, G){
+  var svg=el('figPi'); if(!svg) return;
+  var d=alpha*G*grad;
+  var n1=Math.min(0.95, pi1+d), n2=Math.max(0.05, Math.round((1-n1)*100)/100);
+  var x0=40, base=100, H=78, gap=92, bw=26, maxv=1;
+  var s='<line x1="'+(x0-8)+'" y1="'+base+'" x2="'+(x0+2*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var pairs=[[pi1,n1,'a₁'],[pi2,n2,'a₂']];
+  for(var k=0;k<2;k++){
+    var bx=x0+k*gap, hb=pairs[k][0]/maxv*H, ha=pairs[k][1]/maxv*H;
+    s+='<rect x="'+bx+'" y="'+(base-hb).toFixed(1)+'" width="'+bw+'" height="'+hb.toFixed(1)+'" fill="'+CG+'22" stroke="'+CG+'" stroke-width="1.1"/>';
+    s+='<rect x="'+(bx+bw+4)+'" y="'+(base-ha).toFixed(1)+'" width="'+bw+'" height="'+ha.toFixed(1)+'" fill="'+CUPD+'33" stroke="'+CUPD+'" stroke-width="1.3"/>';
+    s+=ctxt(bx+bw+2, base+12, pairs[k][2], GRY, 8.5, k===0?700:400);
+    if(k===0) s+=ctxt(bx+bw+2, base-Math.max(hb,ha)-4, '↑ tăng', CUPD, 7.5, 700);
+  }
+  s+=txt(x0, 14, '■ π trước', CG, 8.5)+txt(x0+64, 14, '■ π sau', CUPD, 8.5);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var alpha=0.1;
+  var pi1=WB.pick([0.6,0.5,0.7]);
+  var pi2=Math.round((1-pi1)*100)/100;
+  var G=WB.randInt(2,3);
+  var grad=Math.round((1-pi1)*100)/100;
+  var upd=Math.round(G*grad*100)/100;
+  var updNeg=Math.round(-G*grad*100)/100;
+  WB.setAll({
+    alpha:f(alpha), pi1:f(pi1), pi2:f(pi2), G:String(G), Gneg:WB.fmtInt(-G), Gnegw:WB.wrap(-G),
+    grad:f(grad), upd:f(upd), updNeg:f(updNeg)
+  });
+  drawPi(pi1, pi2, grad, alpha, G);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

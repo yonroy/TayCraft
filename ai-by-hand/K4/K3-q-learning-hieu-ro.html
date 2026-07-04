@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài K3 — Q-learning (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài K3</span><h1>Q-learning <small>— một cập nhật từ trải nghiệm (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Q-learning học giá trị hành động <b>chỉ từ trải nghiệm</b> (s,a,r,s'), không cần mô hình môi trường. Hội tụ về
+    Q tối ưu → chính sách tối ưu = chọn argmax Q. Là gốc của Deep Q-Network (DQN).
+    <div class="formula">Q(s,a) ← Q(s,a) + α·[ r + γ·maxₐ' Q(s',a') − Q(s,a) ] (ngoặc = TD error δ)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">Q hiện tại</b> (lam) · <b class="ckk">mục tiêu Bellman &amp; Q mới</b> (cam) · <b class="cvv">TD error δ &amp; bước α</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi trải nghiệm cho một <b>ước lượng mới</b> (mục tiêu Bellman). Q cũ có thể sai → kéo nó <b>một phần α</b> về phía mục tiêu. Phần trong
+    ngoặc là "ngạc nhiên" (TD error): dương thì nâng Q, âm thì hạ.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">α = <span data-q="alpha">0.5</span>, γ = <span data-q="gamma">0.9</span></span></div>
+    <div class="calc" style="font-size:14px">
+      Q(s,a) hiện = <span class="gv" data-q="Q">2</span> ; trải nghiệm: r = <span class="gv" data-q="r">1</span> ;
+      sang s' có maxₐ' Q(s',a') = <span class="gv" data-q="maxQ">4</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — MỤC TIÊU -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Mục tiêu Bellman = r + γ·maxₐ' Q(s',a')</h2><span class="tag">ước lượng tốt hơn</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — mục tiêu</span><br>
+      mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">4</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao "mục tiêu" là ước lượng <b>tốt hơn</b> Q cũ cho Q(s,a)? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 2 — TD ERROR -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>TD error δ = mục tiêu − Q</h2><span class="tag">"ngạc nhiên"</span></div>
+    <div class="figwrap">
+      <svg id="figGap" class="fig" viewBox="0 0 260 110" width="80mm" height="34mm" aria-label="hai cột Q hiện lam và mục tiêu cam, khoảng cách giữa hai đỉnh là TD error"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cột Q hiện (lam) và mục tiêu (cam). <b>Khoảng cách</b> giữa hai đỉnh = δ (TD error, tím). δ &gt; 0 → Q đang <b>thấp hơn</b> thực tế.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — δ (mục tiêu lấy từ Bước 1)</span><br>
+      δ = mục tiêu − Q = <span class="blk" style="min-width:34px"></span> − <span data-q="Q">2</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> δ dương hay âm? Điều đó nói Q hiện cao hay thấp hơn thực tế? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K3 · Q-learning (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần K<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K3</span><h1>Q-learning <small>— cập nhật &amp; off-policy</small></h1></div>
+
+  <!-- CỤM 3 — CẬP NHẬT -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Cập nhật Q ← Q + α·δ (đi một phần α)</h2><span class="tag">mượt, ổn định</span></div>
+    <div class="figwrap">
+      <svg id="figPull" class="fig" viewBox="0 0 260 96" width="84mm" height="31mm" aria-label="trục giá trị: Q cũ lam kéo một phần alpha về mục tiêu cam, Q mới nằm giữa"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> trục giá trị: Q cũ (lam) và mục tiêu (cam). Cập nhật kéo Q đi <b>một phần α</b> của khoảng cách δ → Q mới (xanh) nằm <b>giữa</b> (không nhảy hẳn tới mục tiêu).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — Q mới (δ lấy từ Bước 2)</span><br>
+      Q ← Q + α·δ = <span data-q="Q">2</span> + <span data-q="alpha">0.5</span>·<span class="blk" style="min-width:34px"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu α = 1, Q mới sẽ ở đâu (so với mục tiêu)? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao đi <b>một phần</b> α thay vì nhảy hẳn tới mục tiêu? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — OFF-POLICY -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Off-policy: dùng maxₐ'</h2><span class="tag">vs SARSA</span></div>
+    <div class="note">Q-learning dùng <b>maxₐ'</b> (hành động tốt nhất giả định) bất kể agent thực sự làm gì → <b>off-policy</b>. SARSA (K4) dùng hành động <b>thật</b> đã chọn → on-policy.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> TD error δ đo cái gì? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: Q-learning cập nhật Q thế nào? → <span class="blk" style="min-width:140px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K3 · Q-learning (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K3</span><h1>Q-learning <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — mục tiêu Bellman</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> mục tiêu = 1 + 0.9·4 = <span class="mono" data-q="target">4.6</span>.</li>
+      <li><span class="lab">Vì sao</span> Dựa trên r &amp; giá trị s' vừa quan sát → sát thực tế hơn Q cũ.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — TD error</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> δ = 4.6 − 2 = <span class="mono" data-q="td">2.6</span>.</li>
+      <li><span class="lab">Quan sát</span> δ &gt; 0 → Q hiện <b>thấp hơn</b> thực tế → cần nâng.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — cập nhật</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> Q ← 2 + 0.5·2.6 = <span class="mono" data-q="Qnew">3.3</span>.</li>
+      <li><span class="lab">Dự đoán</span> α = 1 → Q mới = mục tiêu (nhảy hẳn).</li>
+      <li><span class="lab">Vì sao</span> Đi một phần α → mượt, ổn định trước nhiễu (mỗi trải nghiệm chỉ là 1 mẫu).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — off-policy</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> δ = chênh lệch mục tiêu Bellman − Q hiện ("ngạc nhiên").</li>
+      <li><span class="lab">Tóm tắt</span> Q ← Q + α·(r+γmaxQ'−Q); dùng maxQ' → off-policy, gốc DQN.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Q-learning: Q ← Q + α·(r+γmaxQ'−Q); off-policy, gốc của DQN. Bài tiếp (K4): biến thể on-policy —
+    <b style="color:var(--accent2)">SARSA</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K3 · Q-learning (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CQ='#0e7490', CT='#b45309', CD='#7c5cff', CNEW='#16a34a', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ② hai cột Q vs mục tiêu, gap = δ (ĐỘNG) */
+function drawGap(Q, target){
+  var svg=el('figGap'); if(!svg) return;
+  var base=92, x0=54, gap=90, bw=40, maxv=Math.max(Q,target,1)+1, sc=68/maxv;
+  var s='<line x1="'+(x0-14)+'" y1="'+base+'" x2="'+(x0+2*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var h1=Q*sc, h2=target*sc;
+  s+='<rect x="'+x0+'" y="'+(base-h1).toFixed(1)+'" width="'+bw+'" height="'+h1.toFixed(1)+'" fill="'+CQ+'2a" stroke="'+CQ+'" stroke-width="1.3"/>'+ctxt(x0+bw/2, base+13, 'Q hiện', CQ, 9, 700);
+  s+='<rect x="'+(x0+gap)+'" y="'+(base-h2).toFixed(1)+'" width="'+bw+'" height="'+h2.toFixed(1)+'" fill="'+CT+'2a" stroke="'+CT+'" stroke-width="1.3"/>'+ctxt(x0+gap+bw/2, base+13, 'mục tiêu', CT, 9, 700);
+  // gap δ
+  s+='<line x1="'+(x0+bw)+'" y1="'+(base-h1).toFixed(1)+'" x2="'+(x0+gap)+'" y2="'+(base-h1).toFixed(1)+'" stroke="'+CD+'" stroke-width="1" stroke-dasharray="2 2"/>';
+  s+='<line x1="'+(x0+gap+bw/2)+'" y1="'+(base-h1).toFixed(1)+'" x2="'+(x0+gap+bw/2)+'" y2="'+(base-h2).toFixed(1)+'" stroke="'+CD+'" stroke-width="2" marker-end="url(#ad)"/>';
+  s+=ctxt(x0+gap+bw+16, (base-h1+base-h2)/2, 'δ', CD, 11, 700);
+  s+='<defs><marker id="ad" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="'+CD+'"/></marker></defs>';
+  svg.innerHTML=s;
+}
+
+/* ③ Q kéo về mục tiêu theo α (ĐỘNG) */
+function drawPull(Q, target, Qnew){
+  var svg=el('figPull'); if(!svg) return;
+  var x0=30, x1=228, base=54;
+  var lo=Math.min(Q,target)-0.8, hi=Math.max(Q,target)+0.8;
+  function px(v){return x0+(v-lo)/(hi-lo)*(x1-x0);}
+  var qx=px(Q), tx=px(target), nx=px(Qnew);
+  var s='<line x1="'+x0+'" y1="'+base+'" x2="'+x1+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<line x1="'+qx.toFixed(1)+'" y1="'+base+'" x2="'+nx.toFixed(1)+'" y2="'+base+'" stroke="'+CD+'" stroke-width="3" marker-end="url(#ap)"/>';
+  s+='<circle cx="'+qx.toFixed(1)+'" cy="'+base+'" r="5" fill="'+CQ+'"/>'+ctxt(qx, base-10, 'Q cũ '+WB.fmtTrim(Q), CQ, 8.5, 700);
+  s+='<circle cx="'+tx.toFixed(1)+'" cy="'+base+'" r="5" fill="'+CT+'"/>'+ctxt(tx, base-10, 'mục tiêu '+WB.fmtTrim(target), CT, 8.5, 700);
+  s+='<circle cx="'+nx.toFixed(1)+'" cy="'+base+'" r="5" fill="none" stroke="'+CNEW+'" stroke-width="2"/>'+ctxt(nx, base+18, 'Q mới '+WB.fmtTrim(Qnew), CNEW, 8.5, 700);
+  s+='<defs><marker id="ap" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="'+CD+'"/></marker></defs>';
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var alpha=WB.pick([0.5,0.2]);
+  var gamma=WB.pick([0.9,0.8]);
+  var Q=WB.randInt(1,3), r=WB.randInt(1,3), maxQ=WB.randInt(3,5);
+  var target=Math.round((r+gamma*maxQ)*100)/100;
+  var td=Math.round((target-Q)*100)/100;
+  var Qnew=Math.round((Q+alpha*td)*100)/100;
+  WB.setAll({
+    alpha:f(alpha), gamma:f(gamma), Q:String(Q), r:String(r), maxQ:String(maxQ),
+    target:f(target), td:f(td), Qnew:f(Qnew)
+  });
+  drawGap(Q, target);
+  drawPull(Q, target, Qnew);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

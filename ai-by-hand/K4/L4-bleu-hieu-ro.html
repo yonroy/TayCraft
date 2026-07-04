@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài L4 — BLEU n-gram (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài L4</span><h1>BLEU <small>— độ trùng n-gram (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Không thể chấm tay hàng triệu câu dịch. BLEU tự động đo "câu máy trùng bao nhiêu cụm với câu người" → so sánh
+    mô hình dịch/sinh. Không hoàn hảo (bỏ qua ngữ nghĩa) nhưng nhanh &amp; chuẩn ngành.
+    <div class="formula">pₙ = (n-gram trùng)/(n-gram câu máy) · BP = min(1, exp(1 − ref/cand)) · BLEU = BP·exp((1/N)Σln pₙ)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">từ câu máy TRÙNG tham chiếu</b> (lam) · <b class="ckk">từ tham chiếu</b> (cam) · <b class="cvv">brevity penalty (phạt ngắn)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Đếm xem các <b>cụm từ</b> (1-gram, 2-gram…) của câu máy có xuất hiện trong câu tham chiếu không → tỉ lệ trùng cao = giống người. Phạt câu
+    <b>quá ngắn</b> (gian lận: chỉ ghi vài từ chắc đúng) bằng brevity penalty.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ</h2><span class="tag">chỉ 1-gram</span></div>
+    <div class="calc" style="font-size:13px">
+      câu máy = "<span class="gv" data-q="cand">the cat sat</span>" (<span data-q="lc">3</span> từ) ; tham chiếu = "<span class="gv" data-q="ref">the cat sat down</span>" (<span data-q="lr">4</span> từ) · e<sup><span data-q="earg">−0.33</span></sup> = <span class="gv" data-q="eval">0.72</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — PRECISION -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Precision 1-gram = (từ trùng) / (số từ máy)</h2><span class="tag">đếm trùng</span></div>
+    <div class="figwrap">
+      <svg id="figWords" class="fig" viewBox="0 0 270 110" width="90mm" height="36mm" aria-label="hàng từ câu máy và hàng từ tham chiếu, đối chiếu xem từ máy nào có trong tham chiếu"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> hàng trên = từ <b>câu máy</b>, hàng dưới = từ <b>tham chiếu</b>. Đối chiếu: mỗi từ máy có trong tham chiếu không? Đếm số từ trùng.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — p₁ (đếm từ máy có trong tham chiếu)</span><br>
+      số từ trùng = <span class="blk" style="min-width:26px"></span> → p₁ = trùng/số-từ-máy = <span class="blk" style="min-width:26px"></span>/<span data-q="lc">3</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao chia cho <b>số từ câu máy</b> (không phải câu tham chiếu)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L4 · BLEU (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần L<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L4</span><h1>BLEU <small>— brevity penalty &amp; BLEU</small></h1></div>
+
+  <!-- CỤM 2 — BP -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Brevity penalty = exp(1 − ref/cand)</h2><span class="tag">phạt câu ngắn</span></div>
+    <div class="figwrap">
+      <svg id="figLen" class="fig" viewBox="0 0 260 100" width="82mm" height="32mm" aria-label="thanh độ dài: câu máy ngắn hơn tham chiếu, phần thiếu bị phạt bởi brevity penalty"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> thanh <b>câu máy</b> ngắn hơn thanh <b>tham chiếu</b> (<span data-q="lc">3</span> &lt; <span data-q="lr">4</span> từ) → phần thiếu → BP &lt; 1 (tím) kéo điểm xuống.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — BP (tra eˣ từ bảng)</span><br>
+      BP = exp(1 − ref/cand) = exp(1 − <span data-q="lr">4</span>/<span data-q="lc">3</span>) = exp(<span data-q="earg">−0.33</span>) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu câu máy <b>dài bằng</b> tham chiếu, BP = ? → <span class="blk" style="min-width:60px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — BLEU -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>BLEU (chỉ 1-gram) = BP · p₁</h2><span class="tag">kết hợp</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — BLEU (BP từ Bước 2, p₁ từ Bước 1)</span><br>
+      BLEU = BP · p₁ = <span data-q="eval">0.72</span> · <span class="blk" style="min-width:26px"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> p₁ = 1 (trùng hết) nhưng BLEU &lt; 1 — nhờ đâu tránh gian lận độ dài? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — HẠN CHẾ -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hạn chế: không hiểu nghĩa</h2><span class="tag">đếm bề mặt</span></div>
+    <div class="note">BLEU đếm trùng bề mặt → <b>phạt oan</b> câu diễn đạt khác mà đúng nghĩa. Thực tế dùng nhiều n-gram (1–4) + nhiều tham chiếu; bổ sung chỉ số ngữ nghĩa (BERTScore…).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Câu "con mèo ngồi" vs tham chiếu "mèo đang ngồi" — BLEU cao hay thấp dù đúng nghĩa? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: BLEU đo gì &amp; hạn chế gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L4 · BLEU (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L4</span><h1>BLEU <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — precision 1-gram</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> từ trùng = <span class="mono" data-q="matched">3</span> → p₁ = <span data-q="matched">3</span>/<span data-q="lc">3</span> = <span class="mono" data-q="p1">1.0</span>.</li>
+      <li><span class="lab">Vì sao</span> Chia số từ câu máy → đo tỉ lệ từ máy khớp (precision), tránh thưởng câu dài lan man.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — brevity penalty</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> BP = exp(−0.33) = <span class="mono" data-q="bp">0.72</span>.</li>
+      <li><span class="lab">Dự đoán</span> Câu máy dài bằng tham chiếu → BP = <b>1</b> (không phạt).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — BLEU</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> BLEU = 0.72·1.0 = <span class="mono" data-q="bleu">0.72</span>.</li>
+      <li><span class="lab">Vì sao</span> Dù trùng hết (p₁=1), BP kéo xuống vì câu ngắn → tránh gian lận độ dài.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — hạn chế</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> Diễn đạt khác dù đúng nghĩa → BLEU <b>thấp</b> (đếm bề mặt).</li>
+      <li><span class="lab">Tóm tắt</span> BLEU = precision n-gram × brevity penalty; nhanh nhưng không hiểu nghĩa.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> BLEU = precision n-gram × brevity penalty; nhanh nhưng đếm bề mặt. Bài tiếp (L5): chấm xếp hạng nhiều lớp
+    bằng <b style="color:var(--accent2)">top-k accuracy</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L4 · BLEU (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CMATCH='#0e7490', CREF='#b45309', CBP='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function wbox(x,y,w,t,col){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="20" rx="3" fill="'+col+'18" stroke="'+col+'" stroke-width="1.1"/>'+ctxt(x+w/2, y+13, t, col, 9, 400);}
+
+var SC=[
+  {c:['the','cat','sat'],   r:['the','cat','sat','down'],          earg:'−0.33', ev:0.72},
+  {c:['a','dog','ran'],     r:['a','dog','ran','very','fast'],     earg:'−0.67', ev:0.51},
+  {c:['big','red','car'],   r:['the','big','red','car'],           earg:'−0.33', ev:0.72},
+  {c:['the','cat','ran'],   r:['the','cat','sat','down'],          earg:'−0.33', ev:0.72},
+  {c:['the','sun','set'],   r:['the','sun','set','slowly','now'],  earg:'−0.67', ev:0.51}
+];
+
+/* ① hai hàng từ máy/tham chiếu (ĐỘNG, neutral để đếm) */
+function drawWords(cand, ref){
+  var svg=el('figWords'); if(!svg) return;
+  var s=txt(6, 20, 'câu máy:', GRY, 9), x=64;
+  cand.forEach(function(w){ var bw=14+w.length*7; s+=wbox(x, 10, bw, w, CMATCH); x+=bw+6; });
+  s+=txt(6, 66, 'tham chiếu:', GRY, 9); x=64;
+  ref.forEach(function(w){ var bw=14+w.length*7; s+=wbox(x, 56, bw, w, CREF); x+=bw+6; });
+  s+=txt(6, 98, 'đối chiếu: từ máy nào có trong hàng tham chiếu?', GRY, 8.5);
+  svg.innerHTML=s;
+}
+
+/* ② thanh độ dài (ĐỘNG) */
+function drawLen(lc, lr){
+  var svg=el('figLen'); if(!svg) return;
+  var x0=60, unit=32, h=18, s='';
+  s+=txt(6, 30, 'câu máy', GRY, 8.5);
+  s+='<rect x="'+x0+'" y="20" width="'+(lc*unit)+'" height="'+h+'" fill="'+CMATCH+'2a" stroke="'+CMATCH+'" stroke-width="1.2"/>'+ctxt(x0+lc*unit/2, 33, lc+' từ', CMATCH, 8.5, 700);
+  s+=txt(6, 62, 'tham chiếu', GRY, 8.5);
+  s+='<rect x="'+x0+'" y="52" width="'+(lr*unit)+'" height="'+h+'" fill="'+CREF+'2a" stroke="'+CREF+'" stroke-width="1.2"/>'+ctxt(x0+lr*unit/2, 65, lr+' từ', CREF, 8.5, 700);
+  // phần thiếu
+  s+='<rect x="'+(x0+lc*unit)+'" y="20" width="'+((lr-lc)*unit)+'" height="'+h+'" fill="'+CBP+'18" stroke="'+CBP+'" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+=ctxt(x0+lc*unit+(lr-lc)*unit/2, 33, 'thiếu', CBP, 7.5, 700);
+  s+=ctxt(130, 90, 'ngắn hơn → BP < 1 (phạt)', CBP, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var sc=WB.pick(SC);
+  var inRef={}; sc.r.forEach(function(w){inRef[w]=true;});
+  var matched=0; sc.c.forEach(function(w){ if(inRef[w]) matched++; });
+  var lc=sc.c.length, lr=sc.r.length;
+  var p1=Math.round(matched/lc*100)/100;
+  var bp=sc.ev;
+  var bleu=Math.round(bp*p1*100)/100;
+  WB.setAll({
+    cand:sc.c.join(' '), ref:sc.r.join(' '), lc:String(lc), lr:String(lr),
+    earg:sc.earg, eval:f(bp), matched:String(matched), p1:f(p1), bp:f(bp), bleu:f(bleu)
+  });
+  drawWords(sc.c, sc.r);
+  drawLen(lc, lr);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

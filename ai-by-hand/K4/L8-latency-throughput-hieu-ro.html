@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài L8 — Độ trễ &amp; thông lượng (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài L8</span><h1>Độ trễ &amp; thông lượng <small>— latency vs throughput (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Người dùng cảm nhận <b>độ trễ</b> (chờ bao lâu); hệ thống quan tâm <b>thông lượng</b> (phục vụ bao nhiêu/giây =
+    chi phí). Gom batch lớn tăng thông lượng nhưng tăng độ trễ từng yêu cầu — kỹ sư phải cân theo nhu cầu.
+    <div class="formula">throughput = batch / thời_gian_xử_lý · latency ≈ thời gian để một yêu cầu xong</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">cấu hình A (batch nhỏ)</b> (lam) · <b class="ckk">cấu hình B (batch lớn)</b> (cam) · <b class="cvv">latency (độ trễ)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    <b>Độ trễ</b> = "tôi chờ bao lâu cho <b>món của tôi</b>". <b>Thông lượng</b> = "bếp ra <b>bao nhiêu món/giờ</b>". Nấu theo mẻ lớn (batch) →
+    tổng món/giờ tăng (throughput ↑) nhưng mỗi người chờ lâu hơn (latency ↑). Đánh đổi kinh điển.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 cấu hình</span></div>
+    <div class="calc" style="font-size:13.5px">
+      A — batch <span class="gv" data-q="batchA">1</span>, xử lý <span class="gv" data-q="tA">5</span> ms/yêu cầu (= <span data-q="tAs">0.005</span> s) ; B — batch <span class="gv" data-q="batchB">32</span>, xử lý <span class="gv" data-q="tB">80</span> ms/mẻ (= <span data-q="tBs">0.08</span> s)
+    </div>
+  </div>
+
+  <!-- CỤM 1 — THROUGHPUT A -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Thông lượng A = batch / thời gian</h2><span class="tag">xử lý từng cái</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — throughput A (yêu cầu/giây)</span><br>
+      thrA = batchA / tA(s) = <span data-q="batchA">1</span> / <span data-q="tAs">0.005</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Cấu hình A xử lý từng cái → độ trễ mỗi yêu cầu là bao nhiêu ms? → <span class="blk" style="min-width:60px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L8 · Độ trễ &amp; thông lượng (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần L<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L8</span><h1>Độ trễ &amp; thông lượng <small>— mẻ lớn &amp; đánh đổi</small></h1></div>
+
+  <!-- CỤM 2 — THROUGHPUT B -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Thông lượng B (gom mẻ lớn)</h2><span class="tag">chia sẻ chi phí</span></div>
+    <div class="figwrap">
+      <svg id="figThr" class="fig" viewBox="0 0 250 120" width="80mm" height="38mm" aria-label="hai cột throughput A lam và B cam, B cao hơn, ghi chú latency mỗi cột"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cột throughput B (cam) <b>cao hơn</b> A (lam) — gom mẻ chia sẻ chi phí. Nhưng nhãn <b>latency</b> (tím) cho thấy B chờ lâu hơn. Tính thrB.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — throughput B</span><br>
+      thrB = batchB / tB(s) = <span data-q="batchB">32</span> / <span data-q="tBs">0.08</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> thrB so với thrA: cao hơn hay thấp hơn? → <span class="blk" style="min-width:70px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — LATENCY B -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Độ trễ B: phải chờ đủ mẻ</h2><span class="tag">đánh đổi</span></div>
+    <div class="note">Một yêu cầu vào cấu hình B phải <b>chờ gom đủ mẻ</b> rồi + <span data-q="tB">80</span> ms xử lý → latency <b>cao hơn</b> A (<span data-q="tA">5</span> ms). Batch lớn: throughput ↑ nhưng latency ↑.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao gom mẻ làm throughput ↑ nhưng latency ↑ (đánh đổi)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — CHỌN -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Chọn theo nhu cầu: chat vs lô</h2><span class="tag">latency vs throughput</span></div>
+    <div class="note">Chat trực tuyến → ưu tiên <b>latency thấp</b> (batch nhỏ); xử lý hàng loạt ban đêm → ưu tiên <b>throughput</b> (batch lớn). KV cache (H10), quantization (I6) cải thiện cả hai.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Chat trực tuyến nên chọn cấu hình A hay B? → <span class="blk" style="min-width:60px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: batch lớn đánh đổi gì lấy gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L8 · Độ trễ &amp; thông lượng (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L8</span><h1>Độ trễ &amp; thông lượng <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — throughput A</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> thrA = 1/0.005 = <span class="mono" data-q="thrA">200</span> yêu cầu/giây.</li>
+      <li><span class="lab">Quan sát</span> A xử lý từng cái → latency thấp = <span data-q="tA">5</span> ms.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — throughput B</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> thrB = 32/0.08 = <span class="mono" data-q="thrB">400</span> yêu cầu/giây.</li>
+      <li><span class="lab">Quan sát</span> thrB &gt; thrA (gom mẻ chia sẻ chi phí cố định).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — latency B</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> Yêu cầu phải chờ đủ mẻ + thời gian xử lý mẻ → latency B &gt; A → <b>đánh đổi</b>.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — chọn</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> Chat trực tuyến → cấu hình <b>A</b> (latency thấp).</li>
+      <li><span class="lab">Tóm tắt</span> Batch lớn đổi <b>latency cao hơn</b> lấy <b>throughput cao hơn</b>.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> throughput = batch/thời gian; batch lớn tăng throughput nhưng tăng latency → chọn theo nhu cầu. <b>Hết Phần L.</b>
+    Tiếp Phần M — Bài M1: <b style="color:var(--accent2)">GNN message passing</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L8 · Độ trễ &amp; thông lượng (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CA='#0e7490', CB='#b45309', CLAT='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ② cột throughput A vs B + latency (ĐỘNG) */
+function drawThr(thrA, thrB, tA, tB){
+  var svg=el('figThr'); if(!svg) return;
+  var x0=52, base=94, H=72, gap=92, bw=48, maxv=Math.max(thrA,thrB);
+  var s='<line x1="'+(x0-12)+'" y1="'+base+'" x2="'+(x0+2*gap-30)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var data=[['A',thrA,tA,CA],['B',thrB,tB,CB]];
+  for(var k=0;k<2;k++){
+    var bx=x0+k*gap, h=data[k][1]/maxv*H;
+    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+data[k][3]+'22" stroke="'+data[k][3]+'" stroke-width="1.3"/>';
+    s+=ctxt(bx+bw/2, base-h-4, data[k][1]+'/s', data[k][3], 9, 700);
+    s+=ctxt(bx+bw/2, base+13, data[k][0], data[k][3], 9, 700);
+    s+=ctxt(bx+bw/2, base+24, 'lat '+data[k][2]+'ms', CLAT, 7.5, 700);
+  }
+  s+=txt(x0-6, 14, 'throughput ↑', GRY, 8.5);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var batchA=1;
+  var tA=WB.pick([5,4,10]);
+  var Bcfg=WB.pick([[32,80],[16,40],[32,64],[16,32]]);
+  var batchB=Bcfg[0], tB=Bcfg[1];
+  var tAs=tA/1000, tBs=tB/1000;
+  var thrA=Math.round(batchA/tAs), thrB=Math.round(batchB/tBs);
+  WB.setAll({
+    batchA:String(batchA), tA:String(tA), batchB:String(batchB), tB:String(tB),
+    tAs:f(tAs), tBs:f(tBs), thrA:String(thrA), thrB:String(thrB)
+  });
+  drawThr(thrA, thrB, tA, tB);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

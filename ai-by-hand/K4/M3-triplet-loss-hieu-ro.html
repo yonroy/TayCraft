@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài M3 — Triplet loss (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần M · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài M3</span><h1>Triplet loss <small>— neo · dương · âm + lề (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Cho nhận diện khuôn mặt, truy hồi ảnh: cần "cùng người gần, khác người xa". Triplet loss định nghĩa trực tiếp
+    yêu cầu đó với một <b>lề (margin)</b> → embedding có cấu trúc khoảng cách rõ ràng (FaceNet).
+    <div class="formula">L = max( 0, d(a,p) − d(a,n) + margin ) (= 0 khi d(a,n) ≥ d(a,p) + margin)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">neo a</b> (lam) · <b class="cvv">dương p (cùng lớp)</b> (tím) · <b class="ckk">âm n (khác lớp)</b> (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Kéo <b>positive</b> (cùng lớp) lại gần neo và đẩy <b>negative</b> (khác lớp) ra xa, nhưng chỉ tới khi cách nhau <b>đủ một lề</b> — vượt lề
+    rồi thì thôi (loss = 0), khỏi tốn sức. Lề tạo "khoảng đệm an toàn" giữa các lớp.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">margin = <span data-q="margin">1</span></span></div>
+    <div class="calc" style="font-size:14px">
+      d(a,p) = <span class="gv" data-q="dap">3</span> (neo ↔ dương) ; d(a,n) = <span class="gv" data-q="dan">2</span> (neo ↔ âm)
+    </div>
+  </div>
+
+  <!-- CỤM 1 — BIỂU THỨC -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Biểu thức trong max = d(a,p) − d(a,n) + margin</h2><span class="tag">có vi phạm?</span></div>
+    <div class="figwrap">
+      <svg id="figTr" class="fig" viewBox="0 0 250 130" width="76mm" height="42mm" aria-label="neo a ở giữa, dương p gần, âm n xa hơn, vòng lề quanh khoảng cách dương cộng margin"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> neo a (lam), dương p (tím, gần), âm n (cam). Vòng <b>lề</b> = d(a,p)+margin. Nếu n <b>lọt trong</b> vòng lề → vi phạm (biểu thức &gt; 0).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — biểu thức trong max</span><br>
+      d(a,p) − d(a,n) + margin = <span data-q="dap">3</span> − <span data-q="dan">2</span> + <span data-q="margin">1</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Biểu thức &gt; 0 nghĩa là âm còn <b>gần hơn</b> mức cho phép — vì sao đó là vi phạm? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M3 · Triplet loss (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần M<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M3</span><h1>Triplet loss <small>— loss &amp; ca đã thỏa</small></h1></div>
+
+  <!-- CỤM 2 — LOSS -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Loss = max(0, biểu thức)</h2><span class="tag">chặn ở 0</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — L (biểu thức từ Bước 1)</span><br>
+      L = max(0, biểu thức) = max(0, <span class="blk" style="min-width:30px"></span>) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> L &gt; 0 → bộ ba "khó" hay "dễ"? Sẽ bị kéo/đẩy mạnh khi cập nhật? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — ĐÃ THỎA -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Ca đã thỏa: d(a,p)=2, d(a,n)=4</h2><span class="tag">L = 0</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — L khi đã cách đủ lề</span><br>
+      biểu thức = 2 − 4 + <span data-q="margin">1</span> = <span class="blk" style="min-width:30px"></span> → L = max(0, <span data-q="innerOk">−1</span>) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Đã cách đủ lề → L = 0 → không phạt. Vì sao <b>không</b> học thừa? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — HARD MINING -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Chọn bộ ba khó (hard mining)</h2><span class="tag">so InfoNCE</span></div>
+    <div class="note">Chọn negative <b>gần</b> anchor (hard negative) cho tín hiệu học mạnh; bộ ba dễ (loss=0) vô ích. So với InfoNCE (M2) dùng <b>nhiều âm</b> cùng lúc thay vì 1.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Triplet loss = 0 khi nào (điều kiện về khoảng cách)? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: triplet loss ép cấu trúc gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M3 · Triplet loss (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M3</span><h1>Triplet loss <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — biểu thức</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> d(a,p) − d(a,n) + margin = <span class="mono" data-q="inner">2</span>.</li>
+      <li><span class="lab">Vì sao</span> &gt; 0 → âm gần hơn mức "dương + lề" → vi phạm → phải phạt.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — loss</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> L = max(0, <span data-q="inner">2</span>) = <span class="mono" data-q="loss">2</span> <span class="sub" data-q="verdict">(vi phạm → phạt)</span>.</li>
+      <li><span class="lab">Quan sát</span> L &gt; 0 → bộ ba <b>khó</b> → kéo/đẩy mạnh khi cập nhật.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — ca đã thỏa</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> 2 − 4 + 1 = <span class="mono" data-q="innerOk">−1</span> → L = max(0, −1) = <span class="mono" data-q="lossOk">0</span>.</li>
+      <li><span class="lab">Vì sao</span> Đã đủ lề → 0 gradient → khỏi tốn sức chỉnh thêm.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — hard mining</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> L = 0 khi d(a,n) ≥ d(a,p) + margin (cách đủ lề).</li>
+      <li><span class="lab">Tóm tắt</span> Ép cùng-lớp gần, khác-lớp xa <b>một lề</b>; chọn hard negative để học hiệu quả.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Triplet loss = max(0, d(a,p)−d(a,n)+margin); ép cùng-lớp gần, khác-lớp xa một lề. Bài tiếp (M4): căn chỉnh
+    ảnh–chữ — <b style="color:var(--accent2)">CLIP</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M3 · Triplet loss (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CA='#0e7490', CP='#7c5cff', CN='#b45309', CMAR='#159a6b', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① neo/dương/âm + vòng lề (ĐỘNG) */
+function drawTriplet(dap, dan, margin){
+  var svg=el('figTr'); if(!svg) return;
+  var a=[92,66], sc=9;
+  var pR=dap*sc, nR=dan*sc, marginR=(dap+margin)*sc;
+  var s='<circle cx="'+a[0]+'" cy="'+a[1]+'" r="'+marginR.toFixed(1)+'" fill="'+CMAR+'0c" stroke="'+CMAR+'" stroke-width="1" stroke-dasharray="3 3"/>';
+  s+='<circle cx="'+a[0]+'" cy="'+a[1]+'" r="12" fill="'+CA+'22" stroke="'+CA+'" stroke-width="1.6"/>'+ctxt(a[0], a[1]+4, 'a', CA, 10, 700);
+  var p=[a[0]+pR, a[1]-20];
+  s+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1]+'" stroke="'+CP+'" stroke-width="1.2"/>';
+  s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1]+'" r="10" fill="'+CP+'22" stroke="'+CP+'" stroke-width="1.4"/>'+ctxt(p[0], p[1]+4, 'p', CP, 8.5, 700);
+  var n=[a[0]+nR*0.9, a[1]+34];
+  s+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+n[0].toFixed(1)+'" y2="'+n[1]+'" stroke="'+CN+'" stroke-width="1.2"/>';
+  s+='<circle cx="'+n[0].toFixed(1)+'" cy="'+n[1]+'" r="10" fill="'+CN+'22" stroke="'+CN+'" stroke-width="1.4"/>'+ctxt(n[0], n[1]+4, 'n', CN, 8.5, 700);
+  s+=ctxt(a[0], a[1]-marginR+10, 'vòng lề', CMAR, 7.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var F=WB.fmtInt;
+  var margin=WB.pick([1,2]);
+  var dap=WB.randInt(2,4), dan=WB.randInt(1,3);
+  var inner=dap-dan+margin;
+  if(inner<=0){ dan=dap-1; inner=dap-dan+margin; }
+  var loss=Math.max(0, inner);
+  var innerOk=2-4+margin, lossOk=Math.max(0, innerOk);
+  WB.setAll({
+    margin:String(margin), dap:String(dap), dan:String(dan),
+    inner:F(inner), loss:F(loss), innerOk:F(innerOk), lossOk:F(lossOk),
+    verdict: loss>0 ? '(vi phạm → phạt)' : '(đã thỏa)'
+  });
+  drawTriplet(dap, dan, margin);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

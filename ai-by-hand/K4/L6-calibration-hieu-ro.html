@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài L6 — Calibration (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài L6</span><h1>Calibration <small>— độ tin cậy có khớp độ chính xác? (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Mô hình thường <b>quá tự tin</b> (nói 99% nhưng chỉ đúng 90%). Trong y tế, tài chính, độ tin cậy phải
+    <b>đáng tin</b> để ra quyết định. Calibration đo điều đó; mô hình lệch thì cần hiệu chỉnh (temperature scaling).
+    <div class="formula">Chia theo bin độ tin cậy. ECE = Σ (nₘ/N)·| conf(bin m) − acc(bin m) |</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">acc (độ chính xác thật)</b> (lam) · <b class="ckk">conf (đường lý tưởng conf=acc)</b> (cam) · <b class="cvv">độ lệch (ECE)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Gom dự đoán theo "mức tự tin" rồi kiểm: trong nhóm "tự tin 90%", có đúng <b>90%</b> thật không? Nếu chỉ đúng 80% → <b>quá tự tin</b> ở nhóm
+    đó. ECE = trung bình (có trọng số) độ lệch "nói vs làm" trên mọi nhóm.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 bin · <span data-q="N">10</span> mẫu</span></div>
+    <div class="calc" style="font-size:13.5px">
+      bin 1 — độ tin cậy <span class="gv" data-q="conf1">0.9</span>, đúng <span class="gv" data-q="n1ok">4</span>/<span data-q="n1">5</span> ; bin 2 — độ tin cậy <span class="gv" data-q="conf2">0.6</span>, đúng <span class="gv" data-q="n2ok">3</span>/<span data-q="n2">5</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — ACCURACY BIN -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Accuracy mỗi bin = đúng / số mẫu</h2><span class="tag">so với độ tin cậy</span></div>
+    <div class="figwrap">
+      <svg id="figRel" class="fig" viewBox="0 0 250 120" width="74mm" height="38mm" aria-label="reliability diagram: đường chéo cam lý tưởng, cột acc lam mỗi bin, khe hở tới chéo là độ lệch tím"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> đường chéo (cam) = lý tưởng "conf = acc". Cột (lam) = acc thật ở vị trí conf. Cột <b>dưới</b> chéo = quá tự tin; khe hở (tím) = độ lệch bin.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — accuracy mỗi bin</span><br>
+      acc₁ = <span data-q="n1ok">4</span>/<span data-q="n1">5</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      acc₂ = <span data-q="n2ok">3</span>/<span data-q="n2">5</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Bin 1 nói tự tin <span data-q="conf1">0.9</span> nhưng thật đúng bao nhiêu? Có "quá tự tin" không? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L6 · Calibration (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần L<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L6</span><h1>Calibration <small>— độ lệch &amp; ECE</small></h1></div>
+
+  <!-- CỤM 2 — ĐỘ LỆCH -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Độ lệch mỗi bin = |conf − acc|</h2><span class="tag">nói vs làm</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — độ lệch (acc lấy từ Bước 1)</span><br>
+      lệch₁ = |<span data-q="conf1">0.9</span> − acc₁| = <span class="blk"></span> &nbsp;;&nbsp;
+      lệch₂ = |<span data-q="conf2">0.6</span> − acc₂| = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Bin nào lệch nhiều hơn (nói ≠ làm)? → <span class="blk" style="min-width:60px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — ECE -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>ECE = Σ (nₘ/N)·lệch (trọng số theo số mẫu)</h2><span class="tag">độ lệch trung bình</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — ECE (lệch lấy từ Bước 2)</span><br>
+      ECE = (<span data-q="n1">5</span>/<span data-q="N">10</span>)·lệch₁ + (<span data-q="n2">5</span>/<span data-q="N">10</span>)·lệch₂ = <span class="blk" style="min-width:30px"></span> + <span class="blk" style="min-width:30px"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao nhân trọng số nₘ/N (bin nhiều mẫu tính nặng hơn)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — HIỆU CHỈNH -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hiệu chỉnh: temperature scaling</h2><span class="tag">bớt tự tin</span></div>
+    <div class="note">Chia logits cho <b>T &gt; 1</b> làm softmax <b>bớt nhọn</b> → hạ độ tự tin về khớp accuracy. Vẽ <b>reliability diagram</b> (conf vs acc) để thấy lệch; ECE nhỏ = đáng tin.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Mô hình "quá tự tin" nghĩa là conf so với acc thế nào? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: calibration &amp; ECE đo gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L6 · Calibration (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài L6</span><h1>Calibration <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — accuracy bin</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> acc₁ = <span class="mono" data-q="acc1">0.8</span> ; acc₂ = <span class="mono" data-q="acc2">0.6</span>.</li>
+      <li><span class="lab">Quan sát</span> Bin 1 nói 0.9 nhưng đúng acc₁ → nếu acc₁ &lt; 0.9 thì <b>quá tự tin</b>.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — độ lệch</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> lệch₁ = <span class="mono" data-q="gap1">0.1</span> ; lệch₂ = <span class="mono" data-q="gap2">0</span>.</li>
+      <li><span class="lab">Quan sát</span> Bin lệch lớn hơn = nơi "nói ≠ làm" nhiều nhất.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — ECE</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> ECE = 0.5·lệch₁ + 0.5·lệch₂ = <span class="mono" data-q="ece">0.05</span>.</li>
+      <li><span class="lab">Vì sao</span> Bin nhiều mẫu ảnh hưởng chất lượng tổng thể nhiều hơn → trọng số nₘ/N.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — hiệu chỉnh</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> Quá tự tin → conf &gt; acc (nói cao hơn làm).</li>
+      <li><span class="lab">Tóm tắt</span> Calibration: "nói X% thì đúng X%"; ECE đo lệch; temperature scaling (T&gt;1) hiệu chỉnh.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Calibration: "nói X% thì đúng X%"; ECE đo lệch, temperature scaling hiệu chỉnh. Bài tiếp (L7): đếm chi phí tính
+    toán — <b style="color:var(--accent2)">FLOPs</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L6 · Calibration (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CACC='#0e7490', CCONF='#b45309', CGAP='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① reliability diagram (ĐỘNG) */
+function drawRel(c1, a1, c2, a2){
+  var svg=el('figRel'); if(!svg) return;
+  var x0=30, y0=12, S=92, base=y0+S;
+  function X(v){return x0+v*S;} function Y(v){return base-v*S;}
+  var s='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+S)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+S)+'" y2="'+y0+'" stroke="'+CCONF+'" stroke-width="1.3" stroke-dasharray="3 3"/>'+ctxt(x0+S-14, y0+18, 'lý tưởng', CCONF, 7.5, 700);
+  var bins=[[c1,a1],[c2,a2]];
+  for(var k=0;k<2;k++){
+    var c=bins[k][0], a=bins[k][1], bx=X(c)-9;
+    s+='<rect x="'+bx.toFixed(1)+'" y="'+Y(a).toFixed(1)+'" width="18" height="'+(a*S).toFixed(1)+'" fill="'+CACC+'22" stroke="'+CACC+'" stroke-width="1.2"/>';
+    // khe hở tới chéo (nếu a<c)
+    if(Math.abs(c-a)>0.001){
+      s+='<line x1="'+X(c).toFixed(1)+'" y1="'+Y(a).toFixed(1)+'" x2="'+X(c).toFixed(1)+'" y2="'+Y(c).toFixed(1)+'" stroke="'+CGAP+'" stroke-width="2"/>';
+    }
+    s+='<circle cx="'+X(c).toFixed(1)+'" cy="'+Y(c).toFixed(1)+'" r="2.6" fill="'+CCONF+'"/>';
+    s+=ctxt(X(c), base+11, WB.fmtTrim(c), GRY, 7.5);
+  }
+  s+=ctxt(x0+S/2, base+18, 'conf →', GRY, 8)+txt(x0-4, y0+2, 'acc', GRY, 8);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var n1=5, n2=5, N=n1+n2;
+  var conf1=WB.pick([0.9,0.8]);
+  var conf2=WB.pick([0.6,0.5,0.7]);
+  var n1ok=WB.randInt(3,5);
+  var n2ok=Math.round(conf2*5);
+  var acc1=Math.round(n1ok/n1*100)/100;
+  var acc2=Math.round(n2ok/n2*100)/100;
+  var gap1=Math.round(Math.abs(conf1-acc1)*100)/100;
+  var gap2=Math.round(Math.abs(conf2-acc2)*100)/100;
+  var ece=Math.round((n1/N*gap1+n2/N*gap2)*1000)/1000;
+  WB.setAll({
+    N:String(N), n1:String(n1), n2:String(n2), conf1:f(conf1), conf2:f(conf2),
+    n1ok:String(n1ok), n2ok:String(n2ok), acc1:f(acc1), acc2:f(acc2), gap1:f(gap1), gap2:f(gap2), ece:f(ece)
+  });
+  drawRel(conf1, acc1, conf2, acc2);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài M5 — Knowledge distillation (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần M · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài M5</span><h1>Knowledge distillation <small>— thầy → trò (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Mô hình lớn mạnh nhưng chậm/đắt. Distillation <b>nén</b> tri thức vào mô hình nhỏ chạy nhanh, giữ phần lớn chất
+    lượng. Bí quyết: <b>soft targets</b> (xác suất thầy ở nhiệt độ cao) mang nhiều thông tin hơn nhãn cứng ("mèo 0.7, chó 0.2 → mèo giống chó").
+    <div class="formula">soft = softmax(z_thầy / T) · L = α·CE(nhãn cứng, trò) + (1−α)·T²·KL(soft_thầy ‖ soft_trò)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">soft target (T cao, phẳng)</b> (lam) · <b class="ckk">hard (T=1, nhọn)</b> (cam) · <b class="cvv">nhiệt độ T</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Nhãn cứng chỉ nói "đáp án là mèo". Thầy nói thêm "mèo 0.7, <b>chó 0.2</b> (hơi giống), xe 0.0" — <b>tri thức tối</b> về quan hệ giữa lớp.
+    Nâng <b>nhiệt độ T</b> làm các xác suất nhỏ lộ rõ → trò học được cả những gợi ý tinh tế đó.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ</h2><span class="tag">3 lớp · T=<span data-q="T">2</span></span></div>
+    <div class="calc" style="font-size:14px">
+      logits thầy z = (<span class="gv" data-q="z1">2</span>, <span class="gv" data-q="z2">0</span>, <span class="gv" data-q="z3">1</span>) · bảng: e⁰=1, e⁰·⁵=1.65, e¹=2.72, e²=7.39
+    </div>
+  </div>
+
+  <!-- CỤM 1 — LÀM MỀM -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Làm mềm bằng T = softmax(z/T)</h2><span class="tag">chia T → phẳng hơn</span></div>
+    <div class="figwrap">
+      <svg id="figDist" class="fig" viewBox="0 0 250 120" width="82mm" height="38mm" aria-label="hai bộ cột: T bằng 2 phẳng hơn lam, T bằng 1 nhọn hơn cam"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cột <b>T=2</b> (lam) <b>phẳng</b> — lớp nhỏ lộ rõ; cột <b>T=1</b> (cam) <b>nhọn</b> — lớp lớn áp đảo. Tính soft = softmax(z/T).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — soft = softmax(z/T), T=2 (tra eˣ)</span><br>
+      z/T = (<span data-q="zt1">1</span>, <span data-q="zt2">0</span>, <span data-q="zt3">0.5</span>) → e = (<span data-q="es1">2.72</span>, <span data-q="es2">1</span>, <span data-q="es3">1.65</span>), Σ=<span data-q="sumS">5.37</span><br>
+      soft = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao chia T làm phân phối <b>phẳng hơn</b> (lộ xác suất nhỏ)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M5 · Distillation (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần M<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M5</span><h1>Distillation <small>— so T=1, loss &amp; T²</small></h1></div>
+
+  <!-- CỤM 2 — SO T=1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>So với T=1 (nhọn hơn)</h2><span class="tag">soft giàu thông tin hơn</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — so sánh (hard cho sẵn)</span><br>
+      softmax(z) [T=1] = ( <span data-q="hard1">0.67</span>, <span data-q="hard2">0.09</span>, <span data-q="hard3">0.24</span> ) — <b>nhọn</b> hơn soft<br>
+      lớp nhỏ nhất: soft = <span class="blk" style="min-width:34px"></span> vs hard = <span data-q="hard2">0.09</span> → soft <span class="blk" style="min-width:44px"></span> hơn
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Lớp nhỏ (gợi ý "hơi giống") lộ rõ ở soft (T=2) hay hard (T=1)? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — LOSS -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Loss trò = α·CE(nhãn cứng) + (1−α)·KL(soft thầy‖trò)</h2><span class="tag">KL + CE</span></div>
+    <div class="note">Trò khớp <b>soft target</b> của thầy bằng KL (Bài D4) + một phần <b>nhãn cứng</b> (CE) → trò vừa giống thầy (học tri thức tối) vừa không sai nhãn thật.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao cần cả hai số hạng (KL soft + CE nhãn cứng)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — T² -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao nhân T²</h2><span class="tag">cân gradient</span></div>
+    <div class="note">Chia T làm gradient của KL nhỏ đi ~1/T² → nhân lại <b>T²</b> để cân với số hạng CE. Nhờ vậy trò nhỏ đạt gần chất lượng thầy lớn.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Tăng nhiệt độ T làm phân phối thế nào? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: soft targets mang thông tin gì hơn nhãn cứng? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M5 · Distillation (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M5</span><h1>Distillation <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — soft target</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> soft = ( <span class="mono" data-q="soft1">0.51</span>, <span class="mono" data-q="soft2">0.19</span>, <span class="mono" data-q="soft3">0.31</span> ).</li>
+      <li><span class="lab">Vì sao</span> Chia T thu nhỏ khoảng cách logits → eˣ gần nhau hơn → phân phối phẳng.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — so T=1</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> hard = ( <span data-q="hard1">0.67</span>, <span data-q="hard2">0.09</span>, <span data-q="hard3">0.24</span> ) nhọn; lớp nhỏ soft (0.19) &gt; hard (0.09).</li>
+      <li><span class="lab">Quan sát</span> Lớp nhỏ (gợi ý quan hệ) <b>lộ rõ hơn</b> ở soft (T=2).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — loss</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> KL(soft) học tri thức tối của thầy; CE(nhãn cứng) giữ trò không sai nhãn thật.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — T² &amp; nhiệt độ</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> Tăng T → phân phối <b>phẳng hơn</b> (lộ xác suất nhỏ).</li>
+      <li><span class="lab">Tóm tắt</span> Soft targets mang <b>quan hệ/độ giống giữa các lớp</b> (xác suất tương đối), giàu hơn nhãn cứng.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Distillation = trò khớp soft target (softmax/T) của thầy + nhãn cứng → nén mô hình. <b>Hết Phần M.</b> Tiếp Phần N
+    (Capstone) — Bài N1: <b style="color:var(--accent2)">MLP đủ vòng</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M5 · Distillation (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CSOFT='#0e7490', CHARD='#b45309', CT='#7c5cff', GRY='#5b6776';
+var ES={0:1, 0.5:1.65, 1:2.72};
+var EH={0:1, 1:2.72, 2:7.39};
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① soft vs hard (ĐỘNG) */
+function drawDist(soft, hard){
+  var svg=el('figDist'); if(!svg) return;
+  var x0=36, base=96, H=78, gap=66, bw=22, maxv=Math.max.apply(null, hard.concat(soft));
+  var s='<line x1="'+(x0-8)+'" y1="'+base+'" x2="'+(x0+3*gap-22)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  for(var k=0;k<3;k++){
+    var bx=x0+k*gap, hs=soft[k]/maxv*H, hh=hard[k]/maxv*H;
+    s+='<rect x="'+bx+'" y="'+(base-hs).toFixed(1)+'" width="'+bw+'" height="'+hs.toFixed(1)+'" fill="'+CSOFT+'22" stroke="'+CSOFT+'" stroke-width="1.1"/>';
+    s+='<rect x="'+(bx+bw+3)+'" y="'+(base-hh).toFixed(1)+'" width="'+bw+'" height="'+hh.toFixed(1)+'" fill="'+CHARD+'44" stroke="'+CHARD+'" stroke-width="1.3"/>';
+    s+=ctxt(bx+bw, base+12, 'lớp '+(k+1), GRY, 8);
+  }
+  s+=txt(x0, 14, '■ T=2 (phẳng)', CSOFT, 8.5)+txt(x0+98, 14, '■ T=1 (nhọn)', CHARD, 8.5);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var T=2;
+  var z=WB.pick([[2,0,1],[2,1,0],[1,0,2],[0,1,2]]);
+  var es=z.map(function(v){ return ES[v/2]; });
+  var eh=z.map(function(v){ return EH[v]; });
+  var sumS=Math.round(es.reduce(function(a,b){return a+b;},0)*100)/100;
+  var sumH=eh.reduce(function(a,b){return a+b;},0);
+  var soft=es.map(function(v){ return Math.round(v/sumS*100)/100; });
+  var hard=eh.map(function(v){ return Math.round(v/sumH*100)/100; });
+  WB.setAll({
+    T:String(T), z1:String(z[0]), z2:String(z[1]), z3:String(z[2]),
+    zt1:f(z[0]/2), zt2:f(z[1]/2), zt3:f(z[2]/2),
+    es1:f(es[0]), es2:f(es[1]), es3:f(es[2]), sumS:f(sumS),
+    soft1:f(soft[0]), soft2:f(soft[1]), soft3:f(soft[2]),
+    hard1:f(hard[0]), hard2:f(hard[1]), hard3:f(hard[2])
+  });
+  drawDist(soft, hard);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

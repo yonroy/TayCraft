@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài N1 — MLP một vòng (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần N · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài N1</span><h1>MLP — một vòng huấn luyện <small>— capstone 2→2→1 (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~18 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Đây là "bài tổng duyệt": mọi viên gạch (tích vô hướng, ReLU, MSE, chuỗi, gradient) <b>ráp lại</b> thành một bước
+    học hoàn chỉnh. Hiểu trọn vòng này = hiểu mạng nơ-ron học thế nào.
+    <div class="formula">Forward: h=ReLU(W₁x+b₁), o=W₂h+b₂ · Loss: L=½(o−t)² · Backward: δ₂=o−t · Update: W←W−η∂W</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">x vào &amp; chiều xuôi</b> (lam) · <b class="cvv">h lớp ẩn</b> (tím) · <b class="ckk">o ra &amp; gradient ngược</b> (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Một vòng = <b>đoán → đo sai → truy trách nhiệm → chỉnh</b>. Forward đẩy tín hiệu ra dự đoán; loss đo lệch; backward chia trách nhiệm về
+    từng trọng số; update nhích trọng số để lần sau bớt sai. Lặp hàng triệu lần = "huấn luyện".
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2→2→1 · η=0.1</span></div>
+    <div class="calc" style="font-size:13px">
+      x=(<span class="gv" data-q="x1">1</span>,<span class="gv" data-q="x2">2</span>) · W₁=[[1,1],[0,−1]], b₁=(0,1) → z=(<span class="gv" data-q="z1">3</span>,<span class="gv" data-q="z2">−1</span>) · W₂=(<span class="gv" data-q="w2a">1</span>,<span class="gv" data-q="w2b">2</span>), b₂=<span class="gv" data-q="b2">−1</span> · t=<span class="gv" data-q="t">1</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — FORWARD ẨN -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Forward — lớp ẩn: h = ReLU(z)</h2><span class="tag">nơ-ron tắt/mở</span></div>
+    <div class="figwrap">
+      <svg id="figNet" class="fig" viewBox="0 0 250 120" width="80mm" height="38mm" aria-label="mạng 2-2-1: x lam tới h tím tới o cam, nơ-ron ẩn 2 tắt tô xám, mũi tên gradient chảy ngược"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> x (lam) → h (tím) → o (cam). ReLU cắt số âm về 0 → nơ-ron ẩn nào có z &lt; 0 thì <b>tắt</b> (xám). Tính h.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — h = ReLU(z)</span><br>
+      h₁ = ReLU(<span data-q="z1">3</span>) = <span class="blk"></span> &nbsp;;&nbsp; h₂ = ReLU(<span data-q="z2">−1</span>) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Nơ-ron ẩn nào bị <b>tắt</b> (h=0)? Vì sao? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N1 · MLP capstone (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần N<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N1</span><h1>MLP capstone <small>— đầu ra, loss &amp; backward</small></h1></div>
+
+  <!-- CỤM 2 — OUTPUT + LOSS -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Forward — đầu ra &amp; loss</h2><span class="tag">o, L=½(o−t)²</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — o &amp; L (h từ Bước 1)</span><br>
+      o = W₂·h + b₂ = <span data-q="w2a">1</span>·h₁ + <span data-q="w2b">2</span>·h₂ + (<span data-q="b2">−1</span>) = <span class="blk"></span><br>
+      L = ½(o − t)² = ½(o − <span data-q="t">1</span>)² = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Nơ-ron ẩn tắt (h₂=0) có đóng góp vào o không? → <span class="blk" style="min-width:60px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — BACKWARD -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Backward — chia trách nhiệm sai</h2><span class="tag">δ₂ → ∂W</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — gradient (o, h từ trên)</span><br>
+      δ₂ = o − t = <span class="blk" style="min-width:26px"></span><br>
+      ∂W₂ = δ₂·h = ( <span class="blk" style="min-width:26px"></span> , <span class="blk" style="min-width:26px"></span> ) &nbsp;(cột h₂=0 → gradient 0)<br>
+      ∂W₁ = δ₁⊗x với δ₁=(W₂ᵀδ₂)⊙ReLU'(z) = ( <span class="blk" style="min-width:26px"></span> , 0 ) → hàng 2 = (0,0)
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao gradient qua nơ-ron ẩn <b>tắt</b> bằng 0 (ReLU'=0)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N1 · MLP capstone (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần N<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N1</span><h1>MLP capstone <small>— update &amp; lặp</small></h1></div>
+
+  <!-- CỤM 4 — UPDATE -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Update: W ← W − η·∂W (η=0.1)</h2><span class="tag">nhích ngược gradient</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — cập nhật (∂W từ Bước 3)</span><br>
+      W₂ ← (<span data-q="w2a">1</span>, <span data-q="w2b">2</span>) − 0.1·∂W₂ = ( <span class="blk"></span> , <span class="blk"></span> )<br>
+      b₂ ← (<span data-q="b2">−1</span>) − 0.1·δ₂ = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Forward lại với W mới → o gần t hơn → L thế nào? → <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: 4 pha của một vòng huấn luyện là gì? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Toàn cảnh: một vòng học</h2><span class="tag">lặp = hội tụ</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figLoop" class="fig" viewBox="0 0 380 70" width="150mm" height="28mm" aria-label="vòng lặp forward loss backward update rồi quay lại forward"></svg>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Lặp vòng này hàng triệu lần cho ra điều gì? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N1 · MLP capstone (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N1</span><h1>MLP capstone <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — lớp ẩn</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> h = ReLU(z₁, z₂) = ( <span class="mono" data-q="h1">3</span> , <span class="mono" data-q="h2">0</span> ).</li>
+      <li><span class="lab">Quan sát</span> Nơ-ron ẩn 2 tắt (z₂ &lt; 0 → ReLU = 0).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — đầu ra &amp; loss</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> o = <span class="mono" data-q="o">2</span> ; L = ½(o−t)² = <span class="mono" data-q="L">0.5</span>.</li>
+      <li><span class="lab">Quan sát</span> h₂=0 → không đóng góp vào o (nhánh chết ở bước này).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — backward</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> δ₂ = <span class="mono" data-q="d2">1</span> ; ∂W₂=(<span class="mono" data-q="gw2a">3</span>,0) ; ∂W₁=[[<span class="mono" data-q="gw1a">1</span>,<span class="mono" data-q="gw1b">2</span>],[0,0]].</li>
+      <li><span class="lab">Vì sao</span> ReLU'(z&lt;0)=0 → chặn gradient qua nơ-ron tắt (hàng 2 = 0).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4–5 — update &amp; vòng</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> W₂ ← ( <span class="mono" data-q="w2aNew">0.7</span> , <span class="mono" data-q="w2bNew">2</span> ) ; b₂ ← <span class="mono" data-q="b2New">−1.1</span>.</li>
+      <li><span class="lab">Dự đoán</span> Forward lại → o gần t hơn → <b>L giảm</b>.</li>
+      <li><span class="lab">Tóm tắt</span> 4 pha: Forward → Loss → Backward → Update; lặp → hội tụ (= huấn luyện).</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Một vòng MLP = forward → loss → backward → update; lặp để hội tụ. Đây là toàn bộ deep learning thu nhỏ. Bài
+    tiếp (N2): ráp một <b style="color:var(--accent2)">mini-CNN</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N1 · MLP capstone (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CX='#0e7490', CH='#7c5cff', CO='#b45309', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.4"/>';}
+
+/* ① mạng 2-2-1, h2 tắt (ĐỘNG) */
+function drawNet(h2off){
+  var svg=el('figNet'); if(!svg) return;
+  var xs=[36,128,214], yIn=[38,84], yH=[38,84], yO=60;
+  var s='<defs><marker id="fw" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6z" fill="'+CX+'"/></marker>'+
+    '<marker id="bw" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6z" fill="'+CO+'"/></marker></defs>';
+  yIn.forEach(function(yi){ yH.forEach(function(yh){ s+='<line x1="'+(xs[0]+11)+'" y1="'+yi+'" x2="'+(xs[1]-11)+'" y2="'+yh+'" stroke="#cbd5e1" stroke-width="0.7"/>'; }); });
+  yH.forEach(function(yh){ s+='<line x1="'+(xs[1]+11)+'" y1="'+yh+'" x2="'+(xs[2]-11)+'" y2="'+yO+'" stroke="'+CX+'" stroke-width="1.2" marker-end="url(#fw)"/>'; });
+  yIn.forEach(function(y,i){ s+='<circle cx="'+xs[0]+'" cy="'+y+'" r="11" fill="'+CX+'22" stroke="'+CX+'" stroke-width="1.3"/>'+ctxt(xs[0], y+4, 'x'+(i+1), CX, 9, 700); });
+  yH.forEach(function(y,i){ var off=(i===1&&h2off); s+='<circle cx="'+xs[1]+'" cy="'+y+'" r="11" fill="'+(off?'#e5e7eb':CH+'22')+'" stroke="'+(off?'#9aa3ad':CH)+'" stroke-width="1.3"/>'+ctxt(xs[1], y+4, 'h'+(i+1), (off?'#9aa3ad':CH), 9, 700)+(off?ctxt(xs[1],y-13,'tắt','#9aa3ad',7,700):''); });
+  s+='<circle cx="'+xs[2]+'" cy="'+yO+'" r="11" fill="'+CO+'22" stroke="'+CO+'" stroke-width="1.3"/>'+ctxt(xs[2], yO+4, 'o', CO, 9, 700);
+  s+='<line x1="'+(xs[2]-2)+'" y1="'+(yO+16)+'" x2="'+(xs[1]+6)+'" y2="'+(yH[0]+16)+'" stroke="'+CO+'" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#bw)"/>';
+  s+=ctxt((xs[1]+xs[2])/2, yO+30, 'δ₂ ngược', CO, 8, 700);
+  svg.innerHTML=s;
+}
+
+/* ⑤ vòng lặp (TĨNH) */
+function drawLoop(){
+  var svg=el('figLoop'); if(!svg) return;
+  var s='', y=20, h=26, boxes=[['Forward',CX],['Loss',CO],['Backward',CO],['Update',CH]];
+  var x=20, w=74;
+  for(var i=0;i<boxes.length;i++){
+    s+=rct(x, y, w, h, boxes[i][1]+'18', boxes[i][1])+ctxt(x+w/2, y+16, boxes[i][0], boxes[i][1], 9, 700);
+    if(i<boxes.length-1){ s+='<line x1="'+(x+w)+'" y1="'+(y+h/2)+'" x2="'+(x+w+6)+'" y2="'+(y+h/2)+'" stroke="'+GRY+'" stroke-width="1.4"/>'; }
+    x+=w+6;
+  }
+  // vòng quay lại
+  s+='<path d="M'+(x-6)+','+(y+h)+' Q'+(x-6)+',60 20,60 Q10,60 10,'+(y+h/2)+' L20,'+(y+h/2)+'" fill="none" stroke="'+GRY+'" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#lp)"/>';
+  s+='<defs><marker id="lp" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="'+GRY+'"/></marker></defs>';
+  s+=ctxt(190, 66, 'lặp hàng triệu lần → hội tụ', GRY, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim, F=WB.fmtInt, W=WB.wrap;
+  var x1=WB.pick([1,2]), x2=WB.pick([2,3]);
+  var w2a=WB.pick([1,2]), w2b=WB.pick([1,2]);
+  var b2=WB.pick([-1,-2]);
+  var t=WB.pick([1,2]);
+  var z1=x1+x2, z2=-x2+1;
+  var h1=Math.max(0,z1), h2=Math.max(0,z2);
+  var o=w2a*h1+w2b*h2+b2;
+  var L=Math.round(0.5*(o-t)*(o-t)*100)/100;
+  var d2=o-t;
+  var gw2a=d2*h1, gw2b=d2*h2;
+  var d1a=w2a*d2*1;
+  var gw1a=d1a*x1, gw1b=d1a*x2;
+  var w2aNew=Math.round((w2a-0.1*gw2a)*100)/100;
+  var w2bNew=Math.round((w2b-0.1*gw2b)*100)/100;
+  var b2New=Math.round((b2-0.1*d2)*100)/100;
+  WB.setAll({
+    x1:String(x1), x2:String(x2), w2a:String(w2a), w2b:String(w2b), b2:F(b2), t:String(t),
+    z1:F(z1), z2:F(z2), h1:F(h1), h2:F(h2), o:F(o), L:f(L),
+    d2:F(d2), gw2a:F(gw2a), d1a:F(d1a), gw1a:F(gw1a), gw1b:F(gw1b),
+    w2aNew:f(w2aNew), w2bNew:f(w2bNew), b2New:f(b2New)
+  });
+  drawNet(h2<=0);
+}
+WB.wire(generate);
+generate();
+drawLoop();
+</script>
+</body>
+</html>

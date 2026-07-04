@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài K1 — Phần thưởng &amp; chiết khấu (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài K1</span><h1>Phần thưởng &amp; Chiết khấu <small>— return có chiết khấu γ (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Agent không tối ưu thưởng <b>tức thời</b> mà tối ưu <b>tổng dài hạn</b>. γ cân bằng "ăn xổi" vs "đầu tư dài
+    hạn", và đảm bảo tổng hữu hạn với chuỗi vô hạn. Đây là đại lượng mọi thuật toán RL cố ước lượng/tối đa.
+    <div class="formula">Gₜ = rₜ + γ·rₜ₊₁ + γ²·rₜ₊₂ + … = Σ_{k≥0} γᵏ·rₜ₊ₖ (0 ≤ γ ≤ 1)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">r (phần thưởng thô)</b> (lam) · <b class="ckk">γᵏ·rₖ &amp; Return G</b> (cam) · <b class="cvv">γ (hệ số chiết khấu)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Thưởng <b>bây giờ</b> đáng giá hơn thưởng <b>mai sau</b> (như tiền hôm nay &gt; tiền năm sau). γ là "tỉ lệ chiết khấu": γ gần 1 → nhìn
+    xa, kiên nhẫn; γ gần 0 → thiển cận, chỉ quan tâm thưởng ngay.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">γ = <span data-q="gamma">0.5</span></span></div>
+    <div class="calc" style="font-size:14px">
+      chuỗi phần thưởng từ bước t: r = ( <span class="gv" data-q="r1">1</span>, <span class="gv" data-q="r2">0</span>, <span class="gv" data-q="r3">2</span> ) · γ² = <span class="gv" data-q="g2v">0.25</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — CHIẾT KHẤU TỪNG BƯỚC -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chiết khấu từng bước: γᵏ·rₖ</h2><span class="tag">càng xa càng nhẹ</span></div>
+    <div class="figwrap">
+      <svg id="figDisc" class="fig" viewBox="0 0 260 120" width="82mm" height="38mm" aria-label="ba cột phần thưởng theo bước, cột thô lam mờ và cột sau chiết khấu cam thấp dần khi bước xa hơn"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mỗi bước có thưởng r (nền lam mờ). Sau nhân γᵏ → cột <b>cam</b> thấp dần (bước xa bị "đánh thuế thời gian"). Điền giá trị đã chiết khấu.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — γᵏ·rₖ</span><br>
+      γ⁰·r₁ = 1·<span data-q="r1">1</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      γ¹·r₂ = <span data-q="gamma">0.5</span>·<span data-q="r2">0</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      γ²·r₃ = <span data-q="g2v">0.25</span>·<span data-q="r3">2</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Thưởng ở bước xa nhất (t+2) sau chiết khấu <b>còn lại bao nhiêu phần</b>? → <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao thưởng càng xa càng nhân γ lũy thừa cao? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K1 · Return &amp; Chiết khấu (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần K<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K1</span><h1>Phần thưởng &amp; Chiết khấu <small>— cộng Return &amp; đổi tầm nhìn</small></h1></div>
+
+  <!-- CỤM 2 — RETURN G -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Cộng → Return G</h2><span class="tag">tổng có trọng số</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — G (các số hạng lấy từ Bước 1)</span><br>
+      G = γ⁰·r₁ + γ¹·r₂ + γ²·r₃ = <span class="blk" style="min-width:30px"></span> + <span class="blk" style="min-width:30px"></span> + <span class="blk" style="min-width:30px"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> G là "tổng dài hạn có trọng số" — vì sao agent tối ưu G chứ không phải chỉ r₁? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — ĐỔI γ -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Đổi γ → tầm nhìn khác (γ' = <span data-q="gamma2">0.9</span>)</h2><span class="tag">nhìn xa hơn</span></div>
+    <div class="figwrap">
+      <svg id="figCmp" class="fig" viewBox="0 0 260 120" width="82mm" height="38mm" aria-label="hai bộ cột chiết khấu, gamma nhỏ lam giảm nhanh, gamma lớn cam giảm chậm giữ nhiều thưởng xa"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> γ nhỏ (lam) → cột tụt nhanh (thiển cận); γ lớn (cam) → cột giữ cao lâu hơn (nhìn xa). Cùng r nhưng G khác nhau.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — G' với γ' = <span data-q="gamma2">0.9</span> (γ'² = <span data-q="g2b">0.81</span>)</span><br>
+      G' = <span data-q="r1">1</span> + <span data-q="gamma2">0.9</span>·<span data-q="r2">0</span> + <span data-q="g2b">0.81</span>·<span data-q="r3">2</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> G' (γ'=<span data-q="gamma2">0.9</span>) so với G (γ=<span data-q="gamma">0.5</span>): lớn hơn hay nhỏ hơn? Vì sao? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — VÌ SAO CHIẾT KHẤU -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao cần chiết khấu</h2><span class="tag">hội tụ + ưu tiên</span></div>
+    <div class="note">γ &lt; 1 làm tổng <b>hữu hạn</b> dù chuỗi vô hạn, và ưu tiên thưởng sớm (tương lai bất định). RL = tìm chính sách tối đa <b>E[G]</b>.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> γ gần 0 khiến agent hành xử thế nào? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Tóm 1 câu: γ dùng để làm gì? → <span class="blk" style="min-width:140px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K1 · Return &amp; Chiết khấu (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K1</span><h1>Phần thưởng &amp; Chiết khấu <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — chiết khấu từng bước</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> γᵏ·rₖ = ( <span class="mono" data-q="d1">1</span>, <span class="mono" data-q="d2">0</span>, <span class="mono" data-q="d3">0.5</span> ).</li>
+      <li><span class="lab">Quan sát</span> Bước t+2 chỉ còn γ² = <span class="mono" data-q="g2v">0.25</span> phần (¼) giá trị gốc.</li>
+      <li><span class="lab">Vì sao</span> Mỗi bước trễ nhân thêm một γ &lt; 1 → lũy thừa cao → nhẹ dần.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Return G</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> G = <span class="mono" data-q="G">1.5</span> (γ = <span data-q="gamma">0.5</span>).</li>
+      <li><span class="lab">Vì sao</span> Hành động tốt lâu dài có thể thưởng thấp lúc đầu → tối ưu G tránh "ăn xổi".</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — đổi γ</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> G' = <span class="mono" data-q="G2">2.62</span> (γ' = <span data-q="gamma2">0.9</span>).</li>
+      <li><span class="lab">Dự đoán</span> γ' lớn hơn → coi trọng thưởng xa hơn → G' <b>lớn hơn</b> G.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — vì sao chiết khấu</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> γ gần 0 → thiển cận, chỉ quan tâm thưởng tức thời.</li>
+      <li><span class="lab">Vì sao</span> γ giữ tổng hữu hạn (chuỗi vô hạn) &amp; ưu tiên thưởng sớm; định "tầm nhìn" của agent.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Return = Σγᵏrₜ₊ₖ; γ định tầm nhìn &amp; đảm bảo hữu hạn. RL tối đa E[G]. Bài tiếp (K2): ước lượng giá trị bằng
+    phương trình <b style="color:var(--accent2)">Bellman</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K1 · Return &amp; Chiết khấu (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CR='#0e7490', CG='#b45309', CGAM='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① thưởng thô (mờ) vs sau chiết khấu (ĐỘNG) */
+function drawDisc(r, g){
+  var svg=el('figDisc'); if(!svg) return;
+  var x0=30, base=98, H=74, gap=72, bw=26, maxv=3;
+  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  for(var k=0;k<3;k++){
+    var bx=x0+k*gap, raw=r[k]/maxv*H, disc=Math.pow(g,k)*r[k]/maxv*H;
+    s+='<rect x="'+bx+'" y="'+(base-raw).toFixed(1)+'" width="'+bw+'" height="'+raw.toFixed(1)+'" fill="'+CR+'12" stroke="'+CR+'" stroke-width="1" stroke-dasharray="2 2"/>';
+    s+='<rect x="'+bx+'" y="'+(base-disc).toFixed(1)+'" width="'+bw+'" height="'+disc.toFixed(1)+'" fill="'+CG+'2a" stroke="'+CG+'" stroke-width="1.3"/>';
+    s+=ctxt(bx+bw/2, base+13, 't+'+k, GRY, 8.5);
+    s+=ctxt(bx+bw/2, base-disc-4, '×γ'+(k===0?'⁰':k===1?'¹':'²'), CG, 7.5, 700);
+  }
+  s+=txt(x0, 14, '▫ r thô', CR, 8.5)+txt(x0+52, 14, '■ sau chiết khấu', CG, 8.5);
+  svg.innerHTML=s;
+}
+
+/* ③ so sánh 2 γ (ĐỘNG) */
+function drawCmp(r, g, g2){
+  var svg=el('figCmp'); if(!svg) return;
+  var x0=30, base=98, H=74, gap=72, bw=20, maxv=3;
+  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  for(var k=0;k<3;k++){
+    var bx=x0+k*gap, h1=Math.pow(g,k)*r[k]/maxv*H, h2=Math.pow(g2,k)*r[k]/maxv*H;
+    s+='<rect x="'+bx+'" y="'+(base-h1).toFixed(1)+'" width="'+bw+'" height="'+h1.toFixed(1)+'" fill="'+CR+'2a" stroke="'+CR+'" stroke-width="1.2"/>';
+    s+='<rect x="'+(bx+bw+3)+'" y="'+(base-h2).toFixed(1)+'" width="'+bw+'" height="'+h2.toFixed(1)+'" fill="'+CG+'2a" stroke="'+CG+'" stroke-width="1.2"/>';
+    s+=ctxt(bx+bw+1, base+13, 't+'+k, GRY, 8.5);
+  }
+  s+=txt(x0, 14, '■ γ='+WB.fmtTrim(g), CR, 8.5)+txt(x0+66, 14, '■ γ='+WB.fmtTrim(g2), CG, 8.5);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var r=[WB.randInt(0,3), WB.randInt(0,3), WB.randInt(1,3)];
+  var gamma=WB.pick([0.5,0.9]);
+  var gamma2=gamma===0.5?0.9:0.5;
+  var g2=gamma*gamma, g2b=gamma2*gamma2;
+  var d1=r[0], d2=gamma*r[1], d3=Math.round(g2*r[2]*100)/100;
+  var G=Math.round((d1+d2+d3)*100)/100;
+  var G2=Math.round((r[0]+gamma2*r[1]+g2b*r[2])*100)/100;
+  WB.setAll({
+    r1:String(r[0]), r2:String(r[1]), r3:String(r[2]),
+    gamma:f(gamma), gamma2:f(gamma2), g2v:f(g2), g2b:f(g2b),
+    d1:f(d1), d2:f(d2), d3:f(d3), G:f(G), G2:f(G2)
+  });
+  drawDisc(r, gamma);
+  drawCmp(r, gamma, gamma2);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

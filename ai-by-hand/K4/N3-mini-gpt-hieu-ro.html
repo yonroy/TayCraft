@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài N3 — Mini-GPT sinh token (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần N · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài N3</span><h1>Mini-GPT <small>— 2 token vào, sinh 1 token (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~17 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> LLM thu nhỏ làm tay được từ id token tới token sinh ra. Thấy rõ cách mọi mảnh attention ghép thành "máy đoán chữ
+    kế". Hiểu nó là nắm xương sống của ChatGPT.
+    <div class="formula">token → Embed+PE → [Self-Attn (causal) → FFN] → logits → softmax → argmax = token kế</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">token vào</b> (lam) · <b class="cvv">khối attn + FFN</b> (tím) · <b class="ckk">logits &amp; token kế</b> (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Hai token đã có → mô hình <b>trộn ngữ cảnh</b> (token cuối nhìn lại token trước qua attention), <b>xử lý</b> (FFN), rồi <b>chấm điểm</b>
+    mọi token từ điển → chọn token điểm cao nhất làm chữ kế. Lặp = viết câu.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ</h2><span class="tag">2 token · từ điển 3</span></div>
+    <div class="calc" style="font-size:13px">
+      điểm attention token cuối với [t₁,t₂] (đã ÷√d) = (<span class="gv" data-q="a1">0</span>, <span class="gv" data-q="a2">1</span>) · logits cuối z = (<span class="gv" data-q="z1">2</span>,<span class="gv" data-q="z2">0</span>,<span class="gv" data-q="z3">1</span>)
+    </div>
+    <table class="extbl" style="display:inline-table"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr><tr><td class="h">eˣ</td><td>1</td><td>2.72</td><td>7.39</td></tr></table>
+  </div>
+
+  <!-- CỤM 1 — ATTENTION -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Self-attention (causal): softmax điểm → α</h2><span class="tag">chỉ nhìn quá khứ</span></div>
+    <div class="figwrap">
+      <svg id="figGPT" class="fig" viewBox="0 0 250 120" width="82mm" height="39mm" aria-label="hai token lam vào khối attention causal FFN tím ra logits rồi token kế cam"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> t₁, t₂ (lam) vào khối [attn causal → FFN] (tím) → logits → token kế (cam). Mask causal: token cuối chỉ nhìn <b>quá khứ</b>. Tính α (softmax điểm attn).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — α = softmax(điểm attn) (tra eˣ)</span><br>
+      e^<span data-q="a1">0</span>=<span class="blk" style="min-width:26px"></span>, e^<span data-q="a2">1</span>=<span class="blk" style="min-width:32px"></span>, Σ=<span class="blk" style="min-width:34px"></span> → α = ( <span class="blk" style="min-width:30px"></span> , <span class="blk" style="min-width:30px"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Mask causal đảm bảo token cuối <b>không thấy</b> gì? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N3 · Mini-GPT (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần N<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N3</span><h1>Mini-GPT <small>— FFN, logits &amp; sinh token</small></h1></div>
+
+  <!-- CỤM 2 — FFN -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>FFN: xử lý phi tuyến từng vị trí</h2><span class="tag">giãn–ReLU–nén</span></div>
+    <div class="note">Vectơ ngữ cảnh (trộn V theo α ở Bước 1) qua <b>FFN</b> (Bài H11): giãn chiều → ReLU → nén lại → biểu diễn token cuối. FFN xử lý <b>từng vị trí độc lập</b> (không trộn giữa các token — attention mới làm việc đó).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Tầng nào <b>trộn giữa các token</b>: attention hay FFN? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — LOGITS -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Logits → softmax (điểm mỗi token từ điển)</h2><span class="tag">khả năng là chữ kế</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — softmax(z) (tra eˣ)</span><br>
+      z = (<span data-q="z1">2</span>,<span data-q="z2">0</span>,<span data-q="z3">1</span>) → e = (<span class="blk" style="min-width:30px"></span>,<span class="blk" style="min-width:24px"></span>,<span class="blk" style="min-width:30px"></span>), Σ=<span class="blk" style="min-width:36px"></span><br>
+      softmax = ( <span class="blk" style="min-width:28px"></span> , <span class="blk" style="min-width:28px"></span> , <span class="blk" style="min-width:28px"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Token nào có xác suất cao nhất (điểm logit lớn nhất)? → <span class="blk" style="min-width:60px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — SINH -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Sinh token: argmax → nối → lặp</h2><span class="tag">vòng sinh</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — token kế (softmax từ Bước 3)</span><br>
+      argmax(softmax) = token <span class="blk"></span> → nối vào chuỗi → lặp bước sinh
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Mini-GPT chọn token kế bằng gì (2 cách)? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: một bước sinh của GPT gồm những gì? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N3 · Mini-GPT (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài N3</span><h1>Mini-GPT <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — attention α</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> α = ( <span class="mono" data-q="al1">0.27</span> , <span class="mono" data-q="al2">0.73</span> ).</li>
+      <li><span class="lab">Vì sao</span> Mask causal → token cuối không thấy <b>token tương lai</b>, chỉ quá khứ + chính nó.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — FFN</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> <b>Attention</b> trộn giữa token; FFN xử lý từng vị trí độc lập.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — softmax logits</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> softmax = ( <span class="mono" data-q="p1">0.67</span> , <span class="mono" data-q="p2">0.09</span> , <span class="mono" data-q="p3">0.24</span> ).</li>
+      <li><span class="lab">Quan sát</span> Token có logit lớn nhất → xác suất cao nhất.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — sinh token</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> argmax → token <span class="mono" data-q="next">1</span>.</li>
+      <li><span class="lab">Dự đoán</span> Chọn bằng <b>argmax</b> (greedy, I8) hoặc <b>lấy mẫu</b> (sampling, I2).</li>
+      <li><span class="lab">Tóm tắt</span> Embed+PE → (attn causal → FFN) → logits → softmax → chọn token kế; lặp.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Mini-GPT = Embed+PE → (attention causal → FFN) → logits → chọn token kế; lặp để sinh. Bài tiếp (N4): theo dõi
+    hội tụ của <b style="color:var(--accent2)">logistic regression</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N3 · Mini-GPT (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CTOK='#0e7490', CBLK='#7c5cff', COUT='#b45309', GRY='#5b6776';
+var E={0:1, 1:2.72, 2:7.39};
+function el(id){return document.getElementById(id);}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① pipeline mini-GPT (ĐỘNG: token kế) */
+function drawGPT(next){
+  var svg=el('figGPT'); if(!svg) return;
+  var s='<defs><marker id="aG" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6z" fill="'+CTOK+'"/></marker></defs>';
+  [['t₁',28],['t₂',62]].forEach(function(tk){
+    s+='<rect x="14" y="'+(tk[1]-10)+'" width="28" height="20" rx="4" fill="'+CTOK+'22" stroke="'+CTOK+'" stroke-width="1.2"/>'+ctxt(28, tk[1]+4, tk[0], CTOK, 9, 700);
+    s+='<line x1="42" y1="'+tk[1]+'" x2="78" y2="45" stroke="'+CTOK+'" stroke-width="1.1" marker-end="url(#aG)"/>';
+  });
+  s+='<rect x="80" y="22" width="58" height="48" rx="6" fill="'+CBLK+'18" stroke="'+CBLK+'" stroke-width="1.3"/>'+ctxt(109,42,'attn causal',CBLK,8,700)+ctxt(109,56,'+ FFN',CBLK,8,700);
+  s+='<line x1="138" y1="46" x2="166" y2="46" stroke="'+CTOK+'" stroke-width="1.1" marker-end="url(#aG)"/>';
+  s+='<rect x="168" y="30" width="32" height="32" rx="4" fill="'+COUT+'14" stroke="'+COUT+'" stroke-width="1.1"/>'+ctxt(184,42,'logits',COUT,7.5,700)+ctxt(184,54,'(3)',COUT,7.5);
+  s+='<rect x="204" y="76" width="40" height="22" rx="4" fill="'+COUT+'22" stroke="'+COUT+'" stroke-width="1.3"/>'+ctxt(224,91,'t'+next+' kế',COUT,8.5,700);
+  s+='<line x1="188" y1="62" x2="216" y2="74" stroke="'+COUT+'" stroke-width="1.1" stroke-dasharray="2 2"/>';
+  s+=ctxt(224,110,'argmax softmax',GRY,7.5,700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var att=WB.pick([[0,1],[1,0]]);
+  var ea1=E[att[0]], ea2=E[att[1]];
+  var sumA=Math.round((ea1+ea2)*100)/100;
+  var al1=Math.round(ea1/sumA*100)/100, al2=Math.round(ea2/sumA*100)/100;
+  var z=WB.pick([[2,0,1],[2,1,0],[0,2,1],[1,0,2]]);
+  var ez=z.map(function(v){return E[v];});
+  var sumZ=ez.reduce(function(a,b){return a+b;},0);
+  var p=ez.map(function(v){return Math.round(v/sumZ*100)/100;});
+  var next=z.indexOf(Math.max.apply(null,z))+1;
+  WB.setAll({
+    a1:String(att[0]), a2:String(att[1]), z1:String(z[0]), z2:String(z[1]), z3:String(z[2]),
+    ea1:f(ea1), ea2:f(ea2), sumA:f(sumA), al1:f(al1), al2:f(al2),
+    p1:f(p[0]), p2:f(p[1]), p3:f(p[2]), next:String(next)
+  });
+  drawGPT(next);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài M4 — CLIP đa phương thức (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần M · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài M4</span><h1>CLIP <small>— căn chỉnh ảnh ↔ chữ (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Nối <b>hai phương thức</b> (ảnh ↔ chữ) cho phép tìm ảnh bằng câu mô tả, phân loại <b>zero-shot</b> (không cần
+    huấn luyện lớp mới — chỉ cần mô tả chữ). Nền của tìm kiếm đa phương thức &amp; mô hình sinh ảnh có điều kiện.
+    <div class="formula">S[i][j] = cos(ảnhᵢ, chữⱼ)/τ · loss = CE theo hàng + CE theo cột (đường chéo là cặp đúng)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">ảnh (hàng)</b> (lam) · <b class="ckk">chữ (cột)</b> (cam) · <b class="cvv">đường chéo (cặp đúng)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Xếp một <b>lô ảnh</b> và <b>lô caption</b> thành ma trận điểm tương đồng. Cặp đúng nằm trên <b>đường chéo</b>. CLIP ép mỗi ảnh chọn đúng
+    caption của mình (softmax theo hàng) và ngược lại (theo cột) → kéo cặp đúng sáng nhất.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ, −ln</h2><span class="tag">2 ảnh, 2 chữ · τ=1</span></div>
+    <div class="calc" style="font-size:13.5px">
+      S = [ [<span class="gv" data-q="s11">2</span>, <span class="gv" data-q="s12">0</span>], [<span class="gv" data-q="s21">1</span>, <span class="gv" data-q="s22">3</span>] ] (hàng = ảnh, cột = chữ)
+    </div>
+    <table class="extbl" style="display:inline-table;margin-right:10px"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td><td>3</td></tr><tr><td class="h">eˣ</td><td>1</td><td>2.72</td><td>7.39</td><td>20.1</td></tr></table>
+    <table class="extbl" style="display:inline-table"><tr><td class="h">p</td><td>0.95</td><td>0.88</td><td>0.73</td></tr><tr><td class="h">−ln p</td><td>0.05</td><td>0.13</td><td>0.31</td></tr></table>
+  </div>
+
+  <!-- CỤM 1 — SOFTMAX HÀNG 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Softmax hàng ảnh 1 (chéo = chữ 1)</h2><span class="tag">ảnh 1 nên khớp chữ 1</span></div>
+    <div class="figwrap">
+      <svg id="figMat" class="fig" viewBox="0 0 250 130" width="70mm" height="42mm" aria-label="ma trận 2x2 tương đồng ảnh chữ, ô đường chéo viền tím là cặp đúng, ô đậm = tương đồng cao"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> ma trận tương đồng (hàng = ảnh lam, cột = chữ cam). Ô <b>đường chéo</b> (tím) = cặp đúng. Ô càng đậm = tương đồng càng cao. Softmax theo hàng ảnh 1.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — softmax hàng 1 (tra eˣ)</span><br>
+      e^<span data-q="s11">2</span>=<span class="blk" style="min-width:34px"></span>, e^<span data-q="s12">0</span>=<span class="blk" style="min-width:26px"></span>, Σ=<span class="blk" style="min-width:34px"></span> → p = ( <span class="blk" style="min-width:32px"></span> , <span class="blk" style="min-width:32px"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> p ô chéo (chữ 1) cao hay thấp? Đó là điều tốt hay xấu? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M4 · CLIP (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần M<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M4</span><h1>CLIP <small>— hàng ảnh 2, loss &amp; zero-shot</small></h1></div>
+
+  <!-- CỤM 2 — SOFTMAX HÀNG 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Softmax hàng ảnh 2 (chéo = chữ 2)</h2><span class="tag">ảnh 2 khớp chữ 2</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — softmax hàng 2 (tra eˣ)</span><br>
+      e^<span data-q="s21">1</span>=<span class="blk" style="min-width:30px"></span>, e^<span data-q="s22">3</span>=<span class="blk" style="min-width:34px"></span>, Σ=<span class="blk" style="min-width:40px"></span> → p = ( <span class="blk" style="min-width:32px"></span> , <span class="blk" style="min-width:32px"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Ô chéo hàng 2 (chữ 2) chiếm phần lớn softmax không? → <span class="blk" style="min-width:70px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — LOSS -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Loss = trung bình −ln p(chéo)</h2><span class="tag">chéo là nhãn</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — loss (tra −ln, p chéo từ Bước 1 &amp; 2)</span><br>
+      L = ( −ln p(chéo₁) + −ln p(chéo₂) ) / 2 = ( <span class="blk" style="min-width:30px"></span> + <span class="blk" style="min-width:30px"></span> ) / 2 = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao chỉ tính loss trên <b>đường chéo</b> (không phải mọi ô)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — ZERO-SHOT -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Zero-shot: phân loại bằng chữ</h2><span class="tag">không train lớp mới</span></div>
+    <div class="note">Để phân loại ảnh, tạo caption "ảnh con {mèo/chó/…}", chọn caption cosine cao nhất → <b>không cần huấn luyện lớp</b> mới. Đó là sức mạnh của không gian chung ảnh–chữ.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Cặp ảnh–chữ đúng nằm ở đâu trong ma trận? → <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: CLIP căn chỉnh ảnh–chữ thế nào? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M4 · CLIP (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài M4</span><h1>CLIP <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — softmax ảnh 1</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> p = ( <span class="mono" data-q="p11">0.88</span> , <span class="mono" data-q="p12">0.12</span> ) (chéo cao).</li>
+      <li><span class="lab">Quan sát</span> p ô chéo cao = tốt (ảnh 1 khớp đúng chữ 1).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — softmax ảnh 2</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> p = ( <span class="mono" data-q="p21">0.12</span> , <span class="mono" data-q="p22">0.88</span> ) (chéo cao).</li>
+      <li><span class="lab">Quan sát</span> Ô chéo hàng 2 (chữ 2) chiếm phần lớn.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — loss</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> L = (−ln p₁ − ln p₂)/2 = <span class="mono" data-q="loss">0.13</span>.</li>
+      <li><span class="lab">Vì sao</span> Chéo = cặp ảnh–caption đúng → ép chéo sáng = khớp đúng.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — zero-shot</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> Cặp đúng nằm trên <b>đường chéo</b>.</li>
+      <li><span class="lab">Tóm tắt</span> Không gian chung ảnh–chữ; contrastive ép chéo sáng (hàng &amp; cột) → zero-shot.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> CLIP = không gian chung ảnh–chữ; contrastive ép đường chéo sáng; cho zero-shot. Bài tiếp (M5): truyền tri thức
+    từ thầy sang trò — <b style="color:var(--accent2)">distillation</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M4 · CLIP (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CIMG='#0e7490', CTXT='#b45309', CDIAG='#7c5cff', GRY='#5b6776';
+var EXP={0:1, 1:2.72, 2:7.39, 3:20.1};
+function el(id){return document.getElementById(id);}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① ma trận tương đồng, chéo viền tím (ĐỘNG) */
+function drawMat(S){
+  var svg=el('figMat'); if(!svg) return;
+  var x0=64, y0=26, cs=42, maxv=3, s='';
+  s+=ctxt(x0+cs, 14, 'chữ →', CTXT, 8.5, 700);
+  s+='<text x="'+(x0-32)+'" y="'+(y0+cs)+'" text-anchor="middle" font-size="8.5" fill="'+CIMG+'" font-weight="700" transform="rotate(-90 '+(x0-32)+' '+(y0+cs)+')">ảnh ↓</text>';
+  for(var i=0;i<2;i++) for(var j=0;j<2;j++){
+    var v=S[i][j], cx=x0+j*cs, cy=y0+i*cs, op=(0.12+v/maxv*0.7).toFixed(2), diag=(i===j);
+    s+='<rect x="'+cx+'" y="'+cy+'" width="'+cs+'" height="'+cs+'" fill="'+CIMG+'" fill-opacity="'+op+'" stroke="'+(diag?CDIAG:'#9aa3ad')+'" stroke-width="'+(diag?2.4:1)+'"/>';
+    s+=ctxt(cx+cs/2, cy+cs/2+4, String(v), (v>=2?'#fff':'#1f2937'), 11, 700);
+  }
+  s+=ctxt(x0+cs, y0+2*cs+14, '▦ chéo = cặp đúng', CDIAG, 8, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var Ms=[[[2,0],[1,3]], [[3,1],[0,2]], [[2,1],[0,3]], [[3,0],[1,2]]];
+  var S=WB.pick(Ms);
+  var e11=EXP[S[0][0]], e12=EXP[S[0][1]], e21=EXP[S[1][0]], e22=EXP[S[1][1]];
+  var sum1=Math.round((e11+e12)*100)/100, sum2=Math.round((e21+e22)*100)/100;
+  var p11=Math.round(e11/sum1*100)/100, p12=Math.round(e12/sum1*100)/100;
+  var p21=Math.round(e21/sum2*100)/100, p22=Math.round(e22/sum2*100)/100;
+  var loss=Math.round(((-Math.log(p11)-Math.log(p22))/2)*100)/100;
+  WB.setAll({
+    s11:String(S[0][0]), s12:String(S[0][1]), s21:String(S[1][0]), s22:String(S[1][1]),
+    e11:f(e11), e12:f(e12), e21:f(e21), e22:f(e22), sum1:f(sum1), sum2:f(sum2),
+    p11:f(p11), p12:f(p12), p21:f(p21), p22:f(p22), loss:f(loss)
+  });
+  drawMat(S);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

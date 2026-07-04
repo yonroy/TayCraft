@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài K7 — Advantage / baseline (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài K7</span><h1>Advantage <small>— baseline giảm phương sai (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Return thô G dao động lớn (lúc cao lúc thấp tùy may rủi) → gradient nhiễu. Trừ một <b>baseline</b> V(s) cho biết
+    "hành động hơn/kém kỳ vọng" → tín hiệu sạch hơn, học nhanh &amp; ổn định. Lõi của A2C, PPO (GAE).
+    <div class="formula">A(s,a) = Q(s,a) − V(s) ≈ r + γ·V(s') − V(s) · ∇J = E[ ∇log π · A ]</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">baseline V(s)</b> (lam) · <b class="ckk">Q (r+γV') &amp; advantage A</b> (cam) · <b class="cvv">return G thô (nhiễu)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Không hỏi "hành động này được bao nhiêu điểm" (G — phụ thuộc cả ngữ cảnh), mà hỏi "<b>hơn mức bình thường</b> ở đây bao nhiêu" (A). Trừ
+    đi "điểm nền" V(s) → chỉ còn phần <b>do hành động</b> tạo ra → tín hiệu học bớt nhiễu.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">γ = <span data-q="gamma">0.9</span></span></div>
+    <div class="calc" style="font-size:14px">
+      r = <span class="gv" data-q="r">1</span> ; V(s) = <span class="gv" data-q="Vs">9</span> ; sang s' có V(s') = <span class="gv" data-q="Vnext">10</span>
+    </div>
+  </div>
+
+  <!-- CỤM 1 — TD TARGET -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Ước lượng giá trị hành động = r + γ·V(s') (≈ Q)</h2><span class="tag">thực nhận sau 1 bước</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — TD target ≈ Q</span><br>
+      r + γ·V(s') = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="Vnext">10</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao r + γ·V(s') là ước lượng Q "thực nhận" từ trải nghiệm? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 2 — ADVANTAGE -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Advantage A = (r+γV') − V(s)</h2><span class="tag">trên/dưới kỳ vọng</span></div>
+    <div class="figwrap">
+      <svg id="figBase" class="fig" viewBox="0 0 250 120" width="80mm" height="38mm" aria-label="cột Q cam cao hơn cột baseline V lam, phần chênh lệch phía trên là advantage A"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cột Q (cam) so với cột baseline V(s) (lam). <b>Phần vượt lên</b> = advantage A. A &gt; 0 → hành động <b>trên</b> kỳ vọng; A &lt; 0 → dưới.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — A (Q lấy từ Bước 1)</span><br>
+      A = Q − V(s) = <span class="blk" style="min-width:34px"></span> − <span data-q="Vs">9</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> A ở đây dương hay âm? Hành động trên hay dưới kỳ vọng? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K7 · Advantage (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần K<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K7</span><h1>Advantage <small>— thay G bằng A &amp; vì sao không lệch</small></h1></div>
+
+  <!-- CỤM 3 — DÙNG A -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Dùng A thay G trong cập nhật</h2><span class="tag">θ ← θ + α·A·∇log π</span></div>
+    <div class="figwrap">
+      <svg id="figScatter" class="fig" viewBox="0 0 250 120" width="82mm" height="40mm" aria-label="hai chuỗi điểm: return G tím văng rộng, advantage A cam gom quanh 0"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> chấm <b>tím</b> (G thô) văng rộng quanh giá trị nền; chấm <b>cam</b> (A = G − baseline) gom <b>quanh 0</b> → cùng hướng trung bình nhưng <b>ít nhiễu</b> → gradient ổn định.</div>
+    </div>
+    <div class="note">Trước: θ ← θ + α·<b>G</b>·∇log π. Nay: θ ← θ + α·<b>A</b>·∇log π. Cùng công thức, chỉ thay G (nhiễu) bằng A (sạch).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Chuỗi nào (G hay A) gom quanh 0 hơn → gradient ít nhiễu hơn? → <span class="blk" style="min-width:70px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — KHÔNG THIÊN LỆCH -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao trừ baseline không thiên lệch</h2><span class="tag">baseline an toàn</span></div>
+    <div class="note">Vì E[∇log π · V(s)] = 0 (V(s) <b>không phụ thuộc a</b>), trừ V(s) chỉ <b>bớt nhiễu</b>, không lệch nghiệm → an toàn khi dùng baseline bất kỳ (miễn không phụ thuộc a).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Advantage A đo cái gì (so với G)? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Trừ baseline có làm gradient <b>lệch</b> nghiệm không? Vì sao? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K7 · Advantage (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K7</span><h1>Advantage <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — TD target</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> r + γ·V(s') = 1 + 0.9·10 = <span class="mono" data-q="target">10</span> (≈ Q).</li>
+      <li><span class="lab">Vì sao</span> Là "thực nhận" sau một bước (thưởng r + giá trị chiết khấu của s') → ước lượng Q.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Advantage</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> A = 10 − 9 = <span class="mono" data-q="A">1</span>.</li>
+      <li><span class="lab">Quan sát</span> A &gt; 0 → hành động <b>trên</b> kỳ vọng (tốt hơn mức nền V).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — dùng A</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> <b>A</b> gom quanh 0 → gradient ít nhiễu hơn G (văng rộng).</li>
+      <li><span class="lab">Cốt lõi</span> θ ← θ + α·A·∇log π (thay G bằng A).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — không thiên lệch</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> A = hành động <b>hơn mức trung bình</b> bao nhiêu = Q − V (bỏ phần nền chung).</li>
+      <li><span class="lab">Dự đoán</span> Không lệch — vì E[∇log π · V] = 0 → chỉ giảm phương sai.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> A = Q − V ≈ r+γV'−V; thay G bằng A → gradient bớt nhiễu, không lệch. Bài tiếp (K8): cập nhật an toàn bằng
+    <b style="color:var(--accent2)">PPO clip</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K7 · Advantage (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CV='#0e7490', CQ='#b45309', CG='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ② cột Q vs V, phần vượt = A (ĐỘNG) */
+function drawBase(target, Vs){
+  var svg=el('figBase'); if(!svg) return;
+  var base=100, x0=54, gap=90, bw=40, maxv=Math.max(target,Vs)+2, sc=80/maxv;
+  var s='<line x1="'+(x0-14)+'" y1="'+base+'" x2="'+(x0+2*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var hV=Vs*sc, hQ=target*sc;
+  s+='<rect x="'+(x0+gap)+'" y="'+(base-hV).toFixed(1)+'" width="'+bw+'" height="'+hV.toFixed(1)+'" fill="'+CV+'2a" stroke="'+CV+'" stroke-width="1.3"/>'+ctxt(x0+gap+bw/2, base+13, 'V(s)', CV, 9, 700);
+  s+='<rect x="'+x0+'" y="'+(base-hQ).toFixed(1)+'" width="'+bw+'" height="'+hQ.toFixed(1)+'" fill="'+CQ+'2a" stroke="'+CQ+'" stroke-width="1.3"/>'+ctxt(x0+bw/2, base+13, 'Q', CQ, 9, 700);
+  // A = phần vượt (từ V lên Q) trên cột Q
+  s+='<line x1="'+x0+'" y1="'+(base-hV).toFixed(1)+'" x2="'+(x0+bw)+'" y2="'+(base-hV).toFixed(1)+'" stroke="'+CV+'" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<line x1="'+(x0+bw+8)+'" y1="'+(base-hV).toFixed(1)+'" x2="'+(x0+bw+8)+'" y2="'+(base-hQ).toFixed(1)+'" stroke="'+CQ+'" stroke-width="2" marker-end="url(#aa)"/>';
+  s+=ctxt(x0+bw+18, (base-hV+base-hQ)/2, 'A', CQ, 11, 700);
+  s+='<defs><marker id="aa" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="'+CQ+'"/></marker></defs>';
+  svg.innerHTML=s;
+}
+
+/* ③ scatter G rộng vs A quanh 0 (TĨNH) */
+function drawScatter(){
+  var svg=el('figScatter'); if(!svg) return;
+  var x0=24, x1=196, mid=62;
+  var s='<line x1="'+x0+'" y1="'+mid+'" x2="'+x1+'" y2="'+mid+'" stroke="#9aa3ad" stroke-width="1" stroke-dasharray="3 3"/>'+txt(x0-12, mid+3, '0', GRY, 8);
+  var gBase=-24, gs=[-16,18,-10,26,-22,12], as=[-7,9,-5,11,-10,4];
+  for(var k=0;k<6;k++){
+    var gx=x0+14+k*28;
+    s+='<circle cx="'+gx+'" cy="'+(mid+gBase+gs[k]).toFixed(1)+'" r="3.4" fill="'+CG+'"/>';
+    s+='<circle cx="'+(gx+5)+'" cy="'+(mid+as[k]).toFixed(1)+'" r="3.4" fill="'+CQ+'"/>';
+  }
+  s+=ctxt(x1+18, mid-30, 'G', CG, 9, 700)+ctxt(x1+18, mid+4, 'A', CQ, 9, 700);
+  s+=ctxt(110, mid+40, 'A gom quanh 0 → ít nhiễu', GRY, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var gamma=WB.pick([0.9,0.8]);
+  var r=WB.randInt(1,3);
+  var Vnext=WB.pick([10,8,12]);
+  var target=Math.round((r+gamma*Vnext)*100)/100;
+  var Vs=Math.round(target)-WB.randInt(1,2);
+  var A=Math.round((target-Vs)*100)/100;
+  WB.setAll({
+    gamma:f(gamma), r:String(r), Vnext:String(Vnext), Vs:String(Vs),
+    target:f(target), A:f(A)
+  });
+  drawBase(target, Vs);
+}
+WB.wire(generate);
+generate();
+drawScatter();
+</script>
+</body>
+</html>

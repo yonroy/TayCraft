@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài K4 — SARSA (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài K4</span><h1>SARSA <small>— on-policy: học theo hành động thật (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> SARSA học giá trị của <b>chính chính sách đang chạy</b> (kể cả phần khám phá), nên <b>an toàn</b> hơn ở môi
+    trường có rủi ro (tránh đường "tối ưu nhưng nguy hiểm"). So SARSA vs Q-learning làm rõ on-policy vs off-policy.
+    <div class="formula">Q(s,a) ← Q(s,a) + α·[ r + γ·Q(s', a') − Q(s,a) ] (a' = hành động THẬT chọn ở s')</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">SARSA (a' thật)</b> (lam) · <b class="ckk">Q-learning (max)</b> (cam) · <b class="cvv">TD error &amp; cập nhật</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    SARSA hỏi: "nếu tôi <b>tiếp tục cư xử như đang cư xử</b> (kể cả thỉnh thoảng khám phá), giá trị là bao nhiêu?" → ước lượng theo a' thật.
+    Q-learning giả định "từ s' sẽ luôn chơi tối ưu (max)". Khác nhau ở chỗ a' <b>thật</b> hay a' <b>tốt nhất</b>.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">α = <span data-q="alpha">0.5</span>, γ = <span data-q="gamma">0.9</span></span></div>
+    <div class="calc" style="font-size:13.5px">
+      Q(s,a) = <span class="gv" data-q="Q">2</span> ; r = <span class="gv" data-q="r">1</span> ; ở s' agent <b>thật sự chọn</b> a' với
+      Q(s',a') = <span class="gv" data-q="qNext">3</span> (không phải max = <span class="gv" data-q="maxQ">4</span>)
+    </div>
+  </div>
+
+  <!-- CỤM 1 — MỤC TIÊU SARSA -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Mục tiêu SARSA = r + γ·Q(s',a') (a' thật)</h2><span class="tag">theo chính sách</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — mục tiêu SARSA (dùng a' thật)</span><br>
+      mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="qNext">3</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> SARSA dùng Q(s',a') với a' là hành động nào (thật / tốt nhất)? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao dùng a' thật phản ánh đúng chính sách đang chạy? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 2 — TD & CẬP NHẬT -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>TD error &amp; cập nhật (cùng dạng Q-learning)</h2><span class="tag">Q + α·δ</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — δ &amp; Q mới (mục tiêu lấy từ Bước 1)</span><br>
+      δ = mục tiêu − Q = <span class="blk" style="min-width:34px"></span> − <span data-q="Q">2</span> = <span class="blk"></span><br>
+      Q ← <span data-q="Q">2</span> + <span data-q="alpha">0.5</span>·δ = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Công thức cập nhật giống hệt Q-learning; chỉ khác ở đâu? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K4 · SARSA (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần K<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K4</span><h1>SARSA <small>— so Q-learning &amp; an toàn</small></h1></div>
+
+  <!-- CỤM 3 — SO Q-LEARNING -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>So với Q-learning: max vs a' thật</h2><span class="tag">thận trọng hơn</span></div>
+    <div class="figwrap">
+      <svg id="figTwo" class="fig" viewBox="0 0 260 100" width="82mm" height="32mm" aria-label="trục giá trị: mục tiêu SARSA lam thấp hơn mục tiêu Q-learning cam vì a prime thật nhỏ hơn max"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mục tiêu SARSA (lam, a' thật) <b>thấp hơn</b> mục tiêu Q-learning (cam, max) → Q mới SARSA nhỏ hơn → thận trọng.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — đối chiếu mục tiêu</span><br>
+      Q-learning (max = <span data-q="maxQ">4</span>): mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">4</span> = <span class="blk"></span><br>
+      SARSA (a' thật = <span data-q="qNext">3</span>): mục tiêu = <span class="blk" style="min-width:34px"></span> (từ Bước 1) → SARSA <span class="blk" style="min-width:60px"></span> hơn
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao mục tiêu SARSA luôn ≤ Q-learning (khi a' thật ≤ max)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — AN TOÀN -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>An toàn vs tối ưu: bài "vách đá"</h2><span class="tag">on-policy</span></div>
+    <div class="figwrap">
+      <svg id="figCliff" class="fig" viewBox="0 0 260 120" width="86mm" height="40mm" aria-label="lưới với vách đá ở hàng dưới, Q-learning đi sát mép cam, SARSA đi vòng an toàn lam từ S tới G"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> Q-learning (cam) đi <b>sát mép vách đá</b> (ngắn nhất, tối ưu nếu không lỡ). SARSA (lam) đi <b>vòng an toàn</b> vì tính cả rủi ro nước khám phá rơi xuống vực.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Ở môi trường có "vực" rủi ro, phương pháp nào cho đường an toàn hơn? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: SARSA khác Q-learning &amp; vì sao an toàn hơn? → <span class="blk" style="min-width:140px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K4 · SARSA (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài K4</span><h1>SARSA <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — mục tiêu SARSA</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> mục tiêu = 1 + 0.9·3 = <span class="mono" data-q="targetS">3.7</span>.</li>
+      <li><span class="lab">Quan sát</span> Dùng a' <b>thật</b> (hành động agent thực chọn), không phải max.</li>
+      <li><span class="lab">Vì sao</span> Phản ánh đúng chính sách đang chạy (gồm cả nước khám phá).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — cập nhật</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> δ = 3.7 − 2 = <span class="mono" data-q="tdS">1.7</span> ; Q ← 2 + 0.5·1.7 = <span class="mono" data-q="QnewS">2.85</span>.</li>
+      <li><span class="lab">Quan sát</span> Cùng công thức Q-learning; khác duy nhất ở <b>mục tiêu</b> (a' thật vs max).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — so Q-learning</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> Q-learning mục tiêu = <span class="mono" data-q="targetQ">4.6</span> &gt; SARSA <span class="mono" data-q="targetS2">3.7</span> → Q-learning Q mới = <span class="mono" data-q="QnewQ">3.3</span> cao hơn.</li>
+      <li><span class="lab">Vì sao</span> max ≥ a' thật → mục tiêu SARSA ≤ Q-learning (SARSA thận trọng).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — an toàn</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> Môi trường có vực → <b>SARSA</b> an toàn hơn (đi vòng).</li>
+      <li><span class="lab">Tóm tắt</span> SARSA on-policy (a' thật) → tính rủi ro khám phá → tránh đường tối ưu nhưng nguy hiểm.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> SARSA = on-policy: mục tiêu r+γQ(s',a') theo a' thật → thận trọng hơn Q-learning. Bài tiếp (K5): cân
+    bằng khám phá–khai thác bằng <b style="color:var(--accent2)">ε-greedy</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K4 · SARSA (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CSA='#0e7490', CQL='#b45309', CD='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ③ 2 mục tiêu trên trục (ĐỘNG) */
+function drawTwo(ts, tq){
+  var svg=el('figTwo'); if(!svg) return;
+  var x0=26, x1=234, base=52;
+  var lo=Math.min(ts,tq)-0.8, hi=Math.max(ts,tq)+0.8;
+  function px(v){return x0+(v-lo)/(hi-lo)*(x1-x0);}
+  var s='<line x1="'+x0+'" y1="'+base+'" x2="'+x1+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  var sx=px(ts), qx=px(tq);
+  s+='<circle cx="'+sx.toFixed(1)+'" cy="'+base+'" r="5" fill="'+CSA+'"/>'+ctxt(sx, base-10, 'SARSA '+WB.fmtTrim(ts), CSA, 9, 700);
+  s+='<circle cx="'+qx.toFixed(1)+'" cy="'+base+'" r="5" fill="'+CQL+'"/>'+ctxt(qx, base-10, 'Q-learn '+WB.fmtTrim(tq), CQL, 9, 700);
+  s+=ctxt((sx+qx)/2, base+18, "a′ thật < max → SARSA nhỏ hơn", GRY, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+/* ④ vách đá (TĨNH) */
+function drawCliff(){
+  var svg=el('figCliff'); if(!svg) return;
+  var cols=6, rows=4, cw=36, ch=24, ox=14, oy=8, s='';
+  for(var r=0;r<rows;r++) for(var c=0;c<cols;c++){
+    var x=ox+c*cw, y=oy+r*ch, cliff=(r===rows-1 && c>0 && c<cols-1);
+    s+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="'+(cliff?'#c0392b18':'#fbfdfe')+'" stroke="#dbe3ec" stroke-width="0.8"/>';
+    if(cliff) s+=ctxt(x+cw/2, y+ch/2+4, '⚠', '#c0392b', 10, 700);
+  }
+  s+=ctxt(ox+cw/2, oy+(rows-1)*ch+ch/2+4, 'S', '#159a6b', 11, 700);
+  s+=ctxt(ox+(cols-1)*cw+cw/2, oy+(rows-1)*ch+ch/2+4, 'G', '#159a6b', 11, 700);
+  s+=ctxt(ox+3*cw, oy+(rows-1)*ch+ch/2+4, 'vực', '#c0392b', 8, 700);
+  // Q-learning: sát mép (hàng ngay trên vực)
+  var yq=oy+(rows-2)*ch+ch/2;
+  s+='<path d="M'+(ox+cw/2)+','+(oy+(rows-1)*ch+ch/2)+' L'+(ox+cw/2)+','+yq+' L'+(ox+(cols-1)*cw+cw/2)+','+yq+' L'+(ox+(cols-1)*cw+cw/2)+','+(oy+(rows-1)*ch+ch/2)+'" fill="none" stroke="'+CQL+'" stroke-width="2" stroke-dasharray="4 2"/>';
+  // SARSA: đi vòng lên trên
+  var ysa=oy+ch/2;
+  s+='<path d="M'+(ox+cw/2)+','+(oy+(rows-1)*ch+ch/2)+' L'+(ox+cw/2)+','+ysa+' L'+(ox+(cols-1)*cw+cw/2)+','+ysa+' L'+(ox+(cols-1)*cw+cw/2)+','+(oy+(rows-1)*ch+ch/2)+'" fill="none" stroke="'+CSA+'" stroke-width="2"/>';
+  s+=txt(ox+cols*cw+2, oy+ch, '━ SARSA', CSA, 8);
+  s+=txt(ox+cols*cw+2, oy+2*ch, '┅ Q-learn', CQL, 8);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var alpha=WB.pick([0.5,0.2]);
+  var gamma=WB.pick([0.9,0.8]);
+  var Q=WB.randInt(1,3), r=WB.randInt(1,3), maxQ=WB.randInt(4,6);
+  var qNext=maxQ-WB.randInt(1,2);
+  var targetS=Math.round((r+gamma*qNext)*100)/100;
+  var targetQ=Math.round((r+gamma*maxQ)*100)/100;
+  var tdS=Math.round((targetS-Q)*100)/100;
+  var QnewS=Math.round((Q+alpha*tdS)*100)/100;
+  var QnewQ=Math.round((Q+alpha*(targetQ-Q))*100)/100;
+  WB.setAll({
+    alpha:f(alpha), gamma:f(gamma), Q:String(Q), r:String(r), qNext:String(qNext), maxQ:String(maxQ),
+    targetS:f(targetS), targetS2:f(targetS), targetQ:f(targetQ), tdS:f(tdS), QnewS:f(QnewS), QnewQ:f(QnewQ)
+  });
+  drawTwo(targetS, targetQ);
+}
+WB.wire(generate);
+generate();
+drawCliff();
+</script>
+</body>
+</html>

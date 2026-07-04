@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài I5 — LoRA (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài I5</span><h1>LoRA <small>— tinh chỉnh rẻ bằng cập nhật hạng thấp (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Fine-tune cả tỉ tham số rất tốn. <b>LoRA</b> giả định cập nhật cần thiết là <b>hạng thấp</b> → chỉ học hai ma trận nhỏ
+    <b>B, A</b> (đóng băng W gốc) rồi cộng vào. Giảm tham số huấn luyện hàng trăm lần, lưu nhiều "adapter" cho nhiều việc khác nhau.
+    <div class="formula">W' = W + ΔW · ΔW = B·A &nbsp;(B: d×r, A: r×d, r ≪ d) · Tham số học: 2·d·r &nbsp;(thay vì d²)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">B (cột)</b> (lam) · <b class="cvv">A (hàng)</b> (tím) · <b class="ckk">ΔW = B·A</b> (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Thay vì viết lại cả cuốn sách (W), LoRA dán một <b>tờ ghi chú mỏng</b> (B·A hạng r) lên trên. Vì cú "điều chỉnh" thường <b>đơn giản</b>
+    (hạng thấp), tờ ghi chú nhỏ là đủ — và <b>gỡ ra / đổi tờ khác</b> rất dễ (đổi việc mà không phá mô hình nền).
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=4 · r=1 · W đóng băng</span></div>
+    <div class="calc" style="font-size:13.5px">
+      B = ( <span class="gv" data-q="b0">1</span>, <span class="gv" data-q="b1">0</span>, <span class="gv" data-q="b2">2</span>, <span class="gv" data-q="b3">1</span> )ᵀ &nbsp;(4×1) &nbsp;·&nbsp;
+      A = ( <span class="gv" data-q="a0">1</span>, <span class="gv" data-q="a1">0</span>, <span class="gv" data-q="a2">1</span>, <span class="gv" data-q="a3">0</span> ) &nbsp;(1×4)
+    </div>
+    <div class="note">W gốc (4×4) <b>đóng băng</b> (không sửa). Ta chỉ học B, A rồi tạo ΔW = B·A (tích ngoài) để cộng vào W.</div>
+  </div>
+
+  <!-- CỤM 1 — ΔW = B·A -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>ΔW = B·A (tích ngoài, hạng 1)</h2><span class="tag">ΔW[i][j] = B[i]·A[j]</span></div>
+    <div class="figwrap">
+      <svg id="figOuter" class="fig" viewBox="0 0 240 150" width="70mm" height="44mm" aria-label="cột B nhân hàng A tạo ma trận 4x4 ĐW, mỗi ô là tích B[i] A[j]"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cột B (lam) × hàng A (tím) → ma trận ΔW 4×4 (cam). <b>Mỗi ô</b> = B[i]·A[j]. Vì mọi hàng đều là bội của A → ΔW <b>hạng 1</b>. Điền 3 ô hỏi.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — vài phần tử ΔW</span><br>
+      ΔW[0][0] = B₀·A₀ = <span data-q="b0">1</span>·<span data-q="a0">1</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      ΔW[2][0] = B₂·A₀ = <span data-q="b2">2</span>·<span data-q="a0">1</span> = <span class="blk"></span><br>
+      ΔW[0][1] = B₀·A₁ = <span data-q="b0">1</span>·<span data-q="a1">0</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Nếu A[j]=0 thì <b>cả cột</b> j của ΔW ra sao? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao ΔW = B·A luôn có <b>hạng 1</b> (mọi hàng tỉ lệ với A)? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I5 · LoRA (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I5</span><h1>LoRA <small>— đếm tham số &amp; áp dụng</small></h1></div>
+
+  <!-- CỤM 2 — ĐẾM THAM SỐ -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Đếm tham số: LoRA vs full</h2><span class="tag">2·d·r vs d²</span></div>
+    <div class="figwrap">
+      <svg id="figCount" class="fig" viewBox="0 0 240 100" width="72mm" height="30mm" aria-label="khối 8 ô LoRA nhỏ so với khối 16 ô full lớn"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> LoRA chỉ học <b>2·d·r</b> tham số (B + A) — khối nhỏ; full fine-tune học <b>d²</b> ô của W — khối lớn. Với d lớn (vd 4096) khoảng cách <b>khổng lồ</b>.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — số tham số</span><br>
+      LoRA = 2·d·r = 2·4·1 = <span class="blk"></span> &nbsp;;&nbsp; full = d² = 4² = <span class="blk"></span> &nbsp;→&nbsp; tỉ lệ <span class="blk"></span>/16
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Với d=4096, r=8: LoRA ≈ 2·4096·8, full ≈ 4096². Tỉ lệ nhỏ đi <b>bao nhiêu lần</b> (cỡ)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — ÁP DỤNG -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Áp dụng: W' = W + ΔW</h2><span class="tag">gộp khi suy luận</span></div>
+    <div class="figwrap">
+      <svg id="figApply" class="fig" viewBox="0 0 260 108" width="78mm" height="32mm" aria-label="W đóng băng cộng ĐW mỏng ra W phẩy; adapter có thể tháo lắp"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> W gốc (tím, <b>đóng băng</b>) + ΔW (cam, mỏng) = W' dùng lúc suy luận. Có thể <b>gộp sẵn</b> vào W → <b>không thêm chi phí</b> khi chạy; hoặc tháo ra, đổi adapter khác cho việc khác.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Giữ W gốc <b>nguyên vẹn</b> giúp gì khi muốn nhiều "adapter" cho nhiều việc? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-see">Quan sát</span> Sau khi <b>gộp</b> ΔW vào W, lúc suy luận có tốn thêm phép tính không? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I5 · LoRA (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I5</span><h1>LoRA <small>— vì sao hạng thấp là đủ</small></h1></div>
+
+  <!-- CỤM 4 — HẠNG THẤP -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao r ≪ d vẫn đủ</h2><span class="tag">tờ ghi chú mỏng</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figRank" class="fig" viewBox="0 0 360 130" width="140mm" height="47mm" aria-label="W lớn d x d so với B cột nhân A hàng mỏng hạng r"></svg>
+    </div>
+    <div class="note"><b>Vì sao đủ:</b> nghiên cứu cho thấy cập nhật khi fine-tune nằm trong không gian <b>chiều thấp</b> → r nhỏ (4–64) đủ diễn tả "cú điều chỉnh". Tiết kiệm cả <b>bộ nhớ huấn luyện</b> lẫn <b>lưu trữ adapter</b>.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> So diện tích: W (d×d) với B·A (d×r + r×d) — cái nào <b>nhỏ hơn nhiều</b> khi r nhỏ? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> "Tờ ghi chú hạng thấp" đủ diễn tả cú điều chỉnh — ý nghĩa gì? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm tắt 1 câu: LoRA fine-tune rẻ bằng cách nào? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I5 · LoRA (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I5</span><h1>LoRA <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — ΔW = B·A</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> ΔW[0][0] = <span class="mono" data-q="dw00">1</span> ; ΔW[2][0] = <span class="mono" data-q="dw20">2</span> ; ΔW[0][1] = <span class="mono" data-q="dw01">0</span>.</li>
+      <li><span class="lab">Quan sát</span> A[j]=0 → <b>cả cột</b> j của ΔW = 0.</li>
+      <li><span class="lab">Vì sao</span> Mọi hàng ΔW = B[i]·A → tỉ lệ với A → <b>hạng 1</b>.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Đếm tham số</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> LoRA = <span class="mono" data-q="loraP">8</span> ; full = <span class="mono" data-q="fullP">16</span> → 8/16 = ½.</li>
+      <li><span class="lab">Dự đoán</span> d=4096,r=8: LoRA≈65k vs full≈16.7M → nhỏ đi ~<b>256 lần</b>.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Áp dụng</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> W gốc nguyên vẹn → giữ 1 W, nhiều adapter B·A cho nhiều việc (tháo lắp).</li>
+      <li><span class="lab">Quan sát</span> Gộp ΔW vào W → suy luận <b>không tốn thêm</b> phép tính.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Hạng thấp</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> B·A (d×r + r×d) ≪ W (d×d) khi r nhỏ.</li>
+      <li><span class="lab">Vì sao</span> Cú điều chỉnh fine-tune nằm ở không gian chiều thấp → r nhỏ là đủ.</li>
+      <li><span class="lab">Tóm tắt</span> Học B·A hạng thấp, đóng băng W → rẻ, adapter gọn.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> LoRA = W + B·A hạng thấp, đóng băng W → fine-tune rẻ (2·d·r ≪ d²), adapter gọn &amp; tháo lắp.
+    Bài tiếp (I6): <b style="color:var(--accent2)">quantization</b> — nén mô hình bằng int8 để chạy nhẹ hơn.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I5 · LoRA (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CB='#0e7490', CA='#7c5cff', CDW='#b45309', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+
+/* ① Tích ngoài: cột B × hàng A → ΔW 4×4 ("?") */
+function drawOuter(B,A){
+  var svg=el('figOuter'); if(!svg) return;
+  var s='', c=26, gx=70, gy=44;
+  // hàng A trên
+  for(var j=0;j<4;j++){ s += rct(gx+j*c, 14, c-3, 20, CA+'18', CA, 1.3)+ctxt(gx+j*c+(c-3)/2, 28, String(A[j]), CA, 10, 700); }
+  s += ctxt(gx+2*c, 8, 'A (hàng)', CA, 8.5, 700);
+  // cột B trái
+  for(var i=0;i<4;i++){ s += rct(14, gy+i*c, 20, c-3, CB+'18', CB, 1.3)+ctxt(24, gy+i*c+15, String(B[i]), CB, 10, 700); }
+  s += ctxt(24, gy+4*c+8, 'B (cột)', CB, 8.5, 700);
+  // lưới ΔW
+  var ask={'00':1,'20':1,'01':1};
+  for(var ii=0;ii<4;ii++) for(var jj=0;jj<4;jj++){
+    var x=gx+jj*c, y=gy+ii*c, key=''+ii+jj, hot=ask[key];
+    s += rct(x, y, c-3, c-3, CDW+(hot?'1e':'0c'), CDW, hot?1.5:1)+ctxt(x+(c-3)/2, y+15, hot?'?':'·', CDW, hot?11:9, 700);
+  }
+  s += ctxt(gx+2*c, gy+4*c+8, 'ΔW = B·A (4×4)', CDW, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+/* ② Đếm tham số: 8 ô vs 16 ô */
+function drawCount(){
+  var svg=el('figCount'); if(!svg) return;
+  var s='', c=15;
+  s += ctxt(46, 16, 'LoRA = 2·d·r', CB, 9, 700);
+  for(var i=0;i<8;i++){ var x=14+(i%4)*(c+2), y=24+Math.floor(i/4)*(c+2); s += rct(x,y,c,c,CB+'aa'); }
+  s += ctxt(46, 70, '8 ô', CB, 9, 700);
+  s += ctxt(168, 16, 'full = d²', CA, 9, 700);
+  for(var j=0;j<16;j++){ var x2=120+(j%4)*(c+2), y2=24+Math.floor(j/4)*(c+2); s += rct(x2,y2,c,c,CA+'aa'); }
+  s += ctxt(168, 94, '16 ô', CA, 9, 700);
+  s += '<line x1="100" y1="18" x2="100" y2="90" stroke="#e2e8f0" stroke-width="1"/>';
+  svg.innerHTML=s;
+}
+
+/* ③ W đóng băng + ΔW mỏng = W' */
+function drawApply(){
+  var svg=el('figApply'); if(!svg) return;
+  var s='';
+  s += rct(16,26,56,56,CA+'14',CA,1.6)+ctxt(44,50,'W',CA,14,700)+ctxt(44,66,'đóng băng',CA,7.5,700);
+  s += ctxt(90,58,'+',GRY,16,700);
+  s += rct(104,26,20,56,CDW+'18',CDW,1.5)+ctxt(114,54,'ΔW',CDW,9,700);
+  s += ctxt(114,94,'mỏng',CDW,8,400);
+  s += ctxt(144,58,'=',GRY,16,700);
+  s += rct(160,26,56,56,CB+'14',CB,1.6)+ctxt(188,54,"W'",CB,14,700);
+  s += ctxt(240,44,'gộp sẵn',GRY,8.5,700)+ctxt(240,58,'→ không',GRY,8.5,400)+ctxt(240,70,'tốn thêm',GRY,8.5,400);
+  svg.innerHTML=s;
+}
+
+/* ④ W lớn vs B·A mỏng (hạng thấp) */
+function drawRank(){
+  var svg=el('figRank'); if(!svg) return;
+  var s='';
+  s += rct(20,20,90,90,CA+'12',CA,1.6)+ctxt(65,68,'W',CA,18,700);
+  s += ctxt(65,124,'d × d (lớn)',CA,9,700);
+  s += ctxt(140,68,'vs',GRY,12,700);
+  // B cột
+  s += rct(180,20,16,90,CB+'18',CB,1.5)+ctxt(188,68,'B',CB,11,700);
+  s += ctxt(210,68,'×',GRY,12,700);
+  // A hàng
+  s += rct(222,20,90,16,CA+'18',CA,1.5)+ctxt(267,32,'A',CA,11,700);
+  s += ctxt(255,120,'B·A: d×r + r×d (mỏng, hạng r)',CDW,9,700);
+  s += ctxt(255,60,'"tờ ghi chú',GRY,9,400)+ctxt(255,72,'mỏng"',GRY,9,400);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var B=[WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2)];
+  var A=[WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2)];
+  // đảm bảo A0 ≠ 0 (để ΔW[2][0] có ý nghĩa) và B2 ≠ 0
+  if(A[0]===0) A[0]=1;
+  if(B[2]===0) B[2]=2;
+  WB.setAll({
+    b0:String(B[0]), b1:String(B[1]), b2:String(B[2]), b3:String(B[3]),
+    a0:String(A[0]), a1:String(A[1]), a2:String(A[2]), a3:String(A[3]),
+    dw00:String(B[0]*A[0]), dw20:String(B[2]*A[0]), dw01:String(B[0]*A[1]),
+    loraP:'8', fullP:'16'
+  });
+  drawOuter(B,A);
+}
+
+WB.wire(generate);
+generate();
+drawCount();
+drawApply();
+drawRank();
+</script>
+</body>
+</html>

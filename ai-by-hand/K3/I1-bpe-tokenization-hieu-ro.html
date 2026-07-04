@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài I1 — BPE Tokenization (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+/* ===== additive — template HIỂU RÕ: hình-để-điền trên ĐỀ + chùm câu hỏi ===== */
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+/* hình + chú thích */
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+/* CHÙM CÂU HỎI */
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+/* KHỐI TỰ TÍNH */
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:40px;border-bottom:1px solid #94a3b8;}
+/* ĐÁP ÁN gọn */
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài I1</span><h1>BPE Tokenization <small>— gộp cặp hay đi cùng thành token (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> LLM không đọc chữ thô — nó đọc <b>token</b>. Từ điển <b>toàn từ</b> thì quá lớn &amp; gặp từ lạ; <b>toàn ký tự</b> thì
+    chuỗi quá dài. <b>Byte Pair Encoding (BPE)</b> học từ điển <b>con-từ</b>: lặp lại việc <b>gộp cặp ký tự hay đi cùng</b> thành một token mới → từ
+    phổ biến thành 1 token, từ hiếm vẫn ghép được từ mảnh.
+    <div class="formula">Lặp: đếm mọi cặp liền kề → gộp cặp <b>tần số cao nhất</b> → cập nhật → lặp tới đủ K token</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">ký tự / token</b> (lam) · <b class="ckk">cặp gộp &amp; tần số</b> (cam) · <b class="cvv">token mới</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Bắt đầu từ <b>chữ cái</b>, BPE liên tục "dán" hai mảnh <b>hay đứng cạnh nhau</b> thành một mảnh lớn hơn. Cặp xuất hiện <b>nhiều nhất</b>
+    được dán trước → các âm tiết/từ phổ biến dần thành <b>một token</b>, còn từ hiếm vẫn ghép lại từ các mảnh.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">kho nhỏ · từ đã tách ký tự + tần số</span></div>
+    <div class="calc" style="font-size:14px">
+      <span style="color:#0e7490;font-weight:700">l o w</span> ×<span class="gv" data-q="flow">5</span> &nbsp;·&nbsp;
+      <span style="color:#0e7490;font-weight:700">l o w e r</span> ×<span class="gv" data-q="flwr">2</span> &nbsp;·&nbsp;
+      <span style="color:#0e7490;font-weight:700">n e w</span> ×<span class="gv" data-q="fnew">6</span>
+    </div>
+    <div class="note">Mỗi "từ" đã tách thành ký tự, kèm số lần xuất hiện. Tần số của một <b>cặp</b> = tổng tần số các từ <b>chứa</b> cặp đó.</div>
+  </div>
+
+  <!-- CỤM 1 — ĐẾM CẶP -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Đếm cặp liền kề</h2><span class="tag">tần số cặp</span></div>
+    <div class="figwrap">
+      <svg id="figWords" class="fig" viewBox="0 0 300 118" width="88mm" height="35mm" aria-label="ba từ tách thành ô ký tự, các cặp liền kề được đánh dấu"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mỗi từ là dãy ô ký tự (lam); cung nối dưới đánh dấu một <b>cặp liền kề</b>. Cặp (l,o) nằm trong "low" &amp; "lower" → cộng tần số hai từ. Điền các tần số cặp.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — tần số mỗi cặp</span> <span class="sub">(cộng tần số các từ chứa cặp)</span><br>
+      (l,o) = low + lower = <span data-q="flow">5</span> + <span data-q="flwr">2</span> = <span class="blk"></span><br>
+      (o,w) = low + lower = <span data-q="flow">5</span> + <span data-q="flwr">2</span> = <span class="blk"></span><br>
+      (n,e) = new = <span class="blk"></span> &nbsp;;&nbsp; (e,w) = new = <span class="blk"></span> &nbsp;;&nbsp; (w,e) = lower = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Cặp nào đang có tần số <b>cao nhất</b>? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao tần số cặp lại <b>cộng dồn</b> tần số của mọi từ chứa nó? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I1 · BPE Tokenization (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I1</span><h1>BPE Tokenization <small>— gộp cặp cao nhất &amp; lặp</small></h1></div>
+
+  <!-- CỤM 2 — GỘP -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Gộp cặp cao nhất → token mới</h2><span class="tag">(l,o) → "lo"</span></div>
+    <div class="figwrap">
+      <svg id="figMerge" class="fig" viewBox="0 0 260 96" width="76mm" height="28mm" aria-label="hai ô l và o dán lại thành một ô lo"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> cặp cao nhất (l,o) (cam) được <b>dán</b> thành một token mới <b>"lo"</b> (tím). Mọi chỗ "l o" trong kho được thay bằng "lo".</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> (l,o) và (o,w) bằng nhau. Khi <b>hòa</b>, BPE chọn thế nào? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao gộp cặp <b>tần số cao</b> trước lại hợp lý (thay vì cặp bất kỳ)? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — CẬP NHẬT & LẶP -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Cập nhật &amp; lặp vòng sau</h2><span class="tag">(lo,w) → "low"</span></div>
+    <div class="figwrap">
+      <svg id="figUpdate" class="fig" viewBox="0 0 300 100" width="88mm" height="30mm" aria-label="low giờ là lo w; đếm cặp lo w rồi gộp thành low"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> giờ "low" = <b>"lo" "w"</b>, "lower" = "lo" "w" "e" "r". Đếm lại → cặp (lo,w) lại <b>cao nhất</b> → gộp thành <b>"low"</b>. Điền tần số (lo,w).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — vòng 2</span><br>
+      (lo,w) = low + lower = <span data-q="flow">5</span> + <span data-q="flwr">2</span> = <span class="blk"></span> → cao nhất → gộp "lo"+"w" = <b>"low"</b>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Lặp thêm vài vòng, "low" phổ biến sẽ thành <b>mấy</b> token? → <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Sau khi có token "low", đọc chữ "low" tốn bao nhiêu đơn vị (so với 3 ký tự)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I1 · BPE Tokenization (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I1</span><h1>BPE Tokenization <small>— con-từ &amp; cân bằng</small></h1></div>
+
+  <!-- CỤM 4 — CON-TỪ -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Cây gộp &amp; cân bằng con-từ</h2><span class="tag">dừng khi đủ K token</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figTree" class="fig" viewBox="0 0 320 150" width="96mm" height="45mm" aria-label="cây gộp: l o w thành lo thành low; từ lạ lowest tách low est"></svg>
+    </div>
+    <div class="note"><b>Cân bằng:</b> dừng khi đạt <b>K token</b>. Token "low" gặp lại chỉ tốn <b>1 đơn vị</b>; từ <b>lạ</b> như "lowest" tách thành <b>"low" + "est"</b> — vẫn xử lý được (không "chịu thua" từ lạ như từ điển toàn từ).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Theo cây, "low" được ghép từ những mảnh nào (theo thứ tự gộp)? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> BPE cân bằng giữa <b>độ dài chuỗi</b> và <b>kích thước từ điển</b> ra sao? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm tắt 1 câu: BPE dựng từ điển con-từ bằng cách nào? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I1 · BPE Tokenization (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I1</span><h1>BPE Tokenization <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Đếm cặp</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> (l,o) = <span class="mono" data-q="clo">7</span> ; (o,w) = <span class="mono" data-q="cow">7</span> ; (n,e) = <span class="mono" data-q="cne">6</span> ; (e,w) = <span class="mono" data-q="cew">6</span> ; (w,e) = <span class="mono" data-q="cwe">2</span>.</li>
+      <li><span class="lab">Quan sát</span> Cao nhất = (l,o) = (o,w).</li>
+      <li><span class="lab">Vì sao</span> Cặp nằm trong nhiều từ → tần số = tổng tần số các từ đó.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Gộp</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> Hòa → chọn theo <b>quy ước</b> (vd cặp xuất hiện trước) → gộp (l,o) → "lo".</li>
+      <li><span class="lab">Vì sao</span> Gộp cặp phổ biến trước → rút ngắn chuỗi nhiều nhất cho mỗi token thêm vào.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Cập nhật &amp; lặp</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> (lo,w) = <span class="mono" data-q="clow">7</span> → gộp → token <b>"low"</b>.</li>
+      <li><span class="lab">Dự đoán</span> "low" thành <b>1</b> token (thay vì 3 ký tự).</li>
+      <li><span class="lab">Vì sao</span> Đọc "low" tốn <b>1 đơn vị</b> → chuỗi ngắn hơn.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Con-từ</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> l,o → "lo"; "lo",w → "low" (theo thứ tự gộp).</li>
+      <li><span class="lab">Vì sao</span> Từ phổ biến → 1 token (chuỗi ngắn); từ lạ → tách mảnh (từ điển gọn, không OOV).</li>
+      <li><span class="lab">Tóm tắt</span> Lặp gộp cặp tần số cao nhất tới đủ K token.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> BPE = lặp <b>gộp cặp tần số cao</b> → từ điển con-từ; phổ biến thành 1 token, hiếm ghép từ mảnh (không OOV).
+    Bài tiếp (I2): <b style="color:var(--accent2)">sampling</b> — từ logits ra token bằng softmax + lấy mẫu (nhiệt độ, top-k).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I1 · BPE Tokenization (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CX='#0e7490', CC='#b45309', CN='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function line(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'"/>';}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+function chbox(x,y,ch,c){return rct(x,y,20,20,c+'14',c,1.3)+ctxt(x+10,y+14,ch,c,11,700);}
+
+/* ① Ba từ tách ký tự + cung cặp */
+function drawWords(f){
+  var svg=el('figWords'); if(!svg) return;
+  var s='';
+  function word(y, chars, freq, lab){
+    var x0=16;
+    for(var i=0;i<chars.length;i++){ s += chbox(x0+i*24,y,chars[i],CX); }
+    s += txt(x0+chars.length*24+4, y+14, '×'+freq, CC, 11);
+    // cung cặp đầu (ký tự 0-1)
+    s += '<path d="M'+(x0+10)+' '+(y+22)+' q12 8 24 0" fill="none" stroke="'+CC+'" stroke-width="1.3"/>';
+    return lab;
+  }
+  word(10, ['l','o','w'], f.low);
+  word(48, ['l','o','w','e','r'], f.lwr);
+  word(86, ['n','e','w'], f.nw);
+  s += txt(200, 24, 'cung = một cặp liền kề', GRY, 8.5);
+  svg.innerHTML=s;
+}
+
+/* ② Gộp (l,o) → "lo" */
+function drawMerge(){
+  var svg=el('figMerge'); if(!svg) return;
+  var s='';
+  s += chbox(40,38,'l',CC)+chbox(64,38,'o',CC);
+  s += '<path d="M100 48 L150 48" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#am1)"/>';
+  s += '<defs><marker id="am1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#94a3b8"/></marker></defs>';
+  s += rct(160,36,44,24,CN+'14',CN,1.5)+ctxt(182,52,'lo',CN,12,700);
+  s += ctxt(70,30,'cặp cao nhất',CC,8.5,700);
+  s += ctxt(182,30,'token mới',CN,8.5,700);
+  s += ctxt(125,80,'dán "l o" → "lo" ở mọi từ',GRY,8.5,400);
+  svg.innerHTML=s;
+}
+
+/* ③ Cập nhật: low = lo w → low */
+function drawUpdate(){
+  var svg=el('figUpdate'); if(!svg) return;
+  var s='';
+  s += rct(20,36,32,24,CN+'14',CN,1.4)+ctxt(36,52,'lo',CN,11,700);
+  s += chbox(58,38,'w',CX);
+  s += '<path d="M92 48 L140 48" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#am2)"/>';
+  s += '<defs><marker id="am2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#94a3b8"/></marker></defs>';
+  s += rct(150,34,52,28,CN+'18',CN,1.6)+ctxt(176,52,'low',CN,13,700);
+  s += ctxt(48,30,'"lo" + "w"',GRY,8.5,700);
+  s += ctxt(176,28,'token mới',CN,8.5,700);
+  s += ctxt(150,84,'vòng 2: cặp (lo,w) lại cao nhất → gộp',GRY,8.5,400);
+  svg.innerHTML=s;
+}
+
+/* ④ Cây gộp l o w → lo → low ; nhánh lowest = low + est */
+function drawTree(){
+  var svg=el('figTree'); if(!svg) return;
+  var s='';
+  // leaves
+  s += chbox(30,110,'l',CX)+chbox(60,110,'o',CX)+chbox(110,110,'w',CX);
+  // lo node
+  s += rct(38,66,44,22,CN+'14',CN,1.4)+ctxt(60,81,'lo',CN,11,700);
+  s += line(40,110,58,88,'#94a3b8',1.3)+line(70,110,66,88,'#94a3b8',1.3);
+  // low node
+  s += rct(52,24,52,24,CN+'18',CN,1.6)+ctxt(78,40,'low',CN,12,700);
+  s += line(60,66,74,48,'#94a3b8',1.3)+line(120,110,92,48,'#94a3b8',1.3);
+  // right: lowest = low + est
+  s += rct(200,24,52,24,CN+'18',CN,1.6)+ctxt(226,40,'low',CN,12,700);
+  s += rct(262,24,44,24,CC+'14',CC,1.4)+ctxt(284,40,'est',CC,11,700);
+  s += rct(224,86,58,26,'#f8fafc','#cbd5e1',1.3)+ctxt(253,103,'lowest',GRY,11,700);
+  s += line(226,48,246,86,'#94a3b8',1.3)+line(284,48,262,86,'#94a3b8',1.3);
+  s += ctxt(253,124,'từ lạ → tách mảnh đã biết',GRY,8.5,400);
+  s += ctxt(78,142,'từ phổ biến → gộp thành 1 token',GRY,8.5,400);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var flow=WB.randInt(4,6), flwr=WB.randInt(2,3);
+  var fnew=Math.min(WB.randInt(3,6), flow+flwr-1);
+  var clo=flow+flwr;
+  WB.setAll({
+    flow:String(flow), flwr:String(flwr), fnew:String(fnew),
+    clo:String(clo), cow:String(clo), clow:String(clo),
+    cne:String(fnew), cew:String(fnew), cwe:String(flwr)
+  });
+  drawWords({low:flow, lwr:flwr, nw:fnew});
+}
+
+WB.wire(generate);
+generate();
+drawMerge();
+drawUpdate();
+drawTree();
+</script>
+</body>
+</html>

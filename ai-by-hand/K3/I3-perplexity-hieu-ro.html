@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài I3 — Perplexity (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+/* ===== additive — template HIỂU RÕ: hình-để-điền trên ĐỀ + chùm câu hỏi ===== */
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+/* hình + chú thích */
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+/* CHÙM CÂU HỎI */
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+/* KHỐI TỰ TÍNH */
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:40px;border-bottom:1px solid #94a3b8;}
+/* ĐÁP ÁN gọn */
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài I3</span><h1>Perplexity <small>— đo độ "bối rối" của mô hình ngôn ngữ (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Perplexity (PPL) là chỉ số chuẩn để <b>so sánh</b> mô hình ngôn ngữ: <b>mức "bối rối"</b> trung bình khi đoán token kế.
+    PPL = <b>exp của cross-entropy trung bình</b> → "số lựa chọn hiệu dụng" mô hình phân vân giữa. PPL <b>thấp = tốt</b> (tự tin &amp; đúng).
+    <div class="formula">PPL = exp( −(1/N) Σ ln p(tokenₜ) ) = exp( cross-entropy trung bình )</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">p token đúng</b> (lam) · <b class="ckk">độ bất ngờ −ln p</b> (cam) · <b class="cvv">PPL</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Nếu mô hình <b>chắc chắn đúng</b> (p=1 cho token thật) → bối rối = 1 (không phân vân). Nếu đoán mò giữa V token đều nhau → PPL ≈ V.
+    PPL = <b>"số mặt xúc xắc đều"</b> tương đương với độ bất định của mô hình.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 token · bảng ln &amp; eˣ</span></div>
+    <div class="calc" style="font-size:13px">
+      p (mô hình gán cho token đúng) = ( <span class="gv" data-q="p1">0.5</span>, <span class="gv" data-q="p2">0.25</span>, <span class="gv" data-q="p3">0.5</span> )
+      <table class="extbl" style="display:inline-table;vertical-align:middle;margin-left:8px"><tr><td class="h">p</td><td>0.25</td><td>0.5</td></tr><tr><td class="h">ln p</td><td>−1.39</td><td>−0.69</td></tr></table>
+      <table class="extbl" style="display:inline-table;vertical-align:middle;margin-left:6px"><tr><td class="h">x</td><td>0.69</td><td>0.92</td><td>1.16</td><td>1.39</td></tr><tr><td class="h">eˣ</td><td>2.00</td><td>2.51</td><td>3.19</td><td>4.00</td></tr></table>
+    </div>
+    <div class="note">p = xác suất mô hình gán cho token <b>đúng</b> ở mỗi bước. p cao → mô hình tự tin đúng; p thấp → "bất ngờ".</div>
+  </div>
+
+  <!-- CỤM 1 — ĐỘ BẤT NGỜ -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Độ bất ngờ mỗi token (−ln p)</h2><span class="tag">cross-entropy từng bước</span></div>
+    <div class="figwrap">
+      <svg id="figSurprise" class="fig" viewBox="0 0 240 106" width="72mm" height="32mm" aria-label="ba thanh -ln p, token có p thấp thì thanh cao (bất ngờ hơn)"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> −ln p là "độ bất ngờ" mỗi token. p <b>cao</b> → thanh <b>thấp</b> (đoán đúng, không bất ngờ); p <b>thấp</b> → thanh <b>cao</b> (bất ngờ). Điền 3 giá trị.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — độ bất ngờ (tra bảng ln)</span><br>
+      −ln p₁ = −ln(<span data-q="p1">0.5</span>) = <span class="blk"></span> &nbsp;;&nbsp; −ln p₂ = −ln(<span data-q="p2">0.25</span>) = <span class="blk"></span> &nbsp;;&nbsp; −ln p₃ = −ln(<span data-q="p3">0.5</span>) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Token nào bất ngờ nhất (−ln p lớn nhất)? Nó có p ra sao? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao dùng −ln p làm "độ bất ngờ" (p=1 → 0, p→0 → ∞)? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I3</span><h1>Perplexity <small>— trung bình &amp; mũ hóa</small></h1></div>
+
+  <!-- CỤM 2 — CE TRUNG BÌNH -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Cross-entropy trung bình</h2><span class="tag">lấy trung bình −ln p</span></div>
+    <div class="figwrap">
+      <svg id="figAvg" class="fig" viewBox="0 0 240 108" width="72mm" height="33mm" aria-label="ba thanh -ln p và đường ngang trung bình CE"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> lấy <b>trung bình</b> ba thanh −ln p → đường ngang <b>CE</b> (cam đứt). Đây là cross-entropy trung bình trên chuỗi — "độ bất ngờ trung bình".</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — CE trung bình</span> <span class="sub">(−ln p lấy từ Bước 1)</span><br>
+      CE = ( <span class="blk"></span> + <span class="blk"></span> + <span class="blk"></span> ) ÷ 3 = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> CE nằm giữa giá trị −ln p nhỏ nhất và lớn nhất, đúng không? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — PPL -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Perplexity = e^CE</h2><span class="tag">mũ hóa</span></div>
+    <div class="figwrap">
+      <svg id="figPPL" class="fig" viewBox="0 0 250 96" width="74mm" height="28mm" aria-label="CE qua phép e mũ ra PPL, minh hoạ xúc xắc PPL mặt"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mũ hóa CE → <b>PPL</b> (tím): "số token đều khả năng" tương đương. PPL ≈ số mặt của một xúc xắc <b>đều</b> gây cùng độ bối rối. Điền PPL.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — perplexity (tra bảng eˣ)</span><br>
+      PPL = e^CE = e^<span class="blk"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> PPL vừa tính tương đương "phân vân giữa ~mấy token"? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I3</span><h1>Perplexity <small>— đọc &amp; so sánh</small></h1></div>
+
+  <!-- CỤM 4 — ĐỌC PPL -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đọc PPL: 1 hoàn hảo → |V| đoán mò</h2><span class="tag">thấp = tốt</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figScale" class="fig" viewBox="0 0 400 96" width="150mm" height="36mm" aria-label="thang PPL từ 1 hoàn hảo tới V đoán mò, đánh dấu vị trí PPL của mô hình"></svg>
+    </div>
+    <div class="note"><b>Đọc:</b> PPL = 1 → mô hình <b>hoàn hảo</b> (luôn p=1 cho token đúng); càng cao càng tệ; PPL = <b>|V|</b> (kích thước từ điển) → <b>đoán mò hoàn toàn</b>. Chỉ so PPL của các mô hình trên <b>cùng</b> tập kiểm.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Mô hình A có PPL=2.5, mô hình B có PPL=8 (cùng tập kiểm). Cái nào <b>tốt hơn</b>? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> PPL=1 nghĩa là gì về khả năng đoán của mô hình? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm tắt 1 câu: perplexity đo cái gì &amp; tính thế nào? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I3</span><h1>Perplexity <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Độ bất ngờ</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> −ln p = ( <span class="mono" data-q="nl1">0.69</span>, <span class="mono" data-q="nl2">1.39</span>, <span class="mono" data-q="nl3">0.69</span> ).</li>
+      <li><span class="lab">Quan sát</span> Token p thấp nhất (0.25) → bất ngờ nhất (−ln = 1.39).</li>
+      <li><span class="lab">Vì sao</span> −ln p: p=1 → 0 (không bất ngờ); p→0 → ∞ (rất bất ngờ) → hợp làm "độ bất ngờ".</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — CE trung bình</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> CE = <span class="mono" data-q="ce">0.92</span> (trung bình 3 giá trị −ln p).</li>
+      <li><span class="lab">Quan sát</span> CE nằm giữa min &amp; max của −ln p.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Perplexity</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> PPL = e^CE = <span class="mono" data-q="ppl">2.51</span>.</li>
+      <li><span class="lab">Quan sát</span> Tương đương phân vân giữa ~<span class="mono" data-q="pplr">2.5</span> token đều khả năng.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Đọc PPL</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> PPL=2.5 &lt; 8 → mô hình A <b>tốt hơn</b> (bối rối ít hơn).</li>
+      <li><span class="lab">Vì sao</span> PPL=1 → luôn gán p=1 cho token đúng (hoàn hảo).</li>
+      <li><span class="lab">Tóm tắt</span> PPL = exp(CE trung bình) = số lựa chọn hiệu dụng; thấp là tốt.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> PPL = exp(cross-entropy trung bình) = "số token đều khả năng" mô hình phân vân; <b>thấp là tốt</b> (1 = hoàn hảo, |V| = đoán mò).
+    Bài tiếp (I5): <b style="color:var(--accent2)">LoRA</b> — tinh chỉnh mô hình lớn rẻ bằng ma trận hạng thấp.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var NL={0.5:0.69, 0.25:1.39}, LNS={0.5:'−0.69', 0.25:'−1.39'};
+var CP='#0e7490', CS='#b45309', CPP='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function line(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'"/>';}
+function dln(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'" stroke-dasharray="4 3"/>';}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+
+/* ① Thanh −ln p (bất ngờ) */
+function drawSurprise(p){
+  var svg=el('figSurprise'); if(!svg) return;
+  var s='', x0=30, w=40, gap=24, base=76, U=34;
+  for(var i=0;i<3;i++){
+    var x=x0+i*(w+gap), h=NL[p[i]]*U;
+    s += rct(x, base-h, w, h, CS+'cc');
+    s += ctxt(x+w/2, base-h-4, '?', CS, 10, 700);
+    s += ctxt(x+w/2, base+11, 't'+(i+1), GRY, 9, 700);
+    s += ctxt(x+w/2, base+22, 'p='+p[i], CP, 8.5, 700);
+  }
+  s += txt(x0, 16, '−ln p = độ bất ngờ', CS, 9);
+  svg.innerHTML=s;
+}
+
+/* ② −ln p + đường trung bình CE */
+function drawAvg(p){
+  var svg=el('figAvg'); if(!svg) return;
+  var s='', x0=30, w=40, gap=24, base=78, U=34;
+  var ce=(NL[p[0]]+NL[p[1]]+NL[p[2]])/3;
+  for(var i=0;i<3;i++){ var x=x0+i*(w+gap), h=NL[p[i]]*U; s += rct(x, base-h, w, h, CS+'55'); s += ctxt(x+w/2, base+11, 't'+(i+1), GRY, 9, 700); }
+  var yce=base-ce*U;
+  s += dln(x0-6, yce, x0+3*(w+gap), yce, CS, 1.8);
+  s += ctxt(x0+3*(w+gap)+2, yce+4, 'CE=?', CS, 9, 700);
+  s += txt(x0, 16, 'trung bình → CE', CS, 9);
+  svg.innerHTML=s;
+}
+
+/* ③ CE → e^ → PPL (+ xúc xắc minh hoạ) */
+function drawPPL(){
+  var svg=el('figPPL'); if(!svg) return;
+  var s='';
+  s += rct(14,34,54,28,CS+'14',CS,1.5)+ctxt(41,52,'CE',CS,12,700);
+  s += '<path d="M74 48 L120 48" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#ai3)"/>';
+  s += '<defs><marker id="ai3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#94a3b8"/></marker></defs>';
+  s += ctxt(97,40,'e^',GRY,10,700);
+  s += rct(126,32,52,32,CPP+'14',CPP,1.6)+ctxt(152,53,'PPL',CPP,13,700);
+  // xúc xắc
+  s += rct(200,34,30,30,'#f8fafc','#cbd5e1',1.3)+ctxt(215,53,'⁙',GRY,16,700);
+  s += ctxt(215,78,'~PPL mặt',GRY,8.5,700);
+  s += ctxt(120,88,'mũ hóa CE → số token đều tương đương',GRY,8.5,400);
+  svg.innerHTML=s;
+}
+
+/* ④ Thang PPL: 1 → |V|, đánh dấu PPL mô hình */
+function drawScale(ppl){
+  var svg=el('figScale'); if(!svg) return;
+  var s='', x0=30, W=340, y=50;
+  s += line(x0,y,x0+W,y,'#cbd5e1',2);
+  s += '<circle cx="'+x0+'" cy="'+y+'" r="4" fill="'+CPP+'"/>'+ctxt(x0,y+18,'1',GRY,9,700)+ctxt(x0,y+30,'hoàn hảo',GRY,8,400);
+  s += '<circle cx="'+(x0+W)+'" cy="'+y+'" r="4" fill="#94a3b8"/>'+ctxt(x0+W,y+18,'|V|',GRY,9,700)+ctxt(x0+W,y+30,'đoán mò',GRY,8,400);
+  // vị trí PPL (log scale minh hoạ, PPL nhỏ nằm gần trái)
+  var frac=Math.min((ppl-1)/12, 0.85);
+  var px=x0+W*frac;
+  s += '<path d="M'+px+' '+(y-26)+' L'+(px-5)+' '+(y-14)+' L'+(px+5)+' '+(y-14)+' z" fill="'+CPP+'"/>';
+  s += ctxt(px, y-30, 'PPL ≈ '+ppl.toFixed(1), CPP, 10, 700);
+  s += '<circle cx="'+px+'" cy="'+y+'" r="4" fill="'+CPP+'"/>';
+  s += ctxt(x0+W/2, y+30, 'càng trái càng tốt (bối rối ít)', GRY, 8.5, 400);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f2=WB.fmt2;
+  var pool=[0.5,0.25];
+  var p=[WB.pick(pool), WB.pick(pool), WB.pick(pool)];
+  var nl=[NL[p[0]], NL[p[1]], NL[p[2]]];
+  var ce=Math.round((nl[0]+nl[1]+nl[2])/3*100)/100;
+  var ppl=Math.round(Math.exp(ce)*100)/100;
+  WB.setAll({
+    p1:String(p[0]), p2:String(p[1]), p3:String(p[2]),
+    nl1:f2(nl[0]), nl2:f2(nl[1]), nl3:f2(nl[2]),
+    ce:f2(ce), ppl:f2(ppl), pplr:(Math.round(ppl*10)/10).toString()
+  });
+  drawSurprise(p);
+  drawAvg(p);
+  drawScale(ppl);
+}
+
+WB.wire(generate);
+generate();
+drawPPL();
+</script>
+</body>
+</html>

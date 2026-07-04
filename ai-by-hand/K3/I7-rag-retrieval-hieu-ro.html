@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài I7 — RAG retrieval (cosine, bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài I7</span><h1>RAG Retrieval <small>— tìm tài liệu giống nhất bằng cosine (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> LLM không nhớ hết mọi tài liệu &amp; dễ "bịa". <b>RAG</b> tra cứu đoạn liên quan theo độ giống ngữ nghĩa
+    (cosine) rồi cho LLM đọc → trả lời có căn cứ, cập nhật kiến thức mới mà không huấn luyện lại.
+    <div class="formula">cos(q, dᵢ) = (q·dᵢ) / (‖q‖·‖dᵢ‖) → chọn tài liệu có cosine lớn nhất (top-k)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">q (câu hỏi)</b> (lam) · <b class="ckk">tài liệu dᵢ</b> (cam) · <b class="cvv">đoạn được chọn</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Câu hỏi và mỗi tài liệu là một <b>mũi tên ngữ nghĩa</b>. Tài liệu nào <b>cùng hướng</b> câu hỏi nhất (góc nhỏ nhất → cosine cao) thì
+    liên quan nhất → lấy nó đưa cho LLM. Như tìm sách theo "chủ đề" chứ không theo từ khóa khớp chính xác.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">q + 3 tài liệu · mọi ‖·‖ = 5</span></div>
+    <div class="calc" style="font-size:14px">
+      q = ( <span class="gv" data-q="q1">3</span>, <span class="gv" data-q="q2">4</span> ) ·
+      d₁=( <span class="gv" data-q="d11">4</span>,<span class="gv" data-q="d12">3</span> ),
+      d₂=( <span class="gv" data-q="d21">0</span>,<span class="gv" data-q="d22">5</span> ),
+      d₃=( <span class="gv" data-q="d31">−3</span>,<span class="gv" data-q="d32">4</span> )
+    </div>
+    <div class="note">Mọi vectơ có độ dài 5 (bộ ba Pythagore) → mẫu số cosine = ‖q‖·‖dᵢ‖ = 5·5 = <b>25</b> luôn (tính nhẩm).</div>
+  </div>
+
+  <!-- CỤM 1 — TÍCH VÔ HƯỚNG -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Tích vô hướng q·dᵢ (tử số cosine)</h2><span class="tag">mức cùng chiều thô</span></div>
+    <div class="figwrap">
+      <svg id="figAngle" class="fig" viewBox="0 0 210 170" width="64mm" height="52mm" aria-label="mũi tên câu hỏi q màu lam và ba mũi tên tài liệu màu cam trên mặt phẳng, mỗi cái tạo một góc với q"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mũi tên <b>lam</b> = q; ba mũi tên <b>cam</b> = tài liệu. Cái nào <b>gần hướng q nhất</b> (góc nhỏ)? Tích vô hướng q·dᵢ = x₁·x₂ + y₁·y₂ đo "mức cùng chiều".</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — tích vô hướng q·dᵢ</span><br>
+      q·d₁ = <span data-q="q1">3</span>·<span data-q="d11">4</span> + <span data-q="q2">4</span>·<span data-q="d12">3</span> = <span class="blk"></span><br>
+      q·d₂ = <span data-q="q1">3</span>·<span data-q="d21">0</span> + <span data-q="q2">4</span>·<span data-q="d22">5</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      q·d₃ = <span data-q="q1">3</span>·<span data-q="d31">−3</span> + <span data-q="q2">4</span>·<span data-q="d32">4</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Nhìn hình, tài liệu nào bạn <b>đoán</b> giống q nhất (trước khi tính)? → <span class="blk" style="min-width:60px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao chỉ tích vô hướng <b>chưa đủ</b> để so công bằng (nếu độ dài khác nhau)? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I7</span><h1>RAG Retrieval <small>— chuẩn hóa &amp; chọn top-1</small></h1></div>
+
+  <!-- CỤM 2 — COSINE -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa thành cosine (÷ 25)</h2><span class="tag">so công bằng</span></div>
+    <div class="figwrap">
+      <svg id="figCos" class="fig" viewBox="0 0 240 120" width="80mm" height="40mm" aria-label="ba cột cosine cho ba tài liệu, chiều cao là mức giống nhau, cột cao nhất được chọn, đỉnh đánh dấu hỏi"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> ba cột = cosine của d₁, d₂, d₃ (đỉnh "?"). Chia tích vô hướng cho <b>25</b> → mọi giá trị về khoảng [−1, 1] → so công bằng. Cột <b>cao nhất</b> = tài liệu được chọn.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — cosine = (q·dᵢ) / 25, tử số lấy từ Bước 1</span><br>
+      cos₁ = <span class="blk" style="min-width:30px"></span> / 25 = <span class="blk"></span> &nbsp;;&nbsp;
+      cos₂ = <span class="blk" style="min-width:30px"></span> / 25 = <span class="blk"></span> &nbsp;;&nbsp;
+      cos₃ = <span class="blk" style="min-width:30px"></span> / 25 = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Cosine = 1 nghĩa là gì về góc giữa q &amp; tài liệu? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — TOP-1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Chọn top-1 (cosine lớn nhất)</h2><span class="tag">đưa vào ngữ cảnh LLM</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — chọn</span><br>
+      max(cos₁, cos₂, cos₃) = <span class="blk" style="min-width:40px"></span> &nbsp;→&nbsp; tài liệu được chọn = <span class="blk" style="min-width:44px"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu lấy <b>top-2</b> thay vì top-1, hai tài liệu nào được đưa vào? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao lấy top-<b>k</b> (nhiều đoạn) thường tốt hơn chỉ 1 đoạn? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần I<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I7</span><h1>RAG Retrieval <small>— đường ống &amp; vì sao có căn cứ</small></h1></div>
+
+  <!-- CỤM 4 — PIPELINE -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Toàn cảnh: đường ống RAG</h2><span class="tag">nhúng → tra → đọc → trả lời</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figPipe" class="fig" viewBox="0 0 380 92" width="150mm" height="36mm" aria-label="câu hỏi được nhúng thành vectơ, tra kho vectơ lấy top-k đoạn gần nhất, dán vào prompt, LLM trả lời dựa trên đoạn đó"></svg>
+    </div>
+    <div class="note">Nhúng câu hỏi → tìm top-k đoạn gần nhất trong <b>kho vectơ</b> → dán vào prompt → LLM trả lời <b>dựa trên</b> đoạn đó (có căn cứ, trích nguồn được).</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> RAG khắc phục hai điểm yếu nào của LLM (bịa &amp; kiến thức cũ)? → <span class="blk" style="min-width:130px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: quy trình RAG chọn &amp; dùng tài liệu thế nào? → <span class="blk" style="min-width:150px"></span></li>
+      <li><span class="qtag qt-see">Quan sát</span> Bước nào là "tra cứu", bước nào là "sinh"? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài I7</span><h1>RAG Retrieval <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — tích vô hướng</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> q·d₁ = <span class="mono" data-q="dot1">24</span> ; q·d₂ = <span class="mono" data-q="dot2">20</span> ; q·d₃ = <span class="mono" data-q="dot3">7</span>.</li>
+      <li><span class="lab">Vì sao</span> Dot lớn khi cùng chiều <b>và</b> khi vectơ dài → chưa công bằng nếu ‖·‖ khác nhau; cần chia độ dài.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — cosine</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> cos = ( <span class="mono" data-q="cos1">0.96</span>, <span class="mono" data-q="cos2">0.80</span>, <span class="mono" data-q="cos3">0.28</span> ) (mỗi dot ÷ 25).</li>
+      <li><span class="lab">Quan sát</span> cos = 1 → hai vectơ <b>cùng hướng</b> (góc 0°); cos = 0 → vuông góc.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — top-1</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> max = cosine lớn nhất → tài liệu <span class="mono" data-q="best">d₁</span>.</li>
+      <li><span class="lab">Dự đoán</span> top-2 = hai tài liệu cosine cao nhất (vd d₁ &amp; d₂).</li>
+      <li><span class="lab">Vì sao</span> Nhiều đoạn → phủ nhiều khía cạnh câu hỏi, giảm rủi ro 1 đoạn thiếu.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — đường ống</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> Đưa căn cứ thật vào ngữ cảnh → bớt <b>bịa đặt</b> &amp; cập nhật <b>kiến thức mới</b> không cần train lại.</li>
+      <li><span class="lab">Quan sát</span> Tra = nhúng + cosine + top-k (retrieval); Sinh = LLM đọc đoạn &amp; trả lời (generation).</li>
+      <li><span class="lab">Tóm tắt</span> Nhúng q → cosine với kho → lấy top-k → LLM trả lời dựa trên đoạn đó.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> RAG = nhúng + cosine + lấy top-k đoạn liên quan cho LLM đọc → trả lời có căn cứ. Bài tiếp (I8): sinh trọn một
+    chuỗi bằng <b style="color:var(--accent2)">greedy decode</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CQ='#0e7490', CD='#b45309', CSEL='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+
+var VS=[[3,4],[4,3],[0,5],[5,0],[-3,4],[-4,3],[3,-4],[4,-3]];
+
+/* ① góc 2D q + 3 docs (ĐỘNG, KHÔNG lộ winner) */
+function drawAngle(q, d){
+  var svg=el('figAngle'); if(!svg) return;
+  var ox=105, oy=95, sc=11;
+  function mk(c){return '<marker id="a'+c.replace('#','')+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+c+'"/></marker>';}
+  function arrow(vx,vy,c,w,lab){
+    var ex=ox+vx*sc, ey=oy-vy*sc;
+    return '<line x1="'+ox+'" y1="'+oy+'" x2="'+ex.toFixed(1)+'" y2="'+ey.toFixed(1)+'" stroke="'+c+'" stroke-width="'+w+'" marker-end="url(#a'+c.replace('#','')+')"/>'+
+      (lab?ctxt(ex+(vx>=0?7:-7), ey-3, lab, c, 9, 700):'');
+  }
+  var s='<defs>'+mk(CQ)+mk(CD)+'</defs>';
+  s+='<line x1="16" y1="'+oy+'" x2="194" y2="'+oy+'" stroke="#e8e8e8" stroke-width="1"/>';
+  s+='<line x1="'+ox+'" y1="16" x2="'+ox+'" y2="168" stroke="#e8e8e8" stroke-width="1"/>';
+  for(var i=0;i<3;i++){ s+=arrow(d[i][0],d[i][1],CD,1.6,'d'+(i+1)); }
+  s+=arrow(q[0],q[1],CQ,2.6,'q');
+  s+=ctxt(ox, 12, 'góc nhỏ = giống', GRY, 8);
+  svg.innerHTML=s;
+}
+
+/* ② cột cosine "?" (ĐỘNG) */
+function drawCos(cos){
+  var svg=el('figCos'); if(!svg) return;
+  var base=98, x0=40, gap=58, bw=30;
+  var s='<line x1="'+(x0-10)+'" y1="'+base+'" x2="'+(x0+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<line x1="'+(x0-10)+'" y1="'+(base-1*74)+'" x2="'+(x0+3*gap-30)+'" y2="'+(base-1*74)+'" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"/>';
+  s+=txt(x0-34, base-74+3, '1.0', GRY, 8);
+  for(var i=0;i<3;i++){
+    var bx=x0+i*gap, h=Math.max(cos[i],0.02)*74;
+    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+CD+'2a" stroke="'+CD+'" stroke-width="1.3"/>';
+    s+=ctxt(bx+bw/2, base-h-4, '?', CD, 11, 700);
+    s+=ctxt(bx+bw/2, base+13, 'd'+(i+1), GRY, 9, 700);
+  }
+  s+=ctxt(x0+3*gap-6, 16, 'cột cao nhất', CSEL, 8.5, 700)+ctxt(x0+3*gap-6, 27, '= được chọn', CSEL, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+/* ③ pipeline RAG (TĨNH) */
+function drawPipe(){
+  var svg=el('figPipe'); if(!svg) return;
+  var s='', y=20, h=30;
+  var boxes=[['q (câu hỏi)',CQ],['nhúng →vectơ',CQ],['cosine với\nkho vectơ',CD],['top-k đoạn',CSEL],['LLM đọc\n→ trả lời',GRY]];
+  var x=6, w=70;
+  for(var i=0;i<boxes.length;i++){
+    var lines=boxes[i][0].split('\n');
+    s+=rct(x,y,w,h,boxes[i][1]+'18',boxes[i][1],1.4);
+    for(var k=0;k<lines.length;k++){ s+=ctxt(x+w/2, y+(lines.length>1?13:19)+k*11, lines[k], boxes[i][1], 8, 700); }
+    if(i<boxes.length-1){ s+='<line x1="'+(x+w)+'" y1="'+(y+h/2)+'" x2="'+(x+w+6)+'" y2="'+(y+h/2)+'" stroke="'+GRY+'" stroke-width="1.4"/>'; }
+    x+=w+6;
+  }
+  s+=ctxt(120, 76, '← TRA CỨU (retrieval) →', CD, 8.5, 700)+ctxt(320, 76, '← SINH →', GRY, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f2=WB.fmt2;
+  var pickset=WB.pickDistinct(VS,4);
+  var q=pickset[0], d=[pickset[1],pickset[2],pickset[3]];
+  function dot(a,b){return a[0]*b[0]+a[1]*b[1];}
+  var dots=d.map(function(x){return dot(q,x);});
+  var cos=dots.map(function(v){return Math.round(v/25*100)/100;});
+  var bi=cos.indexOf(Math.max(cos[0],cos[1],cos[2]));
+  function v(x){return WB.fmtInt(x);}
+  WB.setAll({
+    q1:v(q[0]), q2:v(q[1]),
+    d11:v(d[0][0]), d12:v(d[0][1]), d21:v(d[1][0]), d22:v(d[1][1]), d31:v(d[2][0]), d32:v(d[2][1]),
+    dot1:v(dots[0]), dot2:v(dots[1]), dot3:v(dots[2]),
+    cos1:f2(cos[0]), cos2:f2(cos[1]), cos3:f2(cos[2]),
+    best:'d'+(bi+1)
+  });
+  drawAngle(q,d);
+  drawCos(cos);
+}
+WB.wire(generate);
+generate();
+drawPipe();
+</script>
+</body>
+</html>

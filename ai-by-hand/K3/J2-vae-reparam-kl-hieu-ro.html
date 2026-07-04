@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài J2 — VAE reparam + KL (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài J2</span><h1>VAE — Reparam + KL <small>— hai mẹo cốt lõi của VAE (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> VAE muốn <b>lấy mẫu</b> z nhưng "lấy mẫu" chặn gradient. <b>Reparam</b> tách ngẫu nhiên ra ε để z <b>khả vi</b>
+    theo μ, σ. <b>KL</b> kéo phân phối ẩn về N(0,1) → vùng ẩn liền mạch, lấy mẫu sinh ảnh mới được.
+    <div class="formula">z = μ + σ·ε, ε ~ N(0,1) · KL = ½ Σ ( μ² + σ² − 1 − ln σ² )</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">μ, σ (từ encoder)</b> (lam) · <b class="ckk">z (mã lấy mẫu)</b> (cam) · <b class="cvv">ε &amp; vùng N(0,1)</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    <b>Reparam:</b> thay vì "bốc z ngẫu nhiên" (không đạo hàm được), ta bốc ε cố định rồi <b>dịch &amp; co</b> bằng μ, σ → gradient chảy qua
+    μ, σ như thường. <b>KL:</b> "phạt" nếu mã ẩn lệch khỏi N(0,1) → giữ vùng ẩn gọn, không rỗng chỗ.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 chiều ẩn · σ = 1</span></div>
+    <div class="calc" style="font-size:14px">
+      μ = ( <span class="gv" data-q="mu1">1</span>, <span class="gv" data-q="mu2">0</span> ) ·
+      σ = ( <span class="gv" data-q="s1">1</span>, <span class="gv" data-q="s2">1</span> ) ·
+      nhiễu ε = ( <span class="gv" data-q="e1">0.5</span>, <span class="gv" data-q="e2">−0.5</span> )
+    </div>
+    <div class="note">σ = 1 → ln σ² = ln 1 = 0 (chọn cho dễ tính tay). ε rút một lần từ N(0,1), coi như hằng.</div>
+  </div>
+
+  <!-- CỤM 1 — REPARAM -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Reparam: z = μ + σ·ε (làm z khả vi)</h2><span class="tag">dịch &amp; co</span></div>
+    <div class="figwrap">
+      <svg id="figFlow" class="fig" viewBox="0 0 280 120" width="94mm" height="40mm" aria-label="hộp mu sigma lam và hộp epsilon tím gộp qua phép cộng thành z cam, gradient chảy ngược qua mu sigma nhưng không qua epsilon"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> μ,σ (<b>lam</b>) và ε (<b>tím</b>) gộp thành z (<b>cam</b>). Mũi tên gradient (nét đứt) chảy ngược <b>qua μ,σ</b> nhưng <b>không</b> qua ε → z khả vi theo μ,σ.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — z = μ + σ·ε</span><br>
+      z₁ = <span data-q="mu1">1</span> + <span data-q="s1">1</span>·<span data-q="e1">0.5</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      z₂ = <span data-q="mu2">0</span> + <span data-q="s2">1</span>·<span data-q="e2">−0.5</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Nếu "bốc z ngẫu nhiên" thẳng thì gradient tới μ,σ gặp vấn đề gì? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-see">Quan sát</span> Trong công thức, thành phần nào là <b>ngẫu nhiên</b>, thành phần nào <b>học được</b>? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần J<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J2</span><h1>VAE — Reparam + KL <small>— phạt KL kéo về N(0,1)</small></h1></div>
+
+  <!-- CỤM 2 — KL TỪNG CHIỀU -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>KL từng chiều = ½(μ² + σ² − 1 − ln σ²)</h2><span class="tag">phạt lệch chuẩn</span></div>
+    <div class="figwrap">
+      <svg id="figLatent" class="fig" viewBox="0 0 220 150" width="66mm" height="45mm" aria-label="vòng tròn phân phối chuẩn N(0,1) tâm gốc, điểm mu lệch khỏi tâm, mũi tên KL kéo về gốc"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> vòng tròn = N(0,1) tâm gốc (<b>tím</b>). Điểm μ (<b>lam</b>) lệch khỏi tâm → KL (mũi tên) <b>kéo về gốc</b>. Với σ=1: KL mỗi chiều rút gọn còn <b>½μ²</b>.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — KL mỗi chiều (σ=1 → chỉ còn ½μ²)</span><br>
+      chiều 1: ½(<span data-q="mu1">1</span>² + 1 − 1 − 0) = ½·<span data-q="mu1">1</span>² = <span class="blk"></span><br>
+      chiều 2: ½(<span data-q="mu2">0</span>² + 1 − 1 − 0) = ½·<span data-q="mu2">0</span>² = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Chiều nào μ = 0 thì KL bằng bao nhiêu? Chiều μ ≠ 0 thì sao? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao KL = 0 đúng khi (μ,σ) = (0,1)? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — TỔNG KL -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tổng KL = cộng các chiều</h2><span class="tag">loss = tái tạo + KL</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — tổng (KL mỗi chiều lấy từ Bước 2)</span><br>
+      KL = KL₁ + KL₂ = <span class="blk"></span> + <span class="blk"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Loss VAE = tái tạo + KL. KL đóng vai trò gì trong tổng loss? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần J<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J2</span><h1>VAE — Reparam + KL <small>— đánh đổi tái tạo ↔ KL</small></h1></div>
+
+  <!-- CỤM 4 — ĐÁNH ĐỔI -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đánh đổi: tái tạo ↔ KL (β-VAE)</h2><span class="tag">cân bằng</span></div>
+    <div class="figwrap">
+      <svg id="figBeta" class="fig" viewBox="0 0 280 120" width="94mm" height="40mm" aria-label="thanh trượt giữa KL quá mạnh làm mờ tái tạo và KL quá yếu làm vùng ẩn lỗ chỗ, điểm cân bằng ở giữa"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> thanh cân bằng. KL <b>quá mạnh</b> (trái) → ẩn về chuẩn nhưng tái tạo <b>mờ</b>; KL <b>quá yếu</b> (phải) → vùng ẩn <b>lỗ chỗ</b>, sinh kém. β-VAE chỉnh trọng số KL để cân.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> KL quá mạnh gây "posterior collapse" — tái tạo sẽ ra sao? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: reparam &amp; KL mỗi cái giải quyết vấn đề gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao cần vùng ẩn "liền mạch" (không lỗ chỗ) mới lấy mẫu sinh tốt? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J2</span><h1>VAE — Reparam + KL <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — reparam</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> z = ( <span class="mono" data-q="z1">1.5</span>, <span class="mono" data-q="z2">−0.5</span> ).</li>
+      <li><span class="lab">Vì sao</span> Bốc z thẳng → bước lấy mẫu chặn gradient (không đạo hàm được) → μ,σ không học được.</li>
+      <li><span class="lab">Quan sát</span> ε = ngẫu nhiên (cố định mỗi lần bốc); μ,σ = học được.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — KL từng chiều</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> KL = ( <span class="mono" data-q="kl1">0.5</span>, <span class="mono" data-q="kl2">0</span> ) = ( ½μ₁², ½μ₂² ).</li>
+      <li><span class="lab">Quan sát</span> μ = 0 → KL = 0; μ ≠ 0 → bị phạt ½μ².</li>
+      <li><span class="lab">Vì sao</span> (μ,σ)=(0,1) là đúng N(0,1) → không lệch → KL = 0.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — tổng KL</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> KL = <span class="mono" data-q="kl">0.5</span>.</li>
+      <li><span class="lab">Vì sao</span> KL = "lực kéo" mã ẩn về N(0,1); tổng loss = tái tạo + KL.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — đánh đổi</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> KL quá mạnh (collapse) → tái tạo <b>mờ</b> (bỏ thông tin để về chuẩn).</li>
+      <li><span class="lab">Dự đoán</span> Reparam: cho gradient qua lấy mẫu; KL: kéo ẩn về N(0,1) liền mạch.</li>
+      <li><span class="lab">Vì sao</span> Vùng liền mạch → mọi điểm z lấy mẫu đều giải mã ra mẫu hợp lý (không "lỗ").</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> VAE = reparam (z = μ+σε, khả vi) + KL (ẩn về N(0,1)); loss = tái tạo + KL, cân bằng bằng β-VAE.
+    Bài tiếp (J3): mô hình sinh đối kháng — <b style="color:var(--accent2)">GAN</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CM='#0e7490', CZ='#b45309', CE='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function box(x,y,w,h,t,c){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+c+'18" stroke="'+c+'" stroke-width="1.4"/>'+ctxt(x+w/2,y+h/2+4,t,c,10,700);}
+
+/* ① luồng reparam + gradient (TĨNH) */
+function drawFlow(){
+  var svg=el('figFlow'); if(!svg) return;
+  var s='';
+  s+=box(14,22,52,26,'μ, σ',CM);
+  s+=box(14,66,52,26,'ε',CE);
+  s+=ctxt(92,58,'⊕',GRY,18,700);
+  s+='<line x1="66" y1="35" x2="82" y2="52" stroke="'+GRY+'" stroke-width="1.3"/>';
+  s+='<line x1="66" y1="79" x2="82" y2="60" stroke="'+GRY+'" stroke-width="1.3"/>';
+  s+=box(112,42,46,26,'z',CZ);
+  s+='<line x1="102" y1="55" x2="112" y2="55" stroke="'+GRY+'" stroke-width="1.4" marker-end="url(#af)"/>';
+  s+=box(186,42,80,26,'loss (tái tạo)',CZ);
+  s+='<line x1="158" y1="55" x2="186" y2="55" stroke="'+GRY+'" stroke-width="1.4" marker-end="url(#af)"/>';
+  // gradient ngược qua μσ, không qua ε
+  s+='<path d="M186,70 Q120,108 40,50" fill="none" stroke="'+CM+'" stroke-width="1.3" stroke-dasharray="4 2" marker-end="url(#ag)"/>';
+  s+=ctxt(120,112,'gradient chảy ngược qua μ,σ (không qua ε)',CM,8.5,700);
+  s+='<defs><marker id="af" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+GRY+'"/></marker>'+
+     '<marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+CM+'"/></marker></defs>';
+  svg.innerHTML=s;
+}
+
+/* ② vùng N(0,1) + điểm μ + KL kéo về (ĐỘNG) */
+function drawLatent(mu1, mu2){
+  var svg=el('figLatent'); if(!svg) return;
+  var cx=110, cy=78, R=48, sc=20;
+  var s='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="'+CE+'10" stroke="'+CE+'" stroke-width="1" stroke-dasharray="4 3"/>';
+  s+=ctxt(cx, cy-R-5, 'N(0,1)', CE, 9, 700);
+  s+='<line x1="'+(cx-R)+'" y1="'+cy+'" x2="'+(cx+R)+'" y2="'+cy+'" stroke="#cfd6dd" stroke-width="0.8"/>';
+  s+='<line x1="'+cx+'" y1="'+(cy-R)+'" x2="'+cx+'" y2="'+(cy+R)+'" stroke="#cfd6dd" stroke-width="0.8"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="'+CE+'"/>'+ctxt(cx+12, cy+12, 'gốc', CE, 8);
+  var px=cx+Math.max(-2,Math.min(2,mu1))*sc, py=cy-Math.max(-2,Math.min(2,mu2))*sc;
+  s+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="4" fill="'+CM+'"/>'+ctxt(px+(mu1>=0?12:-12), py-6, 'μ', CM, 10, 700);
+  if(Math.abs(mu1)+Math.abs(mu2)>0.01){
+    s+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+cx+'" y2="'+cy+'" stroke="'+CZ+'" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#akl)"/>';
+    s+=ctxt((px+cx)/2, (py+cy)/2-4, 'KL kéo về', CZ, 8, 700);
+  }
+  s+='<defs><marker id="akl" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+CZ+'"/></marker></defs>';
+  svg.innerHTML=s;
+}
+
+/* ④ thanh cân bằng β (TĨNH) */
+function drawBeta(){
+  var svg=el('figBeta'); if(!svg) return;
+  var y=52, x0=30, x1=250;
+  var s='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+GRY+'" stroke-width="2"/>';
+  s+=ctxt(x0, y-12, 'KL quá mạnh', CE, 9, 700)+ctxt(x0, y+16, 'tái tạo mờ', GRY, 8);
+  s+=ctxt(x1, y-12, 'KL quá yếu', CZ, 9, 700)+ctxt(x1, y+16, 'ẩn lỗ chỗ', GRY, 8);
+  s+='<circle cx="'+((x0+x1)/2)+'" cy="'+y+'" r="7" fill="#eef7f4" stroke="#159a6b" stroke-width="1.8"/>';
+  s+=ctxt((x0+x1)/2, y-14, 'cân bằng (β-VAE)', '#159a6b', 9, 700);
+  s+=ctxt((x0+x1)/2, y+30, '↑ chỉnh trọng số KL để vừa nét vừa liền mạch', GRY, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var mu1=WB.randInt(-1,2), mu2=WB.randInt(-1,2);
+  var s1=1, s2=1;
+  var e1=WB.pick([0.5,-0.5,1,-1]), e2=WB.pick([0.5,-0.5,1,-1]);
+  var z1=mu1+s1*e1, z2=mu2+s2*e2;
+  var kl1=0.5*mu1*mu1, kl2=0.5*mu2*mu2, kl=kl1+kl2;
+  WB.setAll({
+    mu1:f(mu1), mu2:f(mu2), s1:String(s1), s2:String(s2), e1:f(e1), e2:f(e2),
+    z1:f(z1), z2:f(z2), kl1:f(kl1), kl2:f(kl2), kl:f(kl)
+  });
+  drawLatent(mu1, mu2);
+}
+WB.wire(generate);
+generate();
+drawFlow();
+drawBeta();
+</script>
+</body>
+</html>

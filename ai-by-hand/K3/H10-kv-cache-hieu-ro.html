@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài H10 — KV Cache (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+/* ===== additive — template HIỂU RÕ: hình-để-điền trên ĐỀ + chùm câu hỏi ===== */
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+/* hình + chú thích */
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+/* CHÙM CÂU HỎI */
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+/* KHỐI TỰ TÍNH */
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:40px;border-bottom:1px solid #94a3b8;}
+/* ĐÁP ÁN gọn */
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài H10</span><h1>KV Cache <small>— sinh token nhanh bằng cách nhớ K,V cũ (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Khi sinh <b>từng token</b>, không cache thì mỗi bước phải tính lại attention cho <b>toàn bộ</b> chuỗi → O(n²).
+    KV cache <b>lưu lại K, V</b> của token cũ, token mới chỉ tính K, V của <b>chính nó</b> → mỗi bước O(n). Đây là lý do LLM sinh văn bản
+    đủ nhanh để dùng thật.
+    <div class="formula">Bước mới t: tính qₜ,kₜ,vₜ · K=[K_cache; kₜ] · V=[V_cache; vₜ] · out = softmax(qₜ·Kᵀ/√dₖ)·V &nbsp;(dₖ=4)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">q</b> truy vấn (lam) · <b class="ckk">K</b> khóa (cam) · <b class="cvv">V</b> giá trị (tím) · ô <b style="background:#eef1f5;color:#5b6776">cache</b> = xám (lấy lại)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Các token cũ <b>không đổi</b> khi thêm token mới → K, V của chúng cũng <b>không đổi</b>. Vậy <b>lưu lại</b> mà dùng tiếp, chỉ tính phần <b>mới</b>.
+    Như ghi sẵn sổ tay: mỗi câu mới chỉ <b>ghi thêm một dòng</b> thay vì chép lại cả sổ.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">cache 2 token · token mới q₃ · dₖ=4</span></div>
+    <div class="calc" style="font-size:13px">
+      <b>Cache</b> (đã có): k₁=(1,0), v₁=( <span class="gv" data-q="v11">1</span>, <span class="gv" data-q="v12">0</span> ) · k₂=(0,1), v₂=( <span class="gv" data-q="v21">0</span>, <span class="gv" data-q="v22">1</span> )<br>
+      <b>Token mới</b>: q₃=(2,0) · k₃=( <span class="gv" data-q="k3x">2</span>, <span class="gv" data-q="k3y">0</span> ) · v₃=( <span class="gv" data-q="v31">1</span>, <span class="gv" data-q="v32">1</span> )
+      <table class="extbl" style="display:inline-table;vertical-align:middle;margin-left:10px"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
+      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
+    </div>
+    <div class="note">Đang sinh token thứ 3. k₁,k₂,v₁,v₂ <b>đã có trong cache</b> (không tính lại); chỉ q₃,k₃,v₃ là mới.</div>
+  </div>
+
+  <!-- CỤM 1 — TÁI DÙNG CACHE -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chỉ tính K,V mới — phần cũ lấy từ cache</h2><span class="tag">ghi thêm 1 dòng</span></div>
+    <div class="figwrap">
+      <svg id="figCache" class="fig" viewBox="0 0 300 108" width="88mm" height="32mm" aria-label="hai ô cache xám k1v1 k2v2 được lấy lại, thêm ô mới cam k3v3, ghép thành K và V đầy đủ"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> hai ô <b>cache</b> (xám) k₁v₁, k₂v₂ được <b>lấy lại</b>; chỉ ô <b>mới</b> (cam) k₃v₃ phải tính. Ghép chúng thành K, V đầy đủ cho bước này — <b>không chép lại</b> hai ô cũ.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Ở bước này, có mấy ô K,V phải <b>tính mới</b>, mấy ô <b>lấy từ cache</b>? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao K,V của token cũ <b>không đổi</b> khi thêm token mới (nên lưu lại được)? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H10 · KV Cache (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần H<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H10</span><h1>KV Cache <small>— điểm q₃·K &amp; softmax</small></h1></div>
+
+  <!-- CỤM 2 — ĐIỂM -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Điểm q₃ với mọi K (cache + mới)</h2><span class="tag">÷√dₖ = 2</span></div>
+    <div class="figwrap">
+      <svg id="figScore" class="fig" viewBox="0 0 250 104" width="74mm" height="31mm" aria-label="q3 chấm điểm với k1 k2 từ cache và k3 mới, ba ô điểm để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> q₃ (lam) chấm điểm với <b>cả ba</b> khóa: k₁,k₂ (cache, xám) và k₃ (mới, cam). Ba ô điểm còn "?". Ghép k₃ vào <b>sau</b> cache rồi chấm như attention thường.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — điểm q₃·K rồi ÷2</span><br>
+      q₃·k₁ = 2·1 + 0·0 = <span class="blk"></span> → điểm₁ = <span class="blk"></span> ÷ 2 = <span class="blk"></span> &nbsp;<span class="sub">(cache)</span><br>
+      q₃·k₂ = 2·0 + 0·1 = <span class="blk"></span> → điểm₂ = <span class="blk"></span> ÷ 2 = <span class="blk"></span> &nbsp;<span class="sub">(cache)</span><br>
+      q₃·k₃ = 2·<span data-q="k3x">2</span> + 0·<span data-q="k3y">0</span> = <span class="blk"></span> → điểm₃ = <span class="blk"></span> ÷ 2 = <span class="blk"></span> &nbsp;<span class="sub">(mới)</span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Điểm với token <b>mới</b> (k₃) so với hai token cache — lớn hơn hay nhỏ hơn? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — SOFTMAX -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Softmax → α</h2><span class="tag">eˣ / Σeˣ</span></div>
+    <div class="figwrap">
+      <svg id="figBars" class="fig" viewBox="0 0 240 100" width="72mm" height="30mm" aria-label="ba thanh eˣ để trống, tầng α để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mũ hóa 3 điểm → eˣ (điền), chia tổng → α (điền) cho <b>ba</b> token. α cộng = 1: phần chú ý chia cho token nào (cũ hay mới).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — softmax</span> <span class="sub">(tra bảng eˣ; điểm lấy từ Bước 2)</span><br>
+      e<sup>điểm₁</sup>=<span class="blk"></span>, e<sup>điểm₂</sup>=<span class="blk"></span>, e<sup>điểm₃</sup>=<span class="blk"></span><br>
+      Σ = <span class="blk"></span> + <span class="blk"></span> + <span class="blk"></span> = <span class="blk"></span><br>
+      α = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> α₁+α₂+α₃ = ? Token nào được chú ý nhiều nhất? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H10 · KV Cache (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần H<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H10</span><h1>KV Cache <small>— trộn V &amp; tiết kiệm</small></h1></div>
+
+  <!-- CỤM 4 — TRỘN V -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Trộn V (cache + mới) → đầu ra</h2><span class="tag">out = α·V</span></div>
+    <div class="figwrap">
+      <svg id="figMix" class="fig" viewBox="0 0 160 138" width="48mm" height="41mm" aria-label="ba điểm v1 v2 v3 tạo tam giác; out nằm trong tam giác để xác định"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> v₁,v₂ (cache) và v₃ (mới) là ba đỉnh (tím). out = α₁v₁+α₂v₂+α₃v₃ nằm <b>trong tam giác</b>, ngả về đỉnh có α lớn. <b>out ở đâu?</b> — tính rồi chấm.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — trộn V</span> <span class="sub">(α từ Bước 3; v cho sẵn ở Bước 0)</span><br>
+      out₁ = α₁·<span data-q="v11">1</span> + α₂·<span data-q="v21">0</span> + α₃·<span data-q="v31">1</span> = <span class="blk"></span><br>
+      out₂ = α₁·<span data-q="v12">0</span> + α₂·<span data-q="v22">1</span> + α₃·<span data-q="v32">1</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Kết quả out có <b>giống hệt</b> khi tính lại từ đầu (không cache) không? Cache đổi <b>tốc độ</b> hay <b>kết quả</b>? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 5 — TIẾT KIỆM -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tiết kiệm: O(n²) → O(n)</h2><span class="tag">đổi bộ nhớ lấy tốc độ</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figSave" class="fig" viewBox="0 0 360 110" width="150mm" height="38mm" aria-label="so sánh công mỗi bước: không cache tăng dần, có cache gần như phẳng"></svg>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Không cache, bước thứ n làm bao nhiêu công? Có cache thì mỗi bước làm bao nhiêu? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm tắt 1 câu: KV cache đánh đổi cái gì để lấy cái gì? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H10 · KV Cache (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H10</span><h1>KV Cache <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Tái dùng cache</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> Tính mới: <b>1</b> ô (k₃,v₃); lấy cache: <b>2</b> ô (k₁v₁, k₂v₂).</li>
+      <li><span class="lab">Vì sao</span> Token cũ đứng yên → K,V của chúng cố định → lưu lại dùng tiếp.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Điểm q₃·K</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> điểm (÷2) = ( <span class="mono" data-q="sc1">1</span>, <span class="mono" data-q="sc2">0</span>, <span class="mono" data-q="sc3">2</span> ).</li>
+      <li><span class="lab">Quan sát</span> Điểm với k₃ (mới) lớn nhất → token mới được chú ý nhiều.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Softmax</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> Σ = <span class="mono" data-q="Z">11.11</span> ; α = ( <span class="mono" data-q="a1">0.24</span>, <span class="mono" data-q="a2">0.09</span>, <span class="mono" data-q="a3">0.67</span> ) ; cộng = 1.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Trộn V</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> out = ( <span class="mono" data-q="o1">0.91</span>, <span class="mono" data-q="o2">0.76</span> ).</li>
+      <li><span class="lab">Vì sao</span> Giống hệt tính lại từ đầu — cache đổi <b>tốc độ</b>, KHÔNG đổi kết quả.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 5 — Tiết kiệm</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> Không cache: bước n tính lại n token (tổng O(n²)). Có cache: mỗi bước O(n).</li>
+      <li><span class="lab">Tóm tắt</span> Đổi <b>bộ nhớ</b> (lưu K,V) lấy <b>tốc độ</b> (khỏi tính lại).</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> KV cache tái dùng K,V token cũ → mỗi bước <b>O(n)</b> thay vì O(n²); đổi bộ nhớ lấy tốc độ, kết quả không đổi.
+    Bài tiếp (H11): <b style="color:var(--accent2)">FFN</b> — mạng 2 lớp xử lý thông tin trong từng token của khối Transformer.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H10 · KV Cache (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var EXP={0:1, 1:2.72, 2:7.39};
+var CQ='#0e7490', CK='#b45309', CV='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function line(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'"/>';}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+function arrow(x1,y1,x2,y2,c,w){
+  var a=Math.atan2(y2-y1,x2-x1),L=7;
+  var ax=x2-L*Math.cos(a-0.42),ay=y2-L*Math.sin(a-0.42),bx=x2-L*Math.cos(a+0.42),by=y2-L*Math.sin(a+0.42);
+  return line(x1,y1,x2,y2,c,w)+'<path d="M'+x2+' '+y2+' L'+ax+' '+ay+' L'+bx+' '+by+' z" fill="'+c+'"/>';
+}
+
+/* ① Cache (2 ô xám) + ô mới (cam) → K,V đầy đủ */
+function drawCache(){
+  var svg=el('figCache'); if(!svg) return;
+  var s='', w=54, h=30, y=30;
+  function slot(x,lab,cached){
+    var c = cached? GRY : CK;
+    s += rct(x,y,w,h, cached?'#eef1f5':CK+'14', c, 1.4);
+    s += ctxt(x+w/2, y+13, lab, c, 10, 700);
+    s += ctxt(x+w/2, y+25, cached?'cache':'tính mới', c, 8, 700);
+  }
+  slot(14,'k₁ v₁',true); slot(14+58,'k₂ v₂',true); slot(14+116,'k₃ v₃',false);
+  // dấu ghép
+  s += ctxt(14+58+w+9, y+h/2+4, '⊕', GRY, 13, 700);
+  // K,V đầy đủ
+  s += rct(210, y, 76, h, '#f8fafc', '#cbd5e1', 1.4);
+  s += ctxt(248, y+13, 'K, V đầy đủ', GRY, 9.5, 700);
+  s += ctxt(248, y+25, '(3 token)', GRY, 8, 400);
+  s += ctxt(150, 18, 'chỉ ô cam là việc mới', GRY, 8.5, 700);
+  s += ctxt(150, y+h+16, 'hai ô xám: lấy lại, không tính lại', GRY, 8.5, 400);
+  svg.innerHTML=s;
+}
+
+/* ② q3 chấm điểm với k1,k2 (cache) + k3 (mới) → 3 ô điểm "?" */
+function drawScore(){
+  var svg=el('figScore'); if(!svg) return;
+  var s='';
+  s += rct(10,40,46,26,CQ+'14',CQ,1.5)+ctxt(33,57,'q₃',CQ,12,700);
+  var keys=[['k₁',GRY,true],['k₂',GRY,true],['k₃',CK,false]];
+  for(var i=0;i<3;i++){
+    var y=12+i*32, c=keys[i][1];
+    s += rct(96,y,40,24, keys[i][2]?'#eef1f5':CK+'14', c, 1.3)+ctxt(116,y+16,keys[i][0],c,10,700);
+    s += arrow(56,53,94,y+12,'#94a3b8',1.2);
+    s += rct(176,y,54,24,'#fff','#cbd5e1',1.3)+ctxt(203,y+16,'điểm=?','#64748b',9,700);
+  }
+  s += ctxt(116,102,'k₁,k₂ xám = cache · k₃ cam = mới',GRY,8.5,400);
+  svg.innerHTML=s;
+}
+
+/* ③ softmax: eˣ (?) + α (?) — khung để trống */
+function drawBars(){
+  var svg=el('figBars'); if(!svg) return;
+  var s='', x0=24, w=34, gap=16, base=66;
+  for(var i=0;i<3;i++){
+    var x=x0+i*(w+gap);
+    s += '<rect x="'+x+'" y="'+(base-40)+'" width="'+w+'" height="40" rx="2" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"/>';
+    s += ctxt(x+w/2, base-18, '?', CQ, 12, 700);
+    s += ctxt(x+w/2, base+11, 'đ'+(i+1), GRY, 9, 700);
+  }
+  s += txt(x0, 16, 'eˣ (điền)', CQ, 9);
+  // α strip
+  var ax=170, W=58;
+  s += txt(ax, 16, 'α (điền, Σ=1)', CV, 9);
+  s += '<rect x="'+ax+'" y="30" width="'+W+'" height="18" rx="2" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"/>';
+  s += ctxt(ax+W/2, 43, '?', CV, 12, 700);
+  s += txt(ax, 74, 'chia cho token', GRY, 8);
+  s += txt(ax, 86, 'cũ &amp; mới', GRY, 8);
+  svg.innerHTML=s;
+}
+
+/* ④ Tam giác v1 v2 v3 (tím); out ẩn "?" trong tam giác */
+function drawMix(v1,v2,v3){
+  var svg=el('figMix'); if(!svg) return;
+  var ox=24, oy=112, u=26, s='';
+  s += line(ox-6,oy,ox+120,oy,'#cbd5e1',1)+line(ox,oy+6,ox,oy-96,'#cbd5e1',1);
+  function P(v){return [ox+v[0]*u, oy-v[1]*u];}
+  var p1=P(v1), p2=P(v2), p3=P(v3);
+  s += '<polygon points="'+p1[0]+','+p1[1]+' '+p2[0]+','+p2[1]+' '+p3[0]+','+p3[1]+'" fill="'+CV+'12" stroke="'+CV+'" stroke-width="1.3"/>';
+  function dot(p,lab){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.6" fill="'+CV+'"/>'+txt(p[0]+5,p[1]-3,lab,CV,9);}
+  s += dot(p1,'v₁')+dot(p2,'v₂')+dot(p3,'v₃');
+  var mx=(p1[0]+p2[0]+p3[0])/3, my=(p1[1]+p2[1]+p3[1])/3;
+  s += '<circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="6" fill="none" stroke="'+CK+'" stroke-width="1.4" stroke-dasharray="3 2"/>';
+  s += txt(mx+8,my+4,'out=?',CK,9);
+  s += txt(2,132,'out trong tam giác v₁v₂v₃, ngả về α lớn',GRY,8.5);
+  svg.innerHTML=s;
+}
+
+/* ⑤ Công mỗi bước: không cache (tăng) vs có cache (phẳng) — TĨNH */
+function drawSave(){
+  var svg=el('figSave'); if(!svg) return;
+  var s='', base=86;
+  // trái: không cache — bậc thang tăng
+  s += ctxt(86,14,'không cache: O(n²)',CK,9,700);
+  for(var i=0;i<4;i++){ var h=(i+1)*16, x=20+i*30; s += rct(x,base-h,22,h,CK+'99')+ctxt(x+11,base+11,'b'+(i+1),GRY,8,400); }
+  // phải: có cache — phẳng
+  s += ctxt(268,14,'có cache: O(n) mỗi bước',CQ,9,700);
+  for(var j=0;j<4;j++){ var x2=200+j*30; s += rct(x2,base-16,22,16,CQ+'99')+ctxt(x2+11,base+11,'b'+(j+1),GRY,8,400); }
+  s += line(178,10,178,96,'#e2e8f0',1);
+  s += ctxt(180,104,'công mỗi bước tăng dần khi không nhớ K,V (trái) vs gần như phẳng khi có cache (phải)',GRY,8,400);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f2=WB.fmt2;
+  var m = WB.pick([1,2]);                 // điểm token mới sau /√d (1 hoặc 2)
+  var sc=[1,0,m];
+  var e=[EXP[1], EXP[0], EXP[m]];
+  var Z=Math.round((e[0]+e[1]+e[2])*100)/100;
+  var a=[e[0]/(e[0]+e[1]+e[2]), e[1]/(e[0]+e[1]+e[2]), e[2]/(e[0]+e[1]+e[2])].map(function(v){return Math.round(v*100)/100;});
+  var v1=[WB.randInt(0,2), WB.randInt(0,2)];
+  var v2=[WB.randInt(0,2), WB.randInt(0,2)];
+  var v3=[WB.randInt(0,2), WB.randInt(0,2)];
+  var o1=Math.round((a[0]*v1[0]+a[1]*v2[0]+a[2]*v3[0])*100)/100;
+  var o2=Math.round((a[0]*v1[1]+a[1]*v2[1]+a[2]*v3[1])*100)/100;
+
+  WB.setAll({
+    k3x:String(m), k3y:'0',
+    v11:String(v1[0]), v12:String(v1[1]), v21:String(v2[0]), v22:String(v2[1]), v31:String(v3[0]), v32:String(v3[1]),
+    sc1:'1', sc2:'0', sc3:String(m),
+    Z:f2(Z), a1:f2(a[0]), a2:f2(a[1]), a3:f2(a[2]),
+    o1:f2(o1), o2:f2(o2)
+  });
+
+  drawMix(v1,v2,v3);
+}
+
+WB.wire(generate);
+generate();
+drawCache();
+drawScore();
+drawBars();
+drawSave();
+</script>
+</body>
+</html>

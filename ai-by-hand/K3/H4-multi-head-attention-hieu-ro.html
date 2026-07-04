@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài H4 — Multi-Head Attention (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+/* ===== additive (không đụng wb.css) — template HIỂU RÕ v3: hình-trên-đề + chùm câu hỏi ===== */
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .quiz{margin-top:8px;padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+
+/* legend màu thành phần */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.ch1{background:#0e7490;}.ch2{background:#7c5cff;}.cwo{background:#b45309;}
+
+/* hình + chú thích cạnh nhau */
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+
+/* CHÙM CÂU HỎI — mỗi câu một thẻ màu vai trò */
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;
+  letter-spacing:.02em;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}   /* Quan sát */
+.qt-calc{background:#b45309;}  /* Tính */
+.qt-pred{background:#7c5cff;}  /* Dự đoán */
+.qt-why{background:#475569;}   /* Vì sao */
+.qset .blk{min-width:46px;}
+.qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+
+/* ma trận Wₒ nhỏ gọn */
+.wo{display:inline-table;border-collapse:collapse;font-family:var(--mono);font-size:12px;vertical-align:middle;margin:0 4px;}
+.wo td{border:1px solid #e3b27a;padding:1px 8px;text-align:center;color:#b45309;font-weight:700;}
+
+/* ĐÁP ÁN gọn — danh sách đáp số 1 dòng */
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (phần A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài H4</span><h1>Multi-Head Attention <small>— nhiều đầu, nhiều góc nhìn (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~18 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Một đầu attention chỉ bắt <b>một</b> kiểu quan hệ (vd "chủ–động từ"). <b>Nhiều đầu</b> cho mô hình nhìn
+    <b>nhiều mối liên hệ cùng lúc</b> (cú pháp, đồng tham chiếu, vị trí…) trên các không gian con khác nhau → biểu diễn giàu hơn, gần như cùng chi phí.
+    <div class="formula">headᵢ = Attention(Q Wqᵢ, K Wkᵢ, V Wvᵢ) &nbsp;·&nbsp; out = Concat(head₁…head_h) · Wₒ</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="ch1">head₁</b> đầu 1 (lam) · <b class="ch2">head₂</b> đầu 2 (tím) · <b class="cwo">Wₒ</b> ma trận trộn (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>nhiều chuyên gia</b> cùng đọc một câu, mỗi người soi một loại quan hệ. Mỗi đầu làm việc trên một <b>lát chiều</b> nhỏ (d/h), nộp
+    kết quả; ta <b>ghép</b> các lát lại rồi <b>trộn</b> (Wₒ) thành đầu ra đầy đủ. Phiếu này dùng <b>d=4, h=2 đầu</b> để tính tay được.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=4 · h=2 đầu · mỗi đầu dₖ=2</span></div>
+    <div class="calc" style="font-size:14px">
+      Kết quả mỗi đầu (đã chạy attention riêng):
+      <span style="color:#0e7490;font-weight:700">head₁</span> = ( <span class="gv" data-q="h1a">0.7</span>, <span class="gv" data-q="h1b">0.3</span> ) &nbsp;·&nbsp;
+      <span style="color:#7c5cff;font-weight:700">head₂</span> = ( <span class="gv" data-q="h2a">0.2</span>, <span class="gv" data-q="h2b">0.8</span> )
+    </div>
+    <div class="note">Mỗi đầu trả về một vectơ <b>2 chiều</b>. Việc của bài này: từ hai vectơ đó dựng ra <b>một</b> đầu ra duy nhất.</div>
+  </div>
+
+  <!-- CỤM 1 — CHIA ĐẦU -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chia chiều thành nhiều đầu</h2><span class="tag">d ÷ h</span></div>
+    <div class="figwrap">
+      <svg id="figSplit" class="fig" viewBox="0 0 210 116" width="64mm" height="35mm" aria-label="vectơ d=4 chia thành hai lát chiều, lát trên lam, lát dưới tím"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> vectơ đầu vào dài d=4 bị <b>cắt dọc</b> thành 2 lát bằng nhau; lát trên (lam) cho đầu 1, lát dưới (tím) cho đầu 2. Mỗi đầu chỉ "thấy" lát chiều của mình.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> d=4 chia cho h=2 đầu thì mỗi đầu có mấy chiều (dₖ)? → <span class="blk"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu dùng h=4 đầu, mỗi đầu mấy chiều? Tổng số chiều cộng lại có đổi không? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao chia nhỏ thành nhiều lát thay vì để một đầu "to" gồm cả d=4 chiều? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (phần B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần H<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H4</span><h1>Multi-Head Attention <small>— song song &amp; ghép lại</small></h1></div>
+
+  <!-- CỤM 2 — SONG SONG -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Mỗi đầu một kiểu quan hệ (chạy song song)</h2><span class="tag">độc lập</span></div>
+    <div class="figwrap">
+      <svg id="figHeads" class="fig" viewBox="0 0 232 118" width="72mm" height="36mm" aria-label="hai đầu attention với hai phân bố chú ý khác nhau, ra hai vectơ kết quả"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> hai đầu chú ý <b>khác nhau</b> — đầu 1 (lam) dồn vào token bên trái, đầu 2 (tím) dồn vào token bên phải → hai kết quả khác nhau. Chúng được tính <b>cùng lúc</b>, không phụ thuộc nhau.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> head₁ và head₂ cho kết quả giống hay khác nhau? Điều đó nói lên điều gì? → <span class="blk" style="min-width:130px"></span></li>
+      <li><span class="qtag qt-see">Quan sát</span> Hai đầu chạy <b>song song</b> hay <b>nối tiếp</b> (đầu này chờ đầu kia)? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Nếu mọi đầu học đúng <b>cùng một</b> kiểu quan hệ, có thêm nhiều đầu còn lợi không? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — GHÉP -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Ghép các đầu (concat)</h2><span class="tag">nối lại đủ d</span></div>
+    <div class="figwrap">
+      <svg id="figConcat" class="fig" viewBox="0 0 232 104" width="70mm" height="32mm" aria-label="hai vectơ 2 chiều nối nối tiếp thành một vectơ 4 chiều, hai ô cuối để trống điền"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> đặt head₂ <b>nối đuôi</b> head₁ → một vectơ dài d=4. Không cộng, không trộn — chỉ <b>xếp cạnh nhau</b>. Hãy điền 4 ô kết quả.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — ghép concat (chỉ xếp cạnh nhau, không cộng)</span><br>
+      z = ( head₁ₐ, head₁ᵦ, head₂ₐ, head₂ᵦ ) = ( <span data-q="h1a">0.7</span>, <span data-q="h1b">0.3</span>, <span data-q="h2a">0.2</span>, <span data-q="h2b">0.8</span> )<br>
+      → điền: z = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Vectơ ghép dài mấy chiều? Có khớp với d ban đầu không? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (phần C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần H<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H4</span><h1>Multi-Head Attention <small>— trộn bằng Wₒ &amp; chi phí</small></h1></div>
+
+  <!-- CỤM 4 — TRỘN Wo -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Trộn bằng Wₒ → đầu ra cuối</h2><span class="tag">các đầu "nói chuyện"</span></div>
+    <div class="calc" style="font-size:13px">
+      Cho ma trận trộn
+      <table class="wo"><tr><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td></tr><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td></tr></table>
+      (4 hàng = 4 chiều ghép z₁..z₄ · 2 cột = 2 chiều ra). Đầu ra o = (vectơ ghép) · Wₒ.
+    </div>
+    <div class="figwrap">
+      <svg id="figMix" class="fig" viewBox="0 0 236 138" width="70mm" height="41mm" aria-label="bốn ô vectơ ghép nối sang hai ô đầu ra qua các đường của W_o, hai ô ra để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mỗi đường = một số 1 trong Wₒ. Ô ra <b>o₁</b> nhận đường từ <b>cả</b> lam (đầu 1) lẫn tím (đầu 2) — đó là lúc các đầu <b>trộn</b> thông tin với nhau.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — trộn Wₒ</span> <span class="sub">(o = z·Wₒ; cộng các z có hệ số 1)</span><br>
+      o₁ = z₁ + z₂ + z₄ = <span data-q="h1a">0.7</span> + <span data-q="h1b">0.3</span> + <span data-q="h2b">0.8</span> = <span class="blk"></span> + <span data-q="h2b">0.8</span> = <span class="blk"></span><br>
+      o₂ = z₁ + z₃ + z₄ = <span data-q="h1a">0.7</span> + <span data-q="h2a">0.2</span> + <span data-q="h2b">0.8</span> = <span class="blk"></span> + <span data-q="h2b">0.8</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> o₁ có dùng số đến từ <b>cả hai</b> đầu không? Chỉ ra các đường trên hình. → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao cần Wₒ mà không lấy thẳng vectơ ghép làm đầu ra? → <span class="blk" style="min-width:140px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 5 — CHI PHÍ + TỔNG KẾT -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Toàn cảnh &amp; chi phí</h2><span class="tag">nhiều góc nhìn ~ miễn phí</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figPipe" class="fig" viewBox="0 0 520 78" width="166mm" height="25mm" aria-label="sơ đồ luồng: x chia hai lát, hai attention song song, ghép, nhân W_o, ra"></svg>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Mỗi đầu chỉ d/h chiều. Vì sao tổng tính toán của h đầu ≈ một đầu d chiều ("gần như miễn phí")? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm tắt 1 câu: multi-head attention biến (head₁, head₂) thành đầu ra cuối qua những bước nào? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H4</span><h1>Multi-Head Attention <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Chia đầu</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> dₖ = d/h = 4/2 = <span class="mono">2</span> chiều mỗi đầu.</li>
+      <li><span class="lab">Dự đoán</span> h=4 → mỗi đầu <span class="mono">1</span> chiều; tổng chiều vẫn = d = 4 (không đổi).</li>
+      <li><span class="lab">Vì sao</span> Tách không gian con để mỗi đầu <b>chuyên</b> một kiểu quan hệ riêng.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Song song</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> Khác nhau → mỗi đầu bắt một quan hệ khác.</li>
+      <li><span class="lab">Quan sát</span> Chạy <b>song song</b> (độc lập, không chờ nhau).</li>
+      <li><span class="lab">Vì sao</span> Nếu mọi đầu học giống nhau → thừa, không thêm thông tin.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Ghép (concat)</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> Concat = ( <span class="mono" data-q="c1">0.7</span>, <span class="mono" data-q="c2">0.3</span>, <span class="mono" data-q="c3">0.2</span>, <span class="mono" data-q="c4">0.8</span> ).</li>
+      <li><span class="lab">Quan sát</span> Dài <span class="mono">4</span> chiều = đúng d ban đầu.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Trộn Wₒ</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> o₁ = z₁+z₂+z₄ = <span class="mono" data-q="o1">1.8</span> ; o₂ = z₁+z₃+z₄ = <span class="mono" data-q="o2">1.7</span>.</li>
+      <li><span class="lab">Quan sát</span> o₁ nhận z₁,z₂ (đầu 1) <b>và</b> z₄ (đầu 2) → trộn cả hai đầu.</li>
+      <li><span class="lab">Vì sao</span> Vectơ ghép còn <b>rời rạc</b>; Wₒ cho các đầu trộn thành một biểu diễn thống nhất.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 5 — Chi phí &amp; tóm tắt</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> Mỗi đầu nhỏ gấp h lần → h đầu cộng lại ≈ một đầu d chiều.</li>
+      <li><span class="lab">Tóm tắt</span> chia chiều → attention song song → <b>ghép</b> → <b>·Wₒ</b> → đầu ra.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Multi-head = chia chiều → attention song song (mỗi đầu một quan hệ) → ghép → trộn Wₒ; nhiều góc nhìn, gần như cùng chi phí.
+    Bài tiếp (H5): <b style="color:var(--accent2)">cross-attention</b> — Q đến từ chuỗi này, K/V đến từ chuỗi khác (giải mã nhìn vào mã hóa).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CH1='#0e7490', CH2='#7c5cff', CWO='#b45309', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function line(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'"/>';}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+function arrow(x1,y1,x2,y2,c,w){
+  var a=Math.atan2(y2-y1,x2-x1),L=7;
+  var ax=x2-L*Math.cos(a-0.42),ay=y2-L*Math.sin(a-0.42),bx=x2-L*Math.cos(a+0.42),by=y2-L*Math.sin(a+0.42);
+  return line(x1,y1,x2,y2,c,w)+'<path d="M'+x2+' '+y2+' L'+ax+' '+ay+' L'+bx+' '+by+' z" fill="'+c+'"/>';
+}
+
+function generate(){
+  var f2 = WB.fmt2;
+  var pool = [[0.7,0.3],[0.3,0.7],[0.2,0.8],[0.8,0.2],[0.4,0.6],[0.6,0.4],[0.9,0.1],[0.1,0.9]];
+  var hs = WB.pickDistinct(pool, 2);
+  var h1 = hs[0], h2 = hs[1];
+  var z = [h1[0], h1[1], h2[0], h2[1]];
+  var o1 = Math.round((z[0]+z[1]+z[3])*100)/100;
+  var o2 = Math.round((z[0]+z[2]+z[3])*100)/100;
+
+  WB.setAll({
+    h1a:f2(h1[0]), h1b:f2(h1[1]), h2a:f2(h2[0]), h2b:f2(h2[1]),
+    c1:f2(h1[0]), c2:f2(h1[1]), c3:f2(h2[0]), c4:f2(h2[1]),
+    o1:f2(o1), o2:f2(o2)
+  });
+
+  drawSplit('figSplit');
+  drawHeads('figHeads', h1, h2);
+  drawConcat('figConcat', h1, h2);
+  drawMix('figMix', z);
+  drawPipe('figPipe');
+}
+
+/* ① Chia chiều: vectơ d=4 (cột) cắt dọc thành 2 lát lam/tím */
+function drawSplit(id){
+  var svg=el(id); if(!svg) return;
+  var x=14, w=40, ch=20, top=14, s='';
+  // vectơ d=4 nguyên (xám) bên trái
+  for(var i=0;i<4;i++) s+=rct(x,top+i*ch,w,ch-3,'#eef1f5',GRY,1)+ctxt(x+w/2,top+i*ch+14,'·',GRY,10,400);
+  s+=ctxt(x+w/2,top+4*ch+10,'x · d=4',GRY,9,700);
+  // mũi tên tách
+  s+=arrow(x+w+8,top+18,x+w+34,top+8,GRY,1.4);
+  s+=arrow(x+w+8,top+58,x+w+34,top+68,GRY,1.4);
+  // lát 1 (lam) — 2 ô trên
+  var x2=x+w+40;
+  s+=rct(x2,top-2,w,ch-3,CH1+'22',CH1,1.4)+rct(x2,top+ch-2,w,ch-3,CH1+'22',CH1,1.4);
+  s+=ctxt(x2+w/2,top+ch+10,'đầu 1 · dₖ=2',CH1,9,700);
+  // lát 2 (tím) — 2 ô dưới
+  s+=rct(x2,top+58,w,ch-3,CH2+'22',CH2,1.4)+rct(x2,top+58+ch,w,ch-3,CH2+'22',CH2,1.4);
+  s+=ctxt(x2+w/2,top+58+2*ch+6,'đầu 2 · dₖ=2',CH2,9,700);
+  svg.innerHTML=s;
+}
+
+/* ② Hai đầu song song với phân bố chú ý KHÁC nhau → 2 kết quả */
+function drawHeads(id,h1,h2){
+  var svg=el(id); if(!svg) return;
+  var f2=WB.fmt2, s='';
+  // panel đầu 1 (lam): chú ý dồn token trái
+  panel(8, CH1, 'đầu 1', [0.8,0.2], h1);
+  // panel đầu 2 (tím): chú ý dồn token phải
+  panel(122, CH2, 'đầu 2', [0.25,0.75], h2);
+  function panel(ox,c,lab,al,out){
+    s+=rct(ox,8,98,102,c+'0d',c,1.4);
+    s+=ctxt(ox+49,24,lab+' — chú ý',c,9.5,700);
+    // 2 thanh α
+    var bx=ox+16, by=34, bw=66;
+    s+=txt(ox+6,by+9,'α',c,8.5);
+    s+=rct(bx,by,bw*al[0],9,c+'cc',null);
+    s+=rct(bx,by+13,bw*al[1],9,c+'cc',null);
+    s+=txt(ox+6,by-2,'token1',GRY,7.5);
+    s+=txt(ox+6,by+24,'token2',GRY,7.5);
+    // kết quả
+    s+=ctxt(ox+49,92,'kết quả',GRY,8,400);
+    s+=ctxt(ox+49,104,'('+f2(out[0])+', '+f2(out[1])+')',c,10,700);
+  }
+  svg.innerHTML=s;
+}
+
+/* ③ Concat: [head1][head2] → vectơ 4 ô; 4 ô đích ĐỂ TRỐNG (hình-để-điền) */
+function drawConcat(id,h1,h2){
+  var svg=el(id); if(!svg) return;
+  var f2=WB.fmt2, s='', cw=30, ch=24, y=24;
+  // nguồn head1 (lam)
+  s+=rct(8,y,cw,ch,CH1+'22',CH1,1.4)+ctxt(8+cw/2,y+16,f2(h1[0]),CH1,10,700);
+  s+=rct(8+cw,y,cw,ch,CH1+'22',CH1,1.4)+ctxt(8+1.5*cw,y+16,f2(h1[1]),CH1,10,700);
+  s+=ctxt(8+cw,y-6,'head₁',CH1,8.5,700);
+  // nguồn head2 (tím)
+  s+=rct(8,y+38,cw,ch,CH2+'22',CH2,1.4)+ctxt(8+cw/2,y+38+16,f2(h2[0]),CH2,10,700);
+  s+=rct(8+cw,y+38,cw,ch,CH2+'22',CH2,1.4)+ctxt(8+1.5*cw,y+38+16,f2(h2[1]),CH2,10,700);
+  s+=ctxt(8+cw,y+38+ch+9,'head₂',CH2,8.5,700);
+  // mũi tên
+  s+=arrow(8+2*cw+8,y+ch/2,8+2*cw+30,y+ch/2+14,GRY,1.4);
+  s+=arrow(8+2*cw+8,y+38+ch/2,8+2*cw+30,y+38-ch/2+12,GRY,1.4);
+  // đích: 4 ô để trống, màu theo nguồn
+  var dx=8+2*cw+36, dy=y+12;
+  var cols=[CH1,CH1,CH2,CH2];
+  for(var i=0;i<4;i++) s+=rct(dx+i*cw,dy,cw-2,ch,cols[i]+'14',cols[i],1.4)+ctxt(dx+i*cw+(cw-2)/2,dy+16,'?',cols[i],11,700);
+  s+=ctxt(dx+2*cw,dy-6,'Concat · d=4 (điền vào)',GRY,8.5,700);
+  svg.innerHTML=s;
+}
+
+/* ④ Trộn Wₒ: 4 ô ghép → 2 ô ra; đường = số 1 trong Wₒ; ô ra để trống */
+function drawMix(id,z){
+  var svg=el(id); if(!svg) return;
+  var f2=WB.fmt2, s='', cw=42, ch=22;
+  // 4 ô ghép (trái), màu lam/lam/tím/tím
+  var cols=[CH1,CH1,CH2,CH2], lx=10, lys=[14,40,66,92];
+  for(var i=0;i<4;i++){
+    s+=rct(lx,lys[i],cw,ch,cols[i]+'22',cols[i],1.4);
+    s+=ctxt(lx+cw/2,lys[i]+15,'z'+(i+1)+'='+f2(z[i]),cols[i],9.5,700);
+  }
+  // 2 ô ra (phải, cam) — để trống
+  var rx=186, rys=[34,84];
+  s+=rct(rx,rys[0],40,ch,CWO+'14',CWO,1.6)+ctxt(rx+20,rys[0]+15,'o₁=?',CWO,10,700);
+  s+=rct(rx,rys[1],40,ch,CWO+'14',CWO,1.6)+ctxt(rx+20,rys[1]+15,'o₂=?',CWO,10,700);
+  // đường Wₒ: o1 ← z1,z2,z4 ; o2 ← z1,z3,z4
+  var L=lx+cw, oy1=rys[0]+ch/2, oy2=rys[1]+ch/2;
+  [0,1,3].forEach(function(i){ s+=line(L,lys[i]+ch/2,rx,oy1,cols[i],1.3); });
+  [0,2,3].forEach(function(i){ s+=line(L,lys[i]+ch/2,rx,oy2,cols[i],1.3); });
+  s+=ctxt(118,128,'đường = số 1 trong Wₒ · o₁ và o₂ đều nhận từ cả lam &amp; tím','#5b6776',8.5,400);
+  svg.innerHTML=s;
+}
+
+/* ⑤ Pipeline toàn cảnh (tĩnh) */
+function drawPipe(id){
+  var svg=el(id); if(!svg) return;
+  function box(x,y,w,h,t,c){
+    return rct(x,y,w,h,c+'14',c,1.4)+ctxt(x+w/2,y+h/2+4,t,c,10.5,700);
+  }
+  var s='<defs><marker id="apm" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#94a3b8"/></marker></defs>';
+  var y=16,h=40;
+  s+=box(6,y,52,h,'x (d=4)',GRY);
+  s+=box(96,4,118,24,'attn đầu 1',CH1);
+  s+=box(96,52,118,24,'attn đầu 2',CH2);
+  s+=box(252,y,70,h,'concat',GRY);
+  s+=box(360,y,68,h,'· Wₒ',CWO);
+  s+=box(458,y,56,h,'out',GRY);
+  function ar(x1,y1,x2,y2){return '<path d="M'+x1+' '+y1+' L'+x2+' '+y2+'" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#apm)"/>';}
+  ar(58,30,96,18); ar(58,42,96,62);
+  ar(214,16,252,32); ar(214,64,252,42);
+  ar(322,36,360,36); ar(428,36,458,36);
+  s+=ctxt(260,74,'chia chiều → 2 attention song song → ghép → trộn Wₒ → đầu ra','#5b6776',9,400);
+  svg.innerHTML=s;
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

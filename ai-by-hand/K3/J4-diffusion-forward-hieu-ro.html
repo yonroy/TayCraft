@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài J4 — Diffusion forward (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài J4</span><h1>Diffusion — Forward <small>— thêm nhiễu dần (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Diffusion học cách <b>đảo ngược</b> việc thêm nhiễu (khử nhiễu, Bài J5). Để huấn luyện, ta cần tạo nhanh
+    ảnh nhiễu ở bước t bất kỳ — công thức "nhảy thẳng" dùng tích lũy ᾱ làm điều đó trong một phép.
+    <div class="formula">xₜ = √ᾱₜ · x₀ + √(1 − ᾱₜ) · ε, ε ~ N(0,1) (ᾱₜ = ∏ αᵢ, giảm dần về 0)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">x₀ (ảnh gốc)</b> (lam) · <b class="ckk">hệ số trộn &amp; xₜ</b> (cam) · <b class="cvv">nhiễu ε</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Mỗi bước <b>pha loãng</b> ảnh gốc và <b>thêm một ít nhiễu</b>. √ᾱ là "còn lại bao nhiêu ảnh gốc", √(1−ᾱ) là "đã thêm bao nhiêu
+    nhiễu"; hai trọng số luôn thỏa (√ᾱ)² + (√(1−ᾱ))² = 1 (giữ tổng phương sai).
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 pixel</span></div>
+    <div class="calc" style="font-size:14px">
+      x₀ = <span class="gv" data-q="x0">2</span> · tại bước t có ᾱₜ = <span class="gv" data-q="abar">0.64</span> · 1 − ᾱₜ = <span class="gv" data-q="oneMinus">0.36</span> · nhiễu ε = <span class="gv" data-q="eps">1</span>
+    </div>
+    <div class="note">ᾱ chọn là bình phương số đẹp → căn ra tròn (cặp Pythagore 0.8/0.6). ε rút từ N(0,1), coi như hằng.</div>
+  </div>
+
+  <!-- CỤM 1 — HỆ SỐ TRỘN -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Hệ số trộn: √ᾱ và √(1−ᾱ)</h2><span class="tag">bộ Pythagore</span></div>
+    <div class="figwrap">
+      <svg id="figTri" class="fig" viewBox="0 0 220 140" width="66mm" height="42mm" aria-label="tam giác vuông cạnh huyền 1, cạnh ngang căn alpha ngang là phần ảnh gốc, cạnh dọc căn 1 trừ alpha là phần nhiễu, hai cạnh góc vuông để dấu hỏi"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> tam giác vuông cạnh huyền <b>= 1</b>. Cạnh ngang (<b>cam</b>) = √ᾱ ("còn ảnh gốc"), cạnh dọc (<b>tím</b>) = √(1−ᾱ) ("đã thêm nhiễu"). Tính hai cạnh "?".</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — hai hệ số</span><br>
+      √ᾱ = √<span data-q="abar">0.64</span> = <span class="blk"></span> &nbsp;;&nbsp;
+      √(1−ᾱ) = √<span data-q="oneMinus">0.36</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-calc">Tính</span> Kiểm: (√ᾱ)² + (√(1−ᾱ))² = <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao tổng bình phương hai hệ số luôn = 1 (bảo toàn phương sai)? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần J<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J4</span><h1>Diffusion — Forward <small>— trộn ảnh + nhiễu</small></h1></div>
+
+  <!-- CỤM 2 — TRỘN -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Trộn: xₜ = √ᾱ·x₀ + √(1−ᾱ)·ε</h2><span class="tag">nhảy thẳng tới t</span></div>
+    <div class="figwrap">
+      <svg id="figMix" class="fig" viewBox="0 0 260 120" width="82mm" height="38mm" aria-label="hai đóng góp: phần ảnh gốc lam và phần nhiễu tím cộng lại thành x tại bước t cam đánh dấu hỏi"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> phần <b>ảnh gốc</b> √ᾱ·x₀ (lam) + phần <b>nhiễu</b> √(1−ᾱ)·ε (tím) = xₜ (cam, "?"). Cộng hai đóng góp lại.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — xₜ (hệ số lấy từ Bước 1)</span><br>
+      xₜ = √ᾱ·<span data-q="x0">2</span> + √(1−ᾱ)·<span data-q="eps">1</span> = <span class="blk" style="min-width:44px"></span> + <span class="blk" style="min-width:44px"></span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Đóng góp nào lớn hơn khi ᾱ = 0.64 — ảnh gốc hay nhiễu? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao gọi là "nhảy thẳng" tới bước t (không lặp t bước)? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần J<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J4</span><h1>Diffusion — Forward <small>— ᾱ → 0 &amp; vì sao nhảy thẳng</small></h1></div>
+
+  <!-- CỤM 3 — ᾱ → 0 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Bước t lớn hơn: ᾱ → 0 → nhiễu thuần</h2><span class="tag">ảnh gốc biến mất</span></div>
+    <div class="figwrap">
+      <svg id="figSeq" class="fig" viewBox="0 0 260 110" width="86mm" height="36mm" aria-label="ba khung ảnh rõ rồi mờ pha nhiễu rồi nhiễu thuần khi t tăng"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> t càng lớn, √ᾱ giảm (ít ảnh gốc), √(1−ᾱ) tăng (nhiều nhiễu) → khung cuối gần <b>nhiễu thuần</b>. Đó là điểm xuất phát để khử nhiễu ngược.</div>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Khi ᾱ → 0: √ᾱ → ? và √(1−ᾱ) → ? → xₜ ≈ ? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — NHẢY THẲNG -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao "nhảy thẳng" dùng ᾱₜ</h2><span class="tag">hiệu quả huấn luyện</span></div>
+    <div class="note">Nhờ ᾱₜ = ∏αᵢ (Bài J6), tính xₜ <b>trực tiếp</b> từ x₀ trong một phép, khỏi lặp t bước → huấn luyện lấy mẫu bước t bất kỳ rất nhanh.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Nếu phải lặp t bước thêm nhiễu mỗi lần, huấn luyện sẽ ra sao? → <span class="blk" style="min-width:100px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: forward diffusion làm gì với ảnh? → <span class="blk" style="min-width:140px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J4</span><h1>Diffusion — Forward <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — hệ số trộn</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> √ᾱ = <span class="mono" data-q="sqA">0.8</span> ; √(1−ᾱ) = <span class="mono" data-q="sq1A">0.6</span>.</li>
+      <li><span class="lab">Tính</span> (√ᾱ)² + (√(1−ᾱ))² = ᾱ + (1−ᾱ) = <b>1</b>.</li>
+      <li><span class="lab">Vì sao</span> Cộng "phương sai ảnh gốc" + "phương sai nhiễu" = 1 → giữ tổng phương sai cố định.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — trộn</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> xₜ = 0.8·2 + 0.6·1 = 1.6 + 0.6 = <span class="mono" data-q="xt">2.2</span>.</li>
+      <li><span class="lab">Quan sát</span> ᾱ=0.64 → √ᾱ=0.8 &gt; √(1−ᾱ)=0.6 → phần ảnh gốc còn lớn hơn.</li>
+      <li><span class="lab">Vì sao</span> ᾱₜ gộp sẵn tích αᵢ → một phép ra xₜ, không lặp.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — ᾱ → 0</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> ᾱ→0 → √ᾱ→0, √(1−ᾱ)→1 → xₜ ≈ ε (nhiễu thuần N(0,1)).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — nhảy thẳng</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Vì sao</span> Lặp t bước sẽ rất chậm; nhảy thẳng bằng ᾱₜ giúp lấy mẫu bước t bất kỳ trong 1 phép.</li>
+      <li><span class="lab">Tóm tắt</span> Forward = pha loãng ảnh gốc (√ᾱ) + thêm nhiễu (√(1−ᾱ)) dần tới nhiễu thuần.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Forward diffusion = √ᾱ·x₀ + √(1−ᾱ)·ε, nhảy thẳng tới bước t nhờ ᾱₜ; (√ᾱ)²+(√(1−ᾱ))²=1. Bài tiếp (J5): học đảo
+    ngược — <b style="color:var(--accent2)">một bước khử nhiễu</b>.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CX='#0e7490', CW='#b45309', CN='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+
+/* ① tam giác vuông √ᾱ, √(1−ᾱ), huyền 1 (ĐỘNG) */
+function drawTri(sqA, sq1A){
+  var svg=el('figTri'); if(!svg) return;
+  var ox=40, oy=118, sc=110;
+  var ax=ox+sqA*sc, ay=oy, bx=ox, by=oy-sq1A*sc;
+  var s='';
+  s+='<polygon points="'+ox+','+oy+' '+ax+','+ay+' '+ox+','+by+'" fill="#f4f4f8" stroke="'+GRY+'" stroke-width="0.8"/>';
+  // cạnh ngang √ᾱ
+  s+='<line x1="'+ox+'" y1="'+oy+'" x2="'+ax+'" y2="'+ay+'" stroke="'+CW+'" stroke-width="2.4"/>';
+  s+=ctxt((ox+ax)/2, oy+14, '√ᾱ = ?', CW, 9, 700);
+  // cạnh dọc √(1−ᾱ)
+  s+='<line x1="'+ox+'" y1="'+oy+'" x2="'+bx+'" y2="'+by+'" stroke="'+CN+'" stroke-width="2.4"/>';
+  s+=ctxt(ox-4, (oy+by)/2, '√(1−ᾱ)', CN, 8.5, 700);
+  s+=ctxt(ox-8, (oy+by)/2+11, '= ?', CN, 8.5, 700);
+  // huyền
+  s+='<line x1="'+ax+'" y1="'+ay+'" x2="'+bx+'" y2="'+by+'" stroke="'+GRY+'" stroke-width="1.6" stroke-dasharray="4 2"/>';
+  s+=ctxt((ax+bx)/2+14, (ay+by)/2-4, 'huyền = 1', GRY, 9, 700);
+  // góc vuông
+  s+='<rect x="'+ox+'" y="'+(oy-9)+'" width="9" height="9" fill="none" stroke="'+GRY+'" stroke-width="0.8"/>';
+  svg.innerHTML=s;
+}
+
+/* ② hai đóng góp → xₜ (ĐỘNG) */
+function drawMix(sqA, x0, sq1A, eps){
+  var svg=el('figMix'); if(!svg) return;
+  var base=90, x0p=40, gap=70, bw=30, sc=22;
+  var c1=sqA*x0, c2=sq1A*eps;
+  var s='<line x1="'+(x0p-10)+'" y1="'+base+'" x2="'+(x0p+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  function bar(bx,val,col,lab){
+    var h=Math.abs(val)*sc, y=val>=0?base-h:base;
+    return '<rect x="'+bx+'" y="'+y.toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+col+'2a" stroke="'+col+'" stroke-width="1.3"/>'+ctxt(bx+bw/2, base+13, lab, col, 8, 700);
+  }
+  s+=bar(x0p, c1, CX, '√ᾱ·x₀');
+  s+=ctxt(x0p+gap-8, base-20, '+', GRY, 14, 700);
+  s+=bar(x0p+gap, c2, CN, '√(1−ᾱ)·ε');
+  s+=ctxt(x0p+2*gap-8, base-20, '=', GRY, 14, 700);
+  s+='<rect x="'+(x0p+2*gap)+'" y="'+(base-50)+'" width="'+bw+'" height="44" rx="4" fill="#fff5e9" stroke="'+CW+'" stroke-width="1.5"/>'+ctxt(x0p+2*gap+bw/2, base-26, '?', CW, 13, 700)+ctxt(x0p+2*gap+bw/2, base+13, 'xₜ', CW, 9, 700);
+  svg.innerHTML=s;
+}
+
+/* ③ rõ → mờ → nhiễu (ĐỘNG) */
+function drawSeq(noiseLvl){
+  var svg=el('figSeq'); if(!svg) return;
+  var s='', levels=[0.12, noiseLvl, 0.97], labs=['x₀ (rõ)','xₜ (pha)','x_T (nhiễu)'];
+  for(var k=0;k<3;k++){
+    var bx=14+k*84, by=14, sz=54;
+    s+='<rect x="'+bx+'" y="'+by+'" width="'+sz+'" height="'+sz+'" rx="4" fill="#f4f1ea" stroke="#b9b09a" stroke-width="1.2"/>';
+    var n=Math.round(levels[k]*55);
+    for(var i=0;i<n;i++){ var px=bx+3+((i*37)%(sz-6)), py=by+3+((i*61)%(sz-6)); s+='<circle cx="'+px+'" cy="'+py+'" r="1.1" fill="'+GRY+'"/>'; }
+    if(k===0){ s+='<circle cx="'+(bx+sz/2)+'" cy="'+(by+sz/2)+'" r="13" fill="'+CX+'55" stroke="'+CX+'" stroke-width="1.4"/>'; }
+    s+=ctxt(bx+sz/2, by+sz+12, labs[k], GRY, 8.5, 700);
+    if(k<2) s+=ctxt(bx+sz+8, by+sz/2+4, '→', CW, 13, 700);
+  }
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f=WB.fmtTrim;
+  var pair=WB.pick([{abar:0.64, sqA:0.8, sq1A:0.6}, {abar:0.36, sqA:0.6, sq1A:0.8}]);
+  var x0=WB.randInt(1,3), eps=WB.pick([1,-1,2]);
+  var oneMinus=Math.round((1-pair.abar)*100)/100;
+  var xt=Math.round((pair.sqA*x0 + pair.sq1A*eps)*100)/100;
+  WB.setAll({
+    x0:String(x0), abar:f(pair.abar), eps:f(eps), oneMinus:f(oneMinus),
+    sqA:f(pair.sqA), sq1A:f(pair.sq1A), xt:f(xt)
+  });
+  drawTri(pair.sqA, pair.sq1A);
+  drawMix(pair.sqA, x0, pair.sq1A, eps);
+  drawSeq(pair.sq1A);
+}
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

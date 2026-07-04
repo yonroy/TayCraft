@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài H7 — Positional Encoding (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+/* ===== additive — template HIỂU RÕ: hình-để-điền trên ĐỀ + chùm câu hỏi ===== */
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
+.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
+.extbl td.h{background:#f3ede0;font-weight:700;}
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+/* hình + chú thích */
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+/* CHÙM CÂU HỎI */
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+/* KHỐI TỰ TÍNH */
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:40px;border-bottom:1px solid #94a3b8;}
+/* ĐÁP ÁN gọn */
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài H7</span><h1>Positional Encoding <small>— bơm vị trí bằng sóng sin/cos (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Attention <b>không có thứ tự</b> sẵn — "mèo đuổi chuột" và "chuột đuổi mèo" trông y hệt nếu không có vị trí.
+    Positional Encoding thêm một <b>"dấu vị trí"</b> vào embedding bằng các <b>sóng sin/cos nhiều tần số</b>, để mỗi vị trí có mã <b>duy nhất</b>
+    và mô hình <b>so sánh được</b> khoảng cách giữa các token.
+    <div class="formula">PE(pos, 2i) = sin( pos / 10000<sup>2i/d</sup> ) &nbsp;·&nbsp; PE(pos, 2i+1) = cos( pos / 10000<sup>2i/d</sup> ) &nbsp;&nbsp;(d = 4)</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">chiều 0,1</b> tần số cao (lam) · <b class="cvv">chiều 2,3</b> tần số thấp (tím) · <b class="ckk">PE / z</b> kết quả (cam)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Như <b>bộ kim đồng hồ nhiều tốc độ</b>: chiều <b>chẵn</b> dùng sin, chiều <b>lẻ</b> dùng cos; kim đầu <b>quay nhanh</b> (phân biệt vị trí gần),
+    kim sau <b>quay chậm</b> (phân biệt vị trí xa). Bộ góc của các kim tạo một <b>"vân tay"</b> riêng cho từng vị trí.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=4 · 2 tần số · bảng sin/cos</span></div>
+    <div class="calc" style="font-size:13.5px">
+      Vị trí pos = <span class="gv" data-q="pos">1</span> · embedding token e = ( <span class="gv" data-q="e0">1</span>, <span class="gv" data-q="e1">1</span>, <span class="gv" data-q="e2">0</span>, <span class="gv" data-q="e3">2</span> )
+      <table class="extbl" style="display:inline-table;vertical-align:middle;margin-left:10px">
+        <tr><td class="h">θ (rad)</td><td>1</td><td>2</td><td>3</td></tr>
+        <tr><td class="h">sin θ</td><td>0.84</td><td>0.91</td><td>0.14</td></tr>
+        <tr><td class="h">cos θ</td><td>0.54</td><td>−0.42</td><td>−0.99</td></tr>
+      </table>
+    </div>
+    <div class="note">Bộ chia tần số (d=4): chiều 0,1 → góc = pos÷1 = <b>pos</b>; chiều 2,3 → góc = pos÷100 = <b>pos·0.01</b> (rất nhỏ). Với góc nhỏ: <b>sin(θ)≈θ, cos(θ)≈1.00</b>.</div>
+  </div>
+
+  <!-- CỤM 1 — TẦN SỐ CAO -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Chiều 0,1 — kim quay nhanh (tần số cao)</h2><span class="tag">góc = pos</span></div>
+    <div class="figwrap">
+      <svg id="figHi" class="fig" viewBox="0 0 158 150" width="46mm" height="44mm" aria-label="đồng hồ kim ở góc pos radian; hình chiếu ngang là cos, dọc là sin"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> kim ở góc <b>θ = pos</b> (radian). Hình chiếu <b>ngang</b> = cos (chiều 1), <b>dọc</b> = sin (chiều 0). Kim này quay <b>nhanh</b>: đổi vị trí một bước là góc đổi hẳn → hai vị trí kề đã khác nhau rõ.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — tra bảng sin/cos</span> <span class="sub">(góc θ = pos)</span><br>
+      PE₀ = sin(θ) = sin(<span data-q="pos">1</span>) = <span class="blk"></span><br>
+      PE₁ = cos(θ) = cos(<span data-q="pos">1</span>) = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Trên đồng hồ: hình chiếu nào (ngang/dọc) cho <b>cos</b>, cái nào cho <b>sin</b>? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Kim quay nhanh giúp phân biệt các vị trí <b>gần</b> nhau như thế nào? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H7 · Positional Encoding (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần H<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H7</span><h1>Positional Encoding <small>— tần số thấp &amp; lắp vectơ</small></h1></div>
+
+  <!-- CỤM 2 — TẦN SỐ THẤP -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Chiều 2,3 — kim quay chậm (tần số thấp)</h2><span class="tag">góc = pos·0.01</span></div>
+    <div class="figwrap">
+      <svg id="figLo" class="fig" viewBox="0 0 158 150" width="46mm" height="44mm" aria-label="đồng hồ kim ở góc rất nhỏ; hầu như nằm ngang, sin gần 0, cos gần 1"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> góc <b>θ = pos·0.01</b> rất nhỏ → kim gần như <b>nằm ngang</b>, chỉ nhích một tí. Vậy sin(θ) ≈ <b>góc nhỏ</b> (gần 0), cos(θ) ≈ <b>1.00</b>. Kim này gần như <b>đứng yên</b> giữa các vị trí kề.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — góc nhỏ</span> <span class="sub">(sin θ≈θ, cos θ≈1)</span><br>
+      θ = pos ÷ 100 = <span data-q="pos">1</span> ÷ 100 = <span data-q="poslo">0.01</span> rad<br>
+      PE₂ = sin(θ) ≈ <span class="blk"></span> &nbsp;,&nbsp; PE₃ = cos(θ) ≈ <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Sang vị trí pos+1, chiều 2,3 đổi <b>nhiều</b> hay <b>rất ít</b>? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Cần kim chậm này để mã hóa vị trí trên <b>thang dài</b> — vì sao? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — LẮP VECTƠ + CỘNG EMBEDDING -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Lắp vectơ PE rồi cộng vào embedding</h2><span class="tag">z = e + PE</span></div>
+    <div class="figwrap">
+      <svg id="figVec" class="fig" viewBox="0 0 210 132" width="62mm" height="40mm" aria-label="ba hàng 4 ô: embedding cho sẵn, PE để trống, và tổng z để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> ghép 4 số PE (2 chiều lam từ Bước 1, 2 chiều tím từ Bước 2) thành vectơ, rồi <b>cộng thẳng</b> vào embedding e theo <b>từng ô</b> → token "có vị trí" z. Điền hàng PE và hàng z.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — lắp PE &amp; cộng embedding</span> <span class="sub">(PE lấy từ Bước 1, 2)</span><br>
+      PE(pos) = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
+      z = e + PE = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Hai vị trí khác nhau chắc chắn cho hai vectơ PE khác nhau — điều đó giúp mô hình biết gì? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H7 · Positional Encoding (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần H<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H7</span><h1>Positional Encoding <small>— nhiều tần số &amp; vị trí tương đối</small></h1></div>
+
+  <!-- CỤM 4 — NHIỀU TẦN SỐ + TƯƠNG ĐỐI -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Nhiều tần số → "vân tay" vị trí</h2><span class="tag">tương đối</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figWaves" class="fig" viewBox="0 0 340 120" width="150mm" height="42mm" aria-label="hai sóng sin tần số cao và thấp theo vị trí; đường dọc đánh dấu vị trí pos"></svg>
+    </div>
+    <div class="note"><b>Vị trí tương đối:</b> nhờ công thức cộng góc, PE(pos+k) là một <b>phép quay</b> tuyến tính của PE(pos) → mô hình học được <b>khoảng cách</b> giữa hai token, không chỉ vị trí tuyệt đối. Kiểu <b>cố định</b> (sin/cos) hay <b>học được</b> đều dùng cách "cộng dấu vị trí" này.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Tại đường dọc "pos", sóng lam (nhanh) và sóng tím (chậm) cắt ở hai độ cao — bộ hai giá trị đó nói lên điều gì về vị trí? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao dùng <b>nhiều</b> tần số thay vì một sóng duy nhất để đánh dấu vị trí? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm tắt 1 câu: positional encoding cho token biết vị trí bằng cách nào? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H7 · Positional Encoding (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài H7</span><h1>Positional Encoding <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Tần số cao (chiều 0,1)</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> PE₀ = sin(pos) = <span class="mono" data-q="pe0">0.84</span> ; PE₁ = cos(pos) = <span class="mono" data-q="pe1">0.54</span>.</li>
+      <li><span class="lab">Quan sát</span> Chiếu ngang = cos, chiếu dọc = sin.</li>
+      <li><span class="lab">Vì sao</span> Kim quay nhanh → góc đổi hẳn mỗi bước → vị trí gần nhau vẫn phân biệt được.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Tần số thấp (chiều 2,3)</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> PE₂ ≈ <span class="mono" data-q="pe2">0.01</span> ; PE₃ ≈ <span class="mono" data-q="pe3">1.00</span>.</li>
+      <li><span class="lab">Dự đoán</span> Sang pos+1: chiều 2,3 đổi <b>rất ít</b> (kim gần đứng yên).</li>
+      <li><span class="lab">Vì sao</span> Kim chậm mã hóa vị trí trên <b>thang dài</b> (không lặp lại sớm).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Lắp PE &amp; cộng embedding</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> PE = ( <span class="mono" data-q="pe0b">0.84</span>, <span class="mono" data-q="pe1b">0.54</span>, <span class="mono" data-q="pe2b">0.01</span>, <span class="mono" data-q="pe3b">1.00</span> ).</li>
+      <li><span class="lab">Tính</span> z = e + PE = ( <span class="mono" data-q="z0">1.84</span>, <span class="mono" data-q="z1">1.54</span>, <span class="mono" data-q="z2">0.01</span>, <span class="mono" data-q="z3">3.00</span> ).</li>
+      <li><span class="lab">Vì sao</span> Mỗi vị trí có PE <b>duy nhất</b> → mô hình suy ra được thứ tự &amp; khoảng cách.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Nhiều tần số &amp; tương đối</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Quan sát</span> Bộ (giá trị sóng nhanh, giá trị sóng chậm) tại pos = "vân tay" nhận diện vị trí đó.</li>
+      <li><span class="lab">Vì sao</span> Nhiều tần số → mọi vị trí có mã riêng, không trùng, và so sánh được xa/gần.</li>
+      <li><span class="lab">Tóm tắt</span> Cộng sóng sin/cos nhiều tần số vào embedding → token mang dấu vị trí.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> PE = sóng sin/cos nhiều tần số cộng vào embedding → mã vị trí <b>duy nhất</b>, suy ra được khoảng cách <b>tương đối</b>.
+    Bài tiếp (H8): <b style="color:var(--accent2)">RoPE</b> — nhúng vị trí bằng phép <b>quay</b> trực tiếp lên Q, K thay vì cộng.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H7 · Positional Encoding (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CHI='#0e7490', CLO='#7c5cff', CRES='#b45309', GRY='#5b6776';
+var SIN={1:0.84, 2:0.91, 3:0.14}, COS={1:0.54, 2:-0.42, 3:-0.99};
+function el(id){return document.getElementById(id);}
+function line(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'"/>';}
+function dln(x1,y1,x2,y2,c,w){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'" stroke-dasharray="4 3"/>';}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function rct(x,y,w,h,fill,stroke,sw){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'"'+(stroke?' stroke="'+stroke+'" stroke-width="'+(sw||1)+'"':'')+'/>';}
+function arrow(x1,y1,x2,y2,c,w){
+  var a=Math.atan2(y2-y1,x2-x1),L=8;
+  var ax=x2-L*Math.cos(a-0.42),ay=y2-L*Math.sin(a-0.42),bx=x2-L*Math.cos(a+0.42),by=y2-L*Math.sin(a+0.42);
+  return line(x1,y1,x2,y2,c,w)+'<path d="M'+x2+' '+y2+' L'+ax+' '+ay+' L'+bx+' '+by+' z" fill="'+c+'"/>';
+}
+
+/* Đồng hồ kim ở góc theta: chiếu ngang = cos, dọc = sin. Kết quả để "?" */
+function drawClock(id, theta, col){
+  var svg=el(id); if(!svg) return;
+  var cx=78, cy=80, R=46, s='';
+  s += '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#e2e8f0" stroke-width="1.4"/>';
+  s += line(cx-R-6,cy,cx+R+6,cy,'#cbd5e1',1) + line(cx,cy+R+6,cx,cy-R-8,'#cbd5e1',1);
+  var tx=cx+R*Math.cos(theta), ty=cy-R*Math.sin(theta);
+  // chiếu cos (ngang) + sin (dọc)
+  s += dln(cx,cy,tx,cy,col,1.4);         // cos trên trục x
+  s += dln(tx,cy,tx,ty,col,1.4);         // sin dọc
+  s += arrow(cx,cy,tx,ty,col,2.6);       // kim
+  // cung góc
+  s += '<path d="M'+(cx+18)+' '+cy+' A 18 18 0 0 0 '+(cx+18*Math.cos(theta))+' '+(cy-18*Math.sin(theta))+'" fill="none" stroke="#94a3b8" stroke-width="1"/>';
+  s += txt(cx+22,cy-6,'θ',GRY,9);
+  s += ctxt((cx+tx)/2, cy+12, 'cos = ?', col, 9, 700);
+  s += ctxt(tx+ (Math.cos(theta)>=0? 20:-20), (cy+ty)/2, 'sin = ?', col, 9, 700);
+  svg.innerHTML=s;
+}
+
+/* 3 hàng 4 ô: e (cho sẵn) + PE (?) = z (?) */
+function drawVec(id, e){
+  var svg=el(id); if(!svg) return;
+  var s='', x0=42, w=36, gap=4, y=[10,58,106], h=30;
+  var colPE=[CHI,CHI,CLO,CLO];
+  s += txt(6,y[0]+20,'e',GRY,12);
+  s += txt(6,y[1]+20,'PE',CRES,11);
+  s += txt(6,y[2]+20,'z',CRES,12);
+  for(var i=0;i<4;i++){
+    var x=x0+i*(w+gap);
+    // e (cho sẵn)
+    s += rct(x,y[0],w,h,'#eef1f5',GRY,1) + ctxt(x+w/2,y[0]+20,String(e[i]),GRY,12,700);
+    // PE (?)
+    s += rct(x,y[1],w,h,colPE[i]+'14',colPE[i],1.4) + ctxt(x+w/2,y[1]+20,'?',colPE[i],12,700);
+    // z (?)
+    s += rct(x,y[2],w,h,CRES+'12',CRES,1.4) + ctxt(x+w/2,y[2]+20,'?',CRES,12,700);
+  }
+  // dấu + và =
+  s += ctxt(x0-11,y[0]+h+13,'',GRY,12,700);
+  s += txt(x0+4*(w+gap)-2, y[1]-2, 'chiều: 0  1  2  3', GRY, 8);
+  s += ctxt(24,(y[0]+y[1])/2+16,'+',GRY,14,700);
+  s += ctxt(24,(y[1]+y[2])/2+16,'=',GRY,14,700);
+  svg.innerHTML=s;
+}
+
+/* Nhiều tần số theo vị trí + đường dọc đánh dấu pos (TĨNH, mark động theo pos) */
+function drawWaves(posMark){
+  var svg=el('figWaves'); if(!svg) return;
+  var s='', x0=14, W=300, yc=52, A=30;
+  s += line(x0,yc,x0+W,yc,'#e2e8f0',1);
+  function wave(freq,col){
+    var pts='';
+    for(var x=0;x<=W;x+=3){ var y=yc-A*Math.sin(x*freq); pts+=(x0+x)+','+y.toFixed(1)+' '; }
+    return '<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.8"/>';
+  }
+  s += wave(0.14, CHI);   // nhanh
+  s += wave(0.03, CLO);   // chậm
+  // đường dọc pos: map pos∈{1,2,3} → x
+  var px = x0 + 60 + posMark*40;
+  s += dln(px, 12, px, 96, CRES, 1.6);
+  s += ctxt(px, 108, 'vị trí pos', CRES, 9, 700);
+  s += '<circle cx="'+px+'" cy="'+(yc-A*Math.sin((px-x0)*0.14)).toFixed(1)+'" r="3.2" fill="'+CHI+'"/>';
+  s += '<circle cx="'+px+'" cy="'+(yc-A*Math.sin((px-x0)*0.03)).toFixed(1)+'" r="3.2" fill="'+CLO+'"/>';
+  s += txt(x0+W-58, 20, 'lam: nhanh', CHI, 8.5);
+  s += txt(x0+W-58, 92, 'tím: chậm', CLO, 8.5);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var f2=WB.fmt2;
+  var pos = WB.pick([1,2,3]);
+  var pe0=SIN[pos], pe1=COS[pos];
+  var pe2=Math.round(0.01*pos*100)/100;   // ≈ pos·0.01
+  var pe3=1.00;
+  var e=[WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2), WB.randInt(0,2)];
+  var z=[e[0]+pe0, e[1]+pe1, e[2]+pe2, e[3]+pe3].map(function(v){return Math.round(v*100)/100;});
+
+  WB.setAll({
+    pos:String(pos), poslo:f2(pe2),
+    e0:String(e[0]), e1:String(e[1]), e2:String(e[2]), e3:String(e[3]),
+    pe0:f2(pe0), pe1:f2(pe1), pe2:f2(pe2), pe3:f2(pe3),
+    pe0b:f2(pe0), pe1b:f2(pe1), pe2b:f2(pe2), pe3b:f2(pe3),
+    z0:f2(z[0]), z1:f2(z[1]), z2:f2(z[2]), z3:f2(z[3])
+  });
+
+  drawClock('figHi', pos, CHI);           // góc = pos rad (nhanh)
+  drawClock('figLo', 0.01*pos + 0.18, CLO); // góc nhỏ (phóng đại chút cho nhìn thấy kim)
+  drawVec('figVec', e);
+  drawWaves(pos);
+}
+
+WB.wire(generate);
+generate();
+</script>
+</body>
+</html>

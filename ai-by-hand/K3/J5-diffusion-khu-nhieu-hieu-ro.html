@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Làm toán AI · Bài J5 — Diffusion khử nhiễu (bản hiểu rõ, A4 in được)</title>
+<link rel="stylesheet" href="../wb.css">
+<style>
+.page .step{margin-top:8px;}
+.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .note{margin-top:4px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cqq{background:#0e7490;}.ckk{background:#b45309;}.cvv{background:#7c5cff;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;} .qset .mono{font-family:var(--mono);}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.exptab{display:inline-block;font-family:var(--mono);font-size:11.5px;color:#475569;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px;line-height:1.5;}
+.exptab b{color:#b45309;margin-left:6px;}
+.sub{color:#5b6776;font-size:.86em;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <button class="js-randomize">🎲 Đổi số</button>
+  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+</div>
+
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J · <b>bản hiểu rõ</b></div>
+  </div>
+
+  <div class="wb-title"><span class="no">Bài J5</span><h1>Diffusion — một bước khử nhiễu <small>— từ ảnh nhiễu về ảnh sạch hơn (nhìn hình &amp; trả lời)</small></h1></div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~17 phút</span></div>
+
+  <div class="intro">
+    <b>Vì sao quan trọng.</b> Diffusion sinh ảnh bằng cách bắt đầu từ <b>nhiễu thuần</b> rồi gỡ nhiễu qua nhiều bước. Mỗi bước: mạng
+    <b>đoán nhiễu</b> ε trong ảnh hiện tại xₜ → <b>ước lượng ảnh sạch</b> x̂₀ → <b>trộn lại</b> với nhiễu <b>nhỏ hơn</b> → x<sub>t−1</sub> ít nhiễu hơn.
+    <div class="formula">x̂₀ = (xₜ − √(1−ᾱₜ)·ε) / √ᾱₜ · x<sub>t−1</sub> = √ᾱ<sub>t−1</sub>·x̂₀ + √(1−ᾱ<sub>t−1</sub>)·ε</div>
+    <div class="legend">Mã màu xuyên suốt: <b class="cqq">x̂₀ (ảnh sạch)</b> (lam) · <b class="ckk">xₜ, x<sub>t−1</sub> (ảnh nhiễu)</b> (cam) · <b class="cvv">nhiễu ε</b> (tím)</div>
+  </div>
+
+  <div class="intuition">
+    <span class="lead">💡 Trực giác</span>
+    Forward (J4) <b>thêm</b> nhiễu; reverse <b>đoán và trừ</b> nhiễu. Mạng học "trong ảnh mờ này, đâu là nhiễu?" → gỡ ra một ít → ảnh
+    rõ hơn một chút. Lặp nhiều bước nhỏ, như <b>lau dần</b> lớp bụi để hiện bức tranh.
+  </div>
+
+  <!-- GIVEN -->
+  <div class="step">
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: ảnh nhiễu, nhiễu đoán &amp; lịch nhiễu</h2><span class="tag">ảnh 2 chiều</span></div>
+    <div class="calc" style="font-size:13.5px">
+      xₜ = ( <span class="gv" data-q="xt1">1.40</span>, <span class="gv" data-q="xt2">0.20</span> ) &nbsp;·&nbsp;
+      ε (mạng đoán) = ( <span class="gv" data-q="e1">1</span>, <span class="gv" data-q="e2">−1</span> )
+    </div>
+    <div class="exptab" style="margin-top:6px">
+      √ᾱₜ <b>0.80</b> &nbsp; √(1−ᾱₜ) <b>0.60</b> &nbsp; √ᾱ<sub>t−1</sub> <b>0.96</b> &nbsp; √(1−ᾱ<sub>t−1</sub>) <b>0.28</b>
+    </div>
+    <div class="note">ᾱ tăng dần khi t giảm → hệ số nhiễu tụt từ <b>0.60</b> (ở t) xuống <b>0.28</b> (ở t−1). Hai số = trục ngang &amp; dọc của "ảnh".</div>
+  </div>
+
+  <!-- CỤM 1 — ƯỚC LƯỢNG x̂₀ -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Ước lượng ảnh sạch x̂₀ (đảo công thức forward)</h2><span class="tag">gỡ hết nhiễu</span></div>
+    <div class="figwrap">
+      <svg id="figInvert" class="fig" viewBox="0 0 300 96" width="98mm" height="31mm" aria-label="hộp x t trừ phần nhiễu rồi chia căn alpha ngang ra x mũ 0, đảo ngược của forward"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> lấy xₜ (<b>cam</b>) <b>trừ</b> phần nhiễu √(1−ᾱ)·ε (<b>tím</b>) rồi <b>chia</b> √ᾱ → x̂₀ (<b>lam</b>, "?"). Đây là <b>đảo</b> của công thức forward (J4).</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — x̂₀ = (xₜ − 0.60·ε) / 0.80</span><br>
+      cột 1: ( <span data-q="xt1">1.40</span> − 0.60·<span data-q="e1">1</span> ) / 0.80 = <span class="blk"></span><br>
+      cột 2: ( <span data-q="xt2">0.20</span> − 0.60·<span data-q="e2">−1</span> ) / 0.80 = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao trừ nhiễu rồi <b>chia √ᾱ</b> (không chỉ trừ)? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-see">Quan sát</span> x̂₀ là ước lượng ảnh <b>ở bước nào</b> (t, t−1, hay gốc)? → <span class="blk" style="min-width:80px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion khử nhiễu (bản hiểu rõ)</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần J<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J5</span><h1>Diffusion — khử nhiễu <small>— trộn lại với ít nhiễu hơn</small></h1></div>
+
+  <!-- CỤM 2 — TRỘN LẠI -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Trộn lại → x<sub>t−1</sub> = 0.96·x̂₀ + 0.28·ε</h2><span class="tag">ít nhiễu hơn</span></div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — x<sub>t−1</sub> (x̂₀ lấy từ Bước 1)</span><br>
+      cột 1: 0.96·<span class="blk" style="min-width:30px"></span> + 0.28·<span data-q="e1">1</span> = <span class="blk"></span><br>
+      cột 2: 0.96·<span class="blk" style="min-width:30px"></span> + 0.28·<span data-q="e2">−1</span> = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Nhiễu thêm vào ở bước này (0.28) so với ở xₜ (0.60): nhiều hay ít hơn? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao <b>không</b> lấy thẳng x̂₀ làm kết quả mà còn trộn thêm chút nhiễu? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — KIỂM TRA -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Kiểm tra: đã sạch hơn chưa?</h2><span class="tag">gần x̂₀ hơn</span></div>
+    <div class="figwrap">
+      <svg id="figPlane" class="fig" viewBox="0 0 260 130" width="82mm" height="41mm" aria-label="mặt phẳng ảnh với x t nhiễu, mũi tên tới x t trừ 1 gần hơn, và x mũ 0 sạch; thước mức nhiễu tụt từ 0.6 xuống 0.28"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> trên mặt phẳng ảnh: xₜ (cam đậm) → mũi tên → x<sub>t−1</sub> (cam) <b>gần</b> x̂₀ (lam) hơn. Thước bên phải: mức nhiễu tụt 0.60 → 0.28.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — mức nhiễu &amp; kết luận</span><br>
+      hệ số nhiễu: <span class="blk" style="min-width:36px"></span> (ở xₜ) → <span class="blk" style="min-width:36px"></span> (ở x<sub>t−1</sub>) &nbsp;;&nbsp; x<sub>t−1</sub> gần x̂₀ hơn? <span class="blk" style="min-width:50px"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Chất lượng ảnh cuối phụ thuộc chủ yếu vào cái gì mạng đoán? → <span class="blk" style="min-width:100px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion khử nhiễu (bản hiểu rõ)</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐỀ (C) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần J<br>Mức: nâng cao · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J5</span><h1>Diffusion — khử nhiễu <small>— vì sao lùi từng bước nhỏ</small></h1></div>
+
+  <!-- CỤM 4 — LÙI TỪNG BƯỚC -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao lùi từng bước nhỏ (không về x₀ ngay)</h2><span class="tag">ổn định</span></div>
+    <div class="figwrap">
+      <svg id="figSteps" class="fig" viewBox="0 0 300 100" width="98mm" height="33mm" aria-label="chuỗi nhiều bước nhỏ từ nhiễu thuần về ảnh rõ, mỗi bước gỡ một ít nhiễu"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> lặp <b>nhiều bước nhỏ</b> từ nhiễu thuần → ảnh rõ, mỗi bước gỡ một ít nhiễu. Mạng chỉ học một việc: <b>đoán ε</b> (mất mát ‖ε − ε̂‖²).</div>
+    </div>
+    <div class="note">Nếu nhảy thẳng về x̂₀ ngay: εθ chỉ là <b>ước lượng</b> → sai số lớn, ảnh méo. Nhiều bước nhỏ → mỗi bước sửa một ít, chính xác &amp; ổn định hơn. Đây là lõi của Stable Diffusion / DDPM.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu εθ mạng đoán <b>rất sai</b>, ảnh cuối ra sao? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao nhiều bước nhỏ chính xác hơn một bước lớn? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Tóm 1 câu: một bước khử nhiễu gồm những gì? → <span class="blk" style="min-width:140px"></span></li>
+    </ul>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion khử nhiễu (bản hiểu rõ)</span><span>Trang 3/4 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 4 — ĐÁP ÁN (gọn) ============ -->
+<section class="page key">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài J5</span><h1>Diffusion — khử nhiễu <small>— đáp số gọn + cốt lõi</small></h1></div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — ước lượng x̂₀</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> x̂₀ = ( <span class="mono" data-q="xh1">1</span>, <span class="mono" data-q="xh2">1</span> ) [cột1 = (1.40−0.60)/0.80=1 ; cột2 = (0.20+0.60)/0.80=1].</li>
+      <li><span class="lab">Vì sao</span> Chia √ᾱ để "phóng" về thang ảnh gốc (đảo bước nhân √ᾱ ở forward).</li>
+      <li><span class="lab">Quan sát</span> x̂₀ = ước lượng ảnh <b>gốc</b> (bước 0, sạch hoàn toàn).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — trộn lại</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> x<sub>t−1</sub> = ( <span class="mono" data-q="xp1">1.24</span>, <span class="mono" data-q="xp2">0.68</span> ) [0.96·1±0.28].</li>
+      <li><span class="lab">Quan sát</span> Nhiễu thêm 0.28 &lt; 0.60 → ít hơn.</li>
+      <li><span class="lab">Vì sao</span> Giữ chút nhiễu để đúng phân phối bước t−1; x̂₀ chỉ là ước lượng, chưa chắc đúng hẳn.</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — kiểm tra</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tính</span> hệ số nhiễu <span class="mono" data-q="nz1">0.60</span> → <span class="mono" data-q="nz2">0.28</span> (giảm); x<sub>t−1</sub> gần x̂₀ hơn: <b>đúng ✓</b>.</li>
+      <li><span class="lab">Vì sao</span> Chất lượng phụ thuộc hoàn toàn vào độ chính xác của <b>ε</b> mạng đoán (thứ duy nhất được huấn luyện).</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — lùi từng bước</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> εθ rất sai → ảnh cuối mờ / méo / sai chi tiết.</li>
+      <li><span class="lab">Vì sao</span> εθ chỉ là ước lượng; nhiều bước nhỏ → mỗi bước sửa một ít, chính xác &amp; ổn định hơn.</li>
+      <li><span class="lab">Tóm tắt</span> Đoán ε → ước lượng x̂₀ → trộn lại với ít nhiễu hơn.</li>
+    </ul>
+  </div>
+
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> Một bước diffusion = đoán nhiễu ε → ước lượng ảnh sạch x̂₀ → trộn lại với ít nhiễu hơn. Lặp làm mức nhiễu tụt về 0,
+    ảnh hiện ra. Mạng chỉ học <b>dự đoán ε</b> (mất mát ‖ε−ε̂‖²) — lõi của Stable Diffusion / DDPM. Bài tiếp (J6): <b style="color:var(--accent2)">lịch nhiễu</b> (ᾱ = ∏α).
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J5 · Diffusion khử nhiễu (bản hiểu rõ)</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
+</section>
+
+<script src="../wb-random.js"></script>
+<script>
+var CCLEAN='#0e7490', CNOISY='#b45309', CEPS='#7c5cff', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+function txt(x,y,t,c,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+(fs||9)+'" fill="'+c+'">'+t+'</text>';}
+function ctxt(x,y,t,c,fs,w){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+(fs||9)+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';}
+function box(x,y,w,h,t,c){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+c+'18" stroke="'+c+'" stroke-width="1.4"/>'+ctxt(x+w/2,y+h/2+4,t,c,9.5,700);}
+
+/* ① đảo forward: xₜ − nhiễu → ÷√ᾱ → x̂₀ (TĨNH) */
+function drawInvert(){
+  var svg=el('figInvert'); if(!svg) return;
+  var y=32, h=28, s='';
+  s+=box(10,y,52,h,'xₜ',CNOISY);
+  s+=ctxt(78,y+18,'−',GRY,15,700);
+  s+=box(90,y,84,h,'√(1−ᾱ)·ε',CEPS);
+  s+=ctxt(188,y+18,'÷',GRY,15,700);
+  s+=box(200,y,44,h,'√ᾱ',CNOISY);
+  s+=ctxt(260,y+18,'=',GRY,15,700);
+  s+='<rect x="272" y="'+y+'" width="24" height="'+h+'" rx="5" fill="#eaf4f6" stroke="'+CCLEAN+'" stroke-width="1.5"/>'+ctxt(284,y+18,'?',CCLEAN,13,700);
+  s+=ctxt(284,y-6,'x̂₀',CCLEAN,9,700);
+  s+=ctxt(150,88,'đảo ngược công thức forward: biết nhiễu → suy ra ảnh sạch',GRY,8.5,700);
+  svg.innerHTML=s;
+}
+
+/* ③ mặt phẳng ảnh + thước nhiễu (ĐỘNG) */
+function drawPlane(xt, xh, xp){
+  var svg=el('figPlane'); if(!svg) return;
+  var xs=[xt[0],xh[0],xp[0]], ys=[xt[1],xh[1],xp[1]], pad=0.7;
+  var xmin=Math.min.apply(null,xs)-pad, xmax=Math.max.apply(null,xs)+pad;
+  var ymin=Math.min.apply(null,ys)-pad, ymax=Math.max.apply(null,ys)+pad;
+  var PX=14, PY=12, PW=150, PH=96;
+  function sx(x){return PX+(x-xmin)/(xmax-xmin)*PW;}
+  function sy(y){return PY+PH-(y-ymin)/(ymax-ymin)*PH;}
+  var s='<defs><marker id="adf" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+CNOISY+'"/></marker></defs>';
+  s+='<rect x="'+PX+'" y="'+PY+'" width="'+PW+'" height="'+PH+'" fill="#fbfdfe" stroke="#e7edf2"/>';
+  s+='<line x1="'+sx(xt[0]).toFixed(1)+'" y1="'+sy(xt[1]).toFixed(1)+'" x2="'+sx(xp[0]).toFixed(1)+'" y2="'+sy(xp[1]).toFixed(1)+'" stroke="'+CNOISY+'" stroke-width="1.8" marker-end="url(#adf)"/>';
+  s+='<line x1="'+sx(xp[0]).toFixed(1)+'" y1="'+sy(xp[1]).toFixed(1)+'" x2="'+sx(xh[0]).toFixed(1)+'" y2="'+sy(xh[1]).toFixed(1)+'" stroke="#9fb0c0" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  var hx=sx(xh[0]),hy=sy(xh[1]);
+  s+='<circle cx="'+hx.toFixed(1)+'" cy="'+hy.toFixed(1)+'" r="4.5" fill="'+CCLEAN+'"/>'+txt(hx+6,hy-3,'x̂₀ sạch',CCLEAN,8);
+  s+='<circle cx="'+sx(xt[0]).toFixed(1)+'" cy="'+sy(xt[1]).toFixed(1)+'" r="3.4" fill="#c0392b"/>'+txt(sx(xt[0])+5,sy(xt[1])+10,'xₜ',('#c0392b'),8);
+  s+='<circle cx="'+sx(xp[0]).toFixed(1)+'" cy="'+sy(xp[1]).toFixed(1)+'" r="3.4" fill="'+CNOISY+'"/>'+txt(sx(xp[0])+5,sy(xp[1])-3,'x_{t−1}',CNOISY,8);
+  // thước nhiễu
+  var bx=196, bTop=14, bH=88;
+  s+=ctxt(bx+16,10,'mức nhiễu',GRY,8);
+  s+='<rect x="'+bx+'" y="'+bTop+'" width="30" height="'+bH+'" fill="#f1f5f8" stroke="#cdd6e0"/>';
+  var h1=bH*0.60/0.65, h2=bH*0.28/0.65;
+  s+='<rect x="'+(bx+3)+'" y="'+(bTop+bH-h1).toFixed(1)+'" width="11" height="'+h1.toFixed(1)+'" fill="#c0392b" opacity="0.85"/>'+ctxt(bx+8,bTop+bH-h1-2,'.60','#c0392b',7);
+  s+='<rect x="'+(bx+16)+'" y="'+(bTop+bH-h2).toFixed(1)+'" width="11" height="'+h2.toFixed(1)+'" fill="'+CNOISY+'"/>'+ctxt(bx+21,bTop+bH-h2-2,'.28',CNOISY,7);
+  s+=txt(bx+2,bTop+bH+9,'t',GRY,7)+txt(bx+15,bTop+bH+9,'t−1',GRY,7);
+  svg.innerHTML=s;
+}
+
+/* ④ chuỗi nhiều bước nhỏ (TĨNH) */
+function drawSteps(){
+  var svg=el('figSteps'); if(!svg) return;
+  var s='', n=5, y=30, sz=40;
+  for(var k=0;k<n;k++){
+    var bx=8+k*58;
+    s+='<rect x="'+bx+'" y="'+y+'" width="'+sz+'" height="'+sz+'" rx="4" fill="#f4f1ea" stroke="#b9b09a" stroke-width="1"/>';
+    var dens=Math.round((0.95-k*0.22)*40);
+    for(var i=0;i<Math.max(dens,2);i++){ var px=bx+3+((i*37)%(sz-6)), py=y+3+((i*61)%(sz-6)); s+='<circle cx="'+px+'" cy="'+py+'" r="1" fill="'+GRY+'"/>'; }
+    if(k>=3){ s+='<circle cx="'+(bx+sz/2)+'" cy="'+(y+sz/2)+'" r="'+(6+k)+'" fill="'+CCLEAN+'44" stroke="'+CCLEAN+'" stroke-width="1.2"/>'; }
+    if(k<n-1) s+=ctxt(bx+sz+9, y+sz/2+4, '→', CNOISY, 12, 700);
+  }
+  s+=ctxt(150, y+sz+14, 'nhiễu thuần → (gỡ một ít mỗi bước) → ảnh rõ', GRY, 8.5, 700);
+  svg.innerHTML=s;
+}
+
+function generate(){
+  var xh=[WB.randInt(0,2), WB.randInt(0,2)];
+  var eps=[WB.randInt(-1,1), WB.randInt(-1,1)];
+  if(eps[0]===0 && eps[1]===0) eps[1]=1;
+  var xt=[0.8*xh[0]+0.6*eps[0], 0.8*xh[1]+0.6*eps[1]];
+  var xp=[0.96*xh[0]+0.28*eps[0], 0.96*xh[1]+0.28*eps[1]];
+  WB.setAll({
+    xt1:WB.fmt2(xt[0]), xt2:WB.fmt2(xt[1]),
+    e1:WB.fmtInt(eps[0]), e2:WB.fmtInt(eps[1]),
+    xh1:WB.fmtInt(xh[0]), xh2:WB.fmtInt(xh[1]),
+    xp1:WB.fmt2(xp[0]), xp2:WB.fmt2(xp[1]),
+    nz1:'0.60', nz2:'0.28'
+  });
+  drawPlane(xt, xh, xp);
+}
+WB.wire(generate);
+generate();
+drawInvert();
+drawSteps();
+</script>
+</body>
+</html>

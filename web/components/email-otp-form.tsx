@@ -59,7 +59,7 @@ export function EmailOtpForm({
     tickCooldown();
   }
 
-  async function verifyCode(e: React.FormEvent) {
+  async function verifyCode(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -83,20 +83,20 @@ export function EmailOtpForm({
     return (
       <form onSubmit={verifyCode} className="space-y-3">
         <p className={hintClass}>
-          Đã gửi mã 6 số tới <b className={dark ? "text-white" : undefined}>{email}</b>.
+          Đã gửi mã tới <b className={dark ? "text-white" : undefined}>{email}</b>.
         </p>
         <input
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
-          maxLength={6}
+          maxLength={10}
           required
-          placeholder="Nhập mã 6 số"
+          placeholder="Nhập mã trong email"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           className={cn(inputClass, "text-center tracking-[0.4em] text-lg font-bold")}
         />
-        <Button type="submit" size="lg" className="w-full" disabled={loading || code.length !== 6}>
+        <Button type="submit" size="lg" className="w-full" disabled={loading || code.length < 6}>
           {loading ? "Đang xác nhận…" : "Xác nhận →"}
         </Button>
         <div className="flex items-center justify-between text-xs">

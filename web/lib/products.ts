@@ -86,11 +86,11 @@ export const PRODUCTS: Product[] = [
       "Bonus: dự án capstone + cộng đồng",
     ],
     badge: "Đầy đủ nhất",
-    active: false, // K4 đang hoàn thiện (giảng-giải) → tạm ngừng bán Trọn bộ; bật lại khi K4 xong.
+    active: true, // K4 (bản HIỂU RÕ) đã hoàn tất 25 bài → bật bán lại Trọn bộ.
   },
 ];
 
-// Trong lúc Trọn bộ (all-access) tạm ngừng bán, mặc định rơi vào Pro (gói active cao nhất).
+// Mặc định trỏ vào Pro (gói nổi bật/phổ biến nhất); Trọn bộ đã bán lại nhưng không đặt làm mặc định.
 export const DEFAULT_PRODUCT: ProductId = "k3";
 
 export function productById(id: string): Product | undefined {

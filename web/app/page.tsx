@@ -14,7 +14,7 @@ import { getUser, accessibleCourses } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
-const PRICE = productById("k3")!.priceVnd; // giá gói Pro (Trọn bộ tạm ngừng bán tới khi K4 xong)
+const PRICE = productById("k3")!.priceVnd; // giá gói Pro dùng làm mốc "chỉ từ" ở hero (gói nổi bật)
 
 const FEATURES = [
   { t: "Không code", d: "Tự điền ma trận, nhân–cộng từng ô bằng số thật. Hiểu cơ chế tận gốc." },

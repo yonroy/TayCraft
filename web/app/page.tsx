@@ -9,6 +9,8 @@ import { Reviews } from "@/components/reviews";
 import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
+import { HeroClaimButton } from "@/components/hero-claim-button";
+import { promoExpired } from "@/lib/promo";
 import { TOTAL_AVAILABLE, FREE_COURSES } from "@/lib/lessons";
 import { productById } from "@/lib/products";
 import { getUser, accessibleCourses } from "@/lib/auth";
@@ -31,6 +33,7 @@ export default async function Home() {
   const user = await getUser();
   const access = user ? await accessibleCourses(user.id) : [...FREE_COURSES];
   const ownsK1 = access.includes("K1");
+  const launchActive = !promoExpired(); // hết dịp khai trương → hero về CTA mua gói Pro
   return (
     <>
       <FlashSaleBar
@@ -56,19 +59,50 @@ export default async function Home() {
               Tom Yeh: chạy softmax, attention, backprop bằng <b className="text-ink">số thật</b>{" "}
               trên giấy. Không thư viện, không lý thuyết suông — hiểu vì bạn tự tính.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
-              <Link href="/checkout?product=k3">
-                <Button size="lg">Mua gói Pro · {formatVnd(PRICE)}</Button>
-              </Link>
-              <Link href="/learn/A1-vecto-cong-tru">
-                <Button size="lg" variant="outline">
-                  Xem thử miễn phí →
-                </Button>
-              </Link>
-            </div>
-            <p className="mt-3 text-sm text-dim">
-              🎉 Khai trương: tặng 100 suất Khóa 1 · sau đó chỉ 49.000đ · thanh toán QR chuyển khoản
-            </p>
+            {launchActive ? (
+              <>
+                {/* Phễu khai trương: khách lạnh nhận K1 free trước (popup), mua gói tính sau */}
+                <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
+                  {ownsK1 ? (
+                    <Link href="/learn">
+                      <Button size="lg">Vào học tiếp →</Button>
+                    </Link>
+                  ) : (
+                    <HeroClaimButton />
+                  )}
+                  <Link href="#goi">
+                    <Button size="lg" variant="outline">
+                      Xem các gói
+                    </Button>
+                  </Link>
+                </div>
+                <p className="mt-3 text-sm text-dim">
+                  🎉 100 suất khai trương · không cần thẻ, đăng nhập email là học ngay ·{" "}
+                  <Link
+                    href="/learn/A1-vecto-cong-tru"
+                    className="text-accent font-medium hover:underline"
+                  >
+                    Xem thử 3 phiếu đầu miễn phí →
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
+                  <Link href="/checkout?product=k3">
+                    <Button size="lg">Mua gói Pro · {formatVnd(PRICE)}</Button>
+                  </Link>
+                  <Link href="/learn/A1-vecto-cong-tru">
+                    <Button size="lg" variant="outline">
+                      Xem thử miễn phí →
+                    </Button>
+                  </Link>
+                </div>
+                <p className="mt-3 text-sm text-dim">
+                  Trả một lần, truy cập trọn đời · thanh toán QR chuyển khoản
+                </p>
+              </>
+            )}
           </div>
 
           {/* Ảnh phiếu thật — 2 tờ A4 xếp chồng, bấm vào mở bài học thử miễn phí */}

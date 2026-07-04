@@ -101,6 +101,13 @@ export function LaunchPopup() {
     };
   }, [claim]);
 
+  // Nút "Nhận Khóa 1 miễn phí" trên hero dispatch event này để mở lại popup sau khi bị đóng ✕.
+  useEffect(() => {
+    const reopen = () => setOpen(true);
+    window.addEventListener("open-launch-popup", reopen);
+    return () => window.removeEventListener("open-launch-popup", reopen);
+  }, []);
+
   // Đồng hồ đếm ngược tới hạn chót (tick mỗi giây khi popup mở).
   useEffect(() => {
     if (!open) return;

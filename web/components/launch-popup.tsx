@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { EmailOtpForm } from "@/components/email-otp-form";
 
 type Status = {
   limit: number;
@@ -24,6 +25,7 @@ export function LaunchPopup() {
   const [open, setOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [needLogin, setNeedLogin] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const autoClaimed = useRef(false);
@@ -34,8 +36,9 @@ export function LaunchPopup() {
     try {
       const res = await fetch("/api/promo/claim-k1", { method: "POST" });
       if (res.status === 401) {
-        // Chưa đăng nhập → đăng nhập xong quay lại home tự nhận.
-        router.push("/login?next=" + encodeURIComponent("/?claim=k1"));
+        // Chưa đăng nhập → hiện form nhận mã OTP ngay trong popup (không rời trang,
+        // chạy được cả trong webview Facebook/Instagram nơi Google OAuth bị chặn).
+        setNeedLogin(true);
         return;
       }
       const data = (await res.json()) as { result: ClaimResult; remaining: number };
@@ -210,6 +213,19 @@ export function LaunchPopup() {
 
               {message ? (
                 <p className="mt-5 text-sm font-semibold text-amber-200">{message}</p>
+              ) : needLogin ? (
+                <div className="mt-5 space-y-2 text-left">
+                  <p className="text-center text-xs text-amber-100/70">
+                    Nhập email để nhận mã xác nhận — không cần mật khẩu
+                  </p>
+                  <EmailOtpForm
+                    dark
+                    onSuccess={() => {
+                      setNeedLogin(false);
+                      claim();
+                    }}
+                  />
+                </div>
               ) : (
                 <button
                   onClick={claim}
@@ -219,9 +235,11 @@ export function LaunchPopup() {
                   {claiming ? "Đang xử lý…" : "Nhận Khóa 1 miễn phí →"}
                 </button>
               )}
-              <p className="mt-3 text-xs text-amber-100/60">
-                Cần đăng nhập để giữ quyền học trọn đời cho tài khoản của bạn.
-              </p>
+              {!needLogin && (
+                <p className="mt-3 text-xs text-amber-100/60">
+                  Cần đăng nhập để giữ quyền học trọn đời cho tài khoản của bạn.
+                </p>
+              )}
             </>
           ) : (
             <>

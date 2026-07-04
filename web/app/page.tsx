@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -41,31 +42,61 @@ export default async function Home() {
       {!ownsK1 && <LaunchPopup />}
 
       {/* Hero */}
-      <section className="mx-auto max-w-5xl px-5 pt-16 pb-12 text-center">
-        <p className="font-mono text-xs tracking-[0.18em] uppercase text-accent font-bold">
-          Toán × AI · in A4 để học
-        </p>
-        <h1 className="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight">
-          Học AI <span className="text-accent">bằng tay</span> ✍️
-        </h1>
-        <p className="mt-5 text-lg text-dim max-w-2xl mx-auto">
-          Bộ {TOTAL_AVAILABLE} phiếu <b className="text-ink">tính tay</b> theo tinh thần Prof. Tom Yeh:
-          chạy softmax, attention, backprop bằng <b className="text-ink">số thật</b> trên giấy.
-          Không thư viện, không lý thuyết suông — hiểu vì bạn tự tính.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3 justify-center">
-          <Link href="/checkout?product=k3">
-            <Button size="lg">Mua gói Pro · {formatVnd(PRICE)}</Button>
-          </Link>
-          <Link href="/learn/A1-vecto-cong-tru">
-            <Button size="lg" variant="outline">
-              Xem thử miễn phí →
-            </Button>
+      <section className="mx-auto max-w-5xl px-5 pt-16 pb-12">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
+          <div className="text-center lg:text-left">
+            <p className="font-mono text-xs tracking-[0.18em] uppercase text-accent font-bold">
+              Toán × AI · in A4 để học
+            </p>
+            <h1 className="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight">
+              Học AI <span className="text-accent">bằng tay</span> ✍️
+            </h1>
+            <p className="mt-5 text-lg text-dim max-w-2xl mx-auto lg:mx-0">
+              Bộ {TOTAL_AVAILABLE} phiếu <b className="text-ink">tính tay</b> theo tinh thần Prof.
+              Tom Yeh: chạy softmax, attention, backprop bằng <b className="text-ink">số thật</b>{" "}
+              trên giấy. Không thư viện, không lý thuyết suông — hiểu vì bạn tự tính.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
+              <Link href="/checkout?product=k3">
+                <Button size="lg">Mua gói Pro · {formatVnd(PRICE)}</Button>
+              </Link>
+              <Link href="/learn/A1-vecto-cong-tru">
+                <Button size="lg" variant="outline">
+                  Xem thử miễn phí →
+                </Button>
+              </Link>
+            </div>
+            <p className="mt-3 text-sm text-dim">
+              🎉 Khai trương: tặng 100 suất Khóa 1 · sau đó chỉ 49.000đ · thanh toán QR chuyển khoản
+            </p>
+          </div>
+
+          {/* Ảnh phiếu thật — 2 tờ A4 xếp chồng, bấm vào mở bài học thử miễn phí */}
+          <Link
+            href="/learn/A1-vecto-cong-tru"
+            className="group relative mx-auto block w-full max-w-sm lg:max-w-md"
+            aria-label="Xem thử phiếu miễn phí"
+          >
+            <Image
+              src="/hero/phieu-attention.png"
+              alt="Phiếu tính tay Scaled Dot-Product Attention — trang ĐỀ in A4"
+              width={794}
+              height={1123}
+              className="absolute right-0 top-6 w-[72%] rotate-[4deg] rounded-lg border border-line bg-white shadow-md"
+            />
+            <Image
+              src="/hero/phieu-nhan-ma-tran.png"
+              alt="Phiếu tính tay Nhân ma trận — điền từng ô bằng bút chì, có sơ đồ màu"
+              width={794}
+              height={1123}
+              priority
+              className="relative w-[78%] -rotate-[3deg] rounded-lg border border-line bg-white shadow-xl transition-transform duration-300 group-hover:-rotate-1 group-hover:scale-[1.02]"
+            />
+            <span className="mt-4 block text-center text-sm text-dim">
+              👆 Phiếu thật trong bộ — bấm để <b className="text-accent">làm thử miễn phí</b>
+            </span>
           </Link>
         </div>
-        <p className="mt-3 text-sm text-dim">
-          🎉 Khai trương: tặng 100 suất Khóa 1 · sau đó chỉ 49.000đ · thanh toán QR chuyển khoản
-        </p>
       </section>
 
       {/* Features */}

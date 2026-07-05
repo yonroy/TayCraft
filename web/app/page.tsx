@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CourseCatalog } from "@/components/course-catalog";
 import { PackageGrid } from "@/components/package-grid";
 import { Reviews } from "@/components/reviews";
+import { Faq } from "@/components/faq";
 import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
@@ -178,6 +179,9 @@ export default async function Home() {
 
       {/* Reviews */}
       <Reviews reviews={reviewRows} />
+
+      {/* FAQ */}
+      <Faq />
 
       {/* Pricing CTA */}
       <section className="mx-auto max-w-5xl px-5 py-12">

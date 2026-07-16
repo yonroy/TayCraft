@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { LessonFrame } from "@/components/lesson-frame";
+import { LessonNav } from "@/components/lesson-nav";
 import { Paywall } from "@/components/paywall";
 import { ViewerCount } from "@/components/viewer-count";
 import { lessonBySlug, isFreeLesson } from "@/lib/lessons";
@@ -52,6 +53,9 @@ export default async function LessonViewer({
             <div className="mx-auto max-w-5xl px-5 py-3 text-center text-sm text-dim">
               Mẹo: bấm <b>🎲 Đổi số</b> để luyện bộ số mới · <b>🖨️ In / Lưu PDF</b> để in ra giấy.
             </div>
+            <div className="mx-auto max-w-5xl px-5 pb-10">
+              <LessonNav slug={lesson.slug} />
+            </div>
           </div>
         ) : (
           <div className="px-5 pb-16">
@@ -67,6 +71,7 @@ export default async function LessonViewer({
                 </Link>
               </p>
             )}
+            <LessonNav slug={lesson.slug} />
           </div>
         )}
       </main>

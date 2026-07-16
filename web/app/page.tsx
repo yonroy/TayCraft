@@ -3,7 +3,7 @@ import Image from "next/image";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { CourseCatalog } from "@/components/course-catalog";
+import { CurriculumAccordion } from "@/components/curriculum-accordion";
 import { PackageGrid } from "@/components/package-grid";
 import { Reviews } from "@/components/reviews";
 import { Faq } from "@/components/faq";
@@ -173,7 +173,7 @@ export default async function Home() {
           {TOTAL_AVAILABLE} bài đã có, ra thêm liên tục — học theo thứ tự từ nền tảng đến chuyên sâu.
         </p>
         <div className="mt-8">
-          <CourseCatalog accessCourses={access} />
+          <CurriculumAccordion accessCourses={access} />
         </div>
       </section>
 

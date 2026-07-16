@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { CourseCatalog } from "@/components/course-catalog";
+import { CurriculumAccordion } from "@/components/curriculum-accordion";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { COURSES } from "@/lib/products";
 import { FREE_COURSES } from "@/lib/lessons";
@@ -36,7 +36,7 @@ export default async function LearnPage() {
         </div>
 
         <div className="mt-8">
-          <CourseCatalog accessCourses={courses} />
+          <CurriculumAccordion accessCourses={courses} openCourses={courses} />
         </div>
 
         {user && (

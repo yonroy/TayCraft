@@ -4,6 +4,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { CurriculumAccordion } from "@/components/curriculum-accordion";
+import { TrustBar } from "@/components/trust-bar";
+import { GuaranteeBand } from "@/components/guarantee-band";
 import { PackageGrid } from "@/components/package-grid";
 import { Reviews } from "@/components/reviews";
 import { Faq } from "@/components/faq";
@@ -13,8 +15,8 @@ import { LaunchPopup } from "@/components/launch-popup";
 import { HeroClaimButton } from "@/components/hero-claim-button";
 import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
-import { TOTAL_AVAILABLE, FREE_COURSES } from "@/lib/lessons";
-import { productById } from "@/lib/products";
+import { TOTAL_AVAILABLE, FREE_COURSES, PARTS, FREE_SLUGS } from "@/lib/lessons";
+import { productById, COURSES } from "@/lib/products";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
@@ -37,6 +39,10 @@ export default async function Home() {
   const ownsK1 = access.includes("K1");
   const launchActive = !promoExpired(); // hết dịp khai trương → hero về CTA mua gói Pro
   const reviewRows = await getApprovedReviews(); // tuần tự — pooler max:1, không Promise.all
+  const reviewCount = reviewRows.length;
+  const reviewAvg = reviewCount
+    ? (reviewRows.reduce((s, r) => s + r.rating, 0) / reviewCount).toFixed(1)
+    : null;
   return (
     <>
       <FlashSaleBar
@@ -136,6 +142,16 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Trust bar — số liệu thật (không bịa lượt in/học viên) */}
+      <TrustBar
+        totalPhieu={TOTAL_AVAILABLE}
+        courseCount={COURSES.length}
+        partCount={PARTS.length}
+        freeCount={FREE_SLUGS.length}
+        reviewAvg={reviewAvg}
+        reviewCount={reviewCount}
+      />
+
       {/* Features */}
       <section className="mx-auto max-w-5xl px-5 py-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {FEATURES.map((f) => (
@@ -182,6 +198,9 @@ export default async function Home() {
 
       {/* FAQ */}
       <Faq />
+
+      {/* Cam kết hoàn tiền — trấn an trước lời mời mua */}
+      <GuaranteeBand />
 
       {/* Pricing CTA */}
       <section className="mx-auto max-w-5xl px-5 py-12">

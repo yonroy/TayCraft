@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "./landing.css";
 
 const sans = Be_Vietnam_Pro({
   variable: "--font-sans",

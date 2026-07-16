@@ -1,252 +1,455 @@
 import Link from "next/link";
-import Image from "next/image";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { Button } from "@/components/ui/button";
-import { CurriculumAccordion } from "@/components/curriculum-accordion";
-import { TrustBar } from "@/components/trust-bar";
-import { GuaranteeBand } from "@/components/guarantee-band";
-import { SectionHeading } from "@/components/section-heading";
-import { PackageGrid } from "@/components/package-grid";
-import { Reviews } from "@/components/reviews";
-import { Faq } from "@/components/faq";
-import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
-import { HeroClaimButton } from "@/components/hero-claim-button";
-import { HeroTryCell } from "@/components/hero-try-cell";
-import { StickyBuyBar } from "@/components/sticky-buy-bar";
-import { AuthorityBlock } from "@/components/authority-block";
+import { LandingCurriculum } from "@/components/landing-curriculum";
 import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
-import { TOTAL_AVAILABLE, FREE_COURSES, PARTS, FREE_SLUGS } from "@/lib/lessons";
-import { productById, COURSES } from "@/lib/products";
+import { TOTAL_AVAILABLE, PARTS, FREE_SLUGS } from "@/lib/lessons";
+import { PRODUCTS, productById, effectivePriceVnd, type Product } from "@/lib/products";
 import { getUser, accessibleCourses } from "@/lib/auth";
-import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
-const PRICE = productById("k3")!.priceVnd; // giá gói Pro dùng làm mốc "chỉ từ" ở hero (gói nổi bật)
+const AVATAR_COLORS = ["#0e7490", "#b45309", "#166534", "#7c3aed"];
 
 const FEATURES = [
-  { t: "Không code", d: "Tự điền ma trận, nhân–cộng từng ô bằng số thật. Hiểu cơ chế tận gốc." },
-  { t: "In A4, giải bằng bút chì", d: "Mỗi bài 2 trang: ĐỀ + ĐÁP ÁN. In ra hoặc lưu PDF." },
-  { t: "🎲 Đổi số vô hạn", d: "Bấm một nút là có bộ số mới để luyện lại — không bao giờ hết bài." },
-  { t: "Học theo thứ tự", d: "Mỗi bài dùng lại kết quả bài trước, dắt từ dot product đến Transformer." },
+  { icon: "🧮", t: "Không code", d: "Không cần biết lập trình. Chỉ cần bút chì, giấy A4 và phép cộng trừ nhân chia." },
+  { icon: "🖨️", t: "In A4, giải bằng bút chì", d: "Mỗi phiếu 2 trang ĐỀ + ĐÁP ÁN, in ra và điền tay như làm bài tập ở trường." },
+  { icon: "🎲", t: "Đổi số vô hạn", d: "Bấm nút là ra bộ số mới — luyện lại phiếu cũ tới khi thật sự nắm chắc." },
+  { icon: "🪜", t: "Học theo thứ tự", d: "Lộ trình K1→K4 thiết kế tuần tự, mỗi bài xây trên nền bài trước, không nhảy cóc." },
 ];
 
+const FAQS = [
+  {
+    q: "Phiếu tính tay là gì? Học kiểu gì?",
+    a: "Mỗi phiếu là 1 file gồm 2 trang khổ A4: trang ĐỀ có ô trống để bạn tự điền số, trang ĐÁP ÁN để đối chiếu. Bạn in ra giấy, dùng bút chì tính tay từng bước — theo tinh thần “AI by Hand” của Prof. Tom Yeh. Có nút 🎲 để đổi bộ số bất kỳ lúc nào, luyện lại vô hạn lần.",
+  },
+  {
+    q: "Tôi không biết lập trình, có học được không?",
+    a: "Hoàn toàn được. Bộ phiếu không yêu cầu biết code — chỉ cần phép cộng trừ nhân chia và toán cấp 2. Mục tiêu là hiểu bản chất toán học đằng sau AI, không phải học lập trình.",
+  },
+  {
+    q: "Không có máy in thì học được không?",
+    a: "Được. Mở phiếu trên màn hình, tính ra giấy nháp rồi đối chiếu đáp án ở trang 2. Muốn bản giấy để giải bằng bút chì: bấm Lưu PDF rồi mang ra tiệm photo — mỗi bài chỉ 2 trang A4.",
+  },
+  {
+    q: "Thanh toán và nhận bài thế nào?",
+    a: "Thanh toán qua chuyển khoản quét mã QR ngân hàng. Sau khi chuyển thành công, hệ thống tự động mở khóa trong tài khoản của bạn, thường dưới 1 phút. Trả một lần, học trọn đời.",
+  },
+  {
+    q: "Chính sách hoàn tiền ra sao?",
+    a: "Hoàn tiền 100% trong vòng 7 ngày kể từ ngày mua, không cần lý do — nhắn Facebook hoặc email kèm mã chuyển khoản. Ngoài ra 3 phiếu đầu xem tự do trước khi mua.",
+  },
+];
+
+function PackageCard({ p, launchActive }: { p: Product; launchActive: boolean }) {
+  const price = effectivePriceVnd(p);
+  const old = p.compareAtVnd && p.compareAtVnd > price ? p.compareAtVnd : null;
+  const featured = !!p.highlight;
+  const launchRibbon = p.id === "k1" && launchActive;
+  return (
+    <div className={`pkg-card ${featured ? "featured" : ""}`}>
+      {launchRibbon ? (
+        <span className="pkg-launch-ribbon">🎉 Khai trương · chỉ 49K</span>
+      ) : (
+        featured && <span className="pkg-ribbon">★ Phổ biến nhất</span>
+      )}
+      <div className="pkg-name">{p.label}</div>
+      <div className="pkg-title">{p.tagline}</div>
+      <div className="pkg-price-row">
+        <span className="pkg-price">{formatVnd(price)}</span>
+        {old && <span className="pkg-old">{formatVnd(old)}</span>}
+      </div>
+      {old && <span className="pkg-save">Tiết kiệm {formatVnd(old - price)}</span>}
+      <div className="pkg-note">Trả một lần, học trọn đời</div>
+      <ul className="pkg-feats">
+        {(p.perks ?? []).map((perk) => (
+          <li key={perk}>
+            <span className="ck">✓</span> {perk}
+          </li>
+        ))}
+      </ul>
+      <Link
+        href={`/checkout?product=${p.id}`}
+        className={`btn ${featured ? "btn-amber" : p.id === "k1" ? "btn-primary" : "btn-ghost"}`}
+      >
+        Chọn gói {p.label.split(" · ")[0]}
+      </Link>
+    </div>
+  );
+}
+
 export default async function Home() {
-  const flash = await getFlashSale();
-  // Ẩn popup khai trương cho người đã sở hữu K1 (đã nhận free / đã mua) — khỏi bị mời lại.
-  // Đồng thời truyền danh sách khóa mở được xuống catalog để hiển thị đúng trạng thái khóa/mở.
   const user = await getUser();
-  const access = user ? await accessibleCourses(user.id) : [...FREE_COURSES];
+  const access = user ? await accessibleCourses(user.id) : [];
   const ownsK1 = access.includes("K1");
-  const launchActive = !promoExpired(); // hết dịp khai trương → hero về CTA mua gói Pro
-  const reviewRows = await getApprovedReviews(); // tuần tự — pooler max:1, không Promise.all
-  const reviewCount = reviewRows.length;
+  const launchActive = !promoExpired();
+  const reviews = await getApprovedReviews();
+  const reviewCount = reviews.length;
   const reviewAvg = reviewCount
-    ? (reviewRows.reduce((s, r) => s + r.rating, 0) / reviewCount).toFixed(1)
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviewCount).toFixed(1)
     : null;
+
+  const pro = productById("k3")!;
+  const proPrice = effectivePriceVnd(pro);
+  const proOld = pro.compareAtVnd ?? null;
+
   return (
     <>
       <SiteHeader />
       {launchActive && !ownsK1 && <LaunchPopup />}
 
-      {/* Hero */}
-      <section className="mx-auto max-w-5xl px-5 pt-16 pb-12">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
-          <div className="text-center lg:text-left">
-            <p className="font-mono text-xs tracking-[0.18em] uppercase text-accent font-bold">
-              Toán × AI · in A4 để học
-            </p>
-            <h1 className="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight">
-              Học AI <span className="text-accent">bằng tay</span> ✍️
-            </h1>
-            <p className="mt-5 text-lg text-dim max-w-2xl mx-auto lg:mx-0">
-              Bộ {TOTAL_AVAILABLE} phiếu <b className="text-ink">tính tay</b> theo tinh thần Prof.
-              Tom Yeh: chạy softmax, attention, backprop bằng <b className="text-ink">số thật</b>{" "}
-              trên giấy. Không thư viện, không lý thuyết suông — hiểu vì bạn tự tính.
-            </p>
-            {launchActive ? (
-              <>
-                {/* Phễu khai trương: khách lạnh nhận K1 free trước (popup), mua gói tính sau */}
-                <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
-                  {ownsK1 ? (
-                    <Link href="/learn">
-                      <Button size="lg">Vào học tiếp →</Button>
-                    </Link>
-                  ) : (
-                    <HeroClaimButton />
-                  )}
-                  <Link href="#goi">
-                    <Button size="lg" variant="outline">
-                      Xem các gói
-                    </Button>
-                  </Link>
+      <div className="lp">
+        {/* ============ HERO ============ */}
+        <section className="hero">
+          <div className="lpc hero-grid">
+            <div className="hero-copy">
+              {launchActive && (
+                <div className="hero-badge-row">
+                  <span className="pill-launch">🎉 100 suất khai trương</span>
                 </div>
-                <p className="mt-3 text-sm text-dim">
-                  🎉 100 suất khai trương · không cần thẻ, đăng nhập email là học ngay ·{" "}
-                  <Link
-                    href="/learn/A1-vecto-cong-tru"
-                    className="text-accent font-medium hover:underline"
-                  >
-                    Xem thử 3 phiếu đầu miễn phí →
+              )}
+              <h1>
+                Học AI bằng tay — <em>tự điền từng con số</em>, không code, không lý thuyết suông
+              </h1>
+              <p className="hero-lede">
+                Hơn <strong>{TOTAL_AVAILABLE} phiếu tính tay</strong> khổ A4 theo tinh thần
+                &ldquo;AI by Hand&rdquo; của Prof. Tom Yeh. Mỗi phiếu 2 trang ĐỀ + ĐÁP ÁN, in ra
+                giải bằng bút chì, bấm 🎲 là ra bộ số mới — luyện tới khi thật sự hiểu.
+              </p>
+              <div className="hero-ctas">
+                {launchActive && !ownsK1 ? (
+                  <Link href="/checkout?product=k1" className="btn btn-primary btn-lg">
+                    Nhận Khóa 1 — 49.000đ
                   </Link>
+                ) : (
+                  <Link href="/checkout?product=k3" className="btn btn-primary btn-lg">
+                    Mua gói Pro · {formatVnd(proPrice)}
+                  </Link>
+                )}
+                <Link href="/learn/A1-vecto-cong-tru" className="btn btn-ghost btn-lg">
+                  Xem thử 3 phiếu đầu miễn phí →
+                </Link>
+              </div>
+              <p className="hero-sub-cta">
+                Cam kết <Link href="#guarantee">hoàn tiền 100% trong 7 ngày</Link> nếu không phù hợp
+              </p>
+              <div className="hero-microproof">
+                {reviewCount > 0 ? (
+                  <div className="txt">
+                    <span style={{ color: "#d97706", letterSpacing: "1px" }}>★</span>{" "}
+                    <b>{reviewAvg}/5</b> · {reviewCount} đánh giá thật từ học viên
+                  </div>
+                ) : (
+                  <div className="txt">
+                    ✓ 3 phiếu đầu <b>xem miễn phí</b> · Hoàn tiền 100% trong 7 ngày
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Hero visual: 2 tờ A4 xếp chồng (mô phỏng phiếu thật ĐỀ/ĐÁP ÁN) */}
+            <div className="hero-visual">
+              <div className="floaty-tag tag-1">🎲 Đổi số vô hạn</div>
+              <div className="floaty-tag tag-2">✓ 2 trang: ĐỀ + ĐÁP ÁN</div>
+              <div className="sheet-stack">
+                <div className="sheet sheet-back">
+                  <div className="sheet-label">ĐÁP ÁN · Trang 2/2</div>
+                  <div className="sheet-title">B6 · PCA — Chiếu dữ liệu</div>
+                  <div className="grid-mock">
+                    <div className="cell filled">2.1</div>
+                    <div className="cell filled">−0.4</div>
+                    <div className="cell filled">1.3</div>
+                    <div className="cell filled">0.8</div>
+                    <div className="cell filled">−1.2</div>
+                    <div className="cell filled">3.0</div>
+                    <div className="cell filled">−0.6</div>
+                    <div className="cell filled">2.4</div>
+                  </div>
+                  <div className="sheet-foot">
+                    <span>Bài B6</span>
+                    <span>2/2 · ĐÁP ÁN</span>
+                  </div>
+                </div>
+                <div className="sheet sheet-front">
+                  <div className="sheet-label">ĐỀ · Trang 1/2</div>
+                  <div className="sheet-title">B6 · PCA — Chiếu dữ liệu</div>
+                  <div className="grid-mock">
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                    <div className="cell blank">·</div>
+                  </div>
+                  <div className="sheet-foot">
+                    <span>Bài B6</span>
+                    <span>1/2 · ĐỀ</span>
+                  </div>
+                </div>
+                <div className="dice-badge">🎲</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ TRUST BAR (số thật) ============ */}
+        <section className="trust-bar">
+          <div className="lpc">
+            <div className="trust-grid">
+              <div className="trust-item">
+                <div className="num">
+                  {TOTAL_AVAILABLE}
+                  <span className="unit">+</span>
+                </div>
+                <div className="lbl">phiếu tính tay</div>
+              </div>
+              <div className="trust-item">
+                <div className="num">4</div>
+                <div className="lbl">khóa · lộ trình rõ ràng</div>
+              </div>
+              <div className="trust-item">
+                <div className="num">{PARTS.length}</div>
+                <div className="lbl">phần nội dung</div>
+              </div>
+              <div className="trust-item">
+                {reviewCount > 0 ? (
+                  <>
+                    <div className="num">
+                      {reviewAvg}
+                      <span className="unit">★</span>
+                    </div>
+                    <div className="lbl">{reviewCount} đánh giá học viên</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="num">
+                      ∞<span className="unit">🎲</span>
+                    </div>
+                    <div className="lbl">bộ số luyện lại mỗi phiếu</div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ FEATURES ============ */}
+        <section className="sec">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Vì sao khác biệt</span>
+              <h2>Học bằng tay — nhớ lâu hơn học bằng mắt</h2>
+              <p>Không xem video thụ động. Bạn tự tay tính từng con số cho tới khi cơ chế thấm vào tay.</p>
+            </div>
+            <div className="features-grid">
+              {FEATURES.map((f) => (
+                <div className="feature-card" key={f.t}>
+                  <div className="feature-icon">{f.icon}</div>
+                  <h3>{f.t}</h3>
+                  <p>{f.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============ PACKAGES ============ */}
+        <section className="sec sec-alt" id="packages">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Bảng giá</span>
+              <h2>Chọn gói phù hợp — trả một lần, học trọn đời</h2>
+              <p>Không phí ẩn, không gia hạn hàng tháng. Thanh toán QR chuyển khoản, kích hoạt tức thì.</p>
+            </div>
+            <div className="pkg-grid">
+              {PRODUCTS.filter((p) => p.active).map((p) => (
+                <PackageCard key={p.id} p={p} launchActive={launchActive} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============ CURRICULUM ============ */}
+        <section className="sec" id="curriculum">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Lộ trình học</span>
+              <h2>4 khóa — từ số 0 tới hiểu Transformer/LLM</h2>
+              <p>Bấm vào từng khóa để xem các phần bên trong.</p>
+            </div>
+            <LandingCurriculum />
+          </div>
+        </section>
+
+        {/* ============ REVIEWS (thật) ============ */}
+        <section className="sec sec-alt" id="reviews">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Học viên nói gì</span>
+              <h2>Cảm nhận thật từ người đã học</h2>
+            </div>
+            {reviewCount > 0 ? (
+              <div className="reviews-grid">
+                {reviews.slice(0, 6).map((r, i) => {
+                  const initial = (r.name.trim().split(/\s+/).pop() ?? r.name).charAt(0).toUpperCase();
+                  return (
+                    <div className="review-card" key={r.id}>
+                      <div className="review-stars">{"★".repeat(Math.round(r.rating))}</div>
+                      <p className="review-quote">&ldquo;{r.comment}&rdquo;</p>
+                      <div className="review-person">
+                        <span
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: "50%",
+                            background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {initial}
+                        </span>
+                        <div>
+                          <div className="rname">{r.name}</div>
+                          {r.role && <div className="rmeta">{r.role}</div>}
+                          <div className="review-verified">✓ Đã mua khóa</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="reviews-empty">
+                <p>
+                  Bộ phiếu vừa ra mắt — bạn là một trong những học viên <b>đầu tiên</b>. Đã làm thử
+                  phiếu nào rồi? Để lại vài dòng cảm nhận giúp người học sau nhé.
                 </p>
+                <Link href="/danh-gia" className="btn btn-primary">
+                  Viết đánh giá đầu tiên →
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ============ GUARANTEE ============ */}
+        <section className="sec" id="guarantee">
+          <div className="lpc">
+            <div className="guarantee-box">
+              <div className="guarantee-badge">🛡️</div>
+              <div className="guarantee-txt">
+                <h3>Cam kết hoàn tiền 100% trong 7 ngày</h3>
+                <p>
+                  Nếu sau 7 ngày cảm thấy không phù hợp với cách học &ldquo;làm toán bằng tay&rdquo;,
+                  nhắn cho tụi mình qua Facebook hoặc email kèm mã chuyển khoản — hoàn lại toàn bộ số
+                  tiền, không cần lý do. Ngoài ra 3 phiếu đầu xem tự do trước khi mua.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ FAQ ============ */}
+        <section className="sec sec-alt" id="faq">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Câu hỏi thường gặp</span>
+              <h2>Còn thắc mắc gì trước khi bắt đầu?</h2>
+            </div>
+            <div className="faq-list">
+              {FAQS.map((f) => (
+                <details className="faq-item" key={f.q}>
+                  <summary className="faq-q">
+                    <span>{f.q}</span>
+                    <span className="plus">+</span>
+                  </summary>
+                  <p className="faq-a">{f.a}</p>
+                </details>
+              ))}
+            </div>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "FAQPage",
+                  mainEntity: FAQS.map((f) => ({
+                    "@type": "Question",
+                    name: f.q,
+                    acceptedAnswer: { "@type": "Answer", text: f.a },
+                  })),
+                }),
+              }}
+            />
+          </div>
+        </section>
+
+        {/* ============ FINAL CTA ============ */}
+        <section className="sec">
+          <div className="lpc">
+            <div className="final-cta">
+              <span className="eyebrow">★ Gói được chọn nhiều nhất</span>
+              <h2>Sẵn sàng hiểu AI từ gốc bằng chính đôi tay của bạn?</h2>
+              <p>Gói Pro: Khóa 1 + Khóa 2 + Khóa 3 — Toán nền tới Transformer &amp; LLM.</p>
+              <div className="final-price-row">
+                <span className="price">{formatVnd(proPrice)}</span>
+                {proOld && proOld > proPrice && <span className="old">{formatVnd(proOld)}</span>}
+                {proOld && proOld > proPrice && (
+                  <span className="save-tag">Tiết kiệm {formatVnd(proOld - proPrice)}</span>
+                )}
+              </div>
+              <div className="final-cta-btns">
+                <Link href="/checkout?product=k3" className="btn btn-amber btn-lg">
+                  Mua gói Pro ngay
+                </Link>
+                <Link
+                  href="#curriculum"
+                  className="btn btn-ghost btn-lg"
+                  style={{ borderColor: "rgba(255,255,255,.3)", color: "#fff" }}
+                >
+                  Xem lộ trình chi tiết
+                </Link>
+              </div>
+              <p className="final-cta-note">
+                Trả một lần, học trọn đời · Hoàn tiền 7 ngày · Thanh toán QR an toàn
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ STICKY MOBILE CTA ============ */}
+        <div className="mobile-cta">
+          <div className="mc-txt">
+            {launchActive && !ownsK1 ? (
+              <>
+                <div className="mc-price">
+                  49.000đ <span className="mc-old">149.000đ</span>
+                </div>
+                <div className="mc-label">Khóa 1 · ưu đãi khai trương</div>
               </>
             ) : (
               <>
-                <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
-                  <Link href="/checkout?product=k3">
-                    <Button size="lg">Mua gói Pro · {formatVnd(PRICE)}</Button>
-                  </Link>
-                  <Link href="/learn/A1-vecto-cong-tru">
-                    <Button size="lg" variant="outline">
-                      Xem thử miễn phí →
-                    </Button>
-                  </Link>
-                </div>
-                <p className="mt-3 text-sm text-dim">
-                  Trả một lần, truy cập trọn đời · thanh toán QR chuyển khoản
-                </p>
+                <div className="mc-price">{formatVnd(proPrice)}</div>
+                <div className="mc-label">Gói Pro · trọn đời</div>
               </>
             )}
-
-            {/* Làm thử 1 ô sống — cho khách nếm cảm giác "tính AI bằng tay" ngay tại hero */}
-            <div className="mt-8 max-w-md mx-auto lg:mx-0">
-              <HeroTryCell />
-            </div>
           </div>
-
-          {/* Ảnh phiếu thật — 2 tờ A4 xếp chồng, bấm vào mở bài học thử miễn phí */}
           <Link
-            href="/learn/A1-vecto-cong-tru"
-            className="group relative mx-auto block w-full max-w-sm lg:max-w-md"
-            aria-label="Xem thử phiếu miễn phí"
+            href={launchActive && !ownsK1 ? "/checkout?product=k1" : "/checkout?product=k3"}
+            className="btn btn-primary"
           >
-            <Image
-              src="/hero/phieu-attention.png"
-              alt="Phiếu tính tay Scaled Dot-Product Attention — trang ĐỀ in A4"
-              width={794}
-              height={1123}
-              className="absolute right-0 top-6 w-[72%] rotate-[4deg] rounded-lg border border-line bg-white shadow-md"
-            />
-            <Image
-              src="/hero/phieu-nhan-ma-tran.png"
-              alt="Phiếu tính tay Nhân ma trận — điền từng ô bằng bút chì, có sơ đồ màu"
-              width={794}
-              height={1123}
-              priority
-              className="relative w-[78%] -rotate-[3deg] rounded-lg border border-line bg-white shadow-xl transition-transform duration-300 group-hover:-rotate-1 group-hover:scale-[1.02]"
-            />
-            <span className="mt-4 block text-center text-sm text-dim">
-              👆 Phiếu thật trong bộ — bấm để <b className="text-accent">làm thử miễn phí</b>
-            </span>
+            {launchActive && !ownsK1 ? "Nhận ngay" : "Mua ngay"}
           </Link>
         </div>
-      </section>
-
-      {/* Trust bar — số liệu thật (không bịa lượt in/học viên) */}
-      <TrustBar
-        totalPhieu={TOTAL_AVAILABLE}
-        courseCount={COURSES.length}
-        partCount={PARTS.length}
-        freeCount={FREE_SLUGS.length}
-        reviewAvg={reviewAvg}
-        reviewCount={reviewCount}
-      />
-
-      {/* Features */}
-      <section className="mx-auto max-w-5xl px-5 py-12">
-        <SectionHeading title="Vì sao học bằng tay">
-          <p>Bốn điều khiến bộ phiếu khác hẳn xem video hay đọc lý thuyết suông.</p>
-        </SectionHeading>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f, i) => (
-            <div
-              key={f.t}
-              className="group rounded-2xl border border-line p-5 transition hover:border-accent/50 hover:shadow-sm"
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="rounded-lg bg-accent px-2 py-1 font-mono text-sm font-bold text-white">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="font-bold leading-snug">{f.t}</h3>
-              </div>
-              <p className="mt-2 text-sm text-dim">{f.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Khối uy tín phương pháp "AI by Hand" (GS. Tom Yeh) — dựng niềm tin trước lời mời mua */}
-      <AuthorityBlock />
-
-      {/* Packages */}
-      <section id="goi" className="mx-auto max-w-5xl px-5 py-12 scroll-mt-20">
-        <SectionHeading
-          title="Các gói khóa học"
-          right={
-            flash.enabled && (
-              <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang chọn gói" />
-            )
-          }
-        >
-          <p>
-            {launchActive
-              ? "Xem thử 3 phiếu đầu miễn phí. Khai trương: Khóa 1 chỉ 49.000đ — trả một lần, không thuê bao."
-              : "Xem thử 3 phiếu đầu miễn phí — trả một lần, học trọn đời, không thuê bao."}
-          </p>
-          <p className="mt-2 text-sm">
-            <b className="text-ink">Phiếu là gì?</b> Mỗi phiếu là một bài tập in A4: bạn tự điền số
-            bằng tay, có đề và đáp án.
-          </p>
-        </SectionHeading>
-        <div className="mt-6">
-          <PackageGrid />
-        </div>
-      </section>
-
-      {/* Curriculum */}
-      <section className="mx-auto max-w-5xl px-5 py-12">
-        <SectionHeading title="Toàn bộ lộ trình">
-          <p>
-            {TOTAL_AVAILABLE} bài đã có, ra thêm liên tục — học theo thứ tự từ nền tảng đến chuyên
-            sâu.
-          </p>
-        </SectionHeading>
-        <div className="mt-8">
-          <CurriculumAccordion accessCourses={access} />
-        </div>
-      </section>
-
-      {/* Reviews */}
-      <Reviews reviews={reviewRows} />
-
-      {/* FAQ */}
-      <Faq />
-
-      {/* Cam kết hoàn tiền — trấn an trước lời mời mua */}
-      <GuaranteeBand />
-
-      {/* Pricing CTA */}
-      <section className="mx-auto max-w-5xl px-5 py-12">
-        <div className="rounded-3xl border border-line bg-paper p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold">Pro — trọn lộ trình hiện có</h2>
-          <p className="mt-2 text-dim">
-            Mở khóa nền tảng → CNN/RNN → Transformer &amp; LLM (Khóa 1–3), trả một lần.
-          </p>
-          <div className="mt-5 text-4xl font-extrabold text-accent">{formatVnd(PRICE)}</div>
-          <div className="mt-6">
-            <Link href="/checkout?product=k3">
-              <Button size="lg">Mua ngay</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Chừa khoảng đáy để sticky buy-bar không che nội dung cuối (chỉ mobile) */}
-      <div className="h-20 lg:hidden" aria-hidden />
-      <StickyBuyBar />
+      </div>
 
       <SiteFooter />
     </>

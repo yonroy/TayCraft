@@ -32,33 +32,38 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
   const [paid, setPaid] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Tạo đơn khi vào trang.
+  // Tạo đơn khi vào trang (và mỗi lần bấm "Thử lại" → tăng attempt để chạy lại effect).
   useEffect(() => {
     let active = true;
     (async () => {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product }),
-      });
-      const data = await res.json();
-      if (!active) return;
-      if (data.alreadyOwned) {
-        router.replace("/learn");
-        return;
+      try {
+        const res = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product }),
+        });
+        const data = await res.json();
+        if (!active) return;
+        if (data.alreadyOwned) {
+          router.replace("/learn");
+          return;
+        }
+        if (!res.ok) {
+          setError(data.error ?? "Không tạo được đơn hàng. Bạn thử lại nhé.");
+          return;
+        }
+        setOrder(data);
+      } catch {
+        if (active) setError("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
       }
-      if (!res.ok) {
-        setError(data.error ?? "Có lỗi xảy ra");
-        return;
-      }
-      setOrder(data);
     })();
     return () => {
       active = false;
     };
-  }, [router, product]);
+  }, [router, product, attempt]);
 
   // Poll trạng thái mỗi 4s.
   useEffect(() => {
@@ -96,7 +101,22 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
   }
 
   if (error) {
-    return <p className="text-center text-accent-2">{error}</p>;
+    return (
+      <div className="rounded-2xl border border-accent-2/40 bg-accent-2/5 p-6 text-center">
+        <p className="font-medium text-accent-2">{error}</p>
+        <div className="mt-4">
+          <Button
+            onClick={() => {
+              setError(null);
+              setOrder(null);
+              setAttempt((a) => a + 1);
+            }}
+          >
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (paid) {
@@ -133,6 +153,9 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
       <h2 className="text-xl font-bold text-center">Quét QR để thanh toán</h2>
       <p className="text-center text-dim text-sm mt-1">
         Mở app ngân hàng, quét mã. Hệ thống tự mở khóa sau khi nhận được tiền.
+      </p>
+      <p className="mt-2 text-center text-xs font-medium text-dim">
+        ① Quét &amp; chuyển khoản → ② Chờ xác nhận → ③ Tự mở khóa
       </p>
 
       <div className="mt-6 flex flex-col items-center">
@@ -174,9 +197,9 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
         ⚠️ Giữ <b>nguyên nội dung chuyển khoản</b> (cả từ khóa đầu) để hệ thống nhận diện đơn của bạn.
       </p>
 
-      <div className="mt-4 flex items-center justify-center gap-2 text-dim text-sm">
-        <span className="inline-block h-2 w-2 rounded-full bg-accent animate-pulse" />
-        Đang chờ thanh toán…
+      <div className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-dim">
+        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-accent animate-pulse" />
+        Đang chờ chuyển khoản — tự mở khóa ngay khi nhận được (thường dưới 1 phút)
       </div>
 
       {showHelp && <AdminFallback order={order} onCopy={copy} copied={copied} />}

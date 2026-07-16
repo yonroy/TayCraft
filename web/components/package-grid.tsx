@@ -83,7 +83,7 @@ function PackageCard({ p, launch = false }: { p: Product; launch?: boolean }) {
   );
 }
 
-// 3 bậc: Cơ bản → Pro (nổi bật) → Trọn bộ. Khóa nền tảng học miễn phí.
+// 4 bậc cộng dồn: Khóa 1 → Cơ bản → Pro (nổi bật) → Trọn bộ.
 export function PackageGrid() {
   const launchActive = !promoExpired(); // còn trong dịp khai trương → làm nổi thẻ Khóa 1
   return (
@@ -96,7 +96,7 @@ export function PackageGrid() {
           </span>
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
         {PRODUCTS.map((p) => (
           <PackageCard key={p.id} p={p} launch={p.id === "k1" && launchActive} />
         ))}

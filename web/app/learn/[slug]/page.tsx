@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
+import { LessonFrame } from "@/components/lesson-frame";
 import { Paywall } from "@/components/paywall";
 import { ViewerCount } from "@/components/viewer-count";
 import { lessonBySlug, isFreeLesson } from "@/lib/lessons";
@@ -44,10 +45,9 @@ export default async function LessonViewer({
 
         {canView ? (
           <div className="flex-1 bg-paper">
-            <iframe
+            <LessonFrame
               src={`/api/learn/${lesson.course}/${lesson.slug}.html`}
               title={lesson.title}
-              className="w-full h-[calc(100vh-8rem)] border-0 bg-white"
             />
             <div className="mx-auto max-w-5xl px-5 py-3 text-center text-sm text-dim">
               Mẹo: bấm <b>🎲 Đổi số</b> để luyện bộ số mới · <b>🖨️ In / Lưu PDF</b> để in ra giấy.
@@ -55,7 +55,7 @@ export default async function LessonViewer({
           </div>
         ) : (
           <div className="px-5 pb-16">
-            <Paywall title={`Bài ${lesson.no}: ${lesson.title}`} />
+            <Paywall title={`Bài ${lesson.no}: ${lesson.title}`} course={lesson.course} />
             {!user && (
               <p className="text-center text-sm text-dim mt-4">
                 Đã mua rồi?{" "}

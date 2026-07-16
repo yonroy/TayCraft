@@ -58,7 +58,7 @@ export default async function ReviewPage() {
                 <Link href="/?claim=k1">
                   <Button>Nhận Khóa 1 miễn phí →</Button>
                 </Link>
-                <Link href="/#goi">
+                <Link href="/#packages">
                   <Button variant="outline">Xem các gói</Button>
                 </Link>
               </div>

@@ -21,7 +21,7 @@ export async function SiteHeader() {
           </span>
         </Link>
         <nav className="flex items-center gap-3 sm:gap-4 text-sm sm:text-[15px]">
-          <Link href="/#goi" className="hover:text-accent font-medium">
+          <Link href="/#packages" className="hover:text-accent font-medium">
             Bảng giá
           </Link>
           <Link href="/learn" className="hover:text-accent font-medium hidden sm:inline">

@@ -55,7 +55,7 @@ export default async function AccountPage() {
               <Button>Vào học</Button>
             </Link>
           ) : (
-            <Link href="/#goi">
+            <Link href="/#packages">
               <Button>Xem các gói</Button>
             </Link>
           )}

@@ -10,7 +10,6 @@ import { SectionHeading } from "@/components/section-heading";
 import { PackageGrid } from "@/components/package-grid";
 import { Reviews } from "@/components/reviews";
 import { Faq } from "@/components/faq";
-import { FlashSaleBar } from "@/components/flash-sale-bar";
 import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
 import { HeroClaimButton } from "@/components/hero-claim-button";
@@ -46,11 +45,6 @@ export default async function Home() {
     : null;
   return (
     <>
-      <FlashSaleBar
-        enabled={flash.enabled}
-        headline={flash.headline}
-        countdownMinutes={flash.countdownMinutes}
-      />
       <SiteHeader />
       {launchActive && !ownsK1 && <LaunchPopup />}
 

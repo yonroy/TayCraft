@@ -4,6 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { PageHeading } from "@/components/page-heading";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { COURSES } from "@/lib/products";
 import { FREE_COURSES } from "@/lib/lessons";
@@ -33,9 +34,10 @@ export default async function AccountPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl px-5 py-10 flex-1">
-        <h1 className="text-2xl font-bold">Tài khoản</h1>
-        <p className="text-dim mt-1">{user.email}</p>
+      <main className="mx-auto w-full max-w-3xl px-5 py-12 flex-1">
+        <PageHeading title="Tài khoản">
+          <p>{user.email}</p>
+        </PageHeading>
 
         <div className="mt-6 rounded-2xl border border-line p-5 flex items-center justify-between">
           <div>
@@ -61,7 +63,9 @@ export default async function AccountPage() {
 
         <h2 className="mt-8 font-bold">Lịch sử đơn hàng</h2>
         {myOrders.length === 0 ? (
-          <p className="text-dim text-sm mt-2">Chưa có đơn hàng nào.</p>
+          <div className="mt-3 rounded-xl border border-line bg-paper px-4 py-6 text-center text-sm text-dim">
+            Chưa có đơn hàng nào.
+          </div>
         ) : (
           <div className="mt-3 grid gap-2">
             {myOrders.map((o) => (

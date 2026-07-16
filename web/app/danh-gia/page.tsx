@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { PageHeading } from "@/components/page-heading";
 import { ReviewForm } from "@/components/review-form";
 import { getUser, hasAccess } from "@/lib/auth";
 import { getOwnReview } from "@/lib/reviews";
@@ -23,11 +24,13 @@ export default async function ReviewPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-xl px-5 py-10 flex-1">
-        <h1 className="text-2xl font-bold">Để lại cảm nhận ✍️</h1>
-        <p className="text-dim mt-1">
-          Bạn là một trong những học viên đầu tiên — vài dòng của bạn giúp người học sau rất nhiều.
-        </p>
+      <main className="mx-auto w-full max-w-xl px-5 py-12 flex-1">
+        <PageHeading title="Để lại cảm nhận ✍️">
+          <p>
+            Bạn là một trong những học viên đầu tiên — vài dòng của bạn giúp người học sau rất
+            nhiều.
+          </p>
+        </PageHeading>
 
         <div className="mt-8">
           {canReview ? (

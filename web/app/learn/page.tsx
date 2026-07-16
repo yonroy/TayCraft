@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { PageHeading } from "@/components/page-heading";
 import { CurriculumAccordion } from "@/components/curriculum-accordion";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { COURSES } from "@/lib/products";
@@ -16,24 +17,25 @@ export default async function LearnPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl px-5 py-10 flex-1">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Bài học</h1>
-            <p className="text-dim mt-1">
-              {full
-                ? "Bạn đã mở khóa trọn bộ. Chúc học vui ✍️"
-                : hasPaid
-                  ? "Bạn đã mở khóa một phần. Nâng cấp để học thêm các khóa còn lại."
-                  : "Khóa Nền tảng (K1) miễn phí. Mua gói để mở các khóa nâng cao."}
-            </p>
-          </div>
-          {!full && (
-            <Link href="/#goi">
-              <Button>{hasPaid ? "Nâng cấp gói" : "Xem các gói"}</Button>
-            </Link>
-          )}
-        </div>
+      <main className="mx-auto w-full max-w-5xl px-5 py-12 flex-1">
+        <PageHeading
+          title="Bài học"
+          right={
+            !full && (
+              <Link href="/#goi">
+                <Button>{hasPaid ? "Nâng cấp gói" : "Xem các gói"}</Button>
+              </Link>
+            )
+          }
+        >
+          <p>
+            {full
+              ? "Bạn đã mở khóa trọn bộ. Chúc học vui ✍️"
+              : hasPaid
+                ? "Bạn đã mở khóa một phần. Nâng cấp để học thêm các khóa còn lại."
+                : "Khóa Nền tảng (K1) miễn phí. Mua gói để mở các khóa nâng cao."}
+          </p>
+        </PageHeading>
 
         <div className="mt-8">
           <CurriculumAccordion accessCourses={courses} openCourses={courses} />

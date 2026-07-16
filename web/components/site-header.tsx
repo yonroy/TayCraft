@@ -20,7 +20,10 @@ export async function SiteHeader() {
             Làm toán <span className="text-accent">AI</span> ✍️
           </span>
         </Link>
-        <nav className="flex items-center gap-2 sm:gap-4 text-[15px]">
+        <nav className="flex items-center gap-3 sm:gap-4 text-sm sm:text-[15px]">
+          <Link href="/#goi" className="hover:text-accent font-medium">
+            Bảng giá
+          </Link>
           <Link href="/learn" className="hover:text-accent font-medium hidden sm:inline">
             Bài học
           </Link>

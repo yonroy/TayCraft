@@ -13,6 +13,9 @@ import { Faq } from "@/components/faq";
 import { ViewerCount } from "@/components/viewer-count";
 import { LaunchPopup } from "@/components/launch-popup";
 import { HeroClaimButton } from "@/components/hero-claim-button";
+import { HeroTryCell } from "@/components/hero-try-cell";
+import { StickyBuyBar } from "@/components/sticky-buy-bar";
+import { AuthorityBlock } from "@/components/authority-block";
 import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
 import { TOTAL_AVAILABLE, FREE_COURSES, PARTS, FREE_SLUGS } from "@/lib/lessons";
@@ -107,6 +110,11 @@ export default async function Home() {
                 </p>
               </>
             )}
+
+            {/* Làm thử 1 ô sống — cho khách nếm cảm giác "tính AI bằng tay" ngay tại hero */}
+            <div className="mt-8 max-w-md mx-auto lg:mx-0">
+              <HeroTryCell />
+            </div>
           </div>
 
           {/* Ảnh phiếu thật — 2 tờ A4 xếp chồng, bấm vào mở bài học thử miễn phí */}
@@ -170,6 +178,9 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Khối uy tín phương pháp "AI by Hand" (GS. Tom Yeh) — dựng niềm tin trước lời mời mua */}
+      <AuthorityBlock />
+
       {/* Packages */}
       <section id="goi" className="mx-auto max-w-5xl px-5 py-12 scroll-mt-20">
         <SectionHeading
@@ -232,6 +243,10 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Chừa khoảng đáy để sticky buy-bar không che nội dung cuối (chỉ mobile) */}
+      <div className="h-20 lg:hidden" aria-hidden />
+      <StickyBuyBar />
 
       <SiteFooter />
     </>

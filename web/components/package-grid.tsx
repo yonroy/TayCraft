@@ -1,14 +1,27 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PRODUCTS, COURSES, coursesOfProduct, effectivePriceVnd, type Product } from "@/lib/products";
+import { lessonsOfCourse, type Course } from "@/lib/lessons";
 import { promoExpired } from "@/lib/promo";
 import { formatVnd } from "@/lib/utils";
 
 const courseName = (id: string) => COURSES.find((c) => c.id === id)?.name ?? id;
 
+// Số phiếu ĐÃ PHÁT HÀNH của một khóa (số thật từ manifest — không bịa).
+const availableCount = (id: Course) => lessonsOfCourse(id).filter((l) => l.available).length;
+
+// Quyền lợi dùng chung mọi gói — hiển thị trong khối "bạn nhận được gì".
+const SHARED_PERKS = [
+  "🎲 Đổi số vô hạn — luyện lại không hết bài",
+  "🖨️ In PDF / A4, giải bằng bút chì",
+  "↩️ Hoàn tiền 7 ngày — không hỏi lý do",
+  "♾️ Học trọn đời nội dung hiện có",
+];
+
 // `launch` = thẻ Khóa 1 trong thời gian khai trương → tô nổi bật tông cam (khác Pro tông accent).
 function PackageCard({ p, launch = false }: { p: Product; launch?: boolean }) {
   const courses = coursesOfProduct(p);
+  const totalPhieu = courses.reduce((s, c) => s + availableCount(c), 0);
   const price = effectivePriceVnd(p);
   const emphasis = launch
     ? "border-accent-2 ring-2 ring-accent-2/40 shadow-lg lg:scale-[1.05]"
@@ -50,21 +63,37 @@ function PackageCard({ p, launch = false }: { p: Product; launch?: boolean }) {
         </p>
       )}
 
-      <ul className="mt-3 space-y-1 text-sm text-dim">
-        {courses.map((c) => (
-          <li key={c}>{courseName(c)}</li>
-        ))}
-      </ul>
-
-      {p.perks && (
-        <ul className="mt-3 space-y-1 text-sm flex-1 text-ink">
-          {p.perks.map((perk) => (
-            <li key={perk}>
-              <span className="text-accent">✓</span> {perk}
+      {/* Bạn nhận được gì — số phiếu THẬT/khóa + quyền lợi chung + đặc thù gói */}
+      <div className="mt-3 flex-1">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-dim">Bạn nhận được</p>
+        <ul className="mt-2 space-y-1 text-sm">
+          {courses.map((c) => (
+            <li key={c} className="flex items-start gap-1.5">
+              <span className="text-accent">✓</span>
+              <span>
+                <b className="text-ink">{availableCount(c)} phiếu</b>{" "}
+                <span className="text-dim">· {courseName(c)}</span>
+              </span>
             </li>
           ))}
+          {SHARED_PERKS.map((perk) => (
+            <li key={perk} className="flex items-start gap-1.5 text-dim">
+              <span>{perk}</span>
+            </li>
+          ))}
+          {/* Perk đặc thù gói (vd cập nhật 12 tháng, capstone) — bỏ dòng "trọn đời" đã có ở trên */}
+          {p.perks
+            ?.filter((perk) => !perk.includes("trọn đời"))
+            .map((perk) => (
+              <li key={perk} className="flex items-start gap-1.5 text-ink">
+                <span className="text-accent">✓</span> {perk}
+              </li>
+            ))}
         </ul>
-      )}
+        <p className="mt-2 text-xs text-dim">
+          Tổng <b className="text-ink">{totalPhieu} phiếu</b> đã phát hành · ra thêm liên tục.
+        </p>
+      </div>
 
       <div className="mt-4">
         {p.active ? (

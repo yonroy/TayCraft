@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CurriculumAccordion } from "@/components/curriculum-accordion";
 import { TrustBar } from "@/components/trust-bar";
 import { GuaranteeBand } from "@/components/guarantee-band";
+import { SectionHeading } from "@/components/section-heading";
 import { PackageGrid } from "@/components/package-grid";
 import { Reviews } from "@/components/reviews";
 import { Faq } from "@/components/faq";
@@ -51,7 +52,7 @@ export default async function Home() {
         countdownMinutes={flash.countdownMinutes}
       />
       <SiteHeader />
-      {!ownsK1 && <LaunchPopup />}
+      {launchActive && !ownsK1 && <LaunchPopup />}
 
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-5 pt-16 pb-12">
@@ -153,30 +154,48 @@ export default async function Home() {
       />
 
       {/* Features */}
-      <section className="mx-auto max-w-5xl px-5 py-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {FEATURES.map((f) => (
-          <div key={f.t} className="rounded-2xl border border-line p-5">
-            <h3 className="font-bold">{f.t}</h3>
-            <p className="mt-1.5 text-sm text-dim">{f.d}</p>
-          </div>
-        ))}
+      <section className="mx-auto max-w-5xl px-5 py-12">
+        <SectionHeading title="Vì sao học bằng tay">
+          <p>Bốn điều khiến bộ phiếu khác hẳn xem video hay đọc lý thuyết suông.</p>
+        </SectionHeading>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f, i) => (
+            <div
+              key={f.t}
+              className="group rounded-2xl border border-line p-5 transition hover:border-accent/50 hover:shadow-sm"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="rounded-lg bg-accent px-2 py-1 font-mono text-sm font-bold text-white">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="font-bold leading-snug">{f.t}</h3>
+              </div>
+              <p className="mt-2 text-sm text-dim">{f.d}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Packages */}
       <section id="goi" className="mx-auto max-w-5xl px-5 py-12 scroll-mt-20">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-2xl font-bold">Các gói khóa học</h2>
-          {flash.enabled && (
-            <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang chọn gói" />
-          )}
-        </div>
-        <p className="text-dim mt-1">
-          Xem thử 3 phiếu đầu miễn phí. Khai trương: Khóa 1 chỉ 49.000đ — trả một lần, không thuê bao.
-        </p>
-        <p className="text-sm text-dim mt-2">
-          <b className="text-ink">Phiếu là gì?</b> Mỗi phiếu là một bài tập in A4: bạn tự điền số bằng
-          tay, có đề và đáp án.
-        </p>
+        <SectionHeading
+          title="Các gói khóa học"
+          right={
+            flash.enabled && (
+              <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang chọn gói" />
+            )
+          }
+        >
+          <p>
+            {launchActive
+              ? "Xem thử 3 phiếu đầu miễn phí. Khai trương: Khóa 1 chỉ 49.000đ — trả một lần, không thuê bao."
+              : "Xem thử 3 phiếu đầu miễn phí — trả một lần, học trọn đời, không thuê bao."}
+          </p>
+          <p className="mt-2 text-sm">
+            <b className="text-ink">Phiếu là gì?</b> Mỗi phiếu là một bài tập in A4: bạn tự điền số
+            bằng tay, có đề và đáp án.
+          </p>
+        </SectionHeading>
         <div className="mt-6">
           <PackageGrid />
         </div>
@@ -184,10 +203,12 @@ export default async function Home() {
 
       {/* Curriculum */}
       <section className="mx-auto max-w-5xl px-5 py-12">
-        <h2 className="text-2xl font-bold">Toàn bộ lộ trình</h2>
-        <p className="text-dim mt-1">
-          {TOTAL_AVAILABLE} bài đã có, ra thêm liên tục — học theo thứ tự từ nền tảng đến chuyên sâu.
-        </p>
+        <SectionHeading title="Toàn bộ lộ trình">
+          <p>
+            {TOTAL_AVAILABLE} bài đã có, ra thêm liên tục — học theo thứ tự từ nền tảng đến chuyên
+            sâu.
+          </p>
+        </SectionHeading>
         <div className="mt-8">
           <CurriculumAccordion accessCourses={access} />
         </div>

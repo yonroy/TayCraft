@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SectionHeading } from "@/components/section-heading";
 import type { Review } from "@/lib/db/schema";
 
 const AVATAR_COLORS = ["bg-accent", "bg-accent-2", "bg-[#7c5cff]"];
@@ -41,12 +42,14 @@ export function Reviews({ reviews }: { reviews: Review[] }) {
 
   return (
     <section className="mx-auto max-w-5xl px-5 py-12">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-2xl font-bold">Học viên nói gì</h2>
-        <p className="text-sm text-dim">
-          <span className="text-accent-2 font-bold">★ {avg}/5</span> · {reviews.length} đánh giá
-        </p>
-      </div>
+      <SectionHeading
+        title="Học viên nói gì"
+        right={
+          <p className="text-sm text-dim">
+            <span className="text-accent-2 font-bold">★ {avg}/5</span> · {reviews.length} đánh giá
+          </p>
+        }
+      />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {reviews.map((r, i) => (

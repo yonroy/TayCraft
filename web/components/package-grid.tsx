@@ -88,12 +88,14 @@ export function PackageGrid() {
   const launchActive = !promoExpired(); // còn trong dịp khai trương → làm nổi thẻ Khóa 1
   return (
     <div>
-      <div className="mb-4 rounded-xl border border-accent-2/40 bg-accent-2/5 px-4 py-3 text-sm">
-        <span className="font-mono font-bold text-accent-2">🎉 KHAI TRƯƠNG</span>{" "}
-        <span className="text-dim">
-          Tặng 100 suất Khóa 1 miễn phí · sau đó chỉ 49.000đ. Xem thử 3 phiếu đầu không cần mua.
-        </span>
-      </div>
+      {launchActive && (
+        <div className="mb-4 rounded-xl border border-accent-2/40 bg-accent-2/5 px-4 py-3 text-sm">
+          <span className="font-mono font-bold text-accent-2">🎉 KHAI TRƯƠNG</span>{" "}
+          <span className="text-dim">
+            Tặng 100 suất Khóa 1 miễn phí · sau đó chỉ 49.000đ. Xem thử 3 phiếu đầu không cần mua.
+          </span>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
         {PRODUCTS.map((p) => (
           <PackageCard key={p.id} p={p} launch={p.id === "k1" && launchActive} />

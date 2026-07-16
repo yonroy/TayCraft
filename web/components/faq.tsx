@@ -1,5 +1,6 @@
 // FAQ xử lý nghi ngại trước khi mua — mỗi câu không trả lời là một lý do rời trang.
 // Dùng <details> native: không cần JS, SEO đọc được toàn bộ nội dung.
+import { SectionHeading } from "@/components/section-heading";
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -20,14 +21,14 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Có hoàn tiền không?",
-    a: "Có — hoàn 100% trong 7 ngày, không cần lý do. Nhắn qua Facebook (link ở cuối trang) hoặc email kèm mã chuyển khoản là được hoàn lại đúng số tiền đã trả. Ngoài ra bạn có thể thử trước khi mua: 3 phiếu đầu xem tự do và Khóa 1 đang miễn phí dịp khai trương.",
+    a: "Có — hoàn 100% trong 7 ngày, không cần lý do. Nhắn qua Facebook (link ở cuối trang) hoặc email kèm mã chuyển khoản là được hoàn lại đúng số tiền đã trả. Ngoài ra bạn có thể thử trước khi mua: 3 phiếu đầu xem tự do trước khi quyết định.",
   },
 ];
 
 export function Faq() {
   return (
     <section id="faq" className="mx-auto max-w-3xl px-5 py-12 scroll-mt-20">
-      <h2 className="text-2xl font-bold text-center">Câu hỏi thường gặp</h2>
+      <SectionHeading title="Câu hỏi thường gặp" />
       <div className="mt-6 space-y-3">
         {FAQS.map((f) => (
           <details

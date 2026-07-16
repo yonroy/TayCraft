@@ -1003,4 +1003,222 @@
       display: none;
     }
   }
+
+  /* ============================================================
+     Trang /learn — dùng lại ngôn ngữ .lp (accordion + card + nút)
+     nhưng thân accordion liệt kê BÀI HỌC click được (khóa/free/sắp ra).
+     Additive; không đụng các class marketing ở trên.
+     ============================================================ */
+  .learn-intro {
+    background: radial-gradient(900px 400px at 90% -25%, rgba(14, 116, 144, 0.08), transparent 60%),
+      var(--white);
+    border-bottom: 1px solid var(--line);
+    padding: 40px 0 34px;
+  }
+  .learn-intro h1 {
+    font-size: clamp(24px, 3.4vw, 34px);
+    color: var(--ink);
+    margin: 4px 0 10px;
+  }
+  .learn-status {
+    font-size: 15.5px;
+    color: var(--dim);
+    max-width: 62ch;
+    margin-bottom: 20px;
+  }
+  .learn-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Callout xem thử 3 phiếu free (khách chưa mua) */
+  .free-callout {
+    margin-top: 24px;
+    background: rgba(180, 83, 9, 0.05);
+    border: 1px solid rgba(180, 83, 9, 0.22);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .free-callout .fc-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent-2-dark);
+    margin-bottom: 12px;
+  }
+  .free-callout .fc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .fc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 7px 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .fc-chip:hover {
+    border-color: var(--accent-2);
+    box-shadow: var(--shadow-sm);
+  }
+  .fc-chip .n {
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--accent-2);
+  }
+
+  /* Accordion khóa — thân mở chứa lưới bài học */
+  .learn-acc {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .acc-body-open {
+    border-top: 1px solid var(--line);
+    padding: 4px 22px 22px;
+  }
+  .acc-meta-line {
+    font-size: 12.5px;
+    color: var(--dim);
+    padding: 13px 0 6px;
+  }
+  .acc-meta-line b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .les-part + .les-part {
+    margin-top: 18px;
+  }
+  .les-part-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 10px;
+  }
+  .les-part-head .pno {
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--dim);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 7px;
+  }
+  .les-part-head .pname {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .les-part-head .pcount {
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-size: 11.5px;
+    color: var(--dim);
+  }
+  .les-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+  }
+  .les-card {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 11px 12px;
+    text-decoration: none;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  a.les-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  .les-card.locked {
+    border-style: dashed;
+    background: transparent;
+    opacity: 0.72;
+  }
+  .les-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .les-no {
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 6px;
+    padding: 2px 7px;
+  }
+  .les-card.locked .les-no {
+    background: var(--line);
+    color: var(--dim);
+  }
+  .les-flag {
+    margin-left: auto;
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-size: 10.5px;
+    font-weight: 800;
+  }
+  .les-flag.free {
+    color: var(--accent-2);
+  }
+  .les-flag.soon {
+    color: var(--dim);
+    font-weight: 600;
+  }
+  .les-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .les-card.locked .les-title {
+    color: var(--dim);
+  }
+
+  /* Dải nhắc viết đánh giá (học viên đã đăng nhập) */
+  .learn-review-band {
+    max-width: 880px;
+    margin: 30px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .learn-review-band p {
+    font-size: 13.5px;
+    color: var(--dim);
+  }
+
+  @media (max-width: 760px) {
+    .les-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 480px) {
+    .les-grid {
+      grid-template-columns: 1fr;
+    }
+    .acc-body-open {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
 }

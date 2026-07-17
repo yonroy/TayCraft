@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { EmailOtpForm } from "@/components/email-otp-form";
 
 export function LoginForm({ next }: { next: string }) {
@@ -27,14 +26,18 @@ export function LoginForm({ next }: { next: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      <Button variant="outline" size="lg" className="w-full" onClick={signInGoogle} disabled={loading}>
+    <div>
+      <button
+        type="button"
+        className="btn btn-ghost btn-lg"
+        style={{ width: "100%" }}
+        onClick={signInGoogle}
+        disabled={loading}
+      >
         {loading ? "Đang chuyển…" : "Tiếp tục với Google"}
-      </Button>
+      </button>
 
-      <div className="flex items-center gap-3 text-dim text-sm">
-        <div className="h-px flex-1 bg-line" /> hoặc <div className="h-px flex-1 bg-line" />
-      </div>
+      <div className="co-or">hoặc</div>
 
       <EmailOtpForm
         onSuccess={() => {
@@ -43,7 +46,9 @@ export function LoginForm({ next }: { next: string }) {
         }}
       />
 
-      {error && <p className="text-sm text-accent-2">{error}</p>}
+      {error && (
+        <p style={{ marginTop: 12, fontSize: 13, color: "var(--accent-2)" }}>{error}</p>
+      )}
     </div>
   );
 }

@@ -59,18 +59,27 @@ export default async function LessonViewer({
           </div>
         ) : (
           <div className="px-5 pb-16">
-            <Paywall title={`Bài ${lesson.no}: ${lesson.title}`} course={lesson.course} />
-            {!user && (
-              <p className="text-center text-sm text-dim mt-4">
-                Đã mua rồi?{" "}
-                <Link
-                  href={`/login?next=/learn/${lesson.slug}`}
-                  className="text-accent font-medium"
+            <div className="lp">
+              <Paywall title={`Bài ${lesson.no}: ${lesson.title}`} course={lesson.course} />
+              {!user && (
+                <p
+                  style={{
+                    textAlign: "center",
+                    fontSize: 13.5,
+                    color: "var(--dim)",
+                    marginTop: 16,
+                  }}
                 >
-                  Đăng nhập
-                </Link>
-              </p>
-            )}
+                  Đã mua rồi?{" "}
+                  <Link
+                    href={`/login?next=/learn/${lesson.slug}`}
+                    style={{ color: "var(--accent)", fontWeight: 700, textDecoration: "underline" }}
+                  >
+                    Đăng nhập
+                  </Link>
+                </p>
+              )}
+            </div>
             <LessonNav slug={lesson.slug} />
           </div>
         )}

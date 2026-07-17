@@ -1221,4 +1221,413 @@
       padding-right: 16px;
     }
   }
+
+  /* ============================================================
+     Thanh toán (/checkout, QR, login) + Paywall — hệ .lp
+     Additive; các client component (qr-checkout/login/otp/paywall)
+     render BÊN TRONG .lp nên class .lp ăn được.
+     ============================================================ */
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .co-page {
+    padding: 44px 0 64px;
+    background: radial-gradient(800px 360px at 90% -20%, rgba(14, 116, 144, 0.07), transparent 60%),
+      var(--white);
+    min-height: 62vh;
+  }
+  .co-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .co-head {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .co-head h1 {
+    font-size: clamp(22px, 3.2vw, 28px);
+    margin-top: 8px;
+  }
+  .co-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 22px;
+  }
+  .co-card + .co-card,
+  .co-summary + .co-card {
+    margin-top: 16px;
+  }
+
+  /* Tóm tắt đơn */
+  .co-summary {
+    background: linear-gradient(180deg, #fffaf3, #fff 60%);
+    border: 1.5px solid rgba(180, 83, 9, 0.28);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+  .co-sum-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .co-sum-name {
+    font-size: 15.5px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .co-sum-tag {
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+  .co-sum-price {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--accent-2-dark);
+    white-space: nowrap;
+  }
+  .co-perks {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .co-perks li {
+    font-size: 13.4px;
+    color: var(--ink);
+    display: flex;
+    gap: 8px;
+  }
+  .co-perks li .ck {
+    color: var(--accent);
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .co-viewer {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  /* Khối QR */
+  .co-qr-title {
+    font-size: 17px;
+    font-weight: 800;
+    text-align: center;
+    color: var(--ink);
+  }
+  .co-qr-sub {
+    text-align: center;
+    font-size: 13px;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+  .co-steps {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+  .co-qr-img {
+    display: block;
+    margin: 18px auto 0;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  .co-rows {
+    margin-top: 18px;
+  }
+  .co-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(205, 214, 224, 0.55);
+    font-size: 13.5px;
+  }
+  .co-row .co-k {
+    color: var(--dim);
+  }
+  .co-row .co-v {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .co-row .co-v.hl {
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-weight: 800;
+    color: var(--accent-2);
+  }
+  .co-copy {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 3px 9px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--dim);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .co-copy:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .co-warn {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .co-waiting {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--dim);
+    text-align: center;
+  }
+  .co-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    animation: co-pulse 1.3s infinite;
+  }
+
+  /* Màn thành công */
+  .co-success {
+    text-align: center;
+    background: linear-gradient(135deg, #ecfeff, #f0f9ff);
+    border: 1.5px solid #a5d8e8;
+    border-radius: 20px;
+    padding: 40px 26px;
+    box-shadow: var(--shadow-md);
+  }
+  .co-success .emoji {
+    font-size: 54px;
+  }
+  .co-success h2 {
+    font-size: 24px;
+    margin-top: 8px;
+    color: var(--ink);
+  }
+  .co-success p {
+    color: var(--dim);
+    font-size: 14.5px;
+    margin-top: 8px;
+  }
+  .co-success .tiny {
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  /* Lỗi + fallback admin */
+  .co-alert {
+    border: 1px solid rgba(180, 83, 9, 0.4);
+    background: rgba(180, 83, 9, 0.05);
+    border-radius: var(--radius);
+    padding: 22px;
+    text-align: center;
+  }
+  .co-alert p {
+    color: var(--accent-2-dark);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .co-fallback {
+    margin-top: 20px;
+    border: 1px solid rgba(180, 83, 9, 0.4);
+    background: rgba(180, 83, 9, 0.05);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .co-fallback h3 {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .co-fallback p {
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 6px;
+  }
+  .co-fallback .co-mono {
+    font-family: ui-monospace, "SFMono-Regular", monospace;
+    font-weight: 800;
+    color: var(--accent-2);
+  }
+  .co-fallback .co-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  /* Login trong .lp */
+  .co-login-hint {
+    text-align: center;
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 16px;
+  }
+  .co-or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--dim);
+    font-size: 13px;
+    margin: 14px 0;
+  }
+  .co-or::before,
+  .co-or::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: var(--line);
+  }
+
+  /* Paywall trong reader */
+  .pw-wrap {
+    max-width: 460px;
+    margin: 40px auto 0;
+  }
+  .pw-teaser {
+    position: relative;
+    height: 190px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 18px 18px 0 0;
+    background: #fff;
+  }
+  .pw-teaser iframe {
+    pointer-events: none;
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 820px;
+    width: 100%;
+    border: 0;
+    filter: blur(3px);
+    user-select: none;
+  }
+  .pw-fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(238, 242, 246, 0.6) 55%,
+      var(--paper)
+    );
+  }
+  .pw-badge {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    background: rgba(238, 242, 246, 0.9);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dim);
+    backdrop-filter: blur(4px);
+  }
+  .pw-card {
+    text-align: center;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 30px 26px;
+    border-radius: 0 0 18px 18px;
+  }
+  .pw-card.solo {
+    border-radius: 18px;
+  }
+  .pw-lock {
+    font-size: 40px;
+  }
+  .pw-card h2 {
+    font-size: 19px;
+    margin-top: 8px;
+    color: var(--ink);
+  }
+  .pw-desc {
+    font-size: 13.5px;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+  .pw-value {
+    margin-top: 16px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .pw-value .big {
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .pw-value .big em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .pw-value .small {
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+  .pw-price {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-top: 18px;
+  }
+  .pw-price-note {
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+  .pw-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  @media (max-width: 480px) {
+    .co-wrap {
+      padding: 0 16px;
+    }
+  }
+}
+
+/* @keyframes phải ở top-level, KHÔNG lồng trong .lp{} (nesting @keyframes làm
+   Lightning CSS lỗi parse → drop cả khối biến .lp{--…}). */
+@keyframes co-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }

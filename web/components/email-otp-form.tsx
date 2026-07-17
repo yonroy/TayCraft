@@ -96,9 +96,20 @@ export function EmailOtpForm({
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           className={cn(inputClass, "text-center tracking-[0.4em] text-lg font-bold")}
         />
-        <Button type="submit" size="lg" className="w-full" disabled={loading || code.length < 6}>
-          {loading ? "Đang xác nhận…" : "Xác nhận →"}
-        </Button>
+        {dark ? (
+          <Button type="submit" size="lg" className="w-full" disabled={loading || code.length < 6}>
+            {loading ? "Đang xác nhận…" : "Xác nhận →"}
+          </Button>
+        ) : (
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
+            style={{ width: "100%" }}
+            disabled={loading || code.length < 6}
+          >
+            {loading ? "Đang xác nhận…" : "Xác nhận →"}
+          </button>
+        )}
         <div className="flex items-center justify-between text-xs">
           <button
             type="button"
@@ -141,9 +152,20 @@ export function EmailOtpForm({
         onChange={(e) => setEmail(e.target.value)}
         className={inputClass}
       />
-      <Button type="submit" size="lg" className="w-full" disabled={loading}>
-        {loading ? "Đang gửi…" : "Gửi mã đăng nhập"}
-      </Button>
+      {dark ? (
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          {loading ? "Đang gửi…" : "Gửi mã đăng nhập"}
+        </Button>
+      ) : (
+        <button
+          type="submit"
+          className="btn btn-primary btn-lg"
+          style={{ width: "100%" }}
+          disabled={loading}
+        >
+          {loading ? "Đang gửi…" : "Gửi mã đăng nhập"}
+        </button>
+      )}
       {error && <p className={errorClass}>{error}</p>}
     </form>
   );

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/utils";
 
 // Kênh liên hệ admin cho fallback "chờ duyệt tay" — set ở env (NEXT_PUBLIC_*), để trống nếu không dùng.
@@ -102,74 +101,71 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-accent-2/40 bg-accent-2/5 p-6 text-center">
-        <p className="font-medium text-accent-2">{error}</p>
-        <div className="mt-4">
-          <Button
-            onClick={() => {
-              setError(null);
-              setOrder(null);
-              setAttempt((a) => a + 1);
-            }}
-          >
-            Thử lại
-          </Button>
-        </div>
+      <div className="co-alert">
+        <p>{error}</p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            setError(null);
+            setOrder(null);
+            setAttempt((a) => a + 1);
+          }}
+        >
+          Thử lại
+        </button>
       </div>
     );
   }
 
   if (paid) {
     return (
-      <div className="text-center rounded-3xl border border-accent bg-paper p-10">
-        <div className="text-6xl">🎉</div>
-        <h2 className="mt-3 text-2xl font-extrabold">Chúc mừng bạn!</h2>
-        <p className="mt-2 text-dim">
-          Bạn đã mở khóa <b className="text-ink">{productLabel ?? "gói học"}</b> — chúc bạn học thật
-          vui và hiểu AI tới tận con số ✍️
+      <div className="co-success">
+        <div className="emoji">🎉</div>
+        <h2>Chúc mừng bạn!</h2>
+        <p>
+          Bạn đã mở khóa <b style={{ color: "var(--ink)" }}>{productLabel ?? "gói học"}</b> — chúc bạn
+          học thật vui và hiểu AI tới tận con số ✍️
         </p>
-        <div className="mt-6">
-          <Button
-            size="lg"
+        <div style={{ marginTop: 22 }}>
+          <button
+            type="button"
+            className="btn btn-primary btn-lg"
             onClick={() => {
               router.push("/learn");
               router.refresh();
             }}
           >
             Vào học ngay →
-          </Button>
+          </button>
         </div>
-        <p className="mt-3 text-xs text-dim">Tự động chuyển vào khu học sau vài giây…</p>
+        <p className="tiny" style={{ color: "var(--dim)" }}>
+          Tự động chuyển vào khu học sau vài giây…
+        </p>
       </div>
     );
   }
 
   if (!order) {
-    return <p className="text-center text-dim">Đang tạo đơn hàng…</p>;
+    return (
+      <div className="co-card" style={{ textAlign: "center" }}>
+        <p className="co-qr-sub">Đang tạo đơn hàng…</p>
+      </div>
+    );
   }
 
   return (
-    <div className="rounded-3xl border border-line p-6 sm:p-8">
-      <h2 className="text-xl font-bold text-center">Quét QR để thanh toán</h2>
-      <p className="text-center text-dim text-sm mt-1">
+    <div className="co-card">
+      <div className="co-qr-title">Quét QR để thanh toán</div>
+      <p className="co-qr-sub">
         Mở app ngân hàng, quét mã. Hệ thống tự mở khóa sau khi nhận được tiền.
       </p>
-      <p className="mt-2 text-center text-xs font-medium text-dim">
-        ① Quét &amp; chuyển khoản → ② Chờ xác nhận → ③ Tự mở khóa
-      </p>
+      <p className="co-steps">① Quét &amp; chuyển khoản → ② Chờ xác nhận → ③ Tự mở khóa</p>
 
-      <div className="mt-6 flex flex-col items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={order.qrUrl}
-          alt="QR chuyển khoản"
-          width={260}
-          height={340}
-          className="rounded-xl border border-line"
-        />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={order.qrUrl} alt="QR chuyển khoản" width={260} height={340} className="co-qr-img" />
 
-      <dl className="mt-6 space-y-2 text-sm">
+      <div className="co-rows">
         <Row label="Ngân hàng" value={order.bank.bank} />
         <Row
           label="Số tài khoản"
@@ -191,14 +187,14 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
           onCopy={() => copy(order.transferContent, "code")}
           copied={copied === "code"}
         />
-      </dl>
+      </div>
 
-      <p className="mt-5 text-xs text-dim text-center">
+      <p className="co-warn">
         ⚠️ Giữ <b>nguyên nội dung chuyển khoản</b> (cả từ khóa đầu) để hệ thống nhận diện đơn của bạn.
       </p>
 
-      <div className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-dim">
-        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-accent animate-pulse" />
+      <div className="co-waiting">
+        <span className="co-dot" />
         Đang chờ chuyển khoản — tự mở khóa ngay khi nhận được (thường dưới 1 phút)
       </div>
 
@@ -223,15 +219,14 @@ function AdminFallback({
   const subject = `Xác nhận thanh toán ${order.transferCode}`;
 
   return (
-    <div className="mt-6 rounded-2xl border border-accent-2/40 bg-accent-2/5 p-5">
-      <h3 className="text-sm font-bold">Đã chuyển khoản mà chưa mở khóa? 🤔</h3>
-      <p className="mt-1 text-xs text-dim">
+    <div className="co-fallback">
+      <h3>Đã chuyển khoản mà chưa mở khóa? 🤔</h3>
+      <p>
         Hệ thống thường tự mở khóa trong 1–2 phút. Nếu đã lâu, nhắn cho admin kèm mã đơn{" "}
-        <b className="font-mono text-accent-2">{order.transferCode}</b> để được duyệt tay (thường
-        trong vài giờ).
+        <b className="co-mono">{order.transferCode}</b> để được duyệt tay (thường trong vài giờ).
       </p>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="co-actions">
         {CONTACT.zalo && (
           <ContactLink href={`https://zalo.me/${CONTACT.zalo}`} label="💬 Nhắn Zalo" />
         )}
@@ -244,18 +239,13 @@ function AdminFallback({
             label="✉️ Gửi email"
           />
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 px-3 text-xs"
-          onClick={() => onCopy(msg, "msg")}
-        >
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onCopy(msg, "msg")}>
           {copied === "msg" ? "✓ Đã copy lời nhắn" : "Copy lời nhắn"}
-        </Button>
+        </button>
       </div>
 
       {!HAS_CONTACT && (
-        <p className="mt-2 text-xs text-dim">
+        <p style={{ marginTop: 8 }}>
           Copy lời nhắn trên rồi gửi cho admin qua kênh liên hệ trên trang chủ.
         </p>
       )}
@@ -265,12 +255,7 @@ function AdminFallback({
 
 function ContactLink({ href, label }: { href: string; label: string }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex h-9 items-center rounded-lg border border-line px-3 text-xs font-medium hover:bg-line/40"
-    >
+    <a href={href} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
       {label}
     </a>
   );
@@ -290,18 +275,16 @@ function Row({
   copied?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-line/60 pb-2">
-      <dt className="text-dim">{label}</dt>
-      <dd className="flex items-center gap-2">
-        <span className={highlight ? "font-mono font-bold text-accent-2" : "font-medium"}>
-          {value}
-        </span>
+    <div className="co-row">
+      <span className="co-k">{label}</span>
+      <span className={highlight ? "co-v hl" : "co-v"}>
+        {value}
         {onCopy && (
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onCopy}>
+          <button type="button" className="co-copy" onClick={onCopy}>
             {copied ? "✓" : "Copy"}
-          </Button>
+          </button>
         )}
-      </dd>
+      </span>
     </div>
   );
 }

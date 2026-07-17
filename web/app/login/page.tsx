@@ -18,19 +18,34 @@ export default async function LoginPage({
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-sm px-5 py-16 flex-1">
-        <h1 className="text-2xl font-bold text-center">Đăng nhập</h1>
-        <p className="text-dim text-center mt-1 mb-8 text-sm">
-          Để vào học và mở khóa bài đã mua.
-        </p>
-        {error && (
-          <div className="mb-4 text-center text-sm text-accent-2 bg-accent-2/10 rounded-lg py-2 px-3">
-            <p>Đăng nhập chưa hoàn tất. Bạn thử lại bằng nút bên dưới nhé.</p>
-            {reason && <p className="mt-1 font-mono text-[11px] break-all opacity-80">{reason}</p>}
+      <div className="lp">
+        <section className="co-page">
+          <div className="co-wrap" style={{ maxWidth: 400 }}>
+            <div className="co-head">
+              <span className="eyebrow">Tài khoản</span>
+              <h1>Đăng nhập</h1>
+              <p style={{ color: "var(--dim)", fontSize: 14, marginTop: 8 }}>
+                Để vào học và mở khóa bài đã mua.
+              </p>
+            </div>
+            {error && (
+              <div className="co-alert" style={{ marginBottom: 16 }}>
+                <p style={{ marginBottom: reason ? 8 : 0 }}>
+                  Đăng nhập chưa hoàn tất. Bạn thử lại bằng nút bên dưới nhé.
+                </p>
+                {reason && (
+                  <p className="co-mono" style={{ fontSize: 11, wordBreak: "break-all" }}>
+                    {reason}
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="co-card">
+              <LoginForm next={safeNext} />
+            </div>
           </div>
-        )}
-        <LoginForm next={safeNext} />
-      </main>
+        </section>
+      </div>
       <SiteFooter />
     </>
   );

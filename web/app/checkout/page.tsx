@@ -31,55 +31,64 @@ export default async function CheckoutPage({
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-md px-5 py-12 flex-1">
-        <h1 className="text-2xl font-bold text-center mb-2">Mua {meta?.label ?? "Làm toán AI"}</h1>
-
-        {/* Tóm tắt đơn — hiện NGAY (trước cả khi tạo đơn/đăng nhập) để trấn an giá trị + rủi ro. */}
-        {meta && price != null && (
-          <div className="mt-4 rounded-2xl border border-line bg-paper p-5">
-            <div className="flex items-baseline justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-bold">{meta.label}</div>
-                {meta.tagline && <div className="mt-0.5 text-xs text-dim">{meta.tagline}</div>}
-              </div>
-              <div className="whitespace-nowrap text-2xl font-extrabold text-accent">
-                {formatVnd(price)}
-              </div>
+      <div className="lp">
+        <section className="co-page">
+          <div className="co-wrap">
+            <div className="co-head">
+              <span className="eyebrow">Thanh toán</span>
+              <h1>Mua {meta?.label ?? "Làm toán AI"}</h1>
             </div>
-            <ul className="mt-3 space-y-1 text-sm text-dim">
-              <li>
-                <span className="text-accent">✓</span> Mua một lần, học trọn đời (không thuê bao)
-              </li>
-              <li>
-                <span className="text-accent">✓</span> Hoàn tiền trong 7 ngày nếu chưa hợp
-              </li>
-              <li>
-                <span className="text-accent">✓</span> Tự động mở khóa khi nhận được chuyển khoản
-              </li>
-            </ul>
-          </div>
-        )}
 
-        {flash.enabled && (
-          <div className="mt-4 flex justify-center">
-            <ViewerCount min={flash.viewerMin} max={flash.viewerMax} label="người đang thanh toán" />
-          </div>
-        )}
+            {/* Tóm tắt đơn — hiện NGAY (trước cả khi tạo đơn/đăng nhập) để trấn an giá trị + rủi ro. */}
+            {meta && price != null && (
+              <div className="co-summary">
+                <div className="co-sum-top">
+                  <div>
+                    <div className="co-sum-name">{meta.label}</div>
+                    {meta.tagline && <div className="co-sum-tag">{meta.tagline}</div>}
+                  </div>
+                  <div className="co-sum-price">{formatVnd(price)}</div>
+                </div>
+                <ul className="co-perks">
+                  <li>
+                    <span className="ck">✓</span> Mua một lần, học trọn đời (không thuê bao)
+                  </li>
+                  <li>
+                    <span className="ck">✓</span> Hoàn tiền trong 7 ngày nếu chưa hợp
+                  </li>
+                  <li>
+                    <span className="ck">✓</span> Tự động mở khóa khi nhận được chuyển khoản
+                  </li>
+                </ul>
+              </div>
+            )}
 
-        {user ? (
-          <div className="mt-6">
-            <QrCheckout product={productId} productLabel={meta?.label} />
+            {flash.enabled && (
+              <div className="co-viewer">
+                <ViewerCount
+                  min={flash.viewerMin}
+                  max={flash.viewerMax}
+                  label="người đang thanh toán"
+                />
+              </div>
+            )}
+
+            <div style={{ marginTop: 16 }}>
+              {user ? (
+                <QrCheckout product={productId} productLabel={meta?.label} />
+              ) : (
+                <div className="co-card">
+                  <p className="co-login-hint">
+                    Đăng nhập nhanh bằng email để sang bước thanh toán — không cần mật khẩu. Mua xong
+                    mở khóa vĩnh viễn theo tài khoản này.
+                  </p>
+                  <LoginForm next={nextUrl} />
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="mt-6">
-            <p className="mb-4 text-center text-sm text-dim">
-              Đăng nhập nhanh bằng email để sang bước thanh toán — không cần mật khẩu. Mua xong mở
-              khóa vĩnh viễn theo tài khoản này.
-            </p>
-            <LoginForm next={nextUrl} />
-          </div>
-        )}
-      </main>
+        </section>
+      </div>
       <SiteFooter />
     </>
   );

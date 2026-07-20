@@ -280,23 +280,7 @@
   .hero-slide.s3 {
     animation-delay: 9s;
   }
-  @keyframes heroSlide {
-    0% {
-      opacity: 0;
-    }
-    8% {
-      opacity: 1;
-    }
-    33% {
-      opacity: 1;
-    }
-    41% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
+  /* (@keyframes heroSlide đặt ở TOP-LEVEL cuối file — không lồng trong .lp) */
   /* Tôn trọng người tắt hiệu ứng: chỉ hiện phiếu đầu, không xoay */
   @media (prefers-reduced-motion: reduce) {
     .hero-slide {
@@ -1639,5 +1623,24 @@
   }
   50% {
     opacity: 0.25;
+  }
+}
+
+/* Cross-fade carousel ảnh phiếu ở hero — top-level (xem cảnh báo trên) */
+@keyframes heroSlide {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 1;
+  }
+  41% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
   }
 }

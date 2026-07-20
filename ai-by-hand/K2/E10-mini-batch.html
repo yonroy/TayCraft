@@ -3,19 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài E10 — Mini-batch vs full-batch (A4 in được)</title>
+<title>Làm toán AI · Bài E10 — Mini-batch: nhiễu giảm theo cỡ batch (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,183 +25,262 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E10</span><h1>Mini-batch vs full-batch <small>— nhiễu ↔ tốc độ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Kích thước batch là siêu tham số ảnh hưởng tốc độ, ổn định, dùng GPU và cả khả năng khái quát. Hiểu
-    nó để chọn đúng: mini-batch là điểm cân bằng được dùng phổ biến nhất.
-    <div class="formula">
-      g_batch = (1/|B|) Σ<sub>i∈B</sub> ∇Lᵢ &nbsp;&nbsp; phương sai ước lượng ∝ 1/|B|
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E10</span>
+    <h1>Mini-batch <small>— nhiễu (phương sai) giảm theo cỡ batch</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hỏi <b>cả nước</b> (full-batch) thì chính xác nhưng tốn; hỏi <b>vài người</b> (mini-batch) thì hơi lệch nhưng nhanh và đủ tốt;
-    hỏi <b>một người</b> (SGD) thì rất nhiễu. Càng nhiều mẫu, ước lượng càng mượt (phương sai ∝ 1/|B|).
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Gradient tính từ MỘT mini-batch chỉ là <b>ước lượng</b> của gradient thật (toàn tập) — nó dao động quanh
+    giá trị đúng. Batch càng <b>lớn</b>, ước lượng càng <b>ít dao động</b> (phương sai nhỏ hơn). Hãy tự tay đo mức dao động đó
+    và tìm ra quy luật nó giảm theo cỡ batch B.
+    <div class="formula" style="margin-top:5px">
+      Var(ḡ<sub>B</sub>) = σ²/B &nbsp;&nbsp;⇒&nbsp;&nbsp; độ lệch chuẩn = σ/√B
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">8 mẫu</span></div>
-    <div class="calc" style="font-size:15px">
-      Gradient từng mẫu = (<span class="gv" data-q="g1">2</span>, <span class="gv" data-q="g2">0</span>, <span class="gv" data-q="g3">4</span>, <span class="gv" data-q="g4">−2</span>,
-      <span class="gv" data-q="g5">2</span>, <span class="gv" data-q="g6">2</span>, <span class="gv" data-q="g7">0</span>, <span class="gv" data-q="g8">4</span>)
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 mẫu quan sát</span></div>
+    <div class="calc big">
+      gradient thật (toàn tập) m = <span class="gv" data-q="m">1</span> &nbsp;·&nbsp;
+      gradient từng mẫu = (<span class="gv" data-q="g1">−3</span>, <span class="gv" data-q="g2">5</span>,
+      <span class="gv" data-q="g3">5</span>, <span class="gv" data-q="g4">−3</span>)
     </div>
-    <div class="note">Ước lượng gradient = trung bình gradient của các mẫu trong batch.</div>
+    <div class="note">Phương sai từng mẫu (đã đo được) σ² = <span class="gv" data-q="sigma2">16</span>. Mỗi mẫu lệch khỏi gradient
+      thật một lượng ngẫu nhiên; σ² đo mức lệch bình phương trung bình đó.</div>
   </div>
 
-  <!-- BƯỚC 1 — full -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Full-batch (cả 8)</h2><span class="tag">chính xác nhất</span></div>
-    <div class="calc">
-      (Σ cả 8)/8 = <span data-q="sumAll">12</span>/8 = <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Mini-batch B=1 (chỉ mẫu 1)</h2><span class="tag">nhiễu nhất</span></div>
+    <div class="calc big">
+      ḡ<sub>1</sub> = g₁ = <span class="wcell" style="min-width:36px"></span> &nbsp;·&nbsp;
+      lệch so với gradient thật = |ḡ<sub>1</sub> − m| = <span class="wcell" style="min-width:36px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> ước lượng "thật" nhất nhưng phải duyệt cả tập mỗi bước → chậm, tốn bộ nhớ.</div>
+    <div class="why"><b>Vì sao:</b> chỉ nhìn 1 mẫu → ước lượng CHÍNH LÀ mẫu đó, có thể lệch xa gradient thật.</div>
   </div>
 
-  <!-- BƯỚC 2 — mini -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Mini-batch (4 mẫu đầu)</h2><span class="tag">cân bằng</span></div>
-    <div class="calc">
-      (g₁+g₂+g₃+g₄)/4 = <span data-q="sum4">4</span>/4 = <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Mini-batch B=4 (cả 4 mẫu)</h2><span class="tag">êm hơn</span></div>
+    <div class="calc big">
+      ḡ<sub>4</sub> = (g₁+g₂+g₃+g₄)/4 = <span data-q="sum4">4</span>/4 = <span class="wcell" style="min-width:36px"></span>
+      &nbsp;·&nbsp; lệch = |ḡ<sub>4</sub> − m| = <span class="wcell" style="min-width:32px"></span>
     </div>
-    <div class="hint">Lệch so với full → đó là <b>nhiễu</b> của mini-batch (chỉ thấy một phần dữ liệu).</div>
+    <div class="hint">Gộp nhiều mẫu → phần lệch dương và âm triệt tiêu bớt nhau → ước lượng bám sát gradient thật hơn.</div>
   </div>
 
-  <!-- BƯỚC 3 — stochastic -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Stochastic (1 mẫu)</h2><span class="tag">nhiễu nhất</span></div>
-    <div class="calc">
-      g = g₁ = <span class="blk" style="min-width:40px"></span> (lệch nhiều nhất so với full)
+    <div class="step-h"><div class="b">3</div><h2>Công thức phương sai</h2><span class="tag">Var = σ²/B</span></div>
+    <div class="calc big">
+      Var(ḡ<sub>1</sub>) = σ²/1 = <span class="wcell" style="min-width:36px"></span><br>
+      Var(ḡ<sub>4</sub>) = σ²/4 = <span class="wcell" style="min-width:36px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> phương sai ∝ 1/|B| → batch 1 nhiễu gấp 8 lần batch 8.</div>
+    <div class="why"><b>Vì sao:</b> Var đo mức dao động <b>trung bình qua nhiều lần</b> lấy batch ngẫu nhiên — không phải chỉ
+      đúng 1 lần cụ thể ở Bước 1–2.</div>
   </div>
 
-  <!-- BƯỚC 4 — đánh đổi -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E10 · Mini-batch</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Nhiễu giảm theo 1/√B, không phải 1/B</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E10</span>
+    <h1>Mini-batch <small>— lợi ích giảm dần khi tăng cỡ batch</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: nhiễu giảm theo 1/√B -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đánh đổi</h2><span class="tag">nhiễu ↔ tốc độ ↔ bộ nhớ</span></div>
-    <div class="note">Batch nhỏ → cập nhật nhiều, ít bộ nhớ, nhiễu giúp khái quát; batch lớn → mượt, tận dụng GPU, cần η lớn hơn &
-      dễ kẹt minima "nhọn". <b>Mini-batch</b> là điểm vàng.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — nhiễu giảm theo quy luật nào?</h2><span class="tag">1/√B</span></div>
+    <div class="note" style="margin-top:0">
+      Độ lệch chuẩn (sai số chuẩn) của ước lượng = std = √Var = σ/√B. Điền std cho 3 cỡ batch (cùng σ² ở Bước 0):
+    </div>
+    <div class="calc big">
+      B=1: Var = σ²/1 = <span class="wcell" style="min-width:34px"></span> → std = <span class="wcell" style="min-width:30px"></span><br>
+      B=4: Var = σ²/4 = <span class="wcell" style="min-width:34px"></span> → std = <span class="wcell" style="min-width:30px"></span><br>
+      B=16: Var = σ²/16 = <span class="wcell" style="min-width:34px"></span> → std = <span class="wcell" style="min-width:30px"></span>
+      &nbsp;·&nbsp; gấp 4 lần batch (4→16), std giảm <span class="wcell" style="min-width:28px"></span> lần
+    </div>
+    <div class="note">Gấp 4 lần cỡ batch chỉ giảm nhiễu <b>MỘT NỬA</b> (vì √4 = 2) — không giảm 4 lần! Đây là <b>lợi ích giảm
+      dần</b>: càng tăng batch, mỗi lần tăng thêm càng lời ít, nên batch vừa phải thường là lựa chọn tối ưu.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Đánh đổi: số cập nhật mỗi epoch</h2><span class="tag">N/B</span></div>
+    <div class="calc big">
+      Tập có N = <span class="gv" data-q="N">64</span> mẫu &nbsp;·&nbsp; số cập nhật/epoch = N/B:
+      B=1 → <span class="wcell" style="min-width:36px"></span> &nbsp;
+      B=4 → <span class="wcell" style="min-width:32px"></span> &nbsp;
+      B=16 → <span class="wcell" style="min-width:28px"></span>
+    </div>
+    <div class="note">Batch càng lớn → càng <b>ít</b> bước cập nhật mỗi epoch (mỗi bước "sạch" hơn nhưng cần nhiều mẫu hơn);
+      batch càng nhỏ → nhiều bước hơn nhưng mỗi bước nhiễu hơn.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Phương sai ước lượng tỉ lệ thế nào với |B|? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao mini-batch phổ biến nhất? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Độ lệch chuẩn (nhiễu) của ước lượng gradient giảm theo hàm nào của B? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Gấp 4 lần cỡ batch giảm nhiễu bao nhiêu lần? Vì sao không phải 4 lần? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E10 · Mini-batch vs full-batch</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:14mm"><span class="lb">✏️ Nháp — tính σ²/B rồi lấy căn bậc hai ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính Var/std cho 3 cỡ batch</span>
+    <span><span class="ck"></span>Hiểu vì sao lợi ích giảm dần</span>
+    <span class="win">🎉 Bạn vừa thấy vì sao batch "vừa phải" thường là tối ưu!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E10 · Mini-batch</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E10</span><h1>Mini-batch vs full-batch <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E10</span><h1>Mini-batch <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Full (8)</h2></div>
-    <div class="calc ans"><span data-q="sumAll">12</span>/8 = <span class="blk" data-q="full">1.5</span></div>
+    <div class="step-h"><div class="b">1</div><h2>B=1</h2></div>
+    <div class="calc ans">ḡ<sub>1</sub> = g₁ = <span class="wcell ans" data-q="g1b">−3</span> &nbsp;·&nbsp;
+      lệch = <span class="wcell ans" data-q="lech1">4</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Mini (4)</h2></div>
-    <div class="calc ans"><span data-q="sum4">4</span>/4 = <span class="blk" data-q="mini">1.0</span></div>
+    <div class="step-h"><div class="b">2</div><h2>B=4</h2></div>
+    <div class="calc ans">ḡ<sub>4</sub> = <span data-q="sum4b">4</span>/4 = <span class="wcell ans" data-q="avg4">1</span>
+      &nbsp;·&nbsp; lệch = <span class="wcell ans" data-q="lech4">0</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Single (1)</h2></div>
-    <div class="calc ans">g₁ = <span class="blk" data-q="single">2.0</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Var(B=1), Var(B=4)</h2></div>
+    <div class="calc ans">Var(ḡ<sub>1</sub>) = <span class="wcell ans" data-q="var1">16</span> &nbsp;·&nbsp;
+      Var(ḡ<sub>4</sub>) = <span class="wcell ans" data-q="var4">4</span></div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Quỹ đạo về đáy: mượt → răng cưa</h2><span class="tag">batch lớn → nhỏ</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">4</div><h2>Batch nhỏ trải rộng, batch lớn co cụm</h2><span class="tag">1/√B</span></div>
     <div class="figrow">
-      <svg id="figM" class="fig" viewBox="0 0 220 160" width="68mm" height="49mm" aria-label="ba quỹ đạo về đáy: full mượt, mini hơi gợn, stochastic răng cưa"></svg>
+      <svg id="figM" class="fig" viewBox="0 0 260 150" width="76mm" height="45mm" aria-label="scatter ước lượng gradient: B=1 trải rộng quanh gradient thật, B=16 co cụm sát gradient thật"></svg>
       <div style="flex:1">
-        <div class="note">Cùng về một đáy nhưng: <b>full</b> (lam) đi <b>mượt</b>, <b>mini</b> (cam) hơi gợn, <b>stochastic</b> (xám)
-          <b>răng cưa</b> mạnh. Nhiễu lớn ↔ batch nhỏ. Nhiễu vừa phải còn giúp thoát minima xấu.</div>
+        <div class="calc ans">
+          B=1: Var=<span class="wcell ans" data-q="var1b">16</span> std=<span class="wcell ans" data-q="std1">4</span><br>
+          B=4: Var=<span class="wcell ans" data-q="var4b">4</span> std=<span class="wcell ans" data-q="std4">2</span><br>
+          B=16: Var=<span class="wcell ans" data-q="var16">1</span> std=<span class="wcell ans" data-q="std16">1</span>
+          &nbsp;·&nbsp; 4→16 giảm <span class="wcell ans" data-q="ratio">2</span> lần
+        </div>
+        <div class="note"><b>Cam</b> (B=1) trải rộng quanh <b>lam</b> (gradient thật); <b>tím</b> (B=16) co cụm sát lại — nhiễu
+          giảm theo 1/√B chứ không phải 1/B.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Số cập nhật/epoch (N=<span data-q="Nb">64</span>)</h2></div>
+    <div class="calc ans">B=1 → <span class="wcell ans" data-q="upd1">64</span> &nbsp;
+      B=4 → <span class="wcell ans" data-q="upd4">16</span> &nbsp;
+      B=16 → <span class="wcell ans" data-q="upd16">4</span></div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Phương sai vs |B|? → <span class="qa">∝ 1/|B| — batch lớn thì mượt hơn.</span></li>
-      <li>Mini-batch phổ biến? → <span class="qa">Cân bằng tốc độ, bộ nhớ, nhiễu — hợp GPU.</span></li>
+      <li>Nhiễu giảm theo hàm nào? → <span class="qa">1/√B (sai số chuẩn) — KHÔNG phải 1/B.</span></li>
+      <li>Gấp 4 lần batch? → <span class="qa">Chỉ giảm nhiễu một nửa (√4=2) — lợi ích giảm dần.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Full / mini / stochastic đánh đổi nhiễu ↔ tốc độ ↔ bộ nhớ; mini-batch là điểm vàng. Bài tiếp
+    <b style="color:var(--accent2)">Rút ra.</b> Var(ḡ<sub>B</sub>) = σ²/B → std = σ/√B: batch lớn giúp ước lượng gradient
+    êm hơn nhưng theo quy luật <b>căn bậc hai</b> (lợi ích giảm dần), đổi lại ít bước cập nhật hơn mỗi epoch. Bài tiếp
     (E11): biết khi nào <b style="color:var(--accent2)">dừng</b> huấn luyện — early stopping.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E10 · Mini-batch vs full-batch</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E10 · Mini-batch</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  function f(v){ return WB.fmtTrim(Math.round(v*1000)/1000); }
-  // 8 gradient nguyên nhỏ — đảm bảo full ≠ mini ≠ single để giữ thông điệp "nhiễu"
-  var g, sum4, sumAll;
-  do {
-    g = [];
-    for (var i=0;i<8;i++) g.push(WB.randInt(-2,4));
-    sum4 = g[0]+g[1]+g[2]+g[3];
-    sumAll = g.reduce(function(a,b){ return a+b; }, 0);
-  } while (sumAll/8 === sum4/4 || g[0] === sumAll/8 || g[0] === sum4/4);
+  var m = WB.randInt(-2,2);            // gradient thật (toàn tập)
+  var d = 4*WB.randInt(1,3);           // 4, 8 hoặc 12 — nhiễu từng mẫu (đổi mỗi lần bấm 🎲)
+  var sigma2 = d*d;                     // phương sai từng mẫu (đã đo)
+  var devs = [-d,-d,d,d];
+  for (var i=devs.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=devs[i]; devs[i]=devs[j]; devs[j]=t; }
+  var g = devs.map(function(v){ return m+v; });
+
+  var sum4 = g[0]+g[1]+g[2]+g[3];       // = 4m theo thiết kế (2 lệch +d, 2 lệch −d)
+  var avg4 = sum4/4;                    // = m
+  var lech1 = Math.abs(g[0]-m);         // = d
+  var lech4 = Math.abs(avg4-m);         // = 0
+
+  var var1 = sigma2/1, var4 = sigma2/4, var16 = sigma2/16;
+  var std1 = Math.sqrt(var1), std4 = Math.sqrt(var4), std16 = Math.sqrt(var16);
+  var ratio = std4/std16;                // = 2 luôn (gấp 4 lần batch → std chia đôi)
+
+  var k = WB.randInt(2,6);
+  var N = 16*k;                          // bội số của 16 → N/1, N/4, N/16 đều nguyên
+  var upd1 = N, upd4 = N/4, upd16 = N/16;
+
   var set = {
-    sum4: WB.fmtInt(sum4), sumAll: WB.fmtInt(sumAll),
-    full: f(sumAll/8), mini: f(sum4/4), single: f(g[0])
+    m: WB.fmtInt(m), sigma2: WB.fmtInt(sigma2),
+    g1: WB.fmtInt(g[0]), g2: WB.fmtInt(g[1]), g3: WB.fmtInt(g[2]), g4: WB.fmtInt(g[3]),
+    g1b: WB.fmtInt(g[0]),
+    sum4: WB.fmtInt(sum4), sum4b: WB.fmtInt(sum4), avg4: WB.fmtInt(avg4),
+    lech1: WB.fmtInt(lech1), lech4: WB.fmtInt(lech4),
+    var1: WB.fmtInt(var1), var4: WB.fmtInt(var4), var16: WB.fmtInt(var16),
+    var1b: WB.fmtInt(var1), var4b: WB.fmtInt(var4),
+    std1: WB.fmtInt(std1), std4: WB.fmtInt(std4), std16: WB.fmtInt(std16),
+    ratio: WB.fmtInt(ratio),
+    N: WB.fmtInt(N), Nb: WB.fmtInt(N),
+    upd1: WB.fmtInt(upd1), upd4: WB.fmtInt(upd4), upd16: WB.fmtInt(upd16)
   };
-  for (var k=0;k<8;k++) set['g'+(k+1)] = WB.fmtInt(g[k]);
   WB.setAll(set);
-  drawTraj('figM');
+  drawScatter('figM');
 }
 
-// 3 quỹ đạo về đáy: full mượt, mini gợn, stochastic răng cưa
-function drawTraj(id){
+// scatter: B=1 trải rộng quanh gradient thật (lam), B=16 co cụm sát lại (tím)
+function drawScatter(id){
   var svg = document.getElementById(id);
   if (!svg) return;
+  var cx = 130, cy1 = 46, cy16 = 104;
+  function mkRnd(seed){ var s = seed; return function(){ s = (s*9301+49297)%233280; return s/233280; }; }
   var s = '';
-  // các vòng đồng mức (elip) quanh đáy
-  var cx = 150, cy = 110;
-  for (var r=1;r<=4;r++){
-    s += '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(r*16)+'" ry="'+(r*11)+'" fill="none" stroke="#e2e8f0" stroke-width="1"/>';
+  // trục dọc = gradient thật
+  s += '<line x1="'+cx+'" y1="18" x2="'+cx+'" y2="132" stroke="#0e7490" stroke-width="2" stroke-dasharray="4 3"/>';
+  s += '<text x="'+cx+'" y="12" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">gradient thật</text>';
+
+  s += '<text x="14" y="'+(cy1-20)+'" style="font-size:9px" fill="#b45309" font-weight="700">B=1 (trải rộng)</text>';
+  var r1 = mkRnd(4021);
+  for (var i=0;i<9;i++){
+    var x = cx + (r1()-0.5)*2*54;
+    var y = cy1 + (r1()-0.5)*2*10;
+    s += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="#b45309" opacity="0.82"/>';
   }
-  s += '<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="#475569"/>';
-  s += '<text x="'+(cx+5)+'" y="'+(cy+12)+'" style="font-size:7px" fill="#9aa3ad">đáy</text>';
-  // điểm xuất phát chung
-  var sx = 26, sy = 30;
-  function path(jit, col, dash, seed){
-    var N = 9, p = 'M'+sx+','+sy, rnd = seed;
-    for (var i=1;i<=N;i++){
-      var t = i/N;
-      var bx = sx + (cx-sx)*t;
-      var by = sy + (cy-sy)*t;
-      rnd = (rnd*9301+49297)%233280; var j1 = (rnd/233280-0.5);
-      rnd = (rnd*9301+49297)%233280; var j2 = (rnd/233280-0.5);
-      p += ' L'+(bx+j1*jit).toFixed(1)+','+(by+j2*jit).toFixed(1);
-    }
-    p += ' L'+cx+','+cy;
-    return '<path d="'+p+'" fill="none" stroke="'+col+'" stroke-width="2"'+(dash?' stroke-dasharray="3 2"':'')+'/>';
+
+  s += '<text x="14" y="'+(cy16-20)+'" style="font-size:9px" fill="#7c5cff" font-weight="700">B=16 (co cụm)</text>';
+  var r2 = mkRnd(7789);
+  for (var j=0;j<9;j++){
+    var x2 = cx + (r2()-0.5)*2*13;
+    var y2 = cy16 + (r2()-0.5)*2*10;
+    s += '<circle cx="'+x2.toFixed(1)+'" cy="'+y2.toFixed(1)+'" r="4" fill="#7c5cff" opacity="0.82"/>';
   }
-  s += path(34, '#9aa3ad', true, 12345);   // stochastic răng cưa
-  s += path(14, '#b45309', false, 777);     // mini gợn
-  s += path(2,  '#0e7490', false, 99);      // full mượt
-  s += '<text x="30" y="22" style="font-size:8px" fill="#0e7490" font-weight="700">full</text>';
-  s += '<text x="58" y="60" style="font-size:8px" fill="#b45309" font-weight="700">mini</text>';
-  s += '<text x="30" y="86" style="font-size:8px" fill="#9aa3ad">stochastic</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

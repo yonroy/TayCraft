@@ -4,170 +4,323 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài J7 — DDPM vs DDIM (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .eq{line-height:1.9}
+  .why{line-height:1.6}
+  .mission{line-height:1.6}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J</div>
+  <div class="top">
+    <span class="no">J7</span>
+    <h1>DDPM vs DDIM <small>— hai cách lấy mẫu ngược</small></h1>
+    <span class="chip">PHẦN J · SINH</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>DDIM · tất định</span>
+      <span><span class="sw" style="background:var(--orange)"></span>DDPM · ngẫu nhiên</span>
+      <span><span class="sw" style="background:var(--purple)"></span>z · nhiễu bơm thêm</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài J7</span><h1>DDPM vs DDIM <small>— hai cách lấy mẫu ngược</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Sinh ảnh bằng DDPM tốn hàng trăm-nghìn bước → chậm. DDIM cho phép <b>nhảy bước</b> (vd 50 thay vì 1000) mà
-    vẫn giữ chất lượng, và <b>tất định</b> (cùng nhiễu → cùng ảnh). Đây là đánh đổi tốc độ ↔ đa dạng khi triển khai.
-    <div class="formula">đoán εθ(xₜ,t) → ước lượng x₀ → về xₜ₋₁ · DDPM: + σₜ·z (thêm nhiễu) · DDIM: bỏ σₜ·z (tất định)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cùng một lịch nhiễu, hai cách lùi bước. Cả hai <b>đoán εθ → ước lượng x̂₀ → về xₜ₋₁</b>; chỉ khác ở cuối:
+    <b>xₜ₋₁ = (phần chung) + σₜ·z</b> với <b>σₜ = η·σ̃ₜ</b>. <b>DDIM</b> đặt η=0 (bỏ σ·z), <b>DDPM</b> đặt η=1 (thêm nhiễu z mới mỗi bước).
+    Cuối phiếu bạn tự chứng minh: đổi hạt nhiễu z thì <b>DDIM đứng yên</b> (η=0 triệt tiêu z → tất định, cùng x_T cho cùng ảnh, nên <b>bỏ bớt bước vẫn nhất quán</b>),
+    còn <b>DDPM đổi kết quả</b> (ngẫu nhiên).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Cả hai đều "đoán ảnh gốc rồi lùi một bước". <b>DDPM</b> mỗi bước <b>rắc thêm chút nhiễu</b> (ngẫu nhiên) → mượt nhưng cần nhiều bước.
-    <b>DDIM</b> lùi <b>thẳng, không rắc nhiễu</b> → đi tắt được, cùng hạt nhiễu đầu cho cùng ảnh.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 pixel tại bước t</span></div>
-    <div class="calc" style="font-size:14px">
-      xₜ = <span class="gv" data-q="xt">2.2</span> · mô hình dự đoán nhiễu εθ = <span class="gv" data-q="eps">1</span> ·
-      ᾱₜ = <span class="gv" data-q="abar">0.64</span> (√ᾱ = <span class="gv" data-q="sqA">0.8</span>, √(1−ᾱ) = <span class="gv" data-q="sq1A">0.6</span>)
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Ước lượng ảnh gốc x̂₀</h2><span class="tag">đảo công thức forward</span></div>
-    <div class="calc">
-      x̂₀ = ( xₜ − √(1−ᾱ)·εθ ) / √ᾱ = ( <span data-q="xt">2.2</span> − <span data-q="sq1A">0.6</span>·<span data-q="eps">1</span> ) / <span data-q="sqA">0.8</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> biết nhiễu thì gỡ ra → suy ngược ảnh sạch (đảo công thức forward Bài J4).</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>DDIM (tất định)</h2><span class="tag">bỏ bước được</span></div>
-    <div class="note">Dùng x̂₀ tính xₜ₋₁ <b>không thêm nhiễu</b> → đường đi trơn, <b>bỏ bước</b> được (t: 1000 → 50). Cùng nhiễu khởi đầu → cùng ảnh (tái lập được).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>DDPM (ngẫu nhiên)</h2><span class="tag">+ σₜ·z</span></div>
-    <div class="note">Thêm σₜ·z (z mới mỗi bước) → cần <b>nhiều bước</b> nhỏ, đa dạng hơn, thường nét hơn. Nhiễu bơm lại giúp sửa lỗi tích lũy, nhưng làm chậm.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đánh đổi</h2><span class="tag">nhanh ↔ đa dạng</span></div>
-    <div class="note">DDIM nhanh & tái lập (hợp chỉnh sửa, nội suy ẩn); DDPM chậm & đa dạng. Thực tế chọn số bước theo nhu cầu.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>DDIM khác DDPM ở điểm cốt lõi nào? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao DDIM nhanh hơn? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J7 · DDPM vs DDIM</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài J7</span><h1>DDPM vs DDIM <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Ước lượng x̂₀</h2></div>
-    <div class="calc ans">x̂₀ = ( <span data-q="xt">2.2</span> − <span data-q="sq1A">0.6</span>·<span data-q="eps">1</span> ) / <span data-q="sqA">0.8</span> = <span class="blk" data-q="x0hat">2</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hai đường lùi: nhiễu → ảnh</h2><span class="tag">DDPM gợn · DDIM trơn</span></div>
-    <div class="figrow">
-      <svg id="figR" class="fig" viewBox="0 0 240 130" width="80mm" height="44mm" aria-label="hai đường đi từ nhiễu về ảnh: DDPM nhiều bước gợn nhiễu, DDIM ít bước trơn"></svg>
-      <div style="flex:1">
-        <div class="note">Đường <b>cam</b> = DDPM (nhiều bước, mỗi bước rắc thêm nhiễu → gợn). Đường <b>lam</b> = DDIM (ít bước, trơn, tất định). Hai đầu: nhiễu → ảnh.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">1 pixel tại bước t · lịch nhiễu t và t−1</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Đại lượng</th><th>giá trị</th></tr>
+          <tr><td class="l" style="color:var(--orange)">xₜ (ảnh nhiễu)</td><td style="color:var(--orange);font-weight:800" data-q="xt">2.20</td></tr>
+          <tr><td class="l" style="color:var(--purple)">εθ (mạng đoán)</td><td style="color:var(--purple);font-weight:800" data-q="eps">1</td></tr>
+          <tr><td class="l">σ̃ₜ (độ lệch nhiễu DDPM)</td><td style="color:var(--dim);font-weight:800" data-q="sig">0.30</td></tr>
+          <tr><td class="l" style="color:var(--purple)">z (hạt nhiễu mới)</td><td style="color:var(--purple);font-weight:800" data-q="z">1</td></tr>
+        </table>
+        <div class="cap">z ~ N(0,1) là nhiễu <b>ngẫu nhiên bơm thêm</b> ở DDPM. η = "công tắc": DDIM η=0, DDPM η=1.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table>
+          <tr><th class="l">Lịch nhiễu</th><th>√ᾱ</th><th>√(1−ᾱ)</th></tr>
+          <tr><td class="l">bước t</td><td style="color:var(--blue);font-weight:800">0.80</td><td style="color:var(--purple);font-weight:800">0.60</td></tr>
+          <tr><td class="l">bước t−1</td><td style="color:var(--blue);font-weight:800">0.96</td><td style="color:var(--purple);font-weight:800">0.28</td></tr>
+        </table>
+        <div class="cap">Giống Bài J5/J6. Bước ① &amp; phần chung của ② y hệt J5 (khử nhiễu); điểm mới của J7 là <b>ngã ba σₜ·z</b>.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Khác cốt lõi? → <span class="qa">DDIM tất định, không thêm nhiễu mỗi bước → bỏ bước được.</span></li>
-      <li>Vì sao nhanh? → <span class="qa">Nhảy bước (vài chục thay vì hàng nghìn) mà giữ chất lượng.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">x̂₀ → phần chung → ngã ba: DDIM (bỏ z) · DDPM (+σ·z)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 122" width="100%" height="36mm"
+           aria-label="xt ước lượng x mũ 0 rồi về phần chung, rẽ hai nhánh DDIM không nhiễu và DDPM cộng sigma z, các ô để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Cả hai đoán ε → ước lượng x₀ → lùi bước; DDPM rắc nhiễu (chậm, đa dạng), DDIM tất định (nhanh, tái lập). <b>Hết
-    Phần J & khóa K3.</b> Tiếp K4 — Bài K1: phần thưởng & chiết khấu (RL).
+  <!-- ① x̂₀ -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Ước lượng x̂₀ (bước chung)</span><span class="f">x̂₀ = (xₜ − 0.60·εθ) ÷ 0.80</span></div>
+    <div class="pb">
+      <div class="eq">
+        x̂₀ = ( <span data-q="xt">2.20</span> − 0.60·<span data-q="eps">1</span> ) ÷ 0.80 = <span class="slot sm"></span> ÷ 0.80 = <span class="slot sm"></span>
+      </div>
+      <div class="cap">Đây là bước <b>chung</b> cho cả DDPM &amp; DDIM (đảo forward, giống Bài J5). Chỉ bước lùi tiếp theo mới khác nhau.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J7 · DDPM vs DDIM</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② PHẦN CHUNG + σ -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Phần chung của xₜ₋₁ và độ nhiễu σₜ</span><span class="f">chung = 0.96·x̂₀ + 0.28·εθ · σₜ = η·σ̃ₜ</span></div>
+    <div class="pb">
+      <div class="eq">
+        phần chung = 0.96·<span class="slot sm"></span> + 0.28·<span data-q="eps">1</span> = <span class="slot sm"></span><br>
+        σₜ(DDIM) = 0·<span data-q="sig">0.30</span> = <span class="slot sm"></span> &nbsp;·&nbsp;
+        σₜ(DDPM) = 1·<span data-q="sig">0.30</span> = <span class="slot sm"></span>
+      </div>
+      <div class="cap">η là công tắc nhân vào σ̃ₜ. DDIM tắt (η=0) → σ=0; DDPM bật (η=1) → σ=σ̃ₜ. "Phần chung" hai bên giống hệt.</div>
+    </div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — DDIM tất định, DDPM ngẫu nhiên</span><span class="f">đổi z: nhánh nào đứng yên?</span></div>
+    <div class="pb">
+      <div class="eq">
+        xₜ₋₁ = phần chung + σₜ·z. Thử <b>hai hạt nhiễu</b> z = +1 và z = −1:<br>
+        <b style="color:var(--blue)">DDIM</b> (σ=0): z=+1 → <span class="slot sm"></span> ; z=−1 → <span class="slot sm"></span> &nbsp;→ hai kết quả: <span class="slot" style="min-width:20mm"></span><br>
+        <b style="color:var(--orange)">DDPM</b> (σ=0.30): z=+1 → <span class="slot sm"></span> ; z=−1 → <span class="slot sm"></span> &nbsp;→ hai kết quả: <span class="slot" style="min-width:20mm"></span>
+      </div>
+      <table style="margin-top:1.2mm">
+        <tr><th class="l">Tô thanh 0…3</th><th>DDIM (z=+1)</th><th>DDIM (z=−1)</th><th>DDPM (z=+1)</th><th>DDPM (z=−1)</th></tr>
+        <tr><td class="l">xₜ₋₁</td><td><div class="track uni" id="t_di1"></div></td><td><div class="track uni" id="t_di2"></div></td><td><div class="track uni" id="t_dp1"></div></td><td><div class="track uni" id="t_dp2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…3. Hai thanh DDIM có <b>trùng</b> nhau không? Hai thanh DDPM thì sao? → <span class="slot" style="min-width:24mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:11mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Ước lượng x̂₀</span>
+    <span><span class="ck"></span>Tính phần chung + σₜ</span>
+    <span><span class="ck"></span>Chứng minh DDIM đứng yên khi đổi z</span>
+    <span class="win">🎉 Bạn vừa phân biệt DDPM &amp; DDIM bằng số!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J7 · DDPM vs DDIM</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">J7</span>
+    <h1>DDPM vs DDIM <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>DDIM · tất định</span>
+      <span><span class="sw" style="background:var(--orange)"></span>DDPM · ngẫu nhiên</span>
+      <span><span class="sw" style="background:var(--purple)"></span>z · nhiễu bơm thêm</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">x̂₀ → phần chung → DDIM (bỏ z) · DDPM (+σ·z)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 122" width="100%" height="36mm" aria-label="sơ đồ ngã ba DDPM DDIM đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Ước lượng x̂₀ (bước chung)</span></div>
+    <div class="pb">
+      <div class="eq">
+        x̂₀ = ( <span data-q="xt">2.20</span> − 0.60·<span data-q="eps">1</span> ) ÷ 0.80 = <span class="slot ans sm" data-q="num">1.60</span> ÷ 0.80 = <span class="slot ans sm" data-q="x0hat">2</span>
+      </div>
+      <div class="why"><b>Vì sao là bước chung:</b> cả hai phương pháp đều dựa trên cùng một mạng đoán εθ và cùng phép đảo forward để suy ra ảnh gốc x̂₀. Khác biệt DDPM/DDIM chỉ nằm ở <b>cách lùi</b> từ x̂₀ về xₜ₋₁.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Phần chung của xₜ₋₁ và độ nhiễu σₜ</span></div>
+    <div class="pb">
+      <div class="eq">
+        phần chung = 0.96·<span data-q="x0hat">2</span> + 0.28·<span data-q="eps">1</span> = <span class="slot ans sm" data-q="base">2.20</span><br>
+        σₜ(DDIM) = 0·<span data-q="sig">0.30</span> = <span class="slot ans sm" data-q="sd">0</span> &nbsp;·&nbsp;
+        σₜ(DDPM) = 1·<span data-q="sig">0.30</span> = <span class="slot ans sm" data-q="sig">0.30</span>
+      </div>
+      <div class="why"><b>Vì sao tách η:</b> viết σₜ = η·σ̃ₜ cho thấy DDPM và DDIM là <b>hai điểm cuối</b> của cùng một họ (η từ 0 tới 1). η=0 xoá hẳn nhiễu bơm thêm; η∈(0,1) là các biến thể ở giữa.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — DDIM tất định, DDPM ngẫu nhiên</span></div>
+    <div class="pb">
+      <div class="eq">
+        <b style="color:var(--blue)">DDIM</b> (σ=0): 2.20 + 0·(+1) = <span class="slot ans sm" data-q="base">2.20</span> ; 2.20 + 0·(−1) = <span class="slot ans sm" data-q="base">2.20</span> → <b style="color:var(--blue)">GIỐNG NHAU</b><br>
+        <b style="color:var(--orange)">DDPM</b> (σ=0.30): 2.20 + 0.30·(+1) = <span class="slot ans sm" data-q="dp1">2.50</span> ; 2.20 + 0.30·(−1) = <span class="slot ans sm" data-q="dp2">1.90</span> → <b style="color:var(--orange)">KHÁC NHAU</b>
+      </div>
+      <table style="margin-top:1.2mm">
+        <tr><th class="l">Tô thanh 0…3</th><th>DDIM z=+1</th><th>DDIM z=−1</th><th>DDPM z=+1</th><th>DDPM z=−1</th></tr>
+        <tr><td class="l">xₜ₋₁</td><td><div class="track uni" id="a_di1"></div></td><td><div class="track uni" id="a_di2"></div></td><td><div class="track uni" id="a_dp1"></div></td><td><div class="track uni" id="a_dp2"></div></td></tr>
+      </table>
+      <div class="why p" style="margin:0"><b>Đây là điểm cốt lõi:</b> ở DDIM, σ = η·σ̃ = 0·σ̃ = 0, nên số hạng σ·z <b>biến mất</b> — kết quả <b>không phụ thuộc hạt nhiễu z</b>. Bấm 🎲 đổi z bao nhiêu, hai thanh DDIM vẫn <b>trùng khít</b>:
+        đó chính là "<b>tất định</b>" (cùng x_T &amp; cùng εθ → cùng xₜ₋₁ → cùng ảnh cuối, tái lập được). Vì bước lùi là một <b>hàm xác định</b> (không ngẫu nhiên), ta có thể <b>nhảy nhiều bước một lần</b> mà quỹ đạo vẫn nhất quán → DDIM sinh ảnh <b>nhanh</b>.
+        DDPM (η=1) bơm z mới mỗi bước → ngẫu nhiên, đa dạng hơn nhưng khó bỏ bước.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy khi so DDPM &amp; DDIM</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "DDIM là mô hình khác, phải huấn luyện lại."</b><br>
+          <span style="color:var(--dim)">Không — <b>cùng một mạng</b> εθ. DDIM/DDPM chỉ khác <b>quy tắc lấy mẫu lúc sinh</b> (η=0 hay η=1), không đụng tới trọng số.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "DDIM bỏ bước nên chất lượng tệ hơn hẳn."</b><br>
+          <span style="color:var(--dim)">Với số bước hợp lý (vd 50), DDIM vẫn nét &amp; nhanh hơn nhiều. Đánh đổi là <b>bớt đa dạng</b>, không phải "hỏng".</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "DDPM cũng tất định."</b><br>
+          <span style="color:var(--dim)">Không — DDPM bơm z ngẫu nhiên mỗi bước (σ&gt;0) → cùng x_T vẫn ra ảnh khác nhau mỗi lần chạy.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "η chỉ nhận 0 hoặc 1."</b><br>
+          <span style="color:var(--dim)">η ∈ [0,1] liên tục: 0 = DDIM (tất định), 1 = DDPM (đầy nhiễu), giữa là các biến thể cân bằng tốc độ ↔ đa dạng.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> DDPM &amp; DDIM dùng chung mạng εθ và bước ước lượng x̂₀; chỉ khác σₜ = η·σ̃ₜ: DDIM (η=0) bỏ nhiễu z → <b>tất định</b>, bỏ bớt bước vẫn nhất quán, sinh nhanh;
+    DDPM (η=1) bơm z → <b>ngẫu nhiên</b>, đa dạng hơn. <b>Hết Phần J &amp; hết khoá K3.</b> Bạn đã đi trọn từ embedding &amp; attention (Phần H) → LLM (Phần I) → mô hình sinh (Phần J). 🎉
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J7 · DDPM vs DDIM</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var S = {};
+var SA_T=0.80, SN_T=0.60, SA_P=0.96, SN_P=0.28;
+
 function generate(){
-  var f = WB.fmtTrim;
-  var pair = WB.pick([{abar:0.64, sqA:0.8, sq1A:0.6}, {abar:0.36, sqA:0.6, sq1A:0.8}]);
-  var x0 = WB.randInt(1,3), eps = WB.pick([1,-1,2]);
-  var xt = Math.round((pair.sqA*x0 + pair.sq1A*eps)*100)/100;
-  var x0hat = Math.round(((xt - pair.sq1A*eps)/pair.sqA)*100)/100;   // = x0
+  var f2=WB.fmt2, f=WB.fmtTrim, fi=WB.fmtInt;
+  // sinh x̂₀ nguyên nhỏ + εθ ±1 → forward ra xₜ (đảo ra tròn); giữ mọi kết quả dương trên thang 0…3
+  var x0hat, eps, base, sig;
+  do {
+    x0hat = WB.pick([1,2]);
+    eps   = WB.pick([1,-1]);
+    sig   = WB.pick([0.20,0.30]);
+    base  = Math.round((SA_P*x0hat + SN_P*eps)*100)/100;   // phần chung
+  } while (base - sig < 0.05);   // giữ DDPM(z=−1) không âm để thanh uni đọc được
+  var xt  = Math.round((SA_T*x0hat + SN_T*eps)*100)/100;
+  var num = Math.round((xt - SN_T*eps)*100)/100;           // = √ᾱ·x̂₀
+  var dp1 = Math.round((base + sig)*100)/100;              // DDPM z=+1
+  var dp2 = Math.round((base - sig)*100)/100;              // DDPM z=−1
+
+  S = {x0hat:x0hat, eps:eps, sig:sig, xt:xt, num:num, base:base, dp1:dp1, dp2:dp2};
+
   WB.setAll({
-    xt:f(xt), eps:f(eps), abar:f(pair.abar), sqA:f(pair.sqA), sq1A:f(pair.sq1A),
-    x0hat:f(x0hat)
+    xt:f2(xt), eps:fi(eps), sig:f2(sig), z:'1',
+    num:f2(num), x0hat:fi(x0hat), base:f2(base), sd:'0',
+    dp1:f2(dp1), dp2:f2(dp2)
   });
-  drawPaths('figR');
+
+  // DDIM: base bất kể z → hai thanh trùng
+  drawBarUni('t_di1',0,3,false); drawBarUni('t_di2',0,3,false);
+  drawBarUni('a_di1',base,3,true); drawBarUni('a_di2',base,3,true);
+  // DDPM: base ± sig
+  drawBarUni('t_dp1',0,3,false); drawBarUni('t_dp2',0,3,false);
+  drawBarUni('a_dp1',dp1,3,true); drawBarUni('a_dp2',dp2,3,true);
+
+  drawFig('figQ', false);
+  drawFig('figA', true);
 }
-function drawPaths(id){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=24, x1=216, y0=30, y1=100;
-  var s='';
-  s+='<circle cx="'+x0+'" cy="'+((y0+y1)/2)+'" r="13" fill="#5b677622" stroke="#5b6776" stroke-width="1.2"/>';
-  s+='<text x="'+x0+'" y="'+((y0+y1)/2+3)+'" text-anchor="middle" font-size="7.5" fill="#5b6776">nhiễu</text>';
-  s+='<rect x="'+(x1-13)+'" y="'+((y0+y1)/2-13)+'" width="26" height="26" rx="4" fill="#0e749033" stroke="#0e7490" stroke-width="1.3"/>';
-  s+='<text x="'+x1+'" y="'+((y0+y1)/2+3)+'" text-anchor="middle" font-size="7.5" fill="#0e7490">ảnh</text>';
-  // DDIM: đường trơn lam (ít bước)
-  s+='<path d="M'+(x0+14)+','+((y0+y1)/2-6)+' Q120,'+(y0-2)+' '+(x1-14)+','+((y0+y1)/2-6)+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
-  // mốc ít bước DDIM
-  var ddim=[0.25,0.5,0.75];
-  for(var i=0;i<ddim.length;i++){ var px=x0+14+ddim[i]*(x1-x0-28); s+='<circle cx="'+px.toFixed(1)+'" cy="'+(y0+6+Math.sin(ddim[i]*3.14)*-8).toFixed(1)+'" r="2.2" fill="#0e7490"/>'; }
-  s+='<text x="120" y="'+(y0-4)+'" text-anchor="middle" font-size="8" fill="#0e7490" font-weight="700">DDIM: ít bước, trơn</text>';
-  // DDPM: đường gợn cam (nhiều bước)
-  var d='M'+(x0+14)+','+((y0+y1)/2+6), n=24;
-  for(var k=1;k<=n;k++){ var t=k/n, px=x0+14+t*(x1-x0-28), py=(y0+y1)/2+6+24*Math.sin(t*Math.PI)*(-1)+ (k%2?3:-3); d+=' L'+px.toFixed(1)+','+py.toFixed(1); }
-  s+='<path d="'+d+'" fill="none" stroke="#b45309" stroke-width="1.4"/>';
-  s+='<text x="120" y="'+(y1+18)+'" text-anchor="middle" font-size="8" fill="#b45309" font-weight="700">DDPM: nhiều bước, rắc nhiễu</text>';
+
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:33%"></div><div class="tick" style="left:67%"></div>';
+  if(fill && v>0){ var pct=Math.min(v/max,1)*100; h+='<div class="fill pos" style="left:0%;width:'+pct+'%"></div>'; }
+  el.innerHTML=h;
+}
+
+function box(x,y,w,h,val,filled,col){
+  var C=col||'#b45309', INK='#16202e';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+(filled?'#fff8f0':'#fff')+'" stroke="'+(filled?C:INK)+'" stroke-width="'+(filled?1.2:1.4)+'"'+(filled?'':' stroke-dasharray="3 2"')+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+2.6)+'" text-anchor="middle" font-size="7.2" font-weight="700" fill="'+C+'">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ: xₜ → x̂₀ → phần chung → ngã ba DDIM (bỏ z) / DDPM (+σz).
+function drawFig(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2, DIM='#6b7280', INK='#16202e', BLU='#0e7490', ORG='#b45309', PUR='#6d28d9';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+  s+='<text x="6" y="11" font-size="8" font-weight="800" fill="'+INK+'">Chung tới "phần chung", rồi rẽ đôi tại σₜ·z</text>';
+
+  var my=52;
+  // xₜ
+  s+='<rect x="6" y="'+my+'" width="58" height="24" rx="4" fill="#fff5e9" stroke="'+ORG+'" stroke-width="1.2"/>';
+  s+='<text x="35" y="'+(my-3)+'" text-anchor="middle" font-size="7.2" fill="'+ORG+'">xₜ</text>';
+  s+='<text x="35" y="'+(my+15)+'" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+ORG+'">'+f2(S.xt)+'</text>';
+  s+='<line x1="66" y1="'+(my+12)+'" x2="104" y2="'+(my+12)+'" stroke="'+DIM+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="85" y="'+(my+8)+'" text-anchor="middle" font-size="6.4" fill="'+DIM+'">đảo</text>';
+  // x̂₀
+  s+='<rect x="106" y="'+my+'" width="52" height="24" rx="4" fill="'+(showAns?'#eef7f9':'#fff')+'" stroke="'+(showAns?BLU:INK)+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+  s+='<text x="132" y="'+(my-3)+'" text-anchor="middle" font-size="7.2" fill="'+BLU+'">x̂₀</text>';
+  s+='<text x="132" y="'+(my+15)+'" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+(showAns?BLU:DIM)+'">'+(showAns?WB.fmtInt(S.x0hat):'?')+'</text>';
+  s+='<line x1="160" y1="'+(my+12)+'" x2="198" y2="'+(my+12)+'" stroke="'+DIM+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+  // phần chung
+  s+='<rect x="200" y="'+my+'" width="76" height="24" rx="4" fill="#f4f7f9" stroke="'+DIM+'" stroke-width="1.2"/>';
+  s+='<text x="238" y="'+(my-3)+'" text-anchor="middle" font-size="7.2" fill="'+DIM+'">phần chung</text>';
+  s+='<text x="238" y="'+(my+15)+'" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+(showAns?INK:DIM)+'">'+(showAns?f2(S.base):'?')+'</text>';
+
+  // ngã ba
+  s+='<line x1="278" y1="'+(my+6)+'" x2="330" y2="24" stroke="'+BLU+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<line x1="278" y1="'+(my+18)+'" x2="330" y2="90" stroke="'+ORG+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  // DDIM nhánh
+  s+='<rect x="332" y="12" width="212" height="30" rx="4" fill="#eef7f9" stroke="'+BLU+'" stroke-width="1.2"/>';
+  s+='<text x="338" y="9" font-size="7.4" font-weight="800" fill="'+BLU+'">DDIM (η=0): xₜ₋₁ = chung + 0·z</text>';
+  s+='<text x="340" y="31" font-size="7.6" fill="'+BLU+'">= '+(showAns?f2(S.base):'?')+' — KHÔNG phụ thuộc z (tất định)</text>';
+  // DDPM nhánh
+  s+='<rect x="332" y="78" width="212" height="34" rx="4" fill="#fff5e9" stroke="'+ORG+'" stroke-width="1.2"/>';
+  s+='<text x="338" y="75" font-size="7.4" font-weight="800" fill="'+ORG+'">DDPM (η=1): xₜ₋₁ = chung + σ·z</text>';
+  s+='<text x="340" y="94" font-size="7.6" fill="'+ORG+'">z=+1 → '+(showAns?f2(S.dp1):'?')+'</text>';
+  s+='<text x="440" y="94" font-size="7.6" fill="'+ORG+'">z=−1 → '+(showAns?f2(S.dp2):'?')+'</text>';
+  s+='<text x="340" y="107" font-size="7" fill="'+PUR+'">+ nhiễu z ngẫu nhiên mỗi bước</text>';
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC
 </script>
 </body>
 </html>

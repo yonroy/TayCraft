@@ -1,254 +1,374 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài J1 — Autoencoder / VAE (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài J1 — Autoencoder (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-  /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
-  .page .step{ margin-top:4px; }
-  .page .grid2{ margin-top:2px; gap:4px 22px; }
-  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .why{ margin-top:3px; }
-  .page .calc{ line-height:1.5; }
-  .page .note{ margin-top:3px; }
-  .page .mtx .cell{ height:7mm; }
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.55}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: huấn luyện · học biểu diễn</div>
+  <div class="top">
+    <span class="no">J1</span>
+    <h1>Autoencoder <small>— nén qua "cổ chai" rồi dựng lại</small></h1>
+    <span class="chip">PHẦN J · SINH</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x · vào</span>
+      <span><span class="sw" style="background:var(--orange)"></span>Wₑ,W_d,x̂,ℒ · trọng số/đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>z · cổ chai (thành phần 3)</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài J1</span><h1>Autoencoder / VAE <small>— nén lại rồi dựng lại để sinh mẫu mới</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~18 phút</span></div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Autoencoder ép đầu vào <b>x</b> (3 chiều) qua một "cổ chai" hẹp — mã ẩn <b>z</b> chỉ <b>1 chiều</b> —
+    rồi cố <b>dựng lại</b> thành x̂. Bộ mã hóa Wₑ nén 3→1, bộ giải mã W_d mở lại 1→3. Cuối phiếu bạn tự chứng minh:
+    cổ chai 1 chiều vẫn giữ được <b>trọn vẹn một đường thẳng</b> trong không gian 3 chiều — tái tạo chỉ <b>hoàn hảo</b>
+    (ℒ=0) khi x nằm đúng trên đường đó.
+  </div>
 
-  <div class="intro">
-    <b>Ép qua "cổ chai" để buộc mạng học cái cốt lõi.</b> Bộ <b>mã hóa</b> nén đầu vào x (4 chiều) xuống một mã <b>z</b>
-    chỉ 2 chiều; bộ <b>giải mã</b> cố dựng lại x̂ từ z. Vì z hẹp hơn x, mạng phải vứt nhiễu, giữ thông tin quan trọng →
-    z là một <b>biểu diễn cô đọng</b>. <b>VAE</b> thêm một mẹo nhỏ: cho z một chút ngẫu nhiên (z = μ + σ⊙ε) để vùng mã
-    "liền mạch", nhờ đó <b>lấy mẫu z mới ⇒ sinh ra dữ liệu chưa từng thấy</b>.
-    <div class="formula">
-      z = W<sub>enc</sub>·x &nbsp;→&nbsp; x̂ = W<sub>dec</sub>·z &nbsp;|&nbsp;
-      ℒ = mean((x − x̂)²) &nbsp;<s style="color:var(--accent2)">VAE: z = μ + σ⊙ε</s>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">x (3 chiều) · Wₑ nén 3→1 · W_d mở 1→3</span></div>
+    <div class="pb">
+      <div class="mxwrap">
+        <div class="rowlab" style="--ch:6.8mm"><span>x</span><span>Wₑ</span><span>W_d</span></div>
+        <div class="mx c3" style="--cw:15mm;--ch:6.8mm">
+          <div class="gv" data-q="x0">2</div><div class="gv" data-q="x1">−1</div><div class="gv" data-q="x2">3</div>
+          <div class="pe" data-q="we0">0</div><div class="pe" data-q="we1">−1</div><div class="pe" data-q="we2">0</div>
+          <div class="pe" data-q="wd0">1</div><div class="pe" data-q="wd1">−1</div><div class="pe" data-q="wd2">1</div>
+        </div>
+      </div>
+      <div class="cap"><b>x</b> = đầu vào 3 chiều (lam) · <b>Wₑ</b> = hàng mã hóa (cam) — chỉ <b>một</b> số khác 0, hai số còn lại
+      triệt tiêu ngay khi nhân · <b>W_d</b> = cột giải mã (cam), mỗi phần tử ±1.</div>
     </div>
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>tóm tắt rồi viết lại</b>: encoder nén bài thành vài ý (z), decoder dựng lại bài từ ý đó. Cổ chai càng hẹp càng buộc giữ ý
-    <b>cốt lõi</b>. VAE: ý được mô tả bằng "khoảng" (μ, σ) thay vì điểm → vùng ẩn liền mạch để <b>bịa ra</b> mẫu mới.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: đầu vào x &amp; hai bộ trọng số</h2><span class="tag">4 → 2 → 4</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">x <s>4 chiều</s></div>
-        <div class="mtx c1" style="--cell:13mm">
-          <div class="cell given" data-q="x0">2</div><div class="cell given" data-q="x1">-1</div><div class="cell given" data-q="x2">1</div><div class="cell given" data-q="x3">-2</div></div></div>
-      <div class="mwrap"><div class="mlabel">W<sub>enc</sub> <s>2×4 (nén)</s></div>
-        <div class="mtx c4" style="--cell:12mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we00">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we01">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we02">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we03">0</div>
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we10">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we11">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we12">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="we13">1</div></div></div>
-      <div class="mwrap"><div class="mlabel">W<sub>dec</sub> <s>4×2 (dựng)</s></div>
-        <div class="mtx c2" style="--cell:12mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd00">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd01">0</div>
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd10">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd11">1</div>
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd20">1</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd21">0</div>
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd30">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="wd31">1</div></div></div>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">x (3) → mã hóa → z (1, cổ chai) → giải mã → x̂ (3)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 300 112" width="100%" height="34mm"
+           aria-label="ba nút x lam thu về một nút z tím cổ chai rồi mở lại ba nút x mũ cam, các ô số để trống"></svg>
     </div>
   </div>
 
-  <div class="grid2">
-  <!-- STEP 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mã hóa: z = W<sub>enc</sub>·x</h2><span class="tag">cổ chai 2D</span></div>
-    <div class="calc">
-      z₀ = <span class="blk"></span><br>
-      z₁ = <span class="blk"></span><br>
-      z = ( <span class="blk"></span>, <span class="blk"></span> )
+  <!-- ① MÃ HÓA -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Mã hóa — nén 3 chiều còn 1</span><span class="f">z = Wₑ·x (tích vô hướng)</span></div>
+    <div class="pb">
+      <div class="eq">
+        z = <span data-q="we0">0</span>·<span data-q="x0">2</span> + <span data-q="we1">−1</span>·<span data-q="x1">−1</span> + <span data-q="we2">0</span>·<span data-q="x2">3</span> = <span class="slot"></span>
+      </div>
+      <div class="cap">Hai số hạng có Wₑ=0 <b>triệt tiêu ngay</b> — z chỉ còn phụ thuộc đúng <b>một</b> tọa độ của x.</div>
     </div>
-    <div class="hint"><b>Mẹo:</b> z là toàn bộ những gì giải mã được biết — 4 số đã rút còn 2.</div>
-    <div class="why"><b>Vì sao:</b> cổ chai 2 &lt; 4 → buộc mạng bỏ thông tin dư, giữ <b>đặc trưng chính</b>.</div>
   </div>
 
-  <!-- STEP 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Giải mã: x̂ = W<sub>dec</sub>·z</h2><span class="tag">dựng lại 4D</span></div>
-    <div class="calc">
-      x̂ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+  <!-- ② GIẢI MÃ -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Giải mã — dựng lại 1 chiều thành 3</span><span class="f">x̂ = W_d·z (z từ Bước①)</span></div>
+    <div class="pb">
+      <div class="eq">
+        x̂₀ = <span data-q="wd0">1</span>·z = <span data-q="wd0">1</span>·<span class="slot sm"></span> = <span class="slot"></span> &nbsp;·&nbsp;
+        x̂₁ = <span data-q="wd1">−1</span>·z = <span data-q="wd1">−1</span>·<span class="slot sm"></span> = <span class="slot"></span> &nbsp;·&nbsp;
+        x̂₂ = <span data-q="wd2">1</span>·z = <span data-q="wd2">1</span>·<span class="slot sm"></span> = <span class="slot"></span>
+      </div>
+      <div class="cap">z là số <b>DUY NHẤT</b> decoder biết — cả 3 tọa độ x̂ chỉ là z nhân lại với ±1, nên x̂ luôn nằm trên
+      <b>một đường thẳng</b> qua gốc tọa độ (hướng W_d).</div>
     </div>
-    <div class="note">Mỗi ô x̂ᵢ = hàng i của W<sub>dec</sub> nhân z.</div>
   </div>
 
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Sai số dựng lại &amp; ℒ</h2><span class="tag">mean((x−x̂)²)</span></div>
-    <div class="calc">
-      x − x̂ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
-      ℒ = Σ(·)² ÷ 4 = <span class="blk"></span>
+  <!-- ③ SAI SỐ & LOSS -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Sai số tái tạo &amp; loss</span><span class="f">e = x − x̂ · ℒ = mean(e²)</span></div>
+    <div class="pb">
+      <div class="eq">
+        e₀ = <span data-q="x0">2</span> − x̂₀ = <span class="slot sm"></span> &nbsp;·&nbsp;
+        e₁ = <span data-q="x1">−1</span> − x̂₁ = <span class="slot sm"></span> &nbsp;·&nbsp;
+        e₂ = <span data-q="x2">3</span> − x̂₂ = <span class="slot sm"></span><br>
+        ℒ = (e₀² + e₁² + e₂²) ÷ 3 = <span class="slot"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>ℒ (mất mát)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_mse"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…12. ℒ &gt; 0 với x <b>tổng quát</b> là bình thường — cổ chai 1 chiều không đủ chỗ giữ trọn 3 chiều.</div>
     </div>
-    <div class="note">ℒ &gt; 0 là bình thường: cổ chai 2D không thể giữ trọn 4 chiều — đó là "phí nén".</div>
-    <div class="why"><b>Vì sao:</b> tối thiểu ℒ → mã ẩn z giữ được <b>nhiều thông tin nhất</b> có thể qua cổ chai.</div>
   </div>
 
-  <!-- STEP 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:#7c5cff">V</div><h2>Mẹo VAE: z = μ + σ⊙ε</h2><span class="tag">reparam</span></div>
-    <div class="calc">
-      μ = z (ở trên) · σ = (<span data-q="sg0">1</span>, <span data-q="sg1">1</span>) · ε = (<span data-q="ep0">1</span>, <span data-q="ep1">-1</span>)<br>
-      z<sub>VAE</sub> = μ + σ⊙ε = ( <span class="blk"></span>, <span class="blk"></span> )
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — cổ chai giữ được cả một ĐƯỜNG THẲNG</span><span class="f">x' nằm đúng trên hướng W_d</span></div>
+    <div class="pb">
+      <div class="eq">
+        Chiều x = <span class="slot sm"></span> · chiều z = <span class="slot sm"></span> · mất <span class="slot sm"></span> chiều.
+        Với x tổng quát (Bước③), ℒ <span class="slot sm" style="min-width:20mm"></span> <span style="color:var(--dim);font-family:var(--sans);font-size:8.6px">(điền "&gt; 0" hay "= 0")</span>
+      </div>
+      <div class="eq" style="margin-top:1.4mm">
+        Chọn <b>k</b> = <span data-q="k">2</span>, đặt x' = k·W_d = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> ) — nằm ĐÚNG trên đường W_d.<br>
+        z' = Wₑ·x' = <span class="slot sm"></span> &nbsp;<span style="color:var(--dim);font-family:var(--sans);font-size:8.6px">(chỉ 1 số hạng sống sót, giống Bước①)</span> ·
+        ℒ' = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>ℒ (Bước③ · tổng quát)</th><th>ℒ' (x' trên đường · đặc biệt)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_mse2"></div></td><td><div class="track uni" id="t_mses"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…12 (cả hai cột). x̂' khớp x' <b>tuyệt đối</b> — không cần tính từng ô, vì z' đúng bằng k, hệ số đã dùng để tạo x'. So 2 thanh: cột nào rỗng?</div>
     </div>
-    <div class="hint"><b>ε</b> là nhiễu rút từ N(0,1); đổi ε ⇒ z khác ⇒ <b>mẫu mới</b>.</div>
-  </div>
-  </div><!-- /grid2 -->
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Cổ chai (bottleneck) buộc mạng làm gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>VAE thêm gì so với AE để sinh được? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder / VAE</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính z &amp; x̂</span>
+    <span><span class="ck"></span>Tính e &amp; ℒ</span>
+    <span><span class="ck"></span>Chứng minh x' trên đường → ℒ'=0</span>
+    <span class="win">🎉 Bạn vừa thấy cổ chai 1 chiều giữ được cả một hướng!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
 <section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  <div class="top">
+    <span class="no">J1</span>
+    <h1>Autoencoder <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
   </div>
-  <div class="wb-title"><span class="no">Bài J1</span><h1>Autoencoder / VAE <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x · vào</span>
+      <span><span class="sw" style="background:var(--orange)"></span>Wₑ,W_d,x̂,ℒ · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>z · cổ chai (thành phần 3)</span>
+    </span>
+  </div>
 
-  <div class="grid2">
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mã hóa</h2></div>
-    <div class="calc ans">
-      z₀ = <span data-q="z0e">1·2 + 0·(−1) + 1·1 + 0·(−2)</span> = <span class="blk" data-q="z0">3</span><br>
-      z₁ = <span data-q="z1e">0·2 + 1·(−1) + 0·1 + 1·(−2)</span> = <span class="blk" data-q="z1">−3</span>
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">x (3) → mã hóa → z (1, cổ chai) → giải mã → x̂ (3)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 300 112" width="100%" height="34mm" aria-label="sơ đồ ba nút vào, một nút cổ chai, ba nút ra đã điền đủ số"></svg>
     </div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Giải mã</h2></div>
-    <div class="calc ans">
-      x̂ = ( <span class="blk" data-q="xh0">3</span>, <span class="blk" data-q="xh1">−3</span>, <span class="blk" data-q="xh2">3</span>, <span class="blk" data-q="xh3">−3</span> )
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Mã hóa — nén 3 chiều còn 1</span></div>
+    <div class="pb">
+      <div class="eq">
+        z = <span data-q="we0">0</span>·<span data-q="x0">2</span> + <span data-q="we1">−1</span>·<span data-q="x1">−1</span> + <span data-q="we2">0</span>·<span data-q="x2">3</span> = <span class="slot ans" data-q="z">1</span>
+      </div>
+      <div class="why"><b>Vì sao rẻ:</b> Wₑ chỉ có đúng một phần tử khác 0 (đặt tại đúng vị trí j) — nhân-cộng đủ 3 số hạng nhưng
+      2 số hạng luôn triệt tiêu vì nhân với 0. z chỉ còn là <b>một tọa độ của x</b>, nhân dấu ±1.</div>
     </div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Sai số &amp; ℒ</h2></div>
-    <div class="calc ans">
-      x − x̂ = ( <span data-q="e0">−1</span>, <span data-q="e1">2</span>, <span data-q="e2">−2</span>, <span data-q="e3">1</span> )<br>
-      ℒ = (<span data-q="sqExpr">1 + 4 + 4 + 1</span>) ÷ 4 = <span class="blk" data-q="mse">2.50</span>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Giải mã — dựng lại 1 chiều thành 3</span></div>
+    <div class="pb">
+      <div class="eq">
+        x̂₀ = <span data-q="wd0">1</span>·z = <span data-q="wd0">1</span>·<span class="slot ans sm" data-q="z">1</span> = <span class="slot ans" data-q="xh0">1</span> &nbsp;·&nbsp;
+        x̂₁ = <span data-q="wd1">−1</span>·z = <span data-q="wd1">−1</span>·<span class="slot ans sm" data-q="z">1</span> = <span class="slot ans" data-q="xh1">−1</span> &nbsp;·&nbsp;
+        x̂₂ = <span data-q="wd2">1</span>·z = <span data-q="wd2">1</span>·<span class="slot ans sm" data-q="z">1</span> = <span class="slot ans" data-q="xh2">1</span>
+      </div>
+      <div class="why"><b>Vì sao x̂ nằm trên 1 đường:</b> mọi tọa độ x̂ᵢ = z·(W_d)ᵢ — cùng một số z nhân lại với các hệ số ±1 cố định,
+      nên x̂ luôn là <b>bội số của vector W_d</b>, không thể "tự do" đi ra ngoài hướng đó dù x thật sự ở đâu.</div>
     </div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:#7c5cff">V</div><h2>VAE reparam</h2></div>
-    <div class="calc ans">
-      z<sub>VAE</sub> = (<span data-q="zv0e">3 + 1·1</span>, <span data-q="zv1e">−3 + 1·(−1)</span>) = ( <span class="blk" data-q="zv0">4</span>, <span class="blk" data-q="zv1">−4</span> )
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Sai số tái tạo &amp; loss</span></div>
+    <div class="pb">
+      <div class="eq">
+        e₀ = <span data-q="x0">2</span> − <span data-q="xh0">1</span> = <span class="slot ans sm" data-q="e0">1</span> &nbsp;·&nbsp;
+        e₁ = <span data-q="x1">−1</span> − <span data-q="xh1">−1</span> = <span class="slot ans sm" data-q="e1">0</span> &nbsp;·&nbsp;
+        e₂ = <span data-q="x2">3</span> − <span data-q="xh2">1</span> = <span class="slot ans sm" data-q="e2">2</span><br>
+        ℒ = (<span data-q="e0">1</span>² + <span data-q="e1">0</span>² + <span data-q="e2">2</span>²) ÷ 3 = <span class="slot ans" data-q="mse">1.67</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>ℒ (mất mát)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_mse"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao ℒ&gt;0:</b> x có 3 bậc tự do độc lập, z chỉ mang được 1 con số — cổ chai buộc x̂ "đoán" 2 tọa độ còn lại
+      từ đúng 1 manh mối, nên trừ trường hợp đặc biệt, luôn còn dư sai số.</div>
     </div>
   </div>
-  </div><!-- /grid2 -->
 
-  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: đồng hồ cát mã hóa–giải mã</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figAE" class="fig" viewBox="0 0 270 104" width="150mm" height="58mm" aria-label="bốn nút đầu vào x thu về hai nút cổ chai z rồi mở lại bốn nút x mũ; cổ chai được tô đậm thể hiện nơi nén thông tin"></svg>
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — cổ chai giữ được cả một ĐƯỜNG THẲNG</span></div>
+    <div class="pb">
+      <div class="eq">
+        Chiều x = <span class="slot ans sm" data-q="dimx">3</span> · chiều z = <span class="slot ans sm" data-q="dimz">1</span> · mất <span class="slot ans sm" data-q="dimlost">2</span> chiều.
+        Với x tổng quát (Bước③), ℒ <span class="slot ans sm" data-q="gtLabel" style="min-width:20mm">&gt; 0</span>
+      </div>
+      <div class="eq" style="margin-top:1.4mm">
+        Chọn <b>k</b> = <span data-q="k">2</span>, đặt x' = k·W_d = ( <span class="slot ans sm" data-q="xs0">2</span>, <span class="slot ans sm" data-q="xs1">−2</span>, <span class="slot ans sm" data-q="xs2">2</span> ) — nằm ĐÚNG trên đường W_d.<br>
+        z' = Wₑ·x' = <span class="slot ans sm" data-q="zs">2</span> · ℒ' = <span class="slot ans sm" data-q="mses">0.00</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>ℒ (Bước③ · tổng quát)</th><th>ℒ' (x' trên đường · đặc biệt)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_mse2"></div></td><td><div class="track uni" id="a_mses"></div></td></tr>
+      </table>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> ℒ' <b>đúng bằng 0</b> — không phải xấp xỉ, mà là một
+    <b>đẳng thức</b> (z' = Wₑ·x' = wd_j·(k·wd_j) = k·wd_j² = k, đúng với <b>mọi</b> k vì wd_j=±1 nên wd_j²=1 luôn luôn). Cổ chai 1 chiều
+    tuy chỉ giữ được <b>1 con số</b>, nhưng con số đó đủ mô tả trọn vẹn <b>toàn bộ một đường thẳng</b> (không gian con 1 chiều) trong không
+    gian 3 chiều của x. Đây chính là bản chất của biểu diễn nén: autoencoder không "nhớ hết" x, nó học giữ đúng <b>hướng quan trọng nhất</b>
+    — giống PCA (Bài B6) nhưng có thể học phi tuyến, và bottleneck càng hẹp thì không gian con giữ được càng nhỏ.</div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Cổ chai buộc làm gì? → <span class="qa">Giữ lại đặc trưng quan trọng nhất (nén thông tin).</span></li>
-      <li>VAE thêm gì? → <span class="qa">Phân phối (μ,σ) + KL → vùng ẩn liền mạch để lấy mẫu.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi đọc autoencoder</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Cổ chai càng hẹp thì mô hình càng học tốt hơn."</b><br>
+          <span style="color:var(--dim)">Sai — hẹp quá thì <b>mất thông tin</b> nhiều hơn (ℒ tăng). Đây là đánh đổi giữa mức <b>nén</b> và độ
+          <b>trung thực</b> tái tạo, không phải "càng hẹp càng tốt".</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "ℒ=0 nghĩa là autoencoder này dùng tốt cho MỌI x."</b><br>
+          <span style="color:var(--dim)">Sai — ℒ=0 chỉ đúng cho x nằm <b>đúng trên</b> không gian con mà bottleneck giữ được (Bước④). x tổng quát
+          ngoài không gian con đó (Bước③) vẫn mất mát bình thường.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "z chỉ có 1 số nên ví dụ này vô dụng, không giống thật."</b><br>
+          <span style="color:var(--dim)">z=1 chiều chỉ để <b>tính tay được</b>. Autoencoder thật có z hàng trăm chiều — cùng nguyên lý: z &lt; chiều x,
+          chỉ khác về <b>tỉ lệ nén</b>, không khác về bản chất.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Wₑ, W_d ngẫu nhiên độc lập vẫn tái tạo tốt."</b><br>
+          <span style="color:var(--dim)">Sai — chính vì Wₑ, W_d được <b>huấn luyện cùng nhau</b> để "khớp" (như wd_j·wd_j=1 ở đây) thì mới có cơ hội
+          ℒ=0 trên đúng không gian con mà cả hai "thoả thuận" giữ lại.</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Autoencoder học <b>nén</b> không cần nhãn (tự giám sát): mã z chính là biểu diễn dùng lại cho tìm kiếm,
-    khử nhiễu, phát hiện bất thường. VAE biến cổ chai thành một <b>phân phối</b> và dùng <b>reparam</b> z = μ + σ⊙ε để vẫn
-    lan truyền ngược qua phần ngẫu nhiên (Bài D7); thêm phạt KL kéo (μ,σ) về N(0,1) để có thể <b>lấy mẫu</b> z rồi giải mã
-    ra mẫu mới. Cũng "đoán rồi dựng lại" như <b>Diffusion (Bài J5)</b> — chỉ khác cách thêm/khử nhiễu.
+  <div class="why t">
+    <b>Rút ra.</b> Autoencoder học nén-tái tạo: cổ chai z buộc mạng giữ <b>đúng hướng quan trọng nhất</b> của dữ liệu, bỏ phần còn lại
+    (giống PCA nhưng học được, có thể phi tuyến). ℒ=0 chỉ xảy ra khi x rơi đúng vào không gian con mà bottleneck giữ được — với dữ liệu
+    thật, mạng học Wₑ, W_d sao cho không gian con đó khớp phần lớn dữ liệu thật. Bài tiếp theo <b>J2</b>: VAE thêm <b>reparam z=μ+σ⊙ε</b>
+    + phạt KL để còn <b>lấy mẫu</b> sinh ra dữ liệu mới.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder / VAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J1 · Autoencoder</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var CX='#0e7490', CZ='#6d28d9', CW='#b45309', DIM='#6b7280', INK='#16202e';
+var S = {};
+
 function generate(){
-  var x = [WB.randIntNZ(-2,2),WB.randIntNZ(-2,2),WB.randIntNZ(-2,2),WB.randIntNZ(-2,2)];
-  // W_enc 2×4 và W_dec 4×2 trong {−1,0,1}, thưa để z & x̂ nhỏ.
-  var We = [[WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1)],
-            [WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1),WB.randInt(-1,1)]];
-  var Wd = [[WB.randInt(-1,1),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randInt(-1,1)],
-            [WB.randInt(-1,1),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randInt(-1,1)]];
-  var z = [We[0][0]*x[0]+We[0][1]*x[1]+We[0][2]*x[2]+We[0][3]*x[3],
-           We[1][0]*x[0]+We[1][1]*x[1]+We[1][2]*x[2]+We[1][3]*x[3]];
-  var xh = Wd.map(function(r){ return r[0]*z[0]+r[1]*z[1]; });
-  var e = x.map(function(v,i){ return v - xh[i]; });
-  var mse = (e[0]*e[0]+e[1]*e[1]+e[2]*e[2]+e[3]*e[3])/4;
-  var sig=[1,1], eps=[WB.pick([1,-1]), WB.pick([1,-1])];
-  var zv=[z[0]+sig[0]*eps[0], z[1]+sig[1]*eps[1]];
+  var f2 = WB.fmt2, fI = WB.fmtInt;
+  var x, wd, j, we, z, xh, e, mse;
+  do {
+    x = [WB.randIntNZ(-3,3), WB.randIntNZ(-3,3), WB.randIntNZ(-3,3)];
+    wd = [WB.pick([1,-1]), WB.pick([1,-1]), WB.pick([1,-1])];
+    j = WB.pick([0,1,2]);
+    we = [0,0,0]; we[j] = wd[j];
+    z = we[0]*x[0] + we[1]*x[1] + we[2]*x[2];
+    xh = wd.map(function(w){ return z*w; });
+    e = x.map(function(v,i){ return v - xh[i]; });
+    mse = (e[0]*e[0]+e[1]*e[1]+e[2]*e[2])/3;
+  } while (mse === 0);   // guard: x KHÔNG được rơi đúng vào subspace, Bước③ phải có ℒ>0
+
+  var k = WB.randIntNZ(-3,3);
+  var xs = wd.map(function(w){ return k*w; });
+  var zs = we[0]*xs[0] + we[1]*xs[1] + we[2]*xs[2];   // luôn = k
+  var xhs = wd.map(function(w){ return zs*w; });
+  var es = xs.map(function(v,i){ return v - xhs[i]; });
+  var mses = (es[0]*es[0]+es[1]*es[1]+es[2]*es[2])/3;  // luôn = 0
+
+  S = {x:x, wd:wd, we:we, j:j, z:z, xh:xh, e:e, mse:mse, k:k, xs:xs, zs:zs, xhs:xhs, es:es, mses:mses};
 
   var map = {
-    z0e: We[0].map(function(w,i){ return WB.fmtInt(w)+'·'+WB.wrap(WB.fmtInt(x[i])); }).join(' + '),
-    z1e: We[1].map(function(w,i){ return WB.fmtInt(w)+'·'+WB.wrap(WB.fmtInt(x[i])); }).join(' + '),
-    z0:WB.fmtInt(z[0]), z1:WB.fmtInt(z[1]),
-    sqExpr: e.map(function(v){ return v*v; }).join(' + '), mse:WB.fmt2(mse),
-    sg0:String(sig[0]), sg1:String(sig[1]), ep0:WB.fmtInt(eps[0]), ep1:WB.fmtInt(eps[1]),
-    zv0e: WB.fmtInt(z[0])+' + '+WB.fmtInt(sig[0])+'·'+WB.wrap(WB.fmtInt(eps[0])),
-    zv1e: WB.fmtInt(z[1])+' + '+WB.fmtInt(sig[1])+'·'+WB.wrap(WB.fmtInt(eps[1])),
-    zv0:WB.fmtInt(zv[0]), zv1:WB.fmtInt(zv[1])
+    z: fI(z), mse: f2(mse),
+    k: fI(k), zs: fI(zs), mses: f2(mses),
+    dimx:'3', dimz:'1', dimlost:'2', gtLabel:'> 0'
   };
-  for (var i=0;i<4;i++){ map['x'+i]=WB.fmtInt(x[i]); map['xh'+i]=WB.fmtInt(xh[i]); map['e'+i]=WB.fmtInt(e[i]); }
-  for (var c=0;c<4;c++){ map['we0'+c]=WB.fmtInt(We[0][c]); map['we1'+c]=WB.fmtInt(We[1][c]); }
-  for (var r=0;r<4;r++){ map['wd'+r+'0']=WB.fmtInt(Wd[r][0]); map['wd'+r+'1']=WB.fmtInt(Wd[r][1]); }
+  for (var i=0;i<3;i++){
+    map['x'+i]=fI(x[i]); map['we'+i]=fI(we[i]); map['wd'+i]=fI(wd[i]);
+    map['xh'+i]=fI(xh[i]); map['e'+i]=fI(e[i]);
+    map['xs'+i]=fI(xs[i]); map['xhs'+i]=fI(xhs[i]);
+  }
   WB.setAll(map);
-  drawAE(x, z, xh);
+
+  drawBarUni('t_mse', 0, 12, false);  drawBarUni('a_mse', mse, 12, true);
+  drawBarUni('t_mse2', 0, 12, false); drawBarUni('a_mse2', mse, 12, true);
+  drawBarUni('t_mses', 0, 12, false); drawBarUni('a_mses', mses, 12, true);
+
+  drawFunnel('figQ', false);
+  drawFunnel('figA', true);
 }
 
-function drawAE(x, z, xh){
-  var svg = document.getElementById('figAE'); if (!svg) return;
-  var s='';
-  var xIn=30, xZ=135, xOut=240;
-  var yIn=[16,40,64,88], yZ=[40,64], yOut=[16,40,64,88];
-  function node(cx,cy,txt,fill,stroke){
-    s += '<circle cx="'+cx+'" cy="'+cy+'" r="11" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.4"/>';
-    s += '<text x="'+cx+'" y="'+(cy+3.5)+'" text-anchor="middle" style="font-size:9px" fill="#16202e" font-weight="700">'+txt+'</text>';
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho ℒ (chỉ dương).
+// fill=false → chỉ vạch mốc, chừa trống cho người học tô bút chì (ĐỀ).
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v>0){
+    var pct = Math.min(v/max,1)*100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
   }
-  // cạnh enc
-  yIn.forEach(function(yi){ yZ.forEach(function(yz){ s += '<line x1="'+(xIn+11)+'" y1="'+yi+'" x2="'+(xZ-11)+'" y2="'+yz+'" stroke="#dbe3ec" stroke-width="0.6"/>'; }); });
-  // cạnh dec
-  yZ.forEach(function(yz){ yOut.forEach(function(yo){ s += '<line x1="'+(xZ+11)+'" y1="'+yz+'" x2="'+(xOut-11)+'" y2="'+yo+'" stroke="#f0dcc4" stroke-width="0.6"/>'; }); });
-  // nút
-  x.forEach(function(v,i){ node(xIn,yIn[i],WB.fmtInt(v),'#eaf4f6','#7fb4bf'); });
-  z.forEach(function(v,i){ node(xZ,yZ[i],WB.fmtInt(v),'#f3f0ff','#7c5cff'); });
-  xh.forEach(function(v,i){ node(xOut,yOut[i],WB.fmtInt(v),'#fff5e9','#e3b780'); });
-  s += '<text x="'+xIn+'" y="102" text-anchor="middle" style="font-size:8.5px" fill="#0e7490" font-weight="700">x (4)</text>';
-  s += '<text x="'+xZ+'" y="86" text-anchor="middle" style="font-size:8.5px" fill="#7c5cff" font-weight="700">z (2) · cổ chai</text>';
-  s += '<text x="'+xOut+'" y="102" text-anchor="middle" style="font-size:8.5px" fill="#b45309" font-weight="700">x̂ (4)</text>';
-  s += '<text x="82" y="100" text-anchor="middle" style="font-size:8px" fill="#5b6776">mã hóa ↘ nén</text>';
-  s += '<text x="188" y="100" text-anchor="middle" style="font-size:8px" fill="#5b6776">giải mã ↗ dựng</text>';
-  svg.innerHTML = s;
+  el.innerHTML=h;
 }
+
+// Sơ đồ đồng hồ cát: 3 nút x → 1 nút z (cổ chai) → 3 nút x̂. showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawFunnel(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var xIn=36, xZ=150, xOut=264, yIn=[20,55,90], yZ=55, yOut=[20,55,90];
+  var s='';
+  function line(x1,y1,x2,y2,c){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="0.8"/>'; }
+  function node(cx,cy,t,fill,stroke,tc){
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="13" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.4"/>'+
+      '<text x="'+cx+'" y="'+(cy+3.6)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+tc+'">'+t+'</text>';
+  }
+  function txt(x,y,t,c){ return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="8.6" font-weight="700" fill="'+c+'">'+t+'</text>'; }
+  yIn.forEach(function(yi){ s+=line(xIn+13,yi,xZ-13,yZ,'#dbe3ec'); });
+  yOut.forEach(function(yo){ s+=line(xZ+13,yZ,xOut-13,yo,'#f0dcc4'); });
+  S.x.forEach(function(v,i){ s+=node(xIn,yIn[i],WB.fmtInt(v),'#eaf4f6',CX,CX); });
+  s+=node(xZ,yZ, showAns?WB.fmtInt(S.z):'?', '#f5f1fe',CZ,CZ);
+  S.xh.forEach(function(v,i){ s+=node(xOut,yOut[i], showAns?WB.fmtInt(v):'?', '#fff5e9',CW,CW); });
+  s+=txt(xIn,108,'x (3)',CX)+txt(xZ,108,'z (1) · cổ chai',CZ)+txt(xOut,108,'x̂ (3)',CW);
+  s+=txt(93,16,'mã hóa ↘',DIM)+txt(207,16,'giải mã ↗',DIM);
+  svg.innerHTML=s;
+}
+
 WB.wire(generate);
-drawAE([2,-1,1,-2], [3,-3], [3,-3,3,-3]);
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

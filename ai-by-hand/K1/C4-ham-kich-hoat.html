@@ -1,12 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài C4 — Hàm kích hoạt (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pC">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,25 +22,25 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài C4</span><h1>Hàm kích hoạt <small>— Activation · phi tuyến</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài C4</span>
+    <h1>Hàm kích hoạt <small>— ReLU: cái van một chiều bẻ cong đường thẳng</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intro">
-    <b>Bẻ cong đường thẳng.</b> Sau lớp tuyến tính (Bài C1), ta đưa kết quả qua một <b>hàm phi tuyến</b>. Không có nó,
-    xếp bao nhiêu lớp cũng chỉ ra một đường thẳng. ReLU đơn giản và phổ biến nhất; sigmoid ép giá trị về (0,1).
-    <div class="formula">
-      ReLU(z) = max(0, z) &nbsp;&nbsp;|&nbsp;&nbsp;
-      σ(z) = <span class="frac"><span class="n">1</span><span class="d">1 + e<sup>−z</sup></span></span> &nbsp;&nbsp;|&nbsp;&nbsp;
-      tanh(z) ∈ (−1, 1)
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho dãy 5 giá trị z. Hãy <b>tự tay</b> áp ReLU(z) = max(0, z), đọc sigmoid σ(z) từ bảng,
+    vẽ dạng đồ thị. Phần thưởng: tính <b>đạo hàm ReLU</b> (chỉ 0 hoặc 1) để thấy vì sao ReLU <b>không tắt gradient</b>
+    ở phía dương như sigmoid (C2).
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Dãy đầu vào z</h2><span class="tag">5 giá trị</span></div>
+    <div class="step-h"><div class="b">0</div><h2>Dãy đầu vào z + bảng σ</h2><span class="tag">5 giá trị</span></div>
     <div class="row">
       <div class="mwrap"><div class="mlabel">z</div>
         <div class="mtx c5" style="--cell:15mm">
@@ -46,6 +50,7 @@
         <div>σ(−2)<b>0.12</b></div><div>σ(−1)<b>0.27</b></div><div>σ(0)<b>0.50</b></div><div>σ(1)<b>0.73</b></div><div>σ(2)<b>0.88</b></div>
       </div>
     </div>
+    <div class="why"><b>Vì sao:</b> sau lớp tuyến tính (C1), chèn hàm phi tuyến này để mạng <b>gấp khúc</b> không gian — xếp lớp mới có ích.</div>
   </div>
 
   <div class="grid2">
@@ -56,41 +61,43 @@
       <div class="mtx c5" style="--cell:15mm">
         <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
       </div></div>
-    <div class="hint"><b>Quy tắc:</b> z &lt; 0 → 0; z ≥ 0 → giữ nguyên. VD: ReLU(<span data-q="z0">−2</span>)=0, ReLU(<span data-q="z4">3</span>)=<span data-q="z4">3</span>.</div>
+    <div class="hint"><b>Quy tắc:</b> z &lt; 0 → 0; z ≥ 0 → giữ nguyên.</div>
   </div>
 
   <!-- STEP 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Sigmoid σ(z)</h2><span class="tag">tra bảng trên</span></div>
-    <div class="calc">
-      σ(<span data-q="z0">−2</span>) = <span class="blk"></span> &nbsp; σ(<span data-q="z2">0</span>) = <span class="blk"></span> &nbsp; σ(<span data-q="z3">1</span>) = <span class="blk"></span><br>
-      σ(<span data-q="z4">3</span>) ≈ <span class="blk"></span> <span style="color:var(--dim)">(z lớn → tiến tới 1)</span>
+    <div class="calc big">
+      σ(<span data-q="z0">−2</span>) = <span class="wcell"></span> &nbsp; σ(<span data-q="z2">0</span>) = <span class="wcell"></span><br>
+      σ(<span data-q="z3">1</span>) = <span class="wcell"></span> &nbsp; σ(<span data-q="z4">3</span>) ≈ <span class="wcell"></span>
     </div>
     <div class="note">Sigmoid luôn cho số trong (0,1) — hợp để biểu diễn <b>xác suất</b>.</div>
   </div>
+  </div><!-- /grid2 -->
 
-  <!-- STEP 3 -->
+  <!-- STEP 3 — đồ thị -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vẽ dạng đồ thị</h2><span class="tag">nối điểm</span></div>
-    <svg class="fig" viewBox="0 0 220 96" width="100%" height="84">
+    <div class="step-h"><div class="b">3</div><h2>Vẽ dạng đồ thị ReLU</h2><span class="tag">nối điểm</span></div>
+    <svg class="fig" viewBox="0 0 220 96" width="100%" height="80">
       <line class="grid" x1="110" y1="6" x2="110" y2="90"/>
       <line class="axis" x1="14" y1="70" x2="206" y2="70"/>
       <line class="axis" x1="20" y1="86" x2="20" y2="10"/>
       <text x="150" y="84">z</text><text x="120" y="20">ReLU</text>
     </svg>
-    <div class="note" style="margin-top:3px">Tự vẽ: ReLU nằm ngang 0 ở nửa trái, rồi đi lên 45° ở nửa phải.</div>
+    <div class="note" style="margin-top:3px">Tự vẽ: ReLU nằm ngang 0 ở nửa trái, rồi đi lên 45° ở nửa phải (gấp khúc tại 0).</div>
   </div>
 
-  <!-- STEP 4 -->
+  <!-- STEP 4 — TỰ KIỂM: đạo hàm ReLU -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao phải phi tuyến</h2><span class="tag">cốt lõi</span></div>
-    <div class="note" style="margin-top:2px">
-      Tuyến tính + tuyến tính = vẫn tuyến tính. Chèn ReLU giữa các lớp cho phép mạng <b>gấp khúc</b> không gian,
-      nhờ đó xấp xỉ <b>bất kỳ hàm nào</b>. ReLU rẻ (chỉ so sánh với 0) và tránh được vấn đề "gradient biến mất"
-      tốt hơn sigmoid ở mạng sâu.
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đạo hàm ReLU (0 hoặc 1)</h2><span class="tag">hết vanishing 1 phía</span></div>
+    <div class="row">
+      <div class="mwrap"><div class="mlabel">ReLU'(z)</div>
+        <div class="mtx c5" style="--cell:15mm">
+          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
+        </div></div>
     </div>
+    <div class="note">ReLU'(z) = <b>1</b> khi z &gt; 0, <b>0</b> khi z &lt; 0 (bậc thang). Phía dương gradient = 1 → <b>không teo</b> dù mạng sâu (khác sigmoid σ' ≤ 0.25, C2) ⇒ hết vanishing. Cái giá: z &lt; 0 gradient = 0 → nơ-ron có thể "<b>chết</b>" (dead ReLU).</div>
   </div>
-  </div><!-- /grid2 -->
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C4 · Hàm kích hoạt</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
@@ -114,23 +121,23 @@
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Sigmoid</h2></div>
-    <div class="calc ans">
-      σ(<span data-q="z0">−2</span>) = <span class="blk" data-q="sig0">0.12</span> &nbsp; σ(<span data-q="z2">0</span>) = <span class="blk" data-q="sig2">0.50</span> &nbsp;
-      σ(<span data-q="z3">1</span>) = <span class="blk" data-q="sig3">0.73</span> &nbsp; σ(<span data-q="z4">3</span>) ≈ <span class="blk" data-q="sig4">0.95</span>
+    <div class="calc ans big">
+      σ(<span data-q="z0">−2</span>) = <span class="wcell ans" data-q="sig0">0.12</span> &nbsp; σ(<span data-q="z2">0</span>) = <span class="wcell ans" data-q="sig2">0.50</span> &nbsp;
+      σ(<span data-q="z3">1</span>) = <span class="wcell ans" data-q="sig3">0.73</span> &nbsp; σ(<span data-q="z4">3</span>) ≈ <span class="wcell ans" data-q="sig4">0.95</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Đồ thị</h2></div>
     <div class="row">
-      <svg class="fig" viewBox="0 0 220 96" width="48%" height="92">
+      <svg class="fig" viewBox="0 0 220 96" width="48%" height="88">
         <line class="grid" x1="110" y1="6" x2="110" y2="90"/>
         <line class="axis" x1="14" y1="70" x2="206" y2="70"/>
         <line class="axis" x1="20" y1="86" x2="20" y2="10"/>
         <path class="curve" d="M20,70 L110,70 L196,16"/>
         <text x="150" y="84">z</text><text x="116" y="22">ReLU</text>
       </svg>
-      <svg class="fig" viewBox="0 0 220 96" width="48%" height="92">
+      <svg class="fig" viewBox="0 0 220 96" width="48%" height="88">
         <line class="grid" x1="110" y1="6" x2="110" y2="90"/>
         <line class="axis" x1="14" y1="70" x2="206" y2="70"/>
         <line class="axis" x1="20" y1="86" x2="20" y2="10"/>
@@ -140,9 +147,18 @@
     </div>
   </div>
 
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đạo hàm ReLU</h2><span class="tag">0 / 1</span></div>
+    <div class="mwrap"><div class="mlabel">ReLU'(z)</div>
+      <div class="mtx c5" style="--cell:15mm">
+        <div class="cell ans" data-q="d0">0</div><div class="cell ans" data-q="d1">0</div><div class="cell ans" data-q="d2">0</div><div class="cell ans" data-q="d3">1</div><div class="cell ans" data-q="d4">1</div>
+      </div></div>
+    <div class="why"><b>Vì sao:</b> ReLU'(z) = 1 (z&gt;0) / 0 (z&lt;0). Ở z&gt;0 gradient <b>đúng bằng 1</b> — nhân dồn qua nhiều lớp không teo (khác σ' ≤ 0.25 → vanishing). Đổi lại các z&lt;0 gradient 0 (dead ReLU) — nên có Leaky ReLU cho phía âm dốc nhẹ.</div>
+  </div>
+
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> ReLU = "cái van một chiều": chặn âm, cho dương qua. Chính nhờ chỗ gấp khúc tại 0 mà
-    mạng học được hàm cong. Bài C5 ghép <b>lớp tuyến tính + kích hoạt</b> lại thành <b>một nơ-ron hoàn chỉnh</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> ReLU = "van một chiều": chặn âm, cho dương qua; đạo hàm 0/1 → rẻ &amp; hết vanishing một phía. Chính chỗ gấp khúc tại 0 giúp mạng học hàm cong.
+    Bài C5 ghép <b>lớp tuyến tính + kích hoạt</b> thành <b>một nơ-ron hoàn chỉnh</b>.
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C4 · Hàm kích hoạt</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
@@ -159,6 +175,7 @@ function generate(){
   var zs = [z0,z1,z2,z3,z4];
 
   function relu(v){ return Math.max(0, v); }
+  function drelu(v){ return v > 0 ? 1 : 0; }     // z=0 quy ước 0 (nửa dưới)
   function sigmoid(v){ return 1/(1+Math.exp(-v)); }
 
   var zeroGroup = [], posGroup = [];
@@ -168,12 +185,14 @@ function generate(){
     z0: WB.fmtTrim(z0), z1: WB.fmtTrim(z1), z2: WB.fmtTrim(z2), z3: WB.fmtTrim(z3), z4: WB.fmtTrim(z4),
     relu0: WB.fmtTrim(relu(z0)), relu1: WB.fmtTrim(relu(z1)), relu2: WB.fmtTrim(relu(z2)),
     relu3: WB.fmtTrim(relu(z3)), relu4: WB.fmtTrim(relu(z4)),
+    d0: ''+drelu(z0), d1: ''+drelu(z1), d2: ''+drelu(z2), d3: ''+drelu(z3), d4: ''+drelu(z4),
     sig0: WB.fmt2(sigmoid(z0)), sig2: WB.fmt2(sigmoid(z2)), sig3: WB.fmt2(sigmoid(z3)), sig4: WB.fmt2(sigmoid(z4)),
     reluNote: 'z = ' + zeroGroup.join(', ') + ' đều thành 0; z = ' + posGroup.join(', ') + ' giữ nguyên.'
   };
   WB.setAll(map);
 }
 WB.wire(generate);
+generate();
 </script>
 </body>
 </html>

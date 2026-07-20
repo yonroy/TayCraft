@@ -5,16 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài G3 — RNN trải nhiều bước (BPTT) (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
+.page .step{margin-top:7px;}
+.page .why{margin-top:5px;padding-top:4px;padding-bottom:4px;}
 .page .note{margin-top:4px;}
+.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,119 +28,180 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G3</span><h1>RNN trải nhiều bước (BPTT) <small>— Backprop Through Time</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> RNN dùng <b>cùng một W</b> ở mọi bước thời gian. Để học, gradient phải đi ngược toàn chuỗi và <b>cộng lại</b>
-    đóng góp từng bước. BPTT lý giải vì sao chuỗi dài gây vanishing/exploding (Bài E2) → cần LSTM/clipping.
-    <div class="formula">
-      h<sub>t</sub> = W·x<sub>t</sub> + U·h<sub>t−1</sub> &nbsp;·&nbsp; ∂L/∂W = Σ<sub>t</sub> δ<sub>t</sub>·(∂h<sub>t</sub>/∂W) &nbsp;·&nbsp; δ truyền ngược qua U
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài G3</span>
+    <h1>RNN trải nhiều bước <small>— Backprop Through Time (BPTT)</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Trải RNN ra như một <b>mạng sâu mà mọi lớp xài chung trọng số</b>. Gradient chảy ngược từ bước cuối về bước đầu; vì W lặp lại, ta
-    <b>cộng</b> đóng góp gradient của mọi bước thành một cập nhật.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> RNN dùng lại <b>CÙNG một W</b> ở mọi bước thời gian. Khi lan truyền ngược (BPTT), gradient của W phải
+    <b>CỘNG</b> đóng góp từ cả 3 bước — vì W xuất hiện nhiều lần trong đồ thị tính toán (giống một tham số dùng chung, Bài D8).
+    Hãy tự tay trải 3 bước, tính δ chạy ngược theo thời gian, rồi <b>CỘNG</b> lại ra gradient tổng của W.
+    <div class="formula" style="margin-top:5px">
+      h<sub>t</sub> = W·x<sub>t</sub> + U·h<sub>t−1</sub> &nbsp;·&nbsp; L = ½(h₃ − t)² &nbsp;·&nbsp; ∂L/∂W = Σ<sub>t</sub> δ<sub>t</sub>·x<sub>t</sub> &nbsp;(δ<sub>t</sub>=∂L/∂h<sub>t</sub>)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 bước · tuyến tính</span></div>
-    <div class="calc" style="font-size:14px">
-      W = <span class="gv" data-q="W">1</span>, U = <span class="gv" data-q="U">0.5</span>, h₀ = <span class="gv" data-q="h0">0</span>; x = (<span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">4</span>);
-      mục tiêu t = <span class="gv" data-q="t">4</span> ở bước cuối, loss L = ½(h₂ − t)².
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 bước thời gian</span></div>
+    <div class="calc big">
+      W = <span class="gv" data-q="W">1</span>, U = <span class="gv" data-q="U">0.5</span>, h₀ = <span class="gv" data-q="h0">0</span>;
+      x = (<span class="gv" data-q="x1">4</span>, <span class="gv" data-q="x2">2</span>, <span class="gv" data-q="x3">3</span>);
+      mục tiêu t = <span class="gv" data-q="t">1</span> ở bước cuối (h₃), loss L = ½(h₃ − t)².
     </div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Forward (xuôi)</h2><span class="tag">h₁, h₂</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Forward (xuôi)</h2><span class="tag">h₁, h₂, h₃</span></div>
     <div class="calc">
-      h₁ = W·x₁ + U·h₀ = <span data-q="W">1</span>·<span data-q="x1">2</span> + <span data-q="U">0.5</span>·<span data-q="h0">0</span> = <span class="blk" style="min-width:40px"></span><br>
-      h₂ = W·x₂ + U·h₁ = <span data-q="W">1</span>·<span data-q="x2">4</span> + <span data-q="U">0.5</span>·h₁ = <span class="blk" style="min-width:40px"></span>
+      h₁ = W·x₁ + U·h₀ = <span data-q="W">1</span>·<span data-q="x1">4</span> + <span data-q="U">0.5</span>·<span data-q="h0">0</span> = <span class="wcell" style="min-width:38px;height:8mm"></span><br>
+      h₂ = W·x₂ + U·h₁ = <span data-q="W">1</span>·<span data-q="x2">2</span> + <span data-q="U">0.5</span>·h₁ = <span class="wcell" style="min-width:38px;height:8mm"></span><br>
+      h₃ = W·x₃ + U·h₂ = <span data-q="W">1</span>·<span data-q="x3">3</span> + <span data-q="U">0.5</span>·h₂ = <span class="wcell" style="min-width:38px;height:8mm"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> trạng thái h mang "trí nhớ" từ bước trước qua U·h<sub>t−1</sub>.</div>
+    <div class="why"><b>Vì sao:</b> h mang "trí nhớ" qua U·h<sub>t−1</sub>; W dùng LẶP LẠI ở cả 3 bước — đó là gốc rễ khiến BPTT khác backprop thường.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>δ ở bước cuối</h2><span class="tag">∂L/∂h₂</span></div>
-    <div class="calc">δ₂ = ∂L/∂h₂ = h₂ − t = <span class="blk" style="min-width:36px"></span> − <span data-q="t">4</span> = <span class="blk" style="min-width:36px"></span></div>
-    <div class="hint">bắt đầu từ loss ở bước cuối, lan ngược về các bước trước.</div>
+    <div class="step-h"><div class="b">2</div><h2>δ lan ngược qua thời gian</h2><span class="tag">∂L/∂h<sub>t</sub></span></div>
+    <div class="calc">
+      δ₃ = h₃ − t = <span class="blk"></span> − <span data-q="t">1</span> = <span class="wcell" style="min-width:36px;height:8mm"></span><br>
+      δ₂ = δ₃·U &nbsp;<small style="color:#7a8794">(vì h₃=Wx₃+Uh₂ → ∂h₃/∂h₂=U)</small> = <span class="blk"></span>·<span data-q="U">0.5</span> = <span class="wcell" style="min-width:36px;height:8mm"></span><br>
+      δ₁ = δ₂·U = <span class="blk"></span>·<span data-q="U">0.5</span> = <span class="wcell" style="min-width:36px;height:8mm"></span>
+    </div>
+    <div class="hint">bắt đầu từ loss ở bước CUỐI, δ lan NGƯỢC về đầu, mỗi lần nhân thêm U.</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G3 · BPTT</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Gradient W = tổng đóng góp qua các bước</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G3</span>
+    <h1>RNN trải nhiều bước <small>— cộng gradient của trọng số dùng chung</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM lõi -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Gradient W cộng dồn theo thời gian</h2><span class="tag">Σ<sub>t</sub></span></div>
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — gradient W = TỔNG qua các bước</h2><span class="tag">Σ<sub>t</sub> δ<sub>t</sub>·x<sub>t</sub></span></div>
     <div class="calc">
-      ∂h₂/∂W = x₂ + U·(∂h₁/∂W) = <span data-q="x2">4</span> + <span data-q="U">0.5</span>·<span data-q="x1">2</span> = <span class="blk" style="min-width:40px"></span><br>
-      ∂L/∂W = δ₂·(∂h₂/∂W) = <span class="blk" style="min-width:90px"></span>
+      g₁ = δ₁·x₁ = <span class="blk"></span>·<span data-q="x1">4</span> = <span class="wcell" style="min-width:34px;height:8mm"></span> &nbsp;·&nbsp;
+      g₂ = δ₂·x₂ = <span class="blk"></span>·<span data-q="x2">2</span> = <span class="wcell" style="min-width:34px;height:8mm"></span> &nbsp;·&nbsp;
+      g₃ = δ₃·x₃ = <span class="blk"></span>·<span data-q="x3">3</span> = <span class="wcell" style="min-width:34px;height:8mm"></span><br>
+      ∂L/∂W = g₁ + g₂ + g₃ = <span class="blk"></span> + <span class="blk"></span> + <span class="blk"></span> = <span class="wcell" style="min-width:52px;height:9mm;font-size:17px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> vì ∂h₁/∂W = x₁ và h₂ phụ thuộc W <b>cả trực tiếp lẫn qua h₁</b> → gradient là <b>tổng theo thời gian</b>.</div>
+    <div class="why"><b>Vì sao:</b> W CÙNG một biến xuất hiện ở cả 3 bước (như tham số dùng lại nhiều nơi trong đồ thị tính toán, Bài D8) →
+      đạo hàm TỔNG = TỔNG đạo hàm cục bộ tại mỗi lần xuất hiện: <b>∂L/∂W = Σ<sub>t</sub> δ<sub>t</sub>·x<sub>t</sub></b>.</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Chuỗi dài → vanishing/exploding</h2><span class="tag">∏ U</span></div>
+    <div class="calc">
+      U² (δ lùi 2 bước) = <span data-q="U">0.5</span>·<span data-q="U">0.5</span> = <span class="wcell" style="min-width:34px;height:8mm"></span> &nbsp;·&nbsp;
+      U³ (lùi 3 bước) = U²·<span data-q="U">0.5</span> = <span class="wcell" style="min-width:34px;height:8mm"></span>
+    </div>
+    <div class="note">Vì U = <span class="gv" data-q="U">0.5</span> &lt; 1 → δ càng xa càng <b>TEO</b> (vanishing). Nếu U = 2 (&gt;1): U² =
+      <span class="wcell" style="min-width:30px;height:7mm"></span>, U³ = <span class="wcell" style="min-width:30px;height:7mm"></span> → δ càng xa càng <b>NỔ</b> (exploding).
+      Đó là lý do RNN khó nhớ xa → cần LSTM/GRU (Bài G4) hoặc gradient clipping.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vì sao gradient W là tổng theo thời gian? → <span class="blk" style="min-width:170px"></span></li>
-      <li>Chuỗi dài gây vấn đề gì? → <span class="blk" style="min-width:140px"></span></li>
+      <li>Vì sao gradient W là TỔNG qua các bước, không phải 1 bước? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Chuỗi dài gây vấn đề gì cho gradient? → <span class="blk" style="min-width:140px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G3 · BPTT</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:15mm"><span class="lb">✏️ Nháp — cộng g₁+g₂+g₃, nhân U liên tiếp ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Trải 3 bước forward + δ ngược</span>
+    <span><span class="ck"></span>Cộng gradient W dùng chung</span>
+    <span class="win">🎉 Bạn vừa tự tay làm BPTT!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G3 · BPTT</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G3</span><h1>RNN trải nhiều bước (BPTT) <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G3</span><h1>RNN trải nhiều bước <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Forward</h2></div>
-    <div class="calc ans">h₁ = <span data-q="W">1</span>·<span data-q="x1">2</span> + <span data-q="U">0.5</span>·<span data-q="h0">0</span> = <span class="blk" data-q="h1">2</span> &nbsp;·&nbsp; h₂ = <span data-q="W">1</span>·<span data-q="x2">4</span> + <span data-q="U">0.5</span>·<span data-q="h1">2</span> = <span class="blk" data-q="h2">5</span></div>
+    <div class="calc ans">
+      h₁ = <span data-q="W">1</span>·<span data-q="x1">4</span> + <span data-q="U">0.5</span>·<span data-q="h0">0</span> = <span class="wcell ans" data-q="h1">4</span> &nbsp;·&nbsp;
+      h₂ = <span data-q="W">1</span>·<span data-q="x2">2</span> + <span data-q="U">0.5</span>·<span data-q="h1">4</span> = <span class="wcell ans" data-q="h2">4</span> &nbsp;·&nbsp;
+      h₃ = <span data-q="W">1</span>·<span data-q="x3">3</span> + <span data-q="U">0.5</span>·<span data-q="h2">4</span> = <span class="wcell ans" data-q="h3">5</span>
+    </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>δ bước cuối</h2></div>
-    <div class="calc ans">δ₂ = h₂ − t = <span data-q="h2">5</span> − <span data-q="t">4</span> = <span class="blk" data-q="delta2">1</span></div>
+    <div class="step-h"><div class="b">2</div><h2>δ lan ngược qua thời gian</h2></div>
+    <div class="calc ans">
+      δ₃ = <span data-q="h3">5</span> − <span data-q="t">1</span> = <span class="wcell ans" data-q="delta3">4</span> &nbsp;·&nbsp;
+      δ₂ = <span data-q="delta3">4</span>·<span data-q="U">0.5</span> = <span class="wcell ans" data-q="delta2">2</span> &nbsp;·&nbsp;
+      δ₁ = <span data-q="delta2">2</span>·<span data-q="U">0.5</span> = <span class="wcell ans" data-q="delta1">1</span>
+    </div>
   </div>
 
+  <!-- BƯỚC 3 — TỰ KIỂM lõi + SVG -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Gradient W</h2></div>
-    <div class="calc ans">∂h₂/∂W = <span data-q="x2">4</span> + <span data-q="U">0.5</span>·<span data-q="x1">2</span> = <span class="blk" data-q="dhdW">5</span> &nbsp;·&nbsp; ∂L/∂W = <span data-q="delta2">1</span>·<span data-q="dhdW">5</span> = <span class="blk" data-q="gW">5</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>RNN trải ngang · gradient chạy ngược</h2><span class="tag">lam xuôi · cam ngược</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Gradient W = TỔNG qua các bước</h2><span class="tag">lam xuôi · cam ngược</span></div>
     <div class="figrow">
-      <svg id="figChain" class="fig" viewBox="0 0 220 120" width="70mm" height="38mm" aria-label="chuỗi RNN trải theo thời gian, gradient ngược qua U"></svg>
+      <svg id="figChain" class="fig" viewBox="0 0 300 150" width="86mm" height="43mm" aria-label="RNN trải 4 nút h0..h3, mũi tên xuôi lam, gradient ngược cam, W dùng chung cộng vào ∂L/∂W"></svg>
       <div style="flex:1">
-        <div class="note">Gradient của W dùng chung = <b>tổng</b> đóng góp từ mọi bước (cùng một W xuất hiện khắp nơi). Gradient về bước xa nhân nhiều lần U
-          (∏U) → |U|&lt;1 teo, &gt;1 nổ (E2). Khắc phục: <b>clipping</b> (E9), <b>LSTM/GRU</b> (cổng giữ trí nhớ).</div>
+        <div class="calc ans">
+          g₁ = <span data-q="delta1">1</span>·<span data-q="x1">4</span> = <span class="wcell ans" data-q="g1">4</span> &nbsp;
+          g₂ = <span data-q="delta2">2</span>·<span data-q="x2">2</span> = <span class="wcell ans" data-q="g2">4</span> &nbsp;
+          g₃ = <span data-q="delta3">4</span>·<span data-q="x3">3</span> = <span class="wcell ans" data-q="g3">12</span><br>
+          ∂L/∂W = <span data-q="g1">4</span> + <span data-q="g2">4</span> + <span data-q="g3">12</span> = <span class="wcell ans" data-q="gW" style="min-width:52px;font-size:17px">20</span>
+        </div>
+        <div class="note">W xuất hiện ở CẢ 3 nhánh (h₁,h₂,h₃) → gradient tổng là <b>tổng 3 đóng góp cục bộ</b>, không phải chỉ đóng góp ở bước cuối.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vanishing/exploding theo số bước</h2></div>
+    <div class="calc ans">
+      U² = <span class="wcell ans" data-q="U2">0.25</span> &nbsp; U³ = <span class="wcell ans" data-q="U3">0.13</span>
+      &nbsp;·&nbsp; nếu U=2: U² = <span class="wcell ans" data-q="Ue2">4</span>, U³ = <span class="wcell ans" data-q="Ue3">8</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> gradient về bước xa nhân dồn Jacobian ∏U — U=0.5 teo dần (0.5→0.25→0.125), U=2 nổ dần (2→4→8).
+      Khắc phục: <b>gradient clipping</b> (Bài E9) hoặc kiến trúc có cổng nhớ <b>LSTM/GRU</b> (Bài G4).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Gradient W là tổng theo thời gian? → <span class="qa">W dùng chung mọi bước → cộng đóng góp gradient từng bước.</span></li>
-      <li>Chuỗi dài? → <span class="qa">Vanishing/exploding do nhân U nhiều lần.</span></li>
+      <li>Vì sao gradient W là tổng? → <span class="qa">W dùng chung (xuất hiện) ở mọi bước → cộng đóng góp gradient cục bộ từng bước.</span></li>
+      <li>Chuỗi dài? → <span class="qa">Vanishing/exploding do nhân U liên tiếp (∏U) qua số bước.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> BPTT = trải thời gian + cộng dồn gradient W; chuỗi dài → vanishing/exploding.
-    Bài tiếp <b style="color:var(--accent2)">G5</b>: cổng giữ trí nhớ — GRU.
+    <b style="color:var(--accent2)">Rút ra.</b> BPTT = trải thời gian rồi backprop; vì W dùng chung, gradient tổng = <b>Σ<sub>t</sub> δ<sub>t</sub>·x<sub>t</sub></b>;
+    chuỗi dài → ∏U gây vanishing/exploding. Bài tiếp <b style="color:var(--accent2)">G4</b>: cổng giữ trí nhớ — LSTM.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G3 · BPTT</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G3 · BPTT</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -149,38 +209,59 @@
 function generate(){
   var fI=WB.fmtInt, fT=WB.fmtTrim;
   var W=1, U=0.5, h0=0;
-  var x1=WB.pick([2,4,6]), x2=WB.pick([2,3,4,5]);
-  var h1=W*x1+U*h0, h2=W*x2+U*h1;        // h1,h2 nguyên (x1 chẵn)
-  var d=WB.pick([1,2,-1,3]);
-  var t=h2-d, delta2=d;
-  var dhdW=x2+U*x1, gW=delta2*dhdW;
+  var x1=WB.pick([4,8]);          // bội của 4 → U²·x1 nguyên
+  var x2=WB.pick([2,4,6,8]);      // chẵn → U·x1 cộng x2 nguyên
+  var x3=WB.pick([1,2,3,4,5,6]);
+  var d=WB.pick([4,-4,8,-8]);     // bội của 4 → delta1 nguyên
+
+  var h1=W*x1+U*h0;
+  var h2=W*x2+U*h1;
+  var h3=W*x3+U*h2;
+  var delta3=d, t=h3-d;
+  var delta2=delta3*U, delta1=delta2*U;
+  var g1=delta1*x1, g2=delta2*x2, g3=delta3*x3;
+  var gW=g1+g2+g3;
+  var U2=U*U, U3=U*U*U;           // 0.25 , 0.125 — cố định vì U cho sẵn = 0.5
+  var Ue2=4, Ue3=8;                // minh họa nếu U=2 (2²=4, 2³=8) — hằng cố định
+
   WB.setAll({
-    W:fI(W), U:fT(U), h0:fI(h0), x1:fI(x1), x2:fI(x2), t:fI(t),
-    h1:fT(h1), h2:fT(h2), delta2:fI(delta2), dhdW:fT(dhdW), gW:fT(gW)
+    W:fI(W), U:fT(U), h0:fI(h0), x1:fI(x1), x2:fI(x2), x3:fI(x3), t:fI(t),
+    h1:fT(h1), h2:fT(h2), h3:fT(h3),
+    delta3:fT(delta3), delta2:fT(delta2), delta1:fT(delta1),
+    g1:fT(g1), g2:fT(g2), g3:fT(g3), gW:fT(gW),
+    U2:fT(U2), U3:fT(U3), Ue2:fI(Ue2), Ue3:fI(Ue3)
   });
   drawChain('figChain');
 }
 
 function drawChain(id){
   var svg=document.getElementById(id); if(!svg) return;
-  var xs=[24,98,172], y=58;
+  var xs=[24,116,208,276-16], y=88;
+  xs=[22,105,188,271];
   var defs='<defs>'
     +'<marker id="afG3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#0e7490"/></marker>'
     +'<marker id="abG3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#b45309"/></marker>'
     +'</defs>';
   var s='';
-  var lbl=['h₀','h₁','h₂'];
+  var lbl=['h₀','h₁','h₂','h₃'];
+  // chip W dùng chung ở trên, nét chấm nối xuống mỗi nhánh xuôi
+  s += '<rect x="126" y="10" width="26" height="16" rx="4" fill="#fff" stroke="#b45309" stroke-width="1.4"/>';
+  s += '<text x="139" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">W</text>';
   for(var i=0;i<3;i++){
-    s += '<circle cx="'+xs[i]+'" cy="'+y+'" r="13" fill="#fff" stroke="#1a1a1a" stroke-width="1.3"/>';
-    s += '<text x="'+xs[i]+'" y="'+(y+4)+'" text-anchor="middle" font-size="11" font-weight="700">'+lbl[i]+'</text>';
-    if(i<2){
-      s += '<line x1="'+(xs[i]+13)+'" y1="'+(y-5)+'" x2="'+(xs[i+1]-13)+'" y2="'+(y-5)+'" stroke="#0e7490" stroke-width="1.6" marker-end="url(#afG3)"/>';
-      s += '<line x1="'+(xs[i+1]-13)+'" y1="'+(y+7)+'" x2="'+(xs[i]+13)+'" y2="'+(y+7)+'" stroke="#b45309" stroke-width="1.6" stroke-dasharray="3 2" marker-end="url(#abG3)"/>';
-      s += '<text x="'+((xs[i]+xs[i+1])/2)+'" y="'+(y-9)+'" text-anchor="middle" style="font-size:8px" fill="#0e7490">W·x+U·h</text>';
-      s += '<text x="'+((xs[i]+xs[i+1])/2)+'" y="'+(y+22)+'" text-anchor="middle" style="font-size:8px" fill="#b45309">×U</text>';
+    var mx=(xs[i]+xs[i+1])/2;
+    s += '<line x1="139" y1="26" x2="'+mx+'" y2="'+(y-16)+'" stroke="#b45309" stroke-width="1" stroke-dasharray="2 2"/>';
+  }
+  for(var i2=0;i2<4;i2++){
+    s += '<circle cx="'+xs[i2]+'" cy="'+y+'" r="14" fill="#fff" stroke="#1a1a1a" stroke-width="1.3"/>';
+    s += '<text x="'+xs[i2]+'" y="'+(y+4)+'" text-anchor="middle" font-size="11" font-weight="700">'+lbl[i2]+'</text>';
+    if(i2<3){
+      s += '<line x1="'+(xs[i2]+14)+'" y1="'+(y-6)+'" x2="'+(xs[i2+1]-14)+'" y2="'+(y-6)+'" stroke="#0e7490" stroke-width="1.6" marker-end="url(#afG3)"/>';
+      s += '<line x1="'+(xs[i2+1]-14)+'" y1="'+(y+8)+'" x2="'+(xs[i2]+14)+'" y2="'+(y+8)+'" stroke="#b45309" stroke-width="1.6" stroke-dasharray="3 2" marker-end="url(#abG3)"/>';
+      s += '<text x="'+((xs[i2]+xs[i2+1])/2)+'" y="'+(y+24)+'" text-anchor="middle" style="font-size:8px" fill="#b45309">δ·U</text>';
     }
   }
-  s += '<text x="98" y="18" text-anchor="middle" style="font-size:8px" fill="#6b7280">RNN trải theo thời gian (gradient ngược ×U)</text>';
+  s += '<text x="150" y="132" text-anchor="middle" style="font-size:9px" fill="#475569" font-weight="700">∂L/∂W = g₁ + g₂ + g₃  (W dùng chung → CỘNG)</text>';
+  s += '<text x="150" y="144" text-anchor="middle" style="font-size:8px" fill="#6b7280">RNN trải theo thời gian · lam = xuôi · cam = δ ngược (×U mỗi bước)</text>';
   svg.innerHTML=defs+s;
 }
 WB.wire(generate);

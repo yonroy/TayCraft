@@ -1,283 +1,404 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài I4 — Mixture of Experts (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang, giống I3): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-  /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
-  .page .step{ margin-top:4px; }
-  .page .grid2{ margin-top:2px; gap:4px 22px; }
-  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .why{ margin-top:3px; }
-  .page .calc{ line-height:1.5; }
-  .page .note{ margin-top:3px; }
-  .page .mtx .cell{ height:7mm; }
-  .exptab div{ font-size:10px; }
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.55}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: huấn luyện · scale mô hình</div>
+  <div class="top">
+    <span class="no">I4</span>
+    <h1>Mixture of Experts <small>— router chọn top-k chuyên gia</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>s, y · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>eˢ, w, out · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>N, k · tự kiểm</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I4</span><h1>Mixture of Experts <small>— bộ định tuyến chọn top-k chuyên gia</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
-
-  <div class="intro">
-    <b>Nhiều tham số nhưng mỗi token chỉ dùng một phần nhỏ.</b> Thay vì một mạng FFN to nuốt mọi token, MoE có nhiều
-    <b>chuyên gia</b> (mỗi cái là một FFN nhỏ) và một <b>bộ định tuyến</b>: với mỗi token, router chấm điểm rồi chỉ
-    <b>kích hoạt top-k</b> chuyên gia hợp nhất (ở đây k=2 trong 3). Đầu ra là tổng có trọng số theo "cổng". Nhờ vậy mô
-    hình <b>phình tham số</b> mà chi phí tính cho mỗi token <b>gần như không đổi</b> (Mixtral, GPT-MoE dùng cách này).
-    <div class="formula">
-      g = softmax(router) &nbsp;→&nbsp; giữ top-2, chuẩn hóa lại &nbsp;→&nbsp;
-      out = Σ<sub>i∈top-2</sub> g′ᵢ · Eᵢ(x)
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Router có <b>N=4 chuyên gia</b>: chấm điểm gate cho mỗi chuyên gia, giữ lại <b>top-k=2</b> điểm
+    lớn nhất (loại 2 điểm nhỏ), <b>softmax</b> đúng 2 điểm giữ thành trọng số w, rồi <b>trộn</b> đầu ra 2 chuyên gia đó
+    theo w. Cuối phiếu bạn tự <b>ĐẾM</b>: nếu N tăng lên 8, rồi 16 chuyên gia (model "biết" nhiều hơn hẳn) nhưng vẫn giữ
+    k=2, thì số chuyên gia <b>THỰC SỰ chạy</b> mỗi token có đổi không — đây là lý do MoE cho model khổng lồ mà suy luận
+    vẫn rẻ (sparse activation).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>hội đồng chuyên gia</b>: router (người điều phối) xem token rồi gọi <b>vài</b> chuyên gia hợp nhất, bỏ qua số còn lại. Mỗi
-    token đi qua ít chuyên gia → rẻ; nhưng cả mô hình <b>chứa rất nhiều</b> chuyên gia → giàu kiến thức.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: token x, điểm router, 3 chuyên gia</h2><span class="tag">3 expert · k=2</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">x <s>token</s></div>
-        <div class="mtx c1" style="--cell:13mm"><div class="cell given" data-q="x0">2</div><div class="cell given" data-q="x1">1</div></div></div>
-      <div class="mwrap"><div class="mlabel">điểm router s</div>
-        <div class="mtx c3" style="--cell:14mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="s0">2</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="s1">0</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780" data-q="s2">1</div></div>
-        <div class="note" style="text-align:center">E1 · E2 · E3</div></div>
-      <div class="exptab" style="margin-left:6px;align-self:flex-start;margin-top:14px">
-        <div>e⁰<b>1.00</b></div><div>e¹<b>2.72</b></div><div>e²<b>7.39</b></div><div>e³<b>20.09</b></div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">N=4 chuyên gia · điểm gate s &amp; đầu ra y</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Chuyên gia</th><th>điểm gate s</th><th>đầu ra y</th></tr>
+          <tr><td class="l">E1</td><td style="color:var(--blue);font-weight:800" data-q="s1">2</td><td style="color:var(--blue);font-weight:800" data-q="y1">3</td></tr>
+          <tr><td class="l">E2</td><td style="color:var(--blue);font-weight:800" data-q="s2">0</td><td style="color:var(--blue);font-weight:800" data-q="y2">−2</td></tr>
+          <tr><td class="l">E3</td><td style="color:var(--blue);font-weight:800" data-q="s3">4</td><td style="color:var(--blue);font-weight:800" data-q="y3">5</td></tr>
+          <tr><td class="l">E4</td><td style="color:var(--blue);font-weight:800" data-q="s4">1</td><td style="color:var(--blue);font-weight:800" data-q="y4">−1</td></tr>
+        </table>
+        <div class="cap"><b>s</b> = điểm router chấm cho mỗi chuyên gia · <b>y</b> = đầu ra (số) mỗi chuyên gia sẽ trả về
+          <b>nếu</b> được chọn chạy.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:5.6mm"><span>x</span><span>eˣ</span></div>
+          <div class="mx c5" style="--cw:9mm;--ch:5.6mm">
+            <div>0</div><div>1</div><div>2</div><div>3</div><div>4</div>
+            <div class="pe">1.00</div><div class="pe">2.72</div><div class="pe">7.39</div><div class="pe">20.09</div><div class="pe">54.60</div>
+          </div>
+        </div>
+        <div class="cap">Bảng tra <b>eˣ</b> — KHÔNG bấm máy tính. Điểm gate luôn là số nguyên 0…4, đọc thẳng ra eˣ.</div>
       </div>
     </div>
-    <div class="row" style="margin-top:8px;gap:18px">
-      <div class="mwrap"><div class="mlabel" style="color:#7c5cff">E1 <s>2×2</s></div>
-        <div class="mtx c2" style="--cell:11mm;border-color:#b9a9ff">
-          <div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w100">1</div><div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w101">0</div>
-          <div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w110">0</div><div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w111">1</div></div></div>
-      <div class="mwrap"><div class="mlabel" style="color:#7c5cff">E2 <s>2×2</s></div>
-        <div class="mtx c2" style="--cell:11mm;border-color:#b9a9ff">
-          <div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w200">2</div><div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w201">0</div>
-          <div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w210">0</div><div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w211">-1</div></div></div>
-      <div class="mwrap"><div class="mlabel" style="color:#7c5cff">E3 <s>2×2</s></div>
-        <div class="mtx c2" style="--cell:11mm;border-color:#b9a9ff">
-          <div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w300">-1</div><div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w301">1</div>
-          <div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w310">1</div><div class="cell given" style="background:#f3f0ff;border-color:#b9a9ff" data-q="w311">0</div></div></div>
+  </div>
+
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">4 điểm gate → giữ top-2 → softmax → trộn → out</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 360 130" width="100%" height="32mm"
+           aria-label="bốn chuyên gia, hai chuyên gia đậm màu được router giữ nối tới ô tổng có trọng số ra out, hai chuyên gia mờ bị loại — các ô số để trống"></svg>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.4mm">Chuyên gia <b>tím đậm</b> = được router giữ (thực sự chạy) · chuyên gia <b>xám mờ, nét đứt</b> = bị loại (không chạy).</div>
+  </div>
+
+  <!-- ① TOP-K -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Chọn top-2 — loại 2 điểm nhỏ nhất</span><span class="f">routing thưa (sparse)</span></div>
+    <div class="pb">
+      <div class="eq">
+        Loại (2 điểm nhỏ nhất): <span class="slot" style="min-width:26mm"></span> &nbsp;·&nbsp;
+        Giữ (2 điểm lớn nhất): <span class="slot" style="min-width:26mm"></span>
+      </div>
+      <div class="cap"><b>Đây là chỗ tiết kiệm:</b> chỉ 2/4 chuyên gia thực sự <b>CHẠY</b> cho token này; 2 chuyên gia
+        còn lại bị bỏ qua hoàn toàn, không tốn một phép tính nào.</div>
     </div>
   </div>
 
-  <div class="grid2">
-  <!-- STEP 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Router softmax</h2><span class="tag">eˢ ÷ Σ</span></div>
-    <div class="calc">
-      eˢ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> ) · Σ = <span class="blk"></span><br>
-      g = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
+  <!-- ② SOFTMAX -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax trên 2 điểm giữ</span><span class="f">w = eˢ ÷ Σ (tra bảng eˣ)</span></div>
+    <div class="pb">
+      <div class="eq">eˢ (2 giữ) = ( <span class="slot sm"></span>, <span class="slot sm"></span> ) &nbsp;·&nbsp; Σ = <span class="slot"></span> &nbsp;·&nbsp; w = ( <span class="slot sm"></span>, <span class="slot sm"></span> )</div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>w — gate giữ 1</th><th>w — gate giữ 2</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_w1"></div></td><td><div class="track uni" id="t_w2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>0…1</b> · softmax chỉ chạy trên <b>2 điểm giữ</b> (không phải cả 4) — nên w luôn cộng đúng 1.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> router cho điểm "token này hợp expert nào" rồi softmax thành trọng số cổng.</div>
-  </div>
-  <!-- STEP 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chọn top-2 (loại nhỏ nhất)</h2><span class="tag">routing thưa</span></div>
-    <div class="calc">
-      Bỏ chuyên gia điểm thấp nhất: <span class="blk" style="min-width:40px"></span><br>
-      Giữ: <span class="blk" style="min-width:80px"></span>
-    </div>
-    <div class="hint"><b>Đây là chỗ tiết kiệm:</b> chỉ 2/3 chuyên gia thực sự chạy cho token này.</div>
-  </div>
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chuẩn hóa lại gate</h2><span class="tag">g′ = g/Σ(giữ)</span></div>
-    <div class="calc">
-      g′ = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="note">Hai gate giữ lại chia cho tổng của chính chúng → cộng = 1; gate bị loại = 0.</div>
-  </div>
-  <!-- STEP 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Chuyên gia tính &amp; trộn</h2><span class="tag">Σ g′ᵢ·Eᵢ(x)</span></div>
-    <div class="calc">
-      E(x) của 2 cái giữ: tính yᵢ = Wᵢ·x<br>
-      out = ( <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> kết quả = tổ hợp có trọng số đầu ra các expert được chọn (gate g′ làm trọng số).</div>
-  </div>
-  </div><!-- /grid2 -->
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>MoE đạt được gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Rủi ro của router? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 1/2 · ĐỀ</span></div>
+  <!-- ③ TRỘN -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Trộn đầu ra</span><span class="f">out = w₁·y_giữ1 + w₂·y_giữ2</span></div>
+    <div class="pb">
+      <div class="eq">out = <span class="slot sm"></span>·<span class="slot sm"></span> + <span class="slot sm"></span>·<span class="slot sm"></span> = <span class="slot"></span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>out</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track" id="t_out"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>−10 … 0 … +10</b> · out là <b>tổ hợp lồi</b> (trọng số cộng 1) của đúng 2 chuyên gia được giữ.</div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — chi phí chỉ theo k, KHÔNG theo N</span><span class="f">phình số chuyên gia → chi phí mỗi token có đổi?</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Tổng số chuyên gia N</th><th>top-k giữ</th><th>#chuyên gia THỰC SỰ chạy</th><th>Tô thanh chi phí</th></tr>
+        <tr><td class="l">N = 4 (bài này)</td><td>k = 2</td><td><span class="cellb"></span></td><td><div class="track uni" id="t_c4"></div></td></tr>
+        <tr><td class="l">N = 8</td><td>k = 2</td><td><span class="cellb"></span></td><td><div class="track uni" id="t_c8"></div></td></tr>
+        <tr><td class="l">N = 16</td><td>k = 2</td><td><span class="cellb"></span></td><td><div class="track uni" id="t_c16"></div></td></tr>
+      </table>
+      <div class="cap" style="margin-top:1.6mm">Thang thanh: <b>0…4</b> (giá trị k) · Kiểm thêm: Σw (2 gate giữ) = <span class="slot sm"></span> (phải luôn đúng
+        bằng 1, dù bấm 🎲 bao nhiêu lần, dù N là bao nhiêu).</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Chọn top-2, softmax ra w</span>
+    <span><span class="ck"></span>Trộn ra out &amp; tô thanh</span>
+    <span><span class="ck"></span>Chứng minh chi phí ∝ k, không đổi theo N</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao MoE cho model khổng lồ mà vẫn rẻ!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
 <section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  <div class="top">
+    <span class="no">I4</span>
+    <h1>Mixture of Experts <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
   </div>
-  <div class="wb-title"><span class="no">Bài I4</span><h1>Mixture of Experts <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>s, y · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>eˢ, w, out · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>N, k · tự kiểm</span>
+    </span>
+  </div>
 
-  <div class="grid2">
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Router softmax</h2></div>
-    <div class="calc ans">
-      eˢ = ( <span data-q="e0">7.39</span>, <span data-q="e1">1.00</span>, <span data-q="e2">2.72</span> )<br>
-      Σ = <span data-q="sumE">11.11</span><br>
-      g = ( <span class="blk" data-q="g0">0.67</span>, <span class="blk" data-q="g1">0.09</span>, <span class="blk" data-q="g2">0.24</span> )
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">4 điểm gate → giữ top-2 → softmax → trộn → out</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 360 130" width="100%" height="32mm" aria-label="sơ đồ với trọng số và out đã điền số"></svg>
     </div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Top-2</h2></div>
-    <div class="calc ans">
-      Loại: <span class="blk" data-q="dropName">E2</span> (g nhỏ nhất = <span data-q="dropG">0.09</span>)<br>
-      Giữ: <span class="blk" data-q="keepNames">E1, E3</span>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Chọn top-2 (lời giải)</span></div>
+    <div class="pb">
+      <div class="eq">
+        Loại: <span class="slot ans" style="min-width:26mm" data-q="dropNames">E2, E4</span> &nbsp;·&nbsp;
+        Giữ: <span class="slot ans" style="min-width:26mm" data-q="keepNames">E1, E3</span>
+      </div>
+      <div class="why"><b>Vì sao:</b> loại đúng 2 gate <b>nhỏ nhất</b> — router chỉ so <b>tương đối</b> giữa 4 điểm của
+        token này. Token khác có thể được định tuyến đến cặp chuyên gia hoàn toàn khác.</div>
     </div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chuẩn hóa lại</h2></div>
-    <div class="calc ans">
-      g′ = ( <span class="blk" data-q="gp0">0.74</span>, <span class="blk" data-q="gp1">0</span>, <span class="blk" data-q="gp2">0.26</span> )
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax trên 2 điểm giữ (lời giải)</span></div>
+    <div class="pb">
+      <div class="eq">eˢ (2 giữ) = ( <span class="slot ans sm" data-q="eA">7.39</span>, <span class="slot ans sm" data-q="eB">54.60</span> ) &nbsp;·&nbsp;
+        Σ = <span class="slot ans" data-q="sumE">61.99</span> &nbsp;·&nbsp;
+        w = ( <span class="slot ans sm" data-q="wA">0.12</span>, <span class="slot ans sm" data-q="wB">0.88</span> )</div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>w — gate giữ 1</th><th>w — gate giữ 2</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_w1"></div></td><td><div class="track uni" id="a_w2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao softmax chỉ trên 2 điểm giữ:</b> nếu chia cho tổng eˣ của <b>cả 4</b> điểm (kể cả 2 điểm
+        đã loại), w sẽ không cộng đúng 1 — out bị "hụt" so với thang thật. Softmax phải chạy đúng trên tập <b>đã lọc</b>
+        (k điểm) để giữ tổ hợp lồi.</div>
     </div>
-    <div class="note">Kiểm: Σg′ = 1 ✓ (chỉ trên 2 chuyên gia giữ lại).</div>
   </div>
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Trộn đầu ra</h2></div>
-    <div class="calc ans">
-      <span id="lblA">y₁</span> = (<span data-q="y10">2</span>, <span data-q="y11">1</span>) · <span id="lblB">y₃</span> = (<span data-q="y30">−1</span>, <span data-q="y31">2</span>)<br>
-      out = g′·y = ( <span class="blk" data-q="out0">1.22</span>, <span class="blk" data-q="out1">1.26</span> )
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Trộn đầu ra (lời giải)</span></div>
+    <div class="pb">
+      <div class="eq">out = <span class="slot ans sm" data-q="wA">0.12</span>·<span class="slot ans sm" data-q="yA">3</span> + <span class="slot ans sm" data-q="wB">0.88</span>·<span class="slot ans sm" data-q="yB">5</span> = <span class="slot ans" data-q="out">4.76</span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>out</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track" id="a_out"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao "trộn" chứ không "chọn":</b> out là trung bình có trọng số của <b>đúng 2</b> chuyên gia
+        được giữ, không phải kết quả của một chuyên gia duy nhất — 2 chuyên gia bị loại đóng góp <b>đúng 0</b>, không
+        phải "đóng góp ít".</div>
     </div>
   </div>
-  </div><!-- /grid2 -->
 
-  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: router chọn 2 trong 3 chuyên gia</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figMoE" class="fig" viewBox="0 0 270 104" width="126mm" height="48mm" aria-label="token vào router, router tỏa sang ba chuyên gia; hai chuyên gia điểm cao được tô đậm và nối tới ô tổng có trọng số, chuyên gia bị loại mờ đi"></svg>
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — chi phí chỉ theo k (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Tổng số chuyên gia N</th><th>top-k giữ</th><th>#chuyên gia THỰC SỰ chạy</th><th>Tô thanh chi phí</th></tr>
+        <tr><td class="l">N = 4 (bài này)</td><td>k = 2</td><td class="evt">2</td><td><div class="track uni" id="a_c4"></div></td></tr>
+        <tr><td class="l">N = 8</td><td>k = 2</td><td class="evt">2</td><td><div class="track uni" id="a_c8"></div></td></tr>
+        <tr><td class="l">N = 16</td><td>k = 2</td><td class="evt">2</td><td><div class="track uni" id="a_c16"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">Σw (2 gate giữ) = <span class="slot ans sm" data-q="sumW">1.00</span> — luôn đúng 1, mọi lần bấm 🎲, mọi N.</div>
+      <div class="why p"><b>Đây là điểm cốt lõi của cả bài:</b> ba hàng N=4,8,16 có <b>#chuyên gia chạy</b> và <b>độ dài
+        thanh chi phí</b> giống hệt nhau — vì k=2 KHÔNG đổi. Router chỉ chọn trong số N chuyên gia <b>sẵn có</b>, nhưng
+        luôn dừng lại ở đúng k cái. <b>Dung lượng tham số</b> (kiến thức mô hình lưu được) tỉ lệ N — càng nhiều chuyên
+        gia càng "biết" nhiều; <b>chi phí tính mỗi token</b> tỉ lệ k — cố định, không phụ thuộc N. Đây chính là lý do
+        các LLM MoE (Mixtral, GPT-OSS, DeepSeek-MoE...) có hàng trăm tỉ tham số nhưng suy luận rẻ như model nhỏ hơn nhiều.</div>
+    </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>MoE đạt được gì? → <span class="qa">Nhiều tham số (kiến thức) nhưng tính ít — mỗi token chỉ dùng top-k expert.</span></li>
-      <li>Rủi ro router? → <span class="qa">Dồn tải vào vài expert → cần cân bằng tải (load balancing).</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi học MoE</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Router chỉ chọn 1 chuyên gia duy nhất (như argmax)."</b><br>
+          <span style="color:var(--dim)">Bài này k=2 — router luôn <b>trộn MỀM</b> giữa k chuyên gia theo trọng số w,
+          không "chọn cứng" một cái. k=1 (switch routing) là một biến thể riêng, không phải quy tắc chung.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Softmax trên cả 4 điểm rồi mới cắt bớt, khỏi cần làm lại."</b><br>
+          <span style="color:var(--dim)">Sai — Bước② đã chỉ ra: nếu chia cho tổng của cả 4, hai gate giữ KHÔNG cộng
+          bằng 1. Phải softmax lại đúng trên tập k đã lọc.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Tăng N (thêm chuyên gia) làm tính toán mỗi token tăng theo."</b><br>
+          <span style="color:var(--dim)">Sai — Bước④ vừa chứng minh: chi phí mỗi token chỉ ∝ k (cố định). N chỉ ảnh
+          hưởng <b>bộ nhớ lưu tham số</b>, không ảnh hưởng compute mỗi token.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "2 chuyên gia bị loại vẫn chạy xong rồi mới vứt kết quả."</b><br>
+          <span style="color:var(--dim)">Sai — top-k routing quyết định <b>trước khi</b> forward. 2 chuyên gia bị loại
+          <b>không bao giờ</b> được gọi — đó mới là tiết kiệm thật, không phải "tính thừa rồi bỏ".</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> MoE tách rời <b>dung lượng</b> (tổng số tham số, rất lớn) khỏi <b>chi phí tính</b> (chỉ k chuyên gia
-    chạy mỗi token). Router học cách phân công — token khác nhau đi tới nhóm chuyên gia khác nhau, nên cần thêm
-    "cân tải" để không dồn hết vào một cái. Đây là cách phổ biến để scale LLM lên hàng trăm tỉ tham số mà vẫn suy luận
-    nổi. Mỗi chuyên gia bên trong chính là <b>lớp FFN (Bài H6)</b>; router chỉ là một <b>softmax (Bài C10)</b> nhỏ.
+  <div class="why t">
+    <b>Rút ra.</b> MoE tách rời <b>dung lượng tham số</b> (∝N, kiến thức mô hình lưu được) khỏi <b>chi phí tính mỗi
+    token</b> (∝k, cố định) — router chỉ là một <b>softmax nhỏ</b> (Bài C10) quyết định ai được chạy. Rủi ro đi kèm:
+    router có thể <b>dồn tải</b> vào vài chuyên gia quen thuộc, nên khi train cần thêm cơ chế "cân tải" (load
+    balancing) để mọi chuyên gia đều được luyện đến. Bài tiếp theo <b>I5 (LoRA)</b>: một cách khác để mô hình lớn vẫn
+    rẻ — không phải bằng cách chọn ít tham số chạy, mà bằng cách <b>chỉ học thêm một phần rất nhỏ</b>.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I4 · Mixture of Experts</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var EXP = {0:1.00, 1:2.72, 2:7.39, 3:20.09};
-var ENAME = ['E1','E2','E3'];
+var EXP = {0:1.00, 1:2.72, 2:7.39, 3:20.09, 4:54.60};
+var ENAME = ['E1','E2','E3','E4'];
+var S = {};
+
+function round2(x){ return Math.round(x*100)/100; }
 
 function generate(){
-  var x = [WB.randIntNZ(-2,2), WB.randIntNZ(-2,2)];
-  var s = WB.pickDistinct([0,1,2,3], 3);            // 3 điểm router phân biệt
-  var W = [
-    [[WB.randIntNZ(-2,2),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randIntNZ(-2,2)]],
-    [[WB.randIntNZ(-2,2),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randIntNZ(-2,2)]],
-    [[WB.randIntNZ(-2,2),WB.randInt(-1,1)],[WB.randInt(-1,1),WB.randIntNZ(-2,2)]]
-  ];
-  var e = s.map(function(v){ return EXP[v]; });
-  var sumE = e[0]+e[1]+e[2];
-  var g = e.map(function(v){ return v/sumE; });
-  // top-2: loại index có s nhỏ nhất (e nhỏ nhất)
-  var drop = 0; for (var i=1;i<3;i++){ if (e[i] < e[drop]) drop = i; }
-  var keep = [0,1,2].filter(function(i){ return i!==drop; });
-  var keepSum = e[keep[0]] + e[keep[1]];
-  var gp = [0,0,0]; keep.forEach(function(i){ gp[i] = e[i]/keepSum; });
-  // outputs của tất cả expert
-  var y = W.map(function(m){ return [m[0][0]*x[0]+m[0][1]*x[1], m[1][0]*x[0]+m[1][1]*x[1]]; });
-  var out = [0,0];
-  keep.forEach(function(i){ out[0]+=gp[i]*y[i][0]; out[1]+=gp[i]*y[i][1]; });
+  var fI = WB.fmtInt, f2 = WB.fmt2;
+
+  var sIdx = WB.pickDistinct([0,1,2,3,4], 4);          // 4 điểm gate phân biệt, khớp bảng eˣ (0..4)
+  var y = [WB.randInt(-4,6), WB.randInt(-4,6), WB.randInt(-4,6), WB.randInt(-4,6)];
+
+  // top-2: giữ 2 điểm lớn nhất, loại 2 điểm nhỏ nhất
+  var order = [0,1,2,3].slice().sort(function(a,b){ return sIdx[b]-sIdx[a]; });
+  var keep = [order[0], order[1]].sort(function(a,b){ return a-b; });
+  var drop = [order[2], order[3]].sort(function(a,b){ return a-b; });
+
+  var eA = EXP[sIdx[keep[0]]], eB = EXP[sIdx[keep[1]]];
+  var sumE = round2(eA + eB);
+  var wA = round2(eA / sumE);
+  var wB = round2(1 - wA);                              // ép Σw đúng bằng 1.00
+
+  var yA = y[keep[0]], yB = y[keep[1]];
+  var out = round2(wA*yA + wB*yB);
+
+  S = { sIdx:sIdx, y:y, keep:keep, drop:drop, eA:eA, eB:eB, sumE:sumE, wA:wA, wB:wB, yA:yA, yB:yB, out:out };
 
   var map = {
-    x0:WB.fmtInt(x[0]), x1:WB.fmtInt(x[1]),
-    s0:WB.fmtInt(s[0]), s1:WB.fmtInt(s[1]), s2:WB.fmtInt(s[2]),
-    e0:WB.fmt2(e[0]), e1:WB.fmt2(e[1]), e2:WB.fmt2(e[2]), sumE:WB.fmt2(sumE),
-    g0:WB.fmt2(g[0]), g1:WB.fmt2(g[1]), g2:WB.fmt2(g[2]),
-    dropName:ENAME[drop], dropG:WB.fmt2(g[drop]),
-    keepNames:ENAME[keep[0]]+', '+ENAME[keep[1]],
-    gp0:WB.fmt2(gp[0]), gp1:WB.fmt2(gp[1]), gp2:WB.fmt2(gp[2]),
-    y10:WB.fmtInt(y[keep[0]][0]), y11:WB.fmtInt(y[keep[0]][1]),
-    y30:WB.fmtInt(y[keep[1]][0]), y31:WB.fmtInt(y[keep[1]][1]),
-    out0:WB.fmt2(out[0]), out1:WB.fmt2(out[1])
+    s1: String(sIdx[0]), s2: String(sIdx[1]), s3: String(sIdx[2]), s4: String(sIdx[3]),
+    y1: fI(y[0]), y2: fI(y[1]), y3: fI(y[2]), y4: fI(y[3]),
+    dropNames: ENAME[drop[0]] + ', ' + ENAME[drop[1]],
+    keepNames: ENAME[keep[0]] + ', ' + ENAME[keep[1]],
+    eA: f2(eA), eB: f2(eB), sumE: f2(sumE),
+    wA: f2(wA), wB: f2(wB),
+    yA: fI(yA), yB: fI(yB),
+    out: f2(out),
+    sumW: f2(round2(wA + wB))
   };
-  for (var t=0;t<3;t++){ map['w'+(t+1)+'00']=WB.fmtInt(W[t][0][0]); map['w'+(t+1)+'01']=WB.fmtInt(W[t][0][1]); map['w'+(t+1)+'10']=WB.fmtInt(W[t][1][0]); map['w'+(t+1)+'11']=WB.fmtInt(W[t][1][1]); }
   WB.setAll(map);
-  // nhãn y trong đáp án theo đúng 2 expert giữ
-  relabelKeep(keep);
-  drawMoE(g, gp, drop, keep);
+
+  // thanh w: ĐỀ trống, ĐÁP ÁN tô đầy (0..1, một chiều)
+  drawBarUni('t_w1', 0, 1, false); drawBarUni('t_w2', 0, 1, false);
+  drawBarUni('a_w1', wA, 1, true); drawBarUni('a_w2', wB, 1, true);
+
+  // thanh out: ĐỀ trống, ĐÁP ÁN tô đầy (−10..0..+10, hai chiều)
+  drawBarBi('t_out', 0, 10, false);
+  drawBarBi('a_out', out, 10, true);
+
+  // thanh chi phí tự kiểm: luôn = k=2 trên thang 0..4, BẤT KỂ N — ĐỀ trống, ĐÁP ÁN 3 hàng tô đầy CÙNG độ dài
+  ['t_c4','t_c8','t_c16'].forEach(function(id){ drawBarUni(id, 0, 4, false); });
+  ['a_c4','a_c8','a_c16'].forEach(function(id){ drawBarUni(id, 2, 4, true); });
+
+  drawMoE('figQ', false);
+  drawMoE('figA', true);
 }
 
-// đổi nhãn "y₁ / y₃" trong đáp án cho khớp 2 expert được giữ
-function relabelKeep(keep){
-  var a = document.getElementById('lblA'), b = document.getElementById('lblB');
-  if (a) a.textContent = 'y'+(keep[0]+1);
-  if (b) b.textContent = 'y'+(keep[1]+1);
-}
-
-function drawMoE(g, gp, drop, keep){
-  var svg = document.getElementById('figMoE'); if (!svg) return;
-  var s = '<defs><marker id="amo" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
-  // token
-  s += '<rect x="8" y="44" width="34" height="16" rx="4" fill="#eaf4f6" stroke="#7fb4bf"/><text x="25" y="55" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">token</text>';
-  // router
-  s += '<rect x="62" y="40" width="40" height="24" rx="5" fill="#fff5e9" stroke="#e3b780"/><text x="82" y="50" text-anchor="middle" style="font-size:8.5px" fill="#b45309" font-weight="700">router</text><text x="82" y="60" text-anchor="middle" style="font-size:7px" fill="#b45309">softmax</text>';
-  s += '<line x1="42" y1="52" x2="61" y2="52" stroke="#5b6776" stroke-width="1.4" marker-end="url(#amo)"/>';
-  // experts
-  var ey=[18,52,86];
-  for (var i=0;i<3;i++){
-    var on = (i!==drop);
-    var col = on ? '#7c5cff' : '#c9cfd8';
-    s += '<rect x="150" y="'+(ey[i]-11)+'" width="46" height="22" rx="5" fill="'+(on?'#f3f0ff':'#f4f5f7')+'" stroke="'+col+'" stroke-width="'+(on?1.5:1)+'"/>';
-    s += '<text x="173" y="'+(ey[i]-1)+'" text-anchor="middle" style="font-size:9px" fill="'+(on?'#5b3ed6':'#9aa3ae')+'" font-weight="700">E'+(i+1)+'</text>';
-    s += '<text x="173" y="'+(ey[i]+8)+'" text-anchor="middle" style="font-size:7px" fill="'+(on?'#7c5cff':'#b3bac3')+'">g′='+WB.fmt2(gp[i])+'</text>';
-    s += '<line x1="102" y1="52" x2="149" y2="'+ey[i]+'" stroke="'+(on?'#7c5cff':'#e2e6ec')+'" stroke-width="'+(on?1.4:0.8)+'"'+(on?'':' stroke-dasharray="3 3"')+' marker-end="url(#amo)"/>';
-    s += '<text x="125" y="'+((52+ey[i])/2 -2)+'" text-anchor="middle" style="font-size:6.5px" fill="'+(on?'#5b6776':'#c2ccd8')+'">g='+WB.fmt2(g[i])+'</text>';
+// thanh một chiều (0..max, gốc TRÁI) — dùng cho w, chi phí tự kiểm. fill=false → chỉ vạch mốc (ĐỀ để trống).
+function drawBarUni(id, v, max, fill){
+  var el = document.getElementById(id); if (!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:33%"></div><div class="tick" style="left:66%"></div>';
+  if (fill && v > 0){
+    var pct = Math.min(v/max, 1) * 100;
+    h += '<div class="fill pos" style="left:0;width:' + pct + '%"></div>';
   }
-  // tổng có trọng số
-  s += '<circle cx="236" cy="52" r="11" fill="#fff" stroke="#b45309" stroke-width="1.6"/><text x="236" y="56" text-anchor="middle" style="font-size:13px" fill="#b45309" font-weight="700">Σ</text>';
-  keep.forEach(function(i){ s += '<line x1="196" y1="'+ey[i]+'" x2="226" y2="52" stroke="#b45309" stroke-width="1.4" marker-end="url(#amo)"/>'; });
-  s += '<line x1="247" y1="52" x2="264" y2="52" stroke="#b45309" stroke-width="1.8" marker-end="url(#amo)"/><text x="255" y="46" text-anchor="middle" style="font-size:8px" fill="#b45309" font-weight="700">out</text>';
-  s += '<text x="135" y="102" text-anchor="middle" style="font-size:8px" fill="#5b6776">chỉ 2/3 chuyên gia (đậm) thực sự chạy → tiết kiệm tính toán</text>';
+  el.innerHTML = h;
+}
+
+// thanh hai chiều (gốc GIỮA, dương chạy phải lam, âm chạy trái cam) — dùng cho out.
+function drawBarBi(id, v, max, fill){
+  var el = document.getElementById(id); if (!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if (fill && v !== 0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v > 0 ? '<div class="fill pos" style="left:50%;width:' + pct + '%"></div>'
+               : '<div class="fill neg" style="right:50%;width:' + pct + '%"></div>';
+  }
+  el.innerHTML = h;
+}
+
+// Sơ đồ: 4 chuyên gia (2 tím đậm giữ, 2 xám mờ loại) → Σ có trọng số → out.
+function drawMoE(id, showAns){
+  var svg = document.getElementById(id); if (!svg) return;
+  var DIM='#6b7280', INK='#16202e', ORG='#b45309', PUR='#6d28d9';
+  var s = '<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+        + '<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  var ey = [14, 46, 78, 110];
+  for (var i=0;i<4;i++){
+    var on = S.keep.indexOf(i) !== -1;
+    var col = on ? PUR : '#c9cfd8';
+    var w = on ? (S.keep[0]===i ? S.wA : S.wB) : null;
+    s += '<rect x="30" y="'+(ey[i]-13)+'" width="76" height="26" rx="5" fill="'+(on?'#f5f1fe':'#f4f5f7')+'" stroke="'+col+'" stroke-width="'+(on?1.5:1)+'"'+(on?'':' stroke-dasharray="3 3"')+'/>';
+    s += '<text x="68" y="'+(ey[i]-2)+'" text-anchor="middle" font-size="9" font-weight="800" fill="'+(on?PUR:'#9aa3ae')+'">E'+(i+1)+' · s='+S.sIdx[i]+'</text>';
+    s += '<text x="68" y="'+(ey[i]+9)+'" text-anchor="middle" font-size="7" fill="'+(on?PUR:'#b3bac3')+'">'+(on?('w='+(showAns?WB.fmt2(w):'?')):'loại')+'</text>';
+  }
+
+  s += '<circle cx="220" cy="63" r="14" fill="#fff" stroke="'+ORG+'" stroke-width="1.6"/>'
+     + '<text x="220" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="'+ORG+'">Σ</text>';
+  S.keep.forEach(function(i){ s += '<line x1="106" y1="'+ey[i]+'" x2="206" y2="63" stroke="'+ORG+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>'; });
+  s += '<line x1="234" y1="63" x2="256" y2="63" stroke="'+ORG+'" stroke-width="1.6" marker-end="url(#mk'+id+')"/>';
+
+  s += '<text x="308" y="41" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+ORG+'">out</text>';
+  s += '<rect x="278" y="50" width="60" height="26" rx="3" fill="'+(showAns?'#fff8f0':'#fff')+'" stroke="'+(showAns?ORG:INK)+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+  if (showAns) s += '<text x="308" y="67" text-anchor="middle" font-size="9" font-weight="700" fill="#7a3d00">'+WB.fmt2(S.out)+'</text>';
+  else s += '<text x="308" y="68" text-anchor="middle" font-size="10" fill="#c3ccd6">✍</text>';
+
   svg.innerHTML = s;
 }
+
 WB.wire(generate);
-// vẽ hình khởi tạo khớp số given mặc định (s=2,0,1 → loại E2, giữ E1+E3)
-drawMoE([0.67,0.09,0.24],[0.73,0,0.27],1,[0,2]);
+generate();   // ⚠️ BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

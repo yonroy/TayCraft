@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B4 — k-NN (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,74 +22,117 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B4</span><h1>k-NN — k láng giềng gần nhất <small>— k-Nearest Neighbors</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài B4</span>
+    <h1>k-NN — k láng giềng gần nhất <small>— mẫu giống nhau thì nhãn giống nhau</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> k-NN cho thấy ý tưởng cốt lõi của ML: <b>mẫu giống nhau thì nhãn giống nhau</b>. Không
-    huấn luyện, chỉ cần khoảng cách — nền tảng của truy hồi (retrieval) và nhiều hệ gợi ý.
-    <div class="formula">
-      d²(x, xᵢ) = <span style="font-size:15px">Σ</span> (xⱼ − xᵢⱼ)² &nbsp;→&nbsp; chọn k điểm d nhỏ nhất &nbsp;→&nbsp; nhãn = đa số phiếu
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho <b>5 điểm</b> đã biết lớp (🔵/🔴) và <b>1 điểm hỏi Q</b>. Hãy <b>tự tay</b> đo
+    khoảng cách bình phương d² từ Q tới cả 5 điểm, chọn <b>k = 3</b> gần nhất, bỏ phiếu đa số ra lớp của Q.
+    Phần thưởng: đổi <b>k = 5</b> để thấy chính k điều khiển câu trả lời.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hỏi <b>k người hàng xóm gần nhất</b> rồi theo số đông. k nhỏ → nhạy nhiễu; k lớn → mượt nhưng có thể "nuốt" ranh
-    giới lớp. So sánh khoảng cách thì dùng <b>d²</b> là đủ (khỏi căn) → số đẹp hơn.
-  </div>
-
-  <!-- GIVEN + SVG -->
+  <!-- BƯỚC 0 — CHO SẴN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>5 điểm &amp; điểm hỏi Q</h2><span class="tag">k = 3</span></div>
+    <div class="step-h"><div class="b">0</div><h2>5 điểm cho sẵn &amp; điểm hỏi Q</h2><span class="tag">k = 3</span></div>
+    <div class="calc" style="line-height:1.85">
+      P₁ <b style="color:#0e7490">🔵</b>(<span data-q="p1">1,1</span>) &nbsp;·&nbsp; P₂ <b style="color:#0e7490">🔵</b>(<span data-q="p2">2,1</span>) &nbsp;·&nbsp;
+      P₃ <b style="color:#b45309">🔴</b>(<span data-q="p3">4,4</span>) &nbsp;·&nbsp; P₄ <b style="color:#b45309">🔴</b>(<span data-q="p4">5,4</span>) &nbsp;·&nbsp; P₅ <b style="color:#b45309">🔴</b>(<span data-q="p5">4,1</span>)<br>
+      Điểm hỏi <b>Q = (<span data-q="q">2,2</span>)</b> — chưa biết lớp
+    </div>
+    <div class="why"><b>Vì sao:</b> k-NN <b>không học</b> tham số — chỉ lưu dữ liệu rồi đo khoảng cách lúc dự đoán. "Huấn luyện" = ghi nhớ.</div>
+  </div>
+
+  <!-- BƯỚC 1 — d² tới cả 5 điểm -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Khoảng cách bình phương d² tới Q</h2><span class="tag">5 phép</span></div>
+    <div class="calc" style="line-height:2.15">
+      d²(Q, Pᵢ) = (Δx)² + (Δy)² &nbsp;<small style="color:#7a8794">với Δx = Qₓ − Pᵢₓ, Δy = Q_y − Pᵢ_y</small><br>
+      P₁: ( <span class="blk"></span> )² + ( <span class="blk"></span> )² = <span class="wcell"></span> &nbsp;&nbsp;
+      P₂: ( <span class="blk"></span> )² + ( <span class="blk"></span> )² = <span class="wcell"></span><br>
+      P₃: ( <span class="blk"></span> )² + ( <span class="blk"></span> )² = <span class="wcell"></span> &nbsp;&nbsp;
+      P₄: ( <span class="blk"></span> )² + ( <span class="blk"></span> )² = <span class="wcell"></span><br>
+      P₅: ( <span class="blk"></span> )² + ( <span class="blk"></span> )² = <span class="wcell"></span>
+    </div>
+    <div class="hint"><b>Mẹo:</b> so sánh khoảng cách chỉ cần <b>d²</b> — khỏi khai căn (căn không đổi thứ tự). Số nguyên, dễ cộng.</div>
+  </div>
+
+  <div class="scratch" style="height:24mm"><span class="lb">✏️ Nháp — ghi Δx, Δy từng điểm rồi bình phương ở đây</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài B4</span>
+    <h1>k-NN <small>— bỏ phiếu k=3, đổi k=5 &amp; kiểm bằng hình</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+
+  <!-- BƯỚC 2 — CHỌN k=3 & BỎ PHIẾU -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Chọn k = 3 gần nhất &amp; bỏ phiếu</h2><span class="tag">đa số</span></div>
+    <div class="calc big">
+      Xếp d² từ nhỏ → lớn, lấy <b>3</b> đầu: <span class="wcell" style="min-width:120px"></span><br>
+      Đếm phiếu → 🔵 <span class="wcell" style="min-width:26px"></span> : 🔴 <span class="wcell" style="min-width:26px"></span>
+      &nbsp;→&nbsp; Q thuộc lớp <span class="wcell" style="min-width:50px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> chọn k <b>lẻ</b> để tránh hòa phiếu; nhãn của đa số trong k điểm gần nhất chính là dự đoán cho Q.</div>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM: đổi k=5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đổi k = 5 thì sao?</h2><span class="tag">k điều khiển</span></div>
+    <div class="calc big">
+      Hỏi <b>cả 5</b> điểm (k = 5): 🔵 <span class="wcell" style="min-width:26px"></span> : 🔴 <span class="wcell" style="min-width:26px"></span>
+      &nbsp;→&nbsp; Q thuộc lớp <span class="wcell" style="min-width:50px"></span><br>
+      So với k = 3 ở trên: <span class="wcell" style="min-width:150px"></span>
+    </div>
+    <div class="note">Với k = 5 phiếu <b>luôn</b> là 2 🔵 : 3 🔴 (đếm hết mọi điểm) → luôn ra 🔴. Nếu k = 3 của bạn ra 🔵, thì <b>đổi k đã đổi kết luận</b>: k nhỏ bám cục bộ (nhạy nhiễu), k lớn theo đa số toàn cục (mượt hơn nhưng "nuốt" ranh giới lớp).</div>
+  </div>
+
+  <!-- BƯỚC 4 — HERO: khoanh vòng 3 điểm gần nhất -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Kiểm bằng hình — khoanh vùng k = 3</h2><span class="tag">điểm + vòng</span></div>
     <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 175 150" width="62mm" height="53mm" aria-label="5 điểm hai lớp và điểm hỏi Q trên lưới"></svg>
-      <div style="flex:1">
-        <div class="calc" style="line-height:1.7">
-          P₁<b style="color:#0e7490">🔵</b>(<span data-q="p1">1,1</span>) · P₂<b style="color:#0e7490">🔵</b>(<span data-q="p2">2,1</span>)<br>
-          P₃<b style="color:#b45309">🔴</b>(<span data-q="p3">4,4</span>) · P₄<b style="color:#b45309">🔴</b>(<span data-q="p4">5,4</span>) · P₅<b style="color:#b45309">🔴</b>(<span data-q="p5">4,1</span>)<br>
-          Điểm hỏi Q = (<b data-q="q">2,2</b>)
-        </div>
-        <div class="why"><b>Vì sao:</b> k-NN <b>không học</b> tham số — chỉ lưu dữ liệu rồi đo khoảng cách lúc dự đoán.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 175 150" width="64mm" height="54.9mm" aria-label="5 điểm hai lớp và điểm hỏi Q trên lưới, khoanh vùng 3 điểm gần nhất"></svg>
+      <div style="flex:1;min-width:46mm">
+        <div class="note"><b>Vẽ tay:</b> khoanh một vòng tròn tâm Q vừa đủ ôm <b>3 điểm gần nhất</b>, rồi ghi lớp của Q vào ô.</div>
+        <div class="calc" style="margin-top:6px">lớp Q (k=3) = <span class="wcell" style="min-width:50px"></span></div>
+        <div class="note" style="margin-top:6px">Vòng nhỏ chỉ chứa hàng xóm gần → k-NN chính là "hỏi vùng lân cận". Vùng càng rộng (k lớn) càng gộp nhiều điểm.</div>
       </div>
     </div>
   </div>
 
-  <!-- STEP 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Khoảng cách d² tới Q</h2><span class="tag">5 phép</span></div>
-    <div class="calc">
-      d²(Q,P₁) = <span class="blk"></span> · d²(Q,P₂) = <span class="blk"></span> · d²(Q,P₃) = <span class="blk"></span> · d²(Q,P₄) = <span class="blk"></span> · d²(Q,P₅) = <span class="blk"></span>
-    </div>
-    <div class="hint"><b>Mẹo:</b> d² = (Δx)² + (Δy)² — cộng bình phương hai hiệu tọa độ.</div>
-  </div>
-
-  <!-- STEP 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chọn k=3 gần nhất &amp; bỏ phiếu</h2><span class="tag">đa số</span></div>
-    <div class="calc">
-      3 điểm gần nhất: <span class="blk" style="min-width:130px"></span><br>
-      Phiếu → 🔵 <span class="blk" style="min-width:24px"></span> : 🔴 <span class="blk" style="min-width:24px"></span> &nbsp;→&nbsp; Q thuộc lớp <span class="blk" style="min-width:46px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> chọn k <b>lẻ</b> để tránh hòa phiếu; đa số quyết định nhãn của Q.</div>
-  </div>
-
-  <!-- TỰ KIỂM TRA -->
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>k-NN có "huấn luyện" không? → <span class="blk" style="min-width:200px"></span></li>
-      <li>Vì sao nên chọn k lẻ? → <span class="blk" style="min-width:160px"></span></li>
+      <li>k-NN có "huấn luyện" (học tham số) không? → <span class="blk" style="min-width:190px"></span></li>
+      <li>Vì sao so khoảng cách chỉ cần d² (khỏi căn)? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Đo xong 5 khoảng cách</span>
+    <span><span class="ck"></span>Bỏ phiếu k=3 &amp; k=5</span>
+    <span class="win">🎉 Bạn vừa phân loại bằng láng giềng!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -95,35 +142,58 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Khoảng cách d²</h2></div>
-    <div class="calc ans">
-      P₁: <span class="blk" data-q="d1">2</span> · P₂: <span class="blk" data-q="d2">1</span> · P₃: <span class="blk" data-q="d3">8</span> · P₄: <span class="blk" data-q="d4">13</span> · P₅: <span class="blk" data-q="d5">5</span>
+    <div class="calc ans big" style="line-height:2.05">
+      P₁: (<span data-q="ax1">1</span>)²+(<span data-q="ay1">1</span>)² = <span class="wcell ans" data-q="d1">2</span> &nbsp;·&nbsp;
+      P₂: (<span data-q="ax2">0</span>)²+(<span data-q="ay2">1</span>)² = <span class="wcell ans" data-q="d2">1</span> &nbsp;·&nbsp;
+      P₃: (<span data-q="ax3">−2</span>)²+(<span data-q="ay3">−2</span>)² = <span class="wcell ans" data-q="d3">8</span><br>
+      P₄: (<span data-q="ax4">−3</span>)²+(<span data-q="ay4">−2</span>)² = <span class="wcell ans" data-q="d4">13</span> &nbsp;·&nbsp;
+      P₅: (<span data-q="ax5">−2</span>)²+(<span data-q="ay5">1</span>)² = <span class="wcell ans" data-q="d5">5</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Bỏ phiếu k=3</h2></div>
-    <div class="calc ans">
-      3 gần nhất: <span class="blk" data-q="near">P₂, P₁, P₅</span><br>
-      🔵 <span class="blk" data-q="vblue">2</span> : 🔴 <span class="blk" data-q="vred">1</span> &nbsp;→&nbsp; Q thuộc lớp <span class="blk" data-q="pred">🔵 (Xanh)</span>
+    <div class="step-h"><div class="b">2</div><h2>Bỏ phiếu k = 3</h2></div>
+    <div class="calc ans big">
+      3 gần nhất: <span class="wcell ans" data-q="near">P₂, P₁, P₅</span> &nbsp;→&nbsp;
+      🔵 <span class="wcell ans" data-q="vblue">2</span> : 🔴 <span class="wcell ans" data-q="vred">1</span> &nbsp;→&nbsp;
+      Q thuộc lớp <span class="wcell ans" data-q="pred">🔵</span>
     </div>
-    <div class="note" data-q="ksvg2"></div>
-    <svg id="figK" class="fig" viewBox="0 0 175 150" width="58mm" height="50mm" style="margin-top:4px"></svg>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — k = 5</h2></div>
+    <div class="calc ans big">
+      k = 5: 🔵 <span class="wcell ans" data-q="vblue5">2</span> : 🔴 <span class="wcell ans" data-q="vred5">3</span> &nbsp;→&nbsp;
+      Q thuộc lớp <span class="wcell ans" data-q="pred5">🔴</span> &nbsp;·&nbsp; so với k=3: <span class="wcell ans" data-q="k5cmp">khác</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> k = 5 đếm hết → 3 🔴 &gt; 2 🔵 nên luôn ra 🔴. Chính giá trị k (không phải dữ liệu) quyết định ranh giới — đây là siêu tham số quan trọng nhất của k-NN.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hình — vòng k = 3</h2></div>
+    <div class="figrow">
+      <svg id="figK" class="fig" viewBox="0 0 175 150" width="60mm" height="51.4mm"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans">lớp Q (k=3) = <span class="wcell ans" data-q="predf">🔵</span></div>
+        <div class="why"><b>Vì sao khớp:</b> vòng đứt nét ôm đúng 3 điểm d² nhỏ nhất; màu áp đảo trong vòng là lớp của Q.</div>
+      </div>
+    </div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>k-NN có huấn luyện không? → <span class="qa">Không — chỉ lưu dữ liệu và đo khoảng cách lúc dự đoán</span></li>
-      <li>Vì sao chọn k lẻ? → <span class="qa">Tránh hòa phiếu giữa hai lớp</span></li>
+      <li>Có huấn luyện không? → <span class="qa">Không — chỉ lưu dữ liệu, đo khoảng cách lúc dự đoán (lazy learning)</span></li>
+      <li>Chỉ cần d² vì → <span class="qa">căn bậc hai là hàm tăng → không đổi thứ tự xếp hạng; bỏ căn cho số đẹp, nhanh</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> k-NN = đo khoảng cách + bỏ phiếu đa số; đơn giản nhưng chậm khi dữ liệu lớn (phải so mọi điểm).
-    Bài tiếp (B5): gom cụm <b>không nhãn</b> — k-means.
+    <b style="color:var(--accent2)">Rút ra.</b> k-NN = đo khoảng cách + bỏ phiếu đa số; không học tham số nhưng chậm khi dữ liệu lớn (phải so mọi điểm).
+    <b>k</b> là siêu tham số cốt lõi: nhỏ → nhạy nhiễu, lớn → mượt. Bài tiếp (B5): gom cụm <b>không nhãn</b> — k-means.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B4 · k-NN</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -137,11 +207,14 @@ function generate(){
     { x: WB.randInt(4, 5), y: WB.randInt(3, 4), c: 'red' },
     { x: WB.randInt(4, 5), y: WB.randInt(1, 2), c: 'red' }
   ];
-  // điểm hỏi: nghiêng về một phía → đáp án đổi theo 🎲
+  // điểm hỏi: nghiêng về một phía → đáp án k=3 đổi theo 🎲
   var side = WB.pick(['blue', 'red']);
   var Q = side === 'blue' ? { x: 2, y: WB.randInt(2, 3) } : { x: 4, y: WB.randInt(2, 3) };
 
-  var d = pts.map(function(p, i){ return { i: i, d2: (p.x - Q.x) * (p.x - Q.x) + (p.y - Q.y) * (p.y - Q.y), c: p.c }; });
+  var d = pts.map(function(p, i){
+    var dx = Q.x - p.x, dy = Q.y - p.y;
+    return { i: i, dx: dx, dy: dy, d2: dx * dx + dy * dy, c: p.c };
+  });
   var sorted = d.slice().sort(function(a, b){ return a.d2 - b.d2; });
   var near3 = sorted.slice(0, 3);
   var vblue = near3.filter(function(o){ return o.c === 'blue'; }).length;
@@ -149,18 +222,26 @@ function generate(){
   var predBlue = vblue > vred;
   var nearNames = near3.map(function(o){ return 'P' + (o.i + 1); }).join(', ');
   var r3 = Math.sqrt(near3[2].d2);   // bán kính vòng bao 3 điểm gần nhất
+  // k=5 luôn 2 xanh : 3 đỏ → đỏ; so sánh với k=3
+  var k5cmp = predBlue ? 'khác (k=3→🔵, k=5→🔴)' : 'giống (đều 🔴)';
 
   var set = {
     p1: pts[0].x + ',' + pts[0].y, p2: pts[1].x + ',' + pts[1].y,
     p3: pts[2].x + ',' + pts[2].y, p4: pts[3].x + ',' + pts[3].y, p5: pts[4].x + ',' + pts[4].y,
     q: Q.x + ',' + Q.y,
+    ax1: WB.fmtInt(d[0].dx), ay1: WB.fmtInt(d[0].dy),
+    ax2: WB.fmtInt(d[1].dx), ay2: WB.fmtInt(d[1].dy),
+    ax3: WB.fmtInt(d[2].dx), ay3: WB.fmtInt(d[2].dy),
+    ax4: WB.fmtInt(d[3].dx), ay4: WB.fmtInt(d[3].dy),
+    ax5: WB.fmtInt(d[4].dx), ay5: WB.fmtInt(d[4].dy),
     d1: String(d[0].d2), d2: String(d[1].d2), d3: String(d[2].d2), d4: String(d[3].d2), d5: String(d[4].d2),
     near: nearNames, vblue: String(vblue), vred: String(vred),
-    pred: predBlue ? '🔵 (Xanh)' : '🔴 (Đỏ)'
+    pred: predBlue ? '🔵' : '🔴', predf: predBlue ? '🔵' : '🔴',
+    vblue5: '2', vred5: '3', pred5: '🔴', k5cmp: k5cmp
   };
   WB.setAll(set);
 
-  drawKNN('figA', pts, Q, null);
+  drawKNN('figQ', pts, Q, null);
   drawKNN('figK', pts, Q, r3);
 }
 

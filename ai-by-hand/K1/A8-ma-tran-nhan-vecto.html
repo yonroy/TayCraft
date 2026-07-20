@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A8 — Ma trận × vectơ (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:5px;}
-.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
-.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:4px;}
-.page .note{margin-top:3px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,24 +25,20 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A8</span><h1>Ma trận × vectơ <small>— Matrix–vector product</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A8</span>
+    <h1>Ma trận × vectơ <small>— một lớp mạng nhìn từ số học</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Một lớp mạng nơ-ron <b>chính là</b> một phép ma trận × vectơ: mỗi hàng của W là một nơ-ron
-    "chấm điểm" đầu vào x. Hiểu phép này là hiểu cách tín hiệu <b>đi qua một lớp</b> (chỉ còn thiếu bias).
-    <div class="formula">
-      (A·x)<sub>i</sub> = Σ<sub>j</sub> A<sub>ij</sub> · x<sub>j</sub> &nbsp;&nbsp;|&nbsp;&nbsp; A là m×n, x là n &nbsp;⇒&nbsp; kết quả là vectơ m chiều
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mỗi <b>hàng</b> của A là một nơ-ron "chấm điểm" đầu vào x. Hãy tính 3 điểm (hàng·x) rồi
+    <b>điền vectơ kết quả vào cột trong sơ đồ A·x</b>, sau đó (Trang 2) tính lại theo <b>cách trộn cột</b> để thấy hai góc nhìn
+    cho cùng kết quả. Hiểu phép này là hiểu cách tín hiệu <b>đi qua một lớp</b> (chỉ còn thiếu bias).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi <b>hàng</b> của A là một "câu hỏi" có trọng số; nhân với x = <b>cho điểm</b> x theo câu hỏi đó. m hàng → m điểm → một
-    vectơ m chiều. Cách nhìn khác: kết quả = <b>trộn các cột</b> của A theo hệ số là các thành phần của x.
-  </div>
-
-  <!-- GIVEN -->
+  <!-- BƯỚC 0 — GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn A và x</h2><span class="tag">A 3×2 · x 2</span></div>
     <div class="row">
@@ -62,61 +53,98 @@
           <div class="cell given" data-q="x1">2</div>
           <div class="cell given" data-q="x2">1</div>
         </div></div>
-      <div class="note" style="max-width:62mm">Số <b>cột</b> của A (=2) phải khớp số chiều của x (=2) thì mới nhân được.</div>
+      <div class="note" style="max-width:60mm">Số <b>cột</b> của A (=2) phải khớp số chiều của x (=2) mới nhân được. Đầu ra = số <b>hàng</b> A chiều.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 — từng hàng × x -->
+  <!-- BƯỚC 1 — từng hàng · x -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Từng hàng × x — ba tích vô hướng</h2><span class="tag">theo hàng</span></div>
-    <div class="calc">
-      hàng1·x = <span data-q="h1">1·2 + 2·1</span> = <span class="blk" style="min-width:42px"></span><br>
-      hàng2·x = <span data-q="h2">3·2 + 4·1</span> = <span class="blk" style="min-width:42px"></span><br>
-      hàng3·x = <span data-q="h3">0·2 + 1·1</span> = <span class="blk" style="min-width:42px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> mỗi hàng cho <b>một thành phần</b> kết quả, độc lập nhau; số <b>hàng</b> của A quyết định số chiều đầu ra.</div>
-  </div>
-
-  <!-- BƯỚC 2 — gom vectơ -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Gom thành vectơ kết quả</h2><span class="tag">A·x</span></div>
-    <div class="calc">
-      A·x = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
+    <div class="step-h"><div class="b">1</div><h2>Cách 1 — từng hàng × x (ba tích vô hướng)</h2><span class="tag">điền ô</span></div>
+    <div class="calc big">
+      hàng1·x = <span data-q="h1">1·2 + 2·1</span> = <span class="wcell"></span><br>
+      hàng2·x = <span data-q="h2">3·2 + 4·1</span> = <span class="wcell"></span><br>
+      hàng3·x = <span data-q="h3">0·2 + 1·1</span> = <span class="wcell"></span>
     </div>
   </div>
 
-  <!-- BƯỚC 3 — kiểm thứ nguyên -->
+  <!-- BƯỚC 2 — HERO: điền cột kết quả vào sơ đồ -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Kiểm thứ nguyên</h2><span class="tag">dim</span></div>
-    <div class="calc">
-      (3×2)·(2) → vectơ <span class="blk" style="min-width:34px"></span> chiều
+    <div class="step-h"><div class="b">2</div><h2>Gom thành vectơ — điền cột kết quả vào sơ đồ</h2><span class="tag">hero · A·x</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 240 128" width="112mm" height="60mm" aria-label="ma trận A nhân vectơ x, cột kết quả để trống điền"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="note">Đặt 3 số ở Bước 1 vào <b>cột kết quả ✍ trong hình</b>: hàng 1 (lam) → ô 1, hàng 2 (cam) → ô 2, hàng 3 (tím) → ô 3.</div>
+      </div>
     </div>
-    <div class="hint">Số cột A phải bằng số chiều x; chiều kết quả = số <b>hàng</b> A.</div>
   </div>
 
-  <!-- BƯỚC 4 — trộn cột -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Góc nhìn "trộn cột"</h2><span class="tag">tổ hợp tuyến tính</span></div>
-    <div class="calc">
-      A·x = <span data-q="x1">2</span>·cột1 + <span data-q="x2">1</span>·cột2
-      = <span data-q="x1">2</span>·<span data-q="col1">(1, 3, 0)</span> + <span data-q="x2">1</span>·<span data-q="col2">(2, 4, 1)</span><br>
-      = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> kết quả luôn là <b>tổ hợp các cột</b> của A → luôn nằm trong không gian sinh bởi các cột đó.</div>
+  <div class="scratch" style="height:30mm"><span class="lb">✏️ Nháp — tính 3 tích vô hướng ở đây</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A8 · Ma trận × vectơ</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
+  <div class="wb-title">
+    <span class="no">Bài A8</span>
+    <h1>Ma trận × vectơ <small>— cách 2: trộn các cột của A</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+
+  <div class="mission">
+    🎯 <b>Tiếp.</b> Cùng phép A·x nhưng nhìn khác: <b>A·x = x₁·(cột 1) + x₂·(cột 2)</b> — pha trộn hai cột của A với trọng số là các số của x.
+    Đây là cách một lớp mạng "chọn bao nhiêu của mỗi đặc trưng". Làm ra và <b>kiểm khớp kết quả Cách 1</b>.
+  </div>
+
+  <!-- BƯỚC 3 — trộn cột -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Cách 2 — A·x = x₁·cột1 + x₂·cột2 &amp; kiểm khớp</h2><span class="tag">scale rồi cộng</span></div>
+    <div class="calc big">
+      <span class="lead">x₁·cột1</span> = <span data-q="x1w">2</span>·(<span data-q="a11">1</span>,<span data-q="a21">3</span>,<span data-q="a31">0</span>)
+        = ( <span class="wcell"></span>, <span class="wcell"></span>, <span class="wcell"></span> )<br>
+      <span class="lead">x₂·cột2</span> = <span data-q="x2w">1</span>·(<span data-q="a12">2</span>,<span data-q="a22">4</span>,<span data-q="a32">1</span>)
+        = ( <span class="wcell"></span>, <span class="wcell"></span>, <span class="wcell"></span> )<br>
+      <span class="lead">cộng lại</span> = ( <span class="wcell"></span>, <span class="wcell"></span>, <span class="wcell"></span> )
+        <small style="color:#7a8794">← phải trùng A·x ở Bước 1–2 ✓</small>
+    </div>
+    <div class="note">Nhân cả cột với một số (Bài A1) rồi cộng hai cột theo từng thành phần → đúng bằng vectơ kết quả.
+      Đầu ra luôn là <b>tổ hợp các cột của A</b>.</div>
+  </div>
+
+  <!-- BƯỚC 4 — thứ nguyên -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Kiểm thứ nguyên — điền ô</h2><span class="tag">dim</span></div>
+    <div class="calc big">
+      (3×2)·(vectơ 2) → vectơ <span class="wcell"></span> chiều &nbsp;(= số hàng A)
+    </div>
+  </div>
+
+  <div class="scratch" style="height:26mm"><span class="lb">✏️ Nháp — scale từng cột rồi cộng ở đây</span></div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>A là m×n, x là n chiều → kết quả mấy chiều? → <span class="blk" style="min-width:60px"></span></li>
-      <li>A·x có bằng x·A không? → <span class="blk" style="min-width:120px"></span></li>
+      <li>A là m×n, x là n chiều → kết quả mấy chiều? → <span class="blk" style="min-width:70px"></span></li>
+      <li>A·x có bằng x·A không? → <span class="blk" style="min-width:110px"></span></li>
+      <li>A·x là tổ hợp của cái gì trong A? → <span class="blk" style="min-width:110px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A8 · Ma trận × vectơ</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Xong 3 điểm</span>
+    <span><span class="ck"></span>Điền cột A·x</span>
+    <span><span class="ck"></span>Trộn cột khớp Cách 1</span>
+    <span class="win">🎉 Bạn vừa cho tín hiệu chạy qua một lớp!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A8 · Ma trận × vectơ</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -125,41 +153,39 @@
   <div class="wb-title"><span class="no">Bài A8</span><h1>Ma trận × vectơ <small>— lời giải</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Ba tích vô hướng theo hàng</h2></div>
-    <div class="calc ans">
-      hàng1·x = <span data-q="h1">1·2 + 2·1</span> = <span class="blk" data-q="r1" style="min-width:40px">4</span><br>
-      hàng2·x = <span data-q="h2">3·2 + 4·1</span> = <span class="blk" data-q="r2" style="min-width:40px">10</span><br>
-      hàng3·x = <span data-q="h3">0·2 + 1·1</span> = <span class="blk" data-q="r3" style="min-width:40px">1</span>
+    <div class="step-h"><div class="b">1</div><h2>Cách 1 — ba tích vô hướng theo hàng</h2></div>
+    <div class="calc ans big">
+      hàng1·x = <span data-q="h1">1·2 + 2·1</span> = <span class="wcell ans" data-q="r1">4</span><br>
+      hàng2·x = <span data-q="h2">3·2 + 4·1</span> = <span class="wcell ans" data-q="r2">10</span><br>
+      hàng3·x = <span data-q="h3">0·2 + 1·1</span> = <span class="wcell ans" data-q="r3">1</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Vectơ kết quả</h2></div>
-    <div class="calc ans">
-      A·x = ( <span class="blk" data-q="r1">4</span>, <span class="blk" data-q="r2">10</span>, <span class="blk" data-q="r3">1</span> )
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Thứ nguyên</h2></div>
-    <div class="calc ans">
-      (3×2)·(2) → vectơ <span class="blk" data-q="dim">3</span> chiều (= số hàng A).
-    </div>
-  </div>
-
-  <!-- SƠ ĐỒ ở trang 2 cho cân chiều cao -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: mỗi hàng → một thành phần</h2><span class="tag">minh họa</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Vectơ kết quả — sơ đồ</h2></div>
     <div class="figrow">
-      <svg id="figM" class="fig" viewBox="0 0 320 150" width="92mm" height="44mm" aria-label="ma trận nhân vectơ: mỗi hàng cho một thành phần kết quả"></svg>
-      <div style="flex:1">
-        <div class="calc ans">
-          Trộn cột: <span data-q="x1">2</span>·<span data-q="col1">(1,3,0)</span> + <span data-q="x2">1</span>·<span data-q="col2">(2,4,1)</span>
-          = ( <span class="blk" data-q="r1">4</span>, <span class="blk" data-q="r2">10</span>, <span class="blk" data-q="r3">1</span> )
-        </div>
-        <div class="note">Hàng 1 (lam), hàng 2 (cam), hàng 3 (tím) của A mỗi cái chấm với x cho <b>một ô</b> của kết quả cùng màu.</div>
+      <svg id="figK" class="fig" viewBox="0 0 240 128" width="100mm" height="53mm"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans" style="margin:0">A·x = ( <span data-q="r1">4</span>, <span data-q="r2">10</span>, <span data-q="r3">1</span> )</div>
+        <div class="why"><b>Vì sao:</b> mỗi hàng cho một thành phần độc lập; số hàng A quyết định số chiều đầu ra.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Cách 2 — trộn cột</h2></div>
+    <div class="calc ans big">
+      x₁·cột1 = ( <span class="wcell ans" data-q="s11">2</span>, <span class="wcell ans" data-q="s12">6</span>, <span class="wcell ans" data-q="s13">0</span> ) &nbsp;
+      x₂·cột2 = ( <span class="wcell ans" data-q="s21">2</span>, <span class="wcell ans" data-q="s22">4</span>, <span class="wcell ans" data-q="s23">1</span> )<br>
+      cộng lại = ( <span class="wcell ans" data-q="r1">4</span>, <span class="wcell ans" data-q="r2">10</span>, <span class="wcell ans" data-q="r3">1</span> ) = A·x ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> gom theo x thay vì theo hàng chỉ là đổi thứ tự cộng — kết quả bất biến. Góc nhìn này cho thấy
+      đầu ra luôn nằm trong <b>không gian cột</b> của A: mỗi nơ-ron đầu ra là một pha trộn có trọng số của các cột.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Thứ nguyên</h2></div>
+    <div class="calc ans big">(3×2)·(vectơ 2) → vectơ <span class="wcell ans" data-q="dim">3</span> chiều (= số hàng A).</div>
   </div>
 
   <div class="quiz">
@@ -167,6 +193,7 @@
     <ol>
       <li>m×n nhân vectơ n → ? → <span class="qa">m chiều (= số hàng).</span></li>
       <li>A·x = x·A? → <span class="qa">Nói chung không — thứ tự &amp; kích thước khác nhau.</span></li>
+      <li>A·x là tổ hợp của? → <span class="qa">Các cột của A, trọng số là các số của x.</span></li>
     </ol>
   </div>
 
@@ -175,74 +202,72 @@
     Thêm bias là thành <b>lớp tuyến tính</b> thật (y = W·x + b). Bài tiếp (A9): khi nào một ma trận <b>đảo ngược được</b> — định thức &amp; nghịch đảo 2×2.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A8 · Ma trận × vectơ</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A8 · Ma trận × vectơ</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var STATE = {A:[[1,2],[3,4],[0,1]], x:[2,1], r:[4,10,1]};
+
 function generate(){
   var f = WB.fmtInt, w = WB.wrap;
-  // A 3×2 và x 2 chiều, số nguyên nhỏ (cho phép vài số âm/0)
   function v(){ return WB.pick([0,1,1,2,2,3,3,4,5, -1, -2]); }
   function xv(){ return WB.pick([1,2,2,3, -1, -2]); }
   var A = [[v(), v()], [v(), v()], [v(), v()]];
   var x = [xv(), xv()];
   var r = A.map(function(row){ return row[0]*x[0] + row[1]*x[1]; });
+  STATE.A = A; STATE.x = x; STATE.r = r;
 
-  // biểu thức "a·x1 + b·x2" có dấu sạch cho từng hàng
   function rowExpr(row){
     return f(row[0]) + '·' + w(f(x[0])) + ' + ' + f(row[1]) + '·' + w(f(x[1]));
   }
-  function colStr(c){ return '(' + f(A[0][c]) + ', ' + f(A[1][c]) + ', ' + f(A[2][c]) + ')'; }
+  // cột đã scale: s1 = x1·cột1, s2 = x2·cột2
+  var s1 = [x[0]*A[0][0], x[0]*A[1][0], x[0]*A[2][0]];
+  var s2 = [x[1]*A[0][1], x[1]*A[1][1], x[1]*A[2][1]];
 
   WB.setAll({
     a11: f(A[0][0]), a12: f(A[0][1]),
     a21: f(A[1][0]), a22: f(A[1][1]),
     a31: f(A[2][0]), a32: f(A[2][1]),
-    x1: f(x[0]), x2: f(x[1]),
+    x1: f(x[0]), x2: f(x[1]), x1w: w(f(x[0])), x2w: w(f(x[1])),
     h1: rowExpr(A[0]), h2: rowExpr(A[1]), h3: rowExpr(A[2]),
     r1: f(r[0]), r2: f(r[1]), r3: f(r[2]),
-    dim: '3',
-    col1: colStr(0), col2: colStr(1)
+    s11: f(s1[0]), s12: f(s1[1]), s13: f(s1[2]),
+    s21: f(s2[0]), s22: f(s2[1]), s23: f(s2[2]),
+    dim: '3'
   });
-  drawMatvec('figM', A, x, r);
+  drawMatvec('figQ', A, x, r, false);
+  drawMatvec('figK', A, x, r, true);
 }
 
-// A (3×2) · x (2) = r (3). Hàng i và ô kết quả i cùng màu.
-function drawMatvec(id, A, x, r){
-  var svg = document.getElementById(id);
-  if (!svg) return;
-  var cs = 26, cols = ['#0e7490', '#b45309', '#7c5cff'];
-  var fillRow = ['#eef6fa', '#fdf0e2', '#efeaff'];
+// A (3×2) · x (2) = r (3). Hàng i và ô kết quả i cùng màu. showAns=false → cột r trắng.
+function drawMatvec(id, A, x, r, showAns){
+  var svg = document.getElementById(id); if (!svg) return;
+  var cs = 26, fillRow = ['#eef6fa', '#fdf0e2', '#efeaff'];
   function cell(cx, cy, txt, fill){
     return '<rect x="'+cx+'" y="'+cy+'" width="'+cs+'" height="'+cs+'" fill="'+fill+'" stroke="#5b6776" stroke-width="1"/>'
-      + '<text x="'+(cx+cs/2)+'" y="'+(cy+cs/2+4)+'" text-anchor="middle" style="font-size:12px" font-weight="700">'+txt+'</text>';
+      + (txt===null ? '' : '<text x="'+(cx+cs/2)+'" y="'+(cy+cs/2+4)+'" text-anchor="middle" style="font-size:12px" font-weight="700">'+txt+'</text>');
   }
   var s = '<defs><marker id="mv'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#5b6776"/></marker></defs>';
-  var ay = 30;
-  // A 3×2 ở x=14, mỗi hàng tô màu nhạt
-  var ax = 14;
-  for (var i = 0; i < 3; i++) for (var j = 0; j < 2; j++){
-    s += cell(ax + j*cs, ay + i*cs, WB.fmtInt(A[i][j]), fillRow[i]);
-  }
-  s += '<text x="'+(ax+cs)+'" y="'+(ay-8)+'" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">A</text>';
-  // dấu ·
+  var ay = 30, ax = 16;
+  for (var i=0;i<3;i++) for (var j=0;j<2;j++) s += cell(ax + j*cs, ay + i*cs, WB.fmtInt(A[i][j]), fillRow[i]);
+  s += '<text x="'+(ax+cs)+'" y="'+(ay-7)+'" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">A · 3×2</text>';
   var dotx = ax + 2*cs + 12;
   s += '<text x="'+dotx+'" y="'+(ay+1.5*cs+4)+'" text-anchor="middle" style="font-size:16px" font-weight="700">·</text>';
-  // x (2)
   var xx = dotx + 12;
-  for (var k = 0; k < 2; k++) s += cell(xx, ay + cs/2 + k*cs, WB.fmtInt(x[k]), '#f3f4f6');
-  s += '<text x="'+(xx+cs/2)+'" y="'+(ay-8)+'" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">x</text>';
-  // mũi tên =
+  for (var k=0;k<2;k++) s += cell(xx, ay + cs/2 + k*cs, WB.fmtInt(x[k]), '#f3f4f6');
+  s += '<text x="'+(xx+cs/2)+'" y="'+(ay-7)+'" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">x</text>';
   var eqx = xx + cs + 10;
   s += '<line x1="'+eqx+'" y1="'+(ay+1.5*cs)+'" x2="'+(eqx+30)+'" y2="'+(ay+1.5*cs)+'" stroke="#5b6776" stroke-width="2" marker-end="url(#mv'+id+')"/>';
-  // r (3) tô màu khớp hàng
   var rx = eqx + 44;
-  for (var t = 0; t < 3; t++) s += cell(rx, ay + t*cs, WB.fmtInt(r[t]), fillRow[t]);
-  s += '<text x="'+(rx+cs/2)+'" y="'+(ay-8)+'" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">A·x</text>';
+  for (var t=0;t<3;t++) s += cell(rx, ay + t*cs, showAns ? WB.fmtInt(r[t]) : null, showAns ? fillRow[t] : '#fff');
+  s += '<text x="'+(rx+cs/2)+'" y="'+(ay-7)+'" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">A·x</text>';
+  if (!showAns) s += '<text x="'+(rx+cs/2)+'" y="'+(ay+3*cs+14)+'" text-anchor="middle" style="font-size:9px" fill="#b45309" font-weight="700">✍ 3 ô</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);
+drawMatvec('figQ', STATE.A, STATE.x, STATE.r, false);
+drawMatvec('figK', STATE.A, STATE.x, STATE.r, true);
 generate();
 </script>
 </body>

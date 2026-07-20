@@ -1,12 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài C10 — Softmax đầu ra (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pC">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,16 +22,21 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài C10</span><h1>Softmax đầu ra <small>— logit → xác suất phân lớp</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài C10</span>
+    <h1>Softmax đầu ra <small>— logit thô → xác suất phân lớp</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-  <div class="intro">
-    <b>Biến điểm số thành xác suất.</b> Lớp ra cho 3 con số thô gọi là <b>logit</b> (có thể âm, lớn nhỏ tùy ý). Softmax
-    <b>mũ hóa</b> rồi <b>chuẩn hóa</b> để được 3 xác suất dương, cộng lại = 1. Lớp có xác suất cao nhất là dự đoán.
-    <div class="formula">
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Lớp ra cho 3 số thô (<b>logit</b>, có thể âm). Hãy <b>tự tay</b> chạy softmax: <b>mũ hóa</b> eᶻ → <b>cộng lại</b> → <b>chia</b>,
+    ra 3 xác suất dương cộng bằng 1. Lớp có xác suất cao nhất = dự đoán. Phần thưởng: kiểm mẹo <b>trừ max</b> — cộng cùng
+    một hằng số vào mọi logit <b>không đổi</b> kết quả (chính là mẹo ổn định số trong máy thật).
+    <div class="formula" style="margin-top:5px">
       p<sub>i</sub> = <span class="frac"><span class="n">e<sup>z<sub>i</sub></sup></span><span class="d">Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></span></span>
       &nbsp;&nbsp;<s style="color:var(--dim)">mũ hóa → cộng lại → chia</s>
     </div>
@@ -46,7 +55,7 @@
         <div><span data-q="exLab2">e¹</span><b data-q="exVal2">2.72</b></div>
         <div><span data-q="exLab3">e²</span><b data-q="exVal3">7.39</b></div>
       </div>
-      <div class="note" style="max-width:60mm">Cột 1 = Mèo, cột 2 = Chó, cột 3 = Chim. Tra bảng eˣ bên cạnh.</div>
+      <div class="note" style="max-width:56mm">Cột 1 = Mèo, cột 2 = Chó, cột 3 = Chim. Tra bảng eˣ bên cạnh.</div>
     </div>
   </div>
 
@@ -63,44 +72,88 @@
 
   <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tổng & chia → p</h2><span class="tag">chuẩn hóa</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Tổng &amp; chia → p</h2><span class="tag">chuẩn hóa</span></div>
     <div class="calc">
-      Tổng S = <span data-q="ez1">7.39</span> + <span data-q="ez2">1.00</span> + <span data-q="ez3">2.72</span> = <span class="blk"></span><br>
-      p₁ = <span data-q="ez1">7.39</span>/S = <span class="blk"></span> &nbsp; p₂ = <span data-q="ez2">1.00</span>/S = <span class="blk"></span><br>
-      p₃ = <span data-q="ez3">2.72</span>/S = <span class="blk"></span>
+      S = <span data-q="ez1">7.39</span> + <span data-q="ez2">1.00</span> + <span data-q="ez3">2.72</span> = <span class="wcell"></span><br>
+      p₁ = <span data-q="ez1">7.39</span>/S = <span class="wcell"></span> &nbsp; p₂ = <span data-q="ez2">1.00</span>/S = <span class="wcell"></span> &nbsp; p₃ = <span data-q="ez3">2.72</span>/S = <span class="wcell"></span>
     </div>
-  </div>
-
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Kiểm tra & quyết định</h2><span class="tag">argmax</span></div>
-    <div class="calc">
-      p₁ + p₂ + p₃ = <span class="blk"></span> <span style="color:var(--dim)">(phải ≈ 1)</span><br>
-      Lớp dự đoán (p lớn nhất) = <span class="blk" style="min-width:70px"></span>
-    </div>
-    <div class="note">Softmax giữ <b>thứ tự</b>: logit lớn nhất → xác suất lớn nhất. Nó chỉ "ép" về dạng xác suất.</div>
-  </div>
-
-  <!-- STEP 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Tính chất hay dùng</h2><span class="tag">độ "gắt"</span></div>
-    <div class="calc">
-      Nếu z = (<span data-q="z1x2">4</span>, <span data-q="z2x2">0</span>, <span data-q="z3x2">2</span>) (khoảng cách gấp đôi): p₁ sẽ <span class="blk" style="min-width:90px"></span>
-    </div>
-    <div class="note">Logit cách nhau càng xa → phân phối càng "gắt" (gần 1/0). Cộng cùng một hằng số vào mọi logit
-      <b>không đổi</b> kết quả (e bù trừ ở tử & mẫu).</div>
   </div>
   </div><!-- /grid2 -->
 
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: logit → xác suất</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figSM" class="fig" viewBox="0 0 270 112" width="140mm" height="58mm" aria-label="biểu đồ cột: logit thô biến thành xác suất cộng lại bằng 1"></svg>
+    <div class="step-h"><div class="b">3</div><h2>Kiểm tra &amp; quyết định</h2><span class="tag">Σp = 1 · argmax</span></div>
+    <div class="calc big">
+      p₁ + p₂ + p₃ = <span class="wcell"></span> <span style="color:var(--dim)">(phải ≈ 1)</span> &nbsp;·&nbsp;
+      Lớp dự đoán (p lớn nhất) = <span class="wcell" style="min-width:70px"></span>
+    </div>
+    <div class="note">Softmax giữ <b>thứ tự</b>: logit lớn nhất → xác suất lớn nhất. Nó chỉ "ép" điểm thô về dạng xác suất.</div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C10 · Softmax đầu ra</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: logit → xác suất</h2><span class="tag">đổi theo 🎲</span></div>
+    <svg id="figSM" class="fig" viewBox="0 0 270 112" width="140mm" height="54mm" aria-label="biểu đồ cột: logit thô biến thành xác suất cộng lại bằng 1"></svg>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C10 · Softmax đầu ra</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Softmax — mẹo trừ max (ổn định số)</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài C10</span>
+    <h1>Softmax đầu ra <small>— cộng hằng số vào mọi logit không đổi p</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: shift-invariance -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — trừ max thì p không đổi</h2><span class="tag">ổn định số</span></div>
+    <div class="note" style="margin-top:0">
+      Trừ mọi logit đi <b>m = max = <span class="gv" data-q="mVal">2</span></b> (logit lớn nhất về 0). Trừ trong số mũ = <b>chia</b> mọi eᶻ cho
+      cùng eᵐ = <span class="gv" data-q="eM">7.39</span>. Tử và mẫu <b>cùng chia</b> eᵐ → triệt tiêu → p giữ nguyên:
+    </div>
+    <div class="calc big">
+      eᶻ mới (chia eᵐ): lớn nhất = <span class="wcell"></span> <small style="color:#7a8794">(= 1.00)</small><br>
+      S mới = S/eᵐ = <span data-q="sTotal">11.11</span>/<span data-q="eM">7.39</span> = <span class="wcell"></span><br>
+      p(<span data-q="predClass">Mèo</span>) = 1.00 / S mới = <span class="wcell"></span> &nbsp;<small style="color:#7a8794">— so với Bước 2?</small>
+    </div>
+    <div class="note">Bằng đúng p ở Bước 2 → softmax <b>bất biến khi dịch</b> mọi logit cùng một hằng số. Máy thật luôn <b>trừ max</b> trước khi mũ hóa để eᶻ không bị <b>tràn số</b> (e của logit lớn rất khổng lồ).</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Độ "gắt" của phân phối</h2><span class="tag">logit cách xa → tự tin</span></div>
+    <div class="calc">
+      Nếu nhân đôi khoảng cách logit z = (<span data-q="z1x2">4</span>, <span data-q="z2x2">0</span>, <span data-q="z3x2">2</span>): p của lớp mạnh nhất sẽ <span class="wcell" style="min-width:96px"></span>
+    </div>
+    <div class="note">Logit cách nhau càng xa → phân phối càng "gắt" (gần 1 và 0); càng gần nhau → càng "phẳng" (chia đều). Đây là điều "nhiệt độ" (temperature, Bài I2) điều khiển.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Softmax làm 3 số thô thành gì? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Cộng +10 vào cả 3 logit thì p đổi không? Vì sao? → <span class="blk" style="min-width:140px"></span></li>
+    </ol>
+  </div>
+
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — mũ hóa &amp; chia ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Ra 3 xác suất</span>
+    <span><span class="ck"></span>Kiểm mẹo trừ max</span>
+    <span class="win">🎉 Bạn vừa chạy softmax bằng tay!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C10 · Softmax đầu ra</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -119,34 +172,52 @@
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa</h2></div>
     <div class="calc ans">
-      S = <span class="blk" data-q="sTotal">11.11</span> &nbsp;|&nbsp; p₁ = <span class="blk" data-q="p1">0.67</span> &nbsp;
-      p₂ = <span class="blk" data-q="p2">0.09</span> &nbsp; p₃ = <span class="blk" data-q="p3">0.24</span>
+      S = <span class="wcell ans" data-q="sTotal">11.11</span> &nbsp;|&nbsp; p₁ = <span class="wcell ans" data-q="p1">0.67</span> &nbsp;
+      p₂ = <span class="wcell ans" data-q="p2">0.09</span> &nbsp; p₃ = <span class="wcell ans" data-q="p3">0.24</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Quyết định</h2></div>
     <div class="calc ans">
-      Σp = <span data-q="sumPExpr">0.67+0.09+0.24</span> = <span class="blk" data-q="sumP">1.00</span> ✓ &nbsp;|&nbsp;
-      dự đoán = <span class="blk" data-q="predName" style="min-width:70px">Mèo (p₁)</span>
+      Σp = <span data-q="sumPExpr">0.67+0.09+0.24</span> = <span class="wcell ans" data-q="sumP">1.00</span> ✓ &nbsp;|&nbsp;
+      dự đoán = <span class="wcell ans" data-q="predName" style="min-width:70px">Mèo (p₁)</span>
     </div>
     <div class="note" data-q="predNote">Logit lớn nhất (z₁=2) → xác suất lớn nhất (0.67). Mạng "khá tự tin" chọn Mèo.</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Độ "gắt"</h2></div>
+    <div class="step-h"><div class="b">4</div><h2>Trừ max → p không đổi</h2><span class="tag">shift-invariance</span></div>
     <div class="calc ans">
-      <span data-q="probe4Line">z=(4,0,2): e=(54.6, 1, 7.39), S≈63 → p₁ ≈ </span><span class="blk" data-q="p1After">0.87</span><span data-q="probe4Suffix"> (gắt hơn nhiều)</span>
+      eᶻ mới lớn nhất = <span class="wcell ans" data-q="ePrimeMax">1.00</span> &nbsp;·&nbsp;
+      S mới = <span class="wcell ans" data-q="sPrime">1.50</span> &nbsp;·&nbsp;
+      p(<span data-q="predClass">Mèo</span>) = 1.00/S mới = <span class="wcell ans" data-q="pMaxCheck">0.67</span> = <span data-q="pMaxOld">0.67</span> ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> eᶻ⁻ᵐ = eᶻ/eᵐ — mọi ô tử VÀ mẫu S đều chia cho cùng eᵐ nên tỉ lệ p<sub>i</sub> = eᶻ<sub>i</sub>/S <b>không đổi</b>. Trừ max giữ số mũ ≤ 0 → e không bao giờ tràn.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Độ "gắt"</h2></div>
+    <div class="calc ans">
+      <span data-q="probe5Line">z=(4,0,2): e=(54.6, 1, 7.39), S≈63 → p mạnh nhất ≈ </span><span class="wcell ans" data-q="pStrongAfter">0.87</span><span data-q="probe5Suffix"> (gắt hơn nhiều)</span>
     </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> p = <span data-q="pTuple">(0.67, 0.09, 0.24)</span>, chọn <b data-q="predClass">Mèo</b>. Softmax là "cửa ra" chuẩn cho bài phân loại: nối thẳng với
-    hàm mất mát cross-entropy (−log p của lớp đúng) để huấn luyện. Bài D5: dùng <b>gradient</b> để chỉnh tham số
-    cho p của lớp đúng tăng lên.
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Softmax → <span class="qa">3 xác suất dương cộng lại = 1 (giữ nguyên thứ tự logit).</span></li>
+      <li>Cộng +10 = <span class="qa">p KHÔNG đổi — eᶜ bù trừ ở tử &amp; mẫu (bất biến khi dịch).</span></li>
+    </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C10 · Softmax đầu ra</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="intro" style="border-left-color:var(--accent2)">
+    <b style="color:var(--accent2)">Rút ra.</b> p = <span data-q="pTuple">(0.67, 0.09, 0.24)</span>, chọn <b data-q="predClass2">Mèo</b>. Softmax là "cửa ra" chuẩn cho bài phân loại, nối thẳng
+    với mất mát cross-entropy (−log p của lớp đúng, Bài A20). Mẹo <b>trừ max</b> giữ số ổn định. <b>Hết Phần C</b> — sang K2 (Bài D):
+    dùng <b>gradient</b> để chỉnh tham số cho p của lớp đúng tăng lên.
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C10 · Softmax đầu ra</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -154,7 +225,13 @@
 function generate(){
   var classNames = ['Mèo','Chó','Chim'];
   var sub = ['₁','₂','₃'];
-  var z = [WB.randInt(-2,4), WB.randInt(-2,4), WB.randInt(-2,4)];
+  var z;
+  for (var tries=0; tries<200; tries++){
+    z = [WB.randInt(-2,4), WB.randInt(-2,4), WB.randInt(-2,4)];
+    var mx = Math.max(z[0],z[1],z[2]);
+    var nMax = z.filter(function(v){ return v===mx; }).length;
+    if (nMax === 1) break;                    // một lớp thắng rõ → argmax không nhập nhằng
+  }
 
   function softmax(zs){
     var e = zs.map(function(v){ return Math.exp(v); });
@@ -173,12 +250,18 @@ function generate(){
   var p1r = Math.round(r.p[0]*100)/100, p2r = Math.round(r.p[1]*100)/100, p3r = Math.round(r.p[2]*100)/100;
   var sumPr = p1r+p2r+p3r;
 
+  // BƯỚC 4 — trừ max: chia mọi eᶻ cho eᵐ (eᵐ = e của logit lớn nhất)
+  var eM = r.e[predIdx];
+  var sPrime = r.s / eM;
+  var pMaxCheck = 1 / sPrime;                 // = r.p[predIdx]
+
+  // BƯỚC 5 — độ gắt: nhân đôi khoảng cách logit
   var z2 = z.map(function(v){ return 2*v; });
   var r2 = softmax(z2);
-  var p1Before = r.p[0], p1After = r2.p[0];
+  var pStrongBefore = r.p[predIdx], pStrongAfter = r2.p[predIdx];
   var suffix;
-  if (Math.abs(p1After-p1Before) < 0.005) suffix = ' (gần như không đổi)';
-  else suffix = p1After > p1Before ? ' (gắt hơn — p₁ tăng)' : ' (gắt hơn — p₁ giảm)';
+  if (Math.abs(pStrongAfter-pStrongBefore) < 0.005) suffix = ' (gần như không đổi)';
+  else suffix = pStrongAfter > pStrongBefore ? ' (gắt hơn — p tăng)' : ' (phẳng hơn — p giảm)';
 
   WB.setAll({
     z1: WB.fmtInt(z[0]), z2: WB.fmtInt(z[1]), z3: WB.fmtInt(z[2]),
@@ -193,15 +276,17 @@ function generate(){
     sumPExpr: WB.fmt2(p1r) + '+' + WB.fmt2(p2r) + '+' + WB.fmt2(p3r),
     sumP: WB.fmt2(sumPr),
     predName: classNames[predIdx] + ' (p' + sub[predIdx] + ')',
-    predClass: classNames[predIdx],
+    predClass: classNames[predIdx], predClass2: classNames[predIdx],
     predNote: 'Logit lớn nhất (z' + sub[predIdx] + '=' + WB.fmtInt(z[predIdx]) + ') → xác suất lớn nhất (' +
       WB.fmt2(r.p[predIdx]) + '). Mạng "khá tự tin" chọn ' + classNames[predIdx] + '.',
     pTuple: '(' + WB.fmt2(r.p[0]) + ', ' + WB.fmt2(r.p[1]) + ', ' + WB.fmt2(r.p[2]) + ')',
+    mVal: WB.fmtInt(z[predIdx]), eM: WB.fmt2(eM),
+    ePrimeMax: '1.00', sPrime: WB.fmt2(sPrime), pMaxCheck: WB.fmt2(pMaxCheck), pMaxOld: WB.fmt2(r.p[predIdx]),
     z1x2: WB.fmtInt(z2[0]), z2x2: WB.fmtInt(z2[1]), z3x2: WB.fmtInt(z2[2]),
-    p1After: WB.fmt2(p1After),
-    probe4Line: 'z=(' + WB.fmtInt(z2[0]) + ',' + WB.fmtInt(z2[1]) + ',' + WB.fmtInt(z2[2]) + '): e=(' +
-      WB.fmt2(r2.e[0]) + ', ' + WB.fmt2(r2.e[1]) + ', ' + WB.fmt2(r2.e[2]) + '), S≈' + WB.fmt2(r2.s) + ' → p₁ ≈ ',
-    probe4Suffix: suffix
+    pStrongAfter: WB.fmt2(pStrongAfter),
+    probe5Line: 'z=(' + WB.fmtInt(z2[0]) + ',' + WB.fmtInt(z2[1]) + ',' + WB.fmtInt(z2[2]) + '): e=(' +
+      WB.fmt2(r2.e[0]) + ', ' + WB.fmt2(r2.e[1]) + ', ' + WB.fmt2(r2.e[2]) + '), S≈' + WB.fmt2(r2.s) + ' → p mạnh nhất ≈ ',
+    probe5Suffix: suffix
   });
   drawSM(z, r.p);
 }
@@ -235,7 +320,7 @@ function drawSM(z, p){
   svg.innerHTML = s;
 }
 WB.wire(generate);
-drawSM([2, 0, 1], [0.67, 0.09, 0.24]);
+generate();
 </script>
 </body>
 </html>

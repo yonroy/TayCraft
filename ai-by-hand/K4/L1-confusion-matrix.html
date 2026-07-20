@@ -1,193 +1,295 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài L1 — Ma trận nhầm lẫn (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài L1 — Ma trận nhầm lẫn (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.8mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--orange);font-weight:800}
+.pk{color:var(--blue);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Ma trận nhầm lẫn <small>— Accuracy · Precision · Recall · F1 · <i>Confusion matrix</i></small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~13 phút · Bài L1</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>đúng (TP/TN)</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>sai (FP/FN)</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>Precision / Recall</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài L1</span><h1>Ma trận nhầm lẫn <small>— Accuracy / P / R / F1</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> "Độ chính xác" đơn lẻ <b>gây hiểu lầm</b> khi dữ liệu lệch lớp (99% âm → đoán toàn âm vẫn 99%).
-    Precision/Recall/F1 cho bức tranh thật: bắt sót (FN) hay báo nhầm (FP) nhiều? Đây là cách đọc chất lượng mô hình thực tế.
-    <div class="formula">Acc = (TP+TN)/tổng &nbsp; P = TP/(TP+FP) &nbsp; R = TP/(TP+FN) &nbsp; F1 = 2PR/(P+R)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Từ bảng đếm đúng/sai 2×2 (TP, FP, FN, TN), tự tính <b>Accuracy, Precision, Recall, F1</b>; thấy Precision đọc theo <b>cột báo dương</b>, Recall theo <b>hàng thực dương</b>; khám phá vì sao Accuracy <b>gây hiểu lầm khi lệch lớp</b>, và vì sao F1 (trung bình điều hòa) <b>phạt mạnh</b> nếu một trong hai thấp.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    <b>Precision</b> = "trong số ca tôi <b>báo dương</b>, bao nhiêu đúng?" (sợ báo nhầm). <b>Recall</b> = "trong số ca <b>thực sự dương</b>, tôi
-    bắt được bao nhiêu?" (sợ bỏ sót). F1 dung hòa hai cái. Ưu tiên tùy bài (ung thư → trọng recall).
-  </div>
+  <div class="why2 p"><b>💡 Trực giác.</b> <b>Precision</b> = "trong số ca tôi <i>báo dương</i>, bao nhiêu đúng?" (sợ <b>báo nhầm</b>). <b>Recall</b> = "trong số ca <i>thực sự dương</i>, tôi bắt được bao nhiêu?" (sợ <b>bỏ sót</b>). F1 dung hòa hai cái. Ưu tiên tùy bài: chẩn ung thư → trọng <b>recall</b> (đừng bỏ sót); lọc spam quan trọng → trọng <b>precision</b> (đừng chặn nhầm thư thật).</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag"><span data-q="total">20</span> mẫu</span></div>
-    <div class="calc" style="font-size:14px">
-      TP = <span class="gv" data-q="TP">8</span> ; FP = <span class="gv" data-q="FP">2</span> ;
-      FN = <span class="gv" data-q="FN">2</span> ; TN = <span class="gv" data-q="TN">8</span>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Accuracy</h2><span class="tag">(TP+TN)/tổng</span></div>
-    <div class="calc">
-      Acc = (<span data-q="TP">8</span>+<span data-q="TN">8</span>)/<span data-q="total">20</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> tỉ lệ đoán đúng chung — nhưng cẩn thận khi dữ liệu lệch lớp.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Precision &amp; Recall</h2><span class="tag">cột vs hàng</span></div>
-    <div class="calc">
-      P = <span data-q="TP">8</span>/(<span data-q="TP">8</span>+<span data-q="FP">2</span>) = <span class="blk" style="min-width:40px"></span> ;
-      R = <span data-q="TP">8</span>/(<span data-q="TP">8</span>+<span data-q="FN">2</span>) = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="hint">P nhìn cột "báo dương" (TP+FP); R nhìn hàng "thực dương" (TP+FN).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>F1</h2><span class="tag">2PR/(P+R)</span></div>
-    <div class="calc">
-      F1 = 2·<span data-q="prec">0.8</span>·<span data-q="rec">0.8</span> / (<span data-q="prec">0.8</span>+<span data-q="rec">0.8</span>) = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> F1 = trung bình điều hòa P, R → phạt mạnh nếu một trong hai thấp.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đánh đổi P–R</h2><span class="tag">ngưỡng</span></div>
-    <div class="note">Hạ ngưỡng → báo dương nhiều hơn → Recall ↑, Precision ↓ (và ngược lại). Đường cong P–R / ROC (L2) cho thấy đánh đổi này.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Khi nào Accuracy gây hiểu lầm? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Recall đo gì? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L1 · Ma trận nhầm lẫn</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài L1</span><h1>Ma trận nhầm lẫn <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Accuracy</h2></div>
-    <div class="calc ans">Acc = (<span data-q="TP">8</span>+<span data-q="TN">8</span>)/<span data-q="total">20</span> = <span class="blk" data-q="acc">0.8</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Precision &amp; Recall</h2></div>
-    <div class="calc ans">P = <span class="blk" data-q="prec">0.8</span> ; R = <span class="blk" data-q="rec">0.8</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>F1</h2></div>
-    <div class="calc ans">F1 = <span class="blk" data-q="f1">0.8</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Bảng 2×2 (đúng xanh, sai đỏ)</h2><span class="tag">confusion</span></div>
-    <div class="figrow">
-      <svg id="figC" class="fig" viewBox="0 0 250 130" width="78mm" height="42mm" aria-label="bảng 2x2 TP TN tô xanh, FP FN tô đỏ"></svg>
-      <div style="flex:1">
-        <div class="note">Đường chéo (TP, TN) = đoán đúng (xanh). Ngoài chéo (FP báo nhầm, FN bỏ sót) = sai (đỏ). Precision đọc theo cột dự đoán dương, Recall theo hàng thực dương.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — bảng nhầm lẫn 2×2</span><span class="f">tổng = <span data-q="total">20</span> mẫu</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figConf" viewBox="0 0 264 150" width="82mm" height="43mm" aria-label="ma trận nhầm lẫn 2x2"></svg>
+      <div class="storybox"><b>Đọc bảng:</b> hàng = <i>sự thật</i> (Dương/Âm), cột = <i>mô hình dự đoán</i>. Ô <b class="pk">chéo</b> (TP, TN) = đoán <b>đúng</b>; ô <b class="rw">ngoài chéo</b> (FP báo nhầm, FN bỏ sót) = đoán <b>sai</b>.
+        <div class="cap" style="margin-top:1.2mm">Acc=(TP+TN)/tổng · P=TP/(TP+FP) · R=TP/(TP+FN) · F1=2PR/(P+R).</div>
       </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Bốn ô nghĩa là gì?</span><span class="f">T/F = đúng/sai · P/N = mô hình báo dương/âm</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.6px">
+        <tbody>
+          <tr><td class="l" style="width:14mm"><b class="pk">TP</b></td><td style="text-align:left">True Positive — thực dương, <b>đoán đúng</b> là dương (vd: có bệnh → báo có bệnh)</td></tr>
+          <tr><td class="l"><b class="rw">FP</b></td><td style="text-align:left">False Positive — thực âm nhưng <b>báo nhầm</b> thành dương (báo động giả) → hạ Precision</td></tr>
+          <tr><td class="l"><b class="rw">FN</b></td><td style="text-align:left">False Negative — thực dương nhưng <b>bỏ sót</b>, đoán âm (nguy hiểm nhất y tế) → hạ Recall</td></tr>
+          <tr><td class="l"><b class="pk">TN</b></td><td style="text-align:left">True Negative — thực âm, <b>đoán đúng</b> là âm</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Accuracy gây hiểu lầm? → <span class="qa">Khi dữ liệu lệch lớp (mất cân bằng).</span></li>
-      <li>Recall đo gì? → <span class="qa">Tỉ lệ ca thực sự dương được mô hình bắt được (TP/(TP+FN)).</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">① Accuracy — tỉ lệ đoán đúng chung</span><span class="f">(TP+TN)/tổng</span></div>
+    <div class="pb">
+      <div class="eq">Acc = (<span data-q="TP">8</span> + <span data-q="TN">8</span>) / <span data-q="total">20</span> = <span class="slot ans"></span></div>
+      <div class="why2"><b>Đọc gì?</b> Phần trăm mẫu (cả dương lẫn âm) đoán đúng. Trực quan nhưng <b>bẫy khi lệch lớp</b>: nếu 95% mẫu là âm, chỉ cần "đoán toàn âm" đã đạt Acc 0.95 mà chẳng bắt được ca dương nào (xem trang sau).</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Confusion matrix → Acc/P/R/F1; P sợ báo nhầm, R sợ bỏ sót, F1 dung hòa. Bài tiếp (L2): đánh đổi ngưỡng
-    qua <b style="color:var(--accent2)">ROC &amp; AUC</b>.
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L1 · Ma trận nhầm lẫn</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="why2"><b>🔮 Dự đoán trước khi tính.</b> Nếu mô hình <b>báo dương nhiều hơn</b> (hạ ngưỡng): Precision tăng hay giảm? Recall tăng hay giảm? Ghi phỏng đoán rồi kiểm ở trang sau.</div>
+  <div class="scratch" style="height:34mm"><span class="lb">Nháp — Acc &amp; ghi phỏng đoán P–R</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L1 · Ma trận nhầm lẫn</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Ma trận nhầm lẫn <small>— Precision cột · Recall hàng · F1 · bẫy lệch lớp</small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Precision &amp; Recall — đọc theo cột / hàng</span><span class="f">P: cột báo + · R: hàng thực +</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figPR" viewBox="0 0 264 150" width="80mm" height="43mm" aria-label="ma trận với khoanh cột P và hàng R"></svg>
+      <div class="storybox">
+        <div class="eq" style="line-height:1.9">P = TP/(TP+FP) = <span data-q="TP">8</span>/(<span data-q="TP">8</span>+<span data-q="FP">2</span>) = <span class="slot ans sm"></span><br>
+        R = TP/(TP+FN) = <span data-q="TP">8</span>/(<span data-q="TP">8</span>+<span data-q="FN">2</span>) = <span class="slot ans sm"></span></div>
+        <div class="cap" style="margin-top:.6mm"><b class="pk">Cột tím đứt</b> = mọi ca <i>báo dương</i> (mẫu số P). <b class="pk">Hàng tím chấm</b> = mọi ca <i>thực dương</i> (mẫu số R). Cùng tử số TP.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ F1 — dung hòa Precision &amp; Recall</span><span class="f">2PR/(P+R)</span></div>
+    <div class="pb">
+      <div class="eq">F1 = 2·<span class="slot sm"></span>·<span class="slot sm"></span> / (<span class="slot sm"></span>+<span class="slot sm"></span>) = <span class="slot ans"></span></div>
+      <div class="why2 p"><b>Vì sao dùng F1?</b> Là <b>trung bình điều hòa</b> của P và R — kéo về phía <i>cái nhỏ hơn</i>. Chỉ cao khi <b>cả hai</b> đều tốt; nếu một cái rất thấp thì F1 thấp (khác trung bình cộng — xem tự kiểm). Một con số gói cả precision lẫn recall.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — vì sao Accuracy BẪY khi lệch lớp</div>
+    <div style="font-size:9px;line-height:1.45">100 mẫu: <b>95 âm, 5 dương</b>. Mô hình lười <b>đoán TOÀN ÂM</b> → TP=0, FP=0, FN=5, TN=95. Điền:</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th>chỉ số</th><th>Accuracy=(TP+TN)/100</th><th>Recall=TP/(TP+FN)</th></tr></thead>
+      <tbody><tr><td class="l">giá trị</td><td><span class="cellb" style="width:20mm"></span></td><td><span class="cellb" style="width:20mm"></span></td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Accuracy <b>0.95 nghe rất giỏi</b> nhưng Recall = <b>0</b>: bắt sót toàn bộ ca dương (như bỏ sót mọi bệnh nhân ung thư). Lệch lớp làm Accuracy đánh lừa → phải nhìn Precision/Recall.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — F1 PHẠT cái thấp (điều hòa ≠ trung bình cộng)</div>
+    <div style="font-size:9px;line-height:1.45">Một mô hình P=0.9 nhưng R=0.1 (báo rất chuẩn nhưng bỏ sót gần hết). Tính hai kiểu trung bình:</div>
+    <div class="eq" style="margin-top:.4mm">Trung bình cộng = (0.9+0.1)/2 = <span class="slot ans sm"></span> &nbsp;·&nbsp; F1 = 2·0.9·0.1/(0.9+0.1) = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Trung bình cộng 0.5 (nghe "tạm được") nhưng F1 chỉ <b>0.18</b> — gần cái thấp. F1 <b>không cho gian lận</b> bằng cách kéo một chỉ số lên cao còn cái kia bỏ mặc. Muốn F1 cao phải giỏi <b>cả hai</b>.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Trọng Precision hay Recall? — tùy bài toán</span><span class="f">chọn theo cái sai nào đắt hơn</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.6px">
+        <thead><tr><th style="width:34mm">Bài toán</th><th>Sợ nhất</th><th>Ưu tiên</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Chẩn đoán ung thư</td><td style="text-align:left">bỏ sót bệnh (FN)</td><td class="pt">Recall cao</td></tr>
+          <tr><td class="l">Lọc spam email</td><td style="text-align:left">chặn nhầm thư thật (FP)</td><td class="pt">Precision cao</td></tr>
+          <tr><td class="l">Gợi ý sản phẩm</td><td style="text-align:left">gợi ý rác (FP)</td><td class="pt">Precision cao</td></tr>
+          <tr><td class="l">Báo cháy / an ninh</td><td style="text-align:left">bỏ sót sự cố (FN)</td><td class="pt">Recall cao</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm">Không có "chỉ số tốt nhất" chung — chọn theo <b>loại lỗi nào tốn kém hơn</b>. F1 dùng khi cần cân cả hai.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:14mm"><span class="lb">Nháp — P, R, F1 · bẫy lệch lớp · điều hòa</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Tính Acc</span>
+    <span><span class="ck"></span>Tính P &amp; R</span>
+    <span><span class="ck"></span>Tính F1</span>
+    <span><span class="ck"></span>Bẫy lệch lớp</span>
+    <span class="win">🎉 Xong Bài L1!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L1 · Ma trận nhầm lẫn</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Ma trận nhầm lẫn <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — bốn chỉ số (đáp án)</span><span class="f">TP=<span data-q="TP">8</span> FP=<span data-q="FP">2</span> FN=<span data-q="FN">2</span> TN=<span data-q="TN">8</span></span></div>
+    <div class="pb">
+      <div class="eq">① Acc = (<span data-q="TP">8</span>+<span data-q="TN">8</span>)/<span data-q="total">20</span> = <span class="qa" data-q="acc">0.8</span></div>
+      <div class="eq">② P = <span data-q="TP">8</span>/(<span data-q="TP">8</span>+<span data-q="FP">2</span>) = <span class="qa" data-q="prec">0.8</span> &nbsp;·&nbsp; R = <span data-q="TP">8</span>/(<span data-q="TP">8</span>+<span data-q="FN">2</span>) = <span class="qa" data-q="rec">0.8</span></div>
+      <div class="eq">③ F1 = 2·<span data-q="prec">0.8</span>·<span data-q="rec">0.8</span>/(<span data-q="prec">0.8</span>+<span data-q="rec">0.8</span>) = <span class="qa" data-q="f1">0.8</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Ma trận đã đọc — chéo đúng, ngoài chéo sai</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figConfA" viewBox="0 0 264 150" width="80mm" height="43mm" aria-label="ma trận đã tô"></svg>
+      <div class="storybox"><b class="pk">TP, TN</b> (lam) = đoán đúng. <b class="rw">FP</b> = báo dương nhầm (làm <i>giảm Precision</i>); <b class="rw">FN</b> = bỏ sót ca dương (làm <i>giảm Recall</i>). Precision đọc <b>cột báo +</b>, Recall đọc <b>hàng thực +</b>.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Bẫy lệch lớp — đáp án</div>
+    <table class="tbl-disc">
+      <thead><tr><th>đoán TOÀN ÂM (95 âm/5 dương)</th><th>Accuracy</th><th>Recall</th></tr></thead>
+      <tbody><tr><td class="l">TP=0, FP=0, FN=5, TN=95</td><td class="an">0.95</td><td class="an">0</td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> Accuracy 0.95 <b>đánh lừa</b>: mô hình vô dụng (Recall 0, bỏ sót mọi ca dương) vẫn "đạt điểm cao". Với dữ liệu lệch lớp phải báo cáo Precision/Recall/F1, đừng chỉ Accuracy.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 F1 phạt cái thấp — đáp án</div>
+    <div class="eq">Trung bình cộng = (0.9+0.1)/2 = <b>0.5</b> &nbsp;·&nbsp; F1 = 2·0.9·0.1/1.0 = <b>0.18</b></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">F1 (0.18) kéo về gần R thấp (0.1), thấp hơn hẳn trung bình cộng (0.5). Trung bình điều hòa luôn ≤ trung bình cộng, và <b>rất nhạy với cái nhỏ</b> → buộc cân bằng cả precision lẫn recall.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Đánh đổi Precision–Recall theo ngưỡng</span><span class="f">dẫn sang ROC (L2)</span></div>
+    <div class="pb">
+      <div class="storybox">Hạ <b>ngưỡng</b> quyết định → mô hình <b>báo dương nhiều hơn</b> → bắt được nhiều ca thật (<b>Recall ↑</b>) nhưng cũng báo nhầm nhiều (<b>Precision ↓</b>). Nâng ngưỡng thì ngược lại. Không có bữa trưa miễn phí — phải chọn điểm cân bằng theo bài toán. Đường cong vẽ toàn bộ đánh đổi này là <b>ROC/AUC</b> ở Bài L2.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Chỉ nhìn Accuracy:</b> với dữ liệu lệch lớp, Accuracy cao vẫn có thể vô dụng — luôn kèm P/R/F1.</li>
+        <li><b>Lẫn Precision với Recall:</b> P chia cho <b>cột báo +</b> (TP+FP); R chia cho <b>hàng thực +</b> (TP+FN).</li>
+        <li><b>Nhầm FP và FN:</b> FP = báo dương nhầm (thực âm); FN = bỏ sót (thực dương mà đoán âm).</li>
+        <li><b>Tính F1 bằng trung bình cộng:</b> phải là trung bình <b>điều hòa</b> 2PR/(P+R).</li>
+        <li><b>Quên đánh đổi ngưỡng:</b> P và R phụ thuộc ngưỡng; báo một điểm mà không nói ngưỡng là thiếu.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Ma trận nhầm lẫn → <b>Acc=(TP+TN)/tổng, P=TP/(TP+FP), R=TP/(TP+FN), F1=2PR/(P+R)</b>: Precision sợ báo nhầm, Recall sợ bỏ sót, F1 dung hòa (phạt cái thấp); Accuracy bẫy khi lệch lớp. Bài tiếp <b>L2 · ROC &amp; AUC</b>: vẽ toàn bộ đánh đổi Precision–Recall khi quét ngưỡng.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L1 · Ma trận nhầm lẫn</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var TP = WB.randInt(6,9), TN = WB.randInt(6,9);
-  var FP = WB.randInt(1,3), FN = WB.randInt(1,3);
-  var total = TP+FP+FN+TN;
-  var acc = Math.round((TP+TN)/total*100)/100;
-  var prec = Math.round(TP/(TP+FP)*100)/100;
-  var rec = Math.round(TP/(TP+FN)*100)/100;
-  var f1 = Math.round(2*prec*rec/(prec+rec)*100)/100;
-  WB.setAll({
-    TP:String(TP), FP:String(FP), FN:String(FN), TN:String(TN), total:String(total),
-    acc:f(acc), prec:f(prec), rec:f(rec), f1:f(f1)
-  });
-  drawConf('figC', TP, FP, FN, TN);
-}
-function drawConf(id, TP, FP, FN, TN){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=60, y0=34, cw=64, ch=38;
-  var cells=[['#16a34a',TP],['#dc2626',FP],['#dc2626',FN],['#16a34a',TN]];
-  var s='';
-  s+='<text x="'+(x0+cw)+'" y="14" text-anchor="middle" font-size="8.5" fill="#5b6776">Dự đoán</text>';
-  s+='<text x="'+(x0-44)+'" y="'+(y0+ch)+'" text-anchor="middle" font-size="8.5" fill="#5b6776" transform="rotate(-90 '+(x0-44)+' '+(y0+ch)+')">Thực tế</text>';
-  s+='<text x="'+(x0+cw/2)+'" y="'+(y0-4)+'" text-anchor="middle" font-size="8" fill="#5b6776">+</text>';
-  s+='<text x="'+(x0+cw+cw/2)+'" y="'+(y0-4)+'" text-anchor="middle" font-size="8" fill="#5b6776">−</text>';
-  s+='<text x="'+(x0-8)+'" y="'+(y0+ch/2+3)+'" text-anchor="end" font-size="8" fill="#5b6776">+</text>';
-  s+='<text x="'+(x0-8)+'" y="'+(y0+ch+ch/2+3)+'" text-anchor="end" font-size="8" fill="#5b6776">−</text>';
-  var labels=['TP','FP','FN','TN'];
-  for(var k=0;k<4;k++){
-    var col=k%2, row=Math.floor(k/2);
-    var cx=x0+col*cw, cy=y0+row*ch;
-    s+='<rect x="'+cx+'" y="'+cy+'" width="'+cw+'" height="'+ch+'" fill="'+cells[k][0]+'22" stroke="'+cells[k][0]+'" stroke-width="1.3"/>';
-    s+='<text x="'+(cx+cw/2)+'" y="'+(cy+ch/2-1)+'" text-anchor="middle" font-size="9" fill="'+cells[k][0]+'" font-weight="700">'+labels[k]+'</text>';
-    s+='<text x="'+(cx+cw/2)+'" y="'+(cy+ch/2+12)+'" text-anchor="middle" font-size="9.5" fill="#1f2937">'+cells[k][1]+'</text>';
+function drawConf(id, v, showPR){
+  const svg=document.getElementById(id); if(!svg) return;
+  const gx0=74, gy0=42, cw=82, ch=46;
+  const cells=[[{k:'TP',c:'#0e7490',bg:'#eaf4f6'},{k:'FN',c:'#b45309',bg:'#fff5e9'}],
+               [{k:'FP',c:'#b45309',bg:'#fff5e9'},{k:'TN',c:'#0e7490',bg:'#eaf4f6'}]];
+  let s='';
+  // headers
+  s+='<text x="'+(gx0+cw)+'" y="16" text-anchor="middle" font-size="8.4" font-weight="800" fill="#16202e">Mô hình dự đoán</text>';
+  s+='<text x="'+(gx0+cw/2)+'" y="30" text-anchor="middle" font-size="8" font-weight="700" fill="#0e7490">Dương +</text>';
+  s+='<text x="'+(gx0+cw+cw/2)+'" y="30" text-anchor="middle" font-size="8" font-weight="700" fill="#0e7490">Âm −</text>';
+  s+='<text x="14" y="'+(gy0+ch)+'" font-size="8.4" font-weight="800" fill="#16202e" transform="rotate(-90 14 '+(gy0+ch)+')">Sự thật</text>';
+  s+='<text x="34" y="'+(gy0+ch/2+3)+'" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">Dương +</text>';
+  s+='<text x="34" y="'+(gy0+ch+ch/2+3)+'" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">Âm −</text>';
+  for(let r=0;r<2;r++)for(let c=0;c<2;c++){
+    const cell=cells[r][c], x=gx0+c*cw, y=gy0+r*ch;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="'+cell.bg+'" stroke="'+cell.c+'" stroke-width="1.6"/>';
+    s+='<text x="'+(x+cw/2)+'" y="'+(y+ch/2-2)+'" text-anchor="middle" font-size="9" font-weight="800" fill="'+cell.c+'">'+cell.k+'</text>';
+    s+='<text x="'+(x+cw/2)+'" y="'+(y+ch/2+13)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#16202e" font-family="Consolas,monospace">'+v[cell.k]+'</text>';
+  }
+  if(showPR){
+    // cột P (col0) tím đứt
+    s+='<rect x="'+(gx0-3)+'" y="'+(gy0-3)+'" width="'+(cw+6)+'" height="'+(2*ch+6)+'" fill="none" stroke="#7c5cff" stroke-width="2" stroke-dasharray="5 3"/>';
+    s+='<text x="'+(gx0+cw/2)+'" y="'+(gy0+2*ch+14)+'" text-anchor="middle" font-size="7.6" font-weight="800" fill="#7c5cff">Precision (cột báo +)</text>';
+    // hàng R (row0) tím chấm
+    s+='<rect x="'+(gx0-6)+'" y="'+(gy0-6)+'" width="'+(2*cw+12)+'" height="'+(ch+12)+'" fill="none" stroke="#7c5cff" stroke-width="2" stroke-dasharray="1.5 3"/>';
+    s+='<text x="'+(gx0+2*cw+2)+'" y="'+(gy0+ch/2)+'" text-anchor="start" font-size="7.6" font-weight="800" fill="#7c5cff">Recall</text>';
+    s+='<text x="'+(gx0+2*cw+2)+'" y="'+(gy0+ch/2+10)+'" text-anchor="start" font-size="7.6" font-weight="800" fill="#7c5cff">(hàng thực +)</text>';
   }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function gen(){
+  const TP=WB.randInt(6,9), TN=WB.randInt(6,9), FP=WB.randInt(1,3), FN=WB.randInt(1,3);
+  const total=TP+TN+FP+FN;
+  const acc=Math.round(((TP+TN)/total)*100)/100;
+  const prec=Math.round((TP/(TP+FP))*100)/100;
+  const rec=Math.round((TP/(TP+FN))*100)/100;
+  const f1=Math.round((2*prec*rec/(prec+rec))*100)/100;
+  WB.setAll({
+    TP:WB.fmtInt(TP), TN:WB.fmtInt(TN), FP:WB.fmtInt(FP), FN:WB.fmtInt(FN), total:WB.fmtInt(total),
+    acc:WB.fmt2(acc), prec:WB.fmt2(prec), rec:WB.fmt2(rec), f1:WB.fmt2(f1)
+  });
+  const v={TP,TN,FP,FN};
+  drawConf('figConf',v,false);
+  drawConf('figPR',v,true);
+  drawConf('figConfA',v,false);
+  const pages=[...document.querySelectorAll('.page')];
+  const meas=pages.map((p,i)=>'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight)).join(' ');
+  const md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

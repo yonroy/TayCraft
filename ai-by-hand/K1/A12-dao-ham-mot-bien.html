@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A12 — Đạo hàm một biến (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
 .page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.75;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,74 +25,113 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A12</span><h1>Đạo hàm một biến <small>— Derivatives</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A12</span>
+    <h1>Đạo hàm một biến <small>— độ dốc để đi xuống</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Học máy = <b>đi xuống dốc</b> của hàm mất mát. Để biết đi hướng nào và bước bao nhiêu, cần <b>độ dốc</b> —
-    chính là đạo hàm. Nắm một biến trước, rồi mở sang nhiều biến (gradient) sau.
-    <div class="formula">
-      d/dx (xⁿ) = n·x<sup>n−1</sup> &nbsp;&nbsp; d/dx (c) = 0 &nbsp;&nbsp; (f ± g)' = f' ± g' &nbsp;&nbsp; (c·f)' = c·f'
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Học máy = <b>đi xuống dốc</b> của hàm mất mát; muốn biết đi hướng nào, bước bao nhiêu thì cần <b>độ dốc = đạo hàm</b>.
+    Hãy tìm f'(x) từng số hạng, tính tại x₀, <b>điền độ dốc vào ô ✍ trong hình</b>, đọc <b>dấu</b>, rồi (Trang 2) dùng độ dốc để
+    <b>dự đoán</b> giá trị hàm ở điểm kế bên.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Đạo hàm tại x là <b>độ dốc của đường tiếp tuyến</b> ở đó: dốc <b>dương</b> → hàm đang đi lên, <b>âm</b> → đi xuống, <b>bằng 0</b> →
-    đỉnh/đáy bằng phẳng. Nó trả lời: "nhích x một chút thì f đổi nhanh cỡ nào?".
-  </div>
-
-  <!-- GIVEN -->
+  <!-- BƯỚC 0 — GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn hàm số</h2><span class="tag">đa thức</span></div>
     <div class="calc" style="font-size:15px">
       f(x) = <span data-q="a">3</span>x² <span data-q="bs">− 2</span>x <span data-q="cs">+ 5</span> &nbsp;;&nbsp; xét tại x₀ = <span data-q="x0">2</span>
     </div>
-    <div class="note">Mục tiêu: tìm công thức f'(x), rồi tính độ dốc tại điểm x₀.</div>
+    <div class="note">Nhắc quy tắc: d/dx(xⁿ) = n·x<sup>n−1</sup> · d/dx(c) = 0 · (c·f)' = c·f'. Mục tiêu: có f'(x) rồi tính độ dốc tại x₀.</div>
   </div>
 
-  <!-- BƯỚC 1 — đạo hàm từng số hạng -->
+  <!-- BƯỚC 1 — HERO: f'(x) chẻ từng số hạng + hình -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Đạo hàm từng số hạng</h2><span class="tag">hạ bậc</span></div>
-    <div class="calc">
-      d/dx(<span data-q="a">3</span>x²) = <span class="blk" style="min-width:46px"></span> &nbsp;;&nbsp;
-      d/dx(<span data-q="b">−2</span>x) = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
-      d/dx(<span data-q="c">5</span>) = <span class="blk" style="min-width:30px"></span><br>
-      ⇒ f'(x) = <span class="blk" style="min-width:80px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Đạo hàm từng số hạng → f'(x), tính tại x₀ → điền vào hình</h2><span class="tag">hero · tiếp tuyến</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="62mm" height="46.5mm" aria-label="parabol f và tiếp tuyến tại x0; ô để điền độ dốc f'(x0)"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc big" style="margin:0">
+          d/dx(<span data-q="a">3</span>x²) = <span class="wcell"></span> &nbsp;
+          d/dx(<span data-q="b">−2</span>x) = <span class="wcell"></span> &nbsp;
+          d/dx(<span data-q="c">5</span>) = <span class="wcell"></span><br>
+          ⇒ f'(x) = <span class="wcell"></span>
+          &nbsp;→&nbsp; f'(<span data-q="x0">2</span>) = <span data-q="d2a">6</span>·<span data-q="x0">2</span> <span data-q="bs">− 2</span> = <span class="wcell"></span>
+        </div>
+        <div class="note" style="margin-top:6px">Hạ bậc rồi nhân hệ số; hằng số → 0. <b>Điền f'(x₀) = độ dốc tiếp tuyến vào ô ✍ trong hình.</b></div>
+      </div>
     </div>
-    <div class="why"><b>Vì sao:</b> quy tắc lũy thừa hạ bậc rồi nhân hệ số; hằng số không đổi nên đạo hàm = 0.</div>
   </div>
 
-  <!-- BƯỚC 2 — tính tại x0 -->
+  <!-- BƯỚC 2 — ý nghĩa dấu -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tính tại x₀ = <span data-q="x0">2</span></h2><span class="tag">thay số</span></div>
-    <div class="calc">
-      f'(<span data-q="x0">2</span>) = <span data-q="d2a">6</span>·<span data-q="x0">2</span> <span data-q="bs">− 2</span> = <span class="blk" style="min-width:42px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Đọc dấu → hàm lên hay xuống</h2><span class="tag">tăng / giảm</span></div>
+    <div class="calc big">
+      f'(<span data-q="x0">2</span>) = <span data-q="fpval">10</span> <span data-q="cmp">&gt; 0</span> → tại x₀ hàm đang <span class="wcell"></span>
     </div>
-    <div class="hint">Thay số <b>sau</b> khi đã có công thức f'(x) — đừng thay quá sớm.</div>
+    <div class="why"><b>Vì sao:</b> dốc dương ⇒ tăng x làm f tăng → muốn <b>giảm</b> f thì đi <b>ngược</b> dấu đạo hàm (đó là gradient descent: x ← x − η·f').</div>
   </div>
 
-  <!-- BƯỚC 3 — ý nghĩa dấu -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Ý nghĩa của dấu</h2><span class="tag">tăng / giảm</span></div>
-    <div class="calc">
-      f'(<span data-q="x0">2</span>) = <span data-q="fpval">10</span> <span data-q="cmp">&gt; 0</span> → tại x₀ hàm đang <span class="blk" style="min-width:70px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> dốc dương ⇒ tăng x làm f tăng → muốn <b>giảm</b> f thì đi <b>ngược</b> dấu đạo hàm (đó là gradient descent).</div>
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — hạ bậc &amp; thay số ở đây</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A12 · Đạo hàm một biến</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
+  <div class="wb-title">
+    <span class="no">Bài A12</span>
+    <h1>Đạo hàm một biến <small>— dùng độ dốc để dự đoán</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+
+  <div class="mission">
+    🎯 <b>Tiếp.</b> Đạo hàm không chỉ để đọc dấu — nó <b>dự đoán</b> hàm đổi bao nhiêu khi ta nhích x. Xấp xỉ tuyến tính:
+    <b>f(x₀+h) ≈ f(x₀) + f'(x₀)·h</b>. Hãy dự đoán rồi so với giá trị thật để thấy đạo hàm "nói" đúng cỡ nào.
+  </div>
+
+  <!-- BƯỚC 3 — xấp xỉ tuyến tính -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tiếp tuyến dự đoán f(x₀+1) &amp; sai số = độ cong</h2><span class="tag">f(x₀+h) ≈ f(x₀)+f'·h</span></div>
+    <div class="calc big">
+      <span class="lead">f(x₀)</span> = <span data-q="a">3</span>·<span data-q="x0">2</span>² <span data-q="bs">− 2</span>·<span data-q="x0">2</span> <span data-q="cs">+ 5</span> = <span class="wcell"></span><br>
+      <span class="lead">dự đoán</span> f(x₀+1) ≈ f(x₀) + f'(x₀)·1 = <span class="wcell"></span> + <span data-q="fpval">10</span> = <span class="wcell"></span><br>
+      <span class="lead">thực tế</span> f(x₀+1) = <span class="wcell"></span>
+        &nbsp;·&nbsp; <span class="lead">chênh</span> = thực tế − dự đoán = <span class="wcell"></span>
+        <small style="color:#7a8794">(= <span data-q="a">3</span> = hệ số x², chính là độ cong)</small>
+    </div>
+    <div class="note">Tiếp tuyến là <b>đường thẳng</b> nên chỉ đoán đúng phần "dốc"; phần cong (số hạng x²) làm lệch đúng bằng hệ số a.
+      Bước càng nhỏ (h → 0) sai số càng bé — vì sao gradient descent dùng bước η nhỏ.</div>
+  </div>
+
+  <div class="scratch" style="height:30mm"><span class="lb">✏️ Nháp — tính f(x₀), dự đoán, rồi f(x₀+1) thật ở đây</span></div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Đạo hàm của một hằng số? → <span class="blk" style="min-width:50px"></span></li>
-      <li>f'(x₀) &lt; 0 cho biết điều gì? → <span class="blk" style="min-width:140px"></span></li>
+      <li>Đạo hàm của hằng số? → <span class="blk" style="min-width:60px"></span></li>
+      <li>f'(x₀) &lt; 0 thì hàm đang? → <span class="blk" style="min-width:110px"></span></li>
+      <li>Vì sao dự đoán bằng tiếp tuyến có sai số? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A12 · Đạo hàm một biến</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Có f'(x), tính tại x₀</span>
+    <span><span class="ck"></span>Điền độ dốc + đọc dấu</span>
+    <span><span class="ck"></span>Dự đoán bằng tiếp tuyến</span>
+    <span class="win">🎉 Bạn vừa đo được độ dốc để đi xuống!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A12 · Đạo hàm một biến</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -106,37 +140,34 @@
   <div class="wb-title"><span class="no">Bài A12</span><h1>Đạo hàm một biến <small>— lời giải</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Đạo hàm từng số hạng</h2></div>
-    <div class="calc ans">
-      d/dx(<span data-q="a">3</span>x²) = <span class="blk" data-q="t1">6x</span> ;
-      d/dx(<span data-q="b">−2</span>x) = <span class="blk" data-q="t2">−2</span> ;
-      d/dx(<span data-q="c">5</span>) = <span class="blk" data-q="t3">0</span><br>
-      ⇒ f'(x) = <span class="blk" data-q="fpstr" style="min-width:80px">6x − 2</span>
+    <div class="step-h"><div class="b">1</div><h2>Đạo hàm từng số hạng → f'(x), tại x₀</h2></div>
+    <div class="calc ans big">
+      d/dx(<span data-q="a">3</span>x²) = <span class="wcell ans" data-q="t1">6x</span> ;
+      d/dx(<span data-q="b">−2</span>x) = <span class="wcell ans" data-q="t2">−2</span> ;
+      d/dx(<span data-q="c">5</span>) = <span class="wcell ans" data-q="t3">0</span><br>
+      ⇒ f'(x) = <span class="wcell ans" data-q="fpstr">6x − 2</span>
+      &nbsp;→&nbsp; f'(<span data-q="x0">2</span>) = <span data-q="d2a">6</span>·<span data-q="x0">2</span> <span data-q="bs">− 2</span> = <span class="wcell ans" data-q="fpval">10</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> quy tắc lũy thừa hạ bậc rồi nhân hệ số; hằng số không đổi nên đạo hàm = 0. Thay x₀ <b>sau</b> khi đã có công thức f'(x).</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Dấu → hướng</h2></div>
+    <div class="calc ans big">
+      f'(<span data-q="x0">2</span>) = <span data-q="fpval">10</span> <span data-q="cmp">&gt; 0</span> → hàm đang <span class="wcell ans" data-q="trend">tăng</span> tại x₀.
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tại x₀</h2></div>
-    <div class="calc ans">
-      f'(<span data-q="x0">2</span>) = <span data-q="d2a">6</span>·<span data-q="x0">2</span> <span data-q="bs">− 2</span> = <span class="blk" data-q="fpval">10</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Dấu → hướng</h2></div>
-    <div class="calc ans">
-      f'(<span data-q="x0">2</span>) = <span data-q="fpval">10</span> <span data-q="cmp">&gt; 0</span> → hàm đang <span class="blk" data-q="trend">tăng</span> tại x₀.
-    </div>
-  </div>
-
-  <!-- BƯỚC 4 / SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hình học: tiếp tuyến tại x₀</h2><span class="tag">độ dốc</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Xấp xỉ tuyến tính</h2></div>
     <div class="figrow">
-      <svg id="figP" class="fig" viewBox="0 0 210 150" width="66mm" height="46mm" aria-label="parabol f và tiếp tuyến tại x0 có độ dốc bằng đạo hàm"></svg>
-      <div style="flex:1">
-        <div class="note">Đường cong lam = f(x); <b>đường thẳng cam</b> = tiếp tuyến tại x₀, độ dốc = f'(x₀) = <span data-q="fpval">10</span>.
-          Gradient descent <b>x ← x − η·f'(x)</b> đẩy x về phía đáy (nơi đạo hàm → 0).</div>
+      <svg id="figA" class="fig" viewBox="0 0 200 150" width="56mm" height="42mm"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc ans big" style="margin:0">
+          f(x₀) = <span class="wcell ans" data-q="fx0">13</span> &nbsp; dự đoán = <span data-q="fx0">13</span> + <span data-q="fpval">10</span> = <span class="wcell ans" data-q="predict">23</span><br>
+          thực tế f(x₀+1) = <span class="wcell ans" data-q="fx1">26</span> &nbsp; chênh = <span class="wcell ans" data-q="gap">3</span> = a
+        </div>
+        <div class="why"><b>Vì sao:</b> tiếp tuyến (cam) = đường thẳng độ dốc f'(x₀); nó bỏ qua độ cong nên lệch đúng bằng hệ số a. h nhỏ → sai số nhỏ.</div>
       </div>
     </div>
   </div>
@@ -146,19 +177,22 @@
     <ol>
       <li>Đạo hàm hằng số? → <span class="qa">0.</span></li>
       <li>f'(x₀) &lt; 0? → <span class="qa">Hàm đang giảm tại x₀ (dốc xuống).</span></li>
+      <li>Sai số của dự đoán? → <span class="qa">Do bỏ qua độ cong (số hạng x²); h nhỏ thì sai số nhỏ.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Đạo hàm = độ dốc; dấu cho hướng đi, độ lớn cho bước. Đó là toàn bộ ý của gradient descent một biến.
-    Bài tiếp (A13): khi hàm <b>lồng nhau</b>, tính đạo hàm bằng <b>quy tắc chuỗi</b> — gốc của backprop.
+    <b style="color:var(--accent2)">Rút ra.</b> Đạo hàm = độ dốc; dấu cho hướng, độ lớn cho bước, và f(x₀+h) ≈ f(x₀)+f'·h là cách gradient "dự báo" thay đổi.
+    Đó là toàn bộ ý của gradient descent một biến. Bài tiếp (A13): khi hàm <b>lồng nhau</b>, tính đạo hàm bằng <b>quy tắc chuỗi</b> — gốc của backprop.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A12 · Đạo hàm một biến</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A12 · Đạo hàm một biến</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var STATE = {a:3,b:-2,c:5,x0:2,fpval:10};
+
 function generate(){
   var f = WB.fmtInt;
   var a = WB.randInt(1, 4);              // hệ số x² dương (parabol mở lên)
@@ -166,62 +200,69 @@ function generate(){
   var c = WB.randInt(-3, 5);
   var x0, fpval;
   do { x0 = WB.randInt(-2, 3); fpval = 2*a*x0 + b; } while (fpval === 0);
+  STATE = {a:a, b:b, c:c, x0:x0, fpval:fpval};
 
   function signed(v){ // số có dấu nối tiếp: "+ 5" / "− 2"
     var s = f(v), neg = /^−/.test(s), mag = neg ? s.slice(1) : s;
     return (neg ? '− ' : '+ ') + mag;
   }
-  // f'(x) = (2a)x + b
   var d2a = 2*a;
   var fpstr = f(d2a) + 'x ' + signed(b);   // "6x − 2"
   var t1 = f(d2a) + 'x';
   var trend = fpval > 0 ? 'tăng' : 'giảm';
   var cmp = fpval > 0 ? '> 0' : '< 0';
+  // xấp xỉ tuyến tính
+  var fx0 = a*x0*x0 + b*x0 + c;
+  var fx1 = a*(x0+1)*(x0+1) + b*(x0+1) + c;
+  var predict = fx0 + fpval;
+  var gap = fx1 - predict;                  // = a (độ cong)
 
   WB.setAll({
     a: f(a), b: f(b), c: f(c), x0: f(x0),
-    bs: signed(b),
-    cs: signed(c),
+    bs: signed(b), cs: signed(c),
     d2a: f(d2a),
     t1: t1, t2: f(b), t3: '0',
     fpstr: fpstr, fpval: f(fpval),
-    trend: trend, cmp: cmp
+    trend: trend, cmp: cmp,
+    fx0: f(fx0), fx1: f(fx1), predict: f(predict), gap: f(gap)
   });
-  drawParab('figP', a, b, c, x0, fpval);
+  drawParab('figQ', a, b, c, x0, fpval, false);
+  drawParab('figA', a, b, c, x0, fpval, true);
 }
 
-// parabol f(x)=ax²+bx+c và tiếp tuyến tại x0 (độ dốc fp)
-function drawParab(id, a, b, c, x0, fp){
+// parabol f(x)=ax²+bx+c và tiếp tuyến tại x0 (độ dốc fp); ô điền f'(x0).
+function drawParab(id, a, b, c, x0, fp, showAns){
   var svg = document.getElementById(id);
   if (!svg) return;
   var xmin = x0 - 2.6, xmax = x0 + 2.6;
   function F(x){ return a*x*x + b*x + c; }
-  // lấy mẫu để biết khoảng y
   var ys = [], i, x;
   for (i = 0; i <= 40; i++){ x = xmin + (xmax-xmin)*i/40; ys.push(F(x)); }
-  // thêm hai đầu tiếp tuyến vào khoảng y để không bị tràn
   var tw = 1.4;
   ys.push(F(x0) + fp*tw); ys.push(F(x0) - fp*tw);
   var ymin = Math.min.apply(null, ys), ymax = Math.max.apply(null, ys);
   if (ymax === ymin) ymax = ymin + 1;
-  var PX0 = 22, PX1 = 196, PY0 = 14, PY1 = 132;
+  var PX0 = 20, PX1 = 188, PY0 = 14, PY1 = 132;
   function SX(x){ return (PX0 + (x - xmin)/(xmax - xmin)*(PX1 - PX0)).toFixed(1); }
   function SY(y){ return (PY1 - (y - ymin)/(ymax - ymin)*(PY1 - PY0)).toFixed(1); }
   var s = '';
-  // khung
   s += '<rect x="'+PX0+'" y="'+PY0+'" width="'+(PX1-PX0)+'" height="'+(PY1-PY0)+'" fill="#fafbfc" stroke="#e5e7eb" stroke-width="1"/>';
-  // parabol
   var pts = '';
   for (i = 0; i <= 40; i++){ x = xmin + (xmax-xmin)*i/40; pts += SX(x)+','+SY(F(x))+' '; }
   s += '<polyline points="'+pts.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.4"/>';
-  // tiếp tuyến qua (x0, F(x0)) độ dốc fp
   s += '<line x1="'+SX(x0-tw)+'" y1="'+SY(F(x0)-fp*tw)+'" x2="'+SX(x0+tw)+'" y2="'+SY(F(x0)+fp*tw)+'" stroke="#b45309" stroke-width="2.4"/>';
-  // điểm
   s += '<circle cx="'+SX(x0)+'" cy="'+SY(F(x0))+'" r="3.4" fill="#7c5cff" stroke="#fff" stroke-width="1"/>';
   s += '<text x="'+SX(x0)+'" y="'+(parseFloat(SY(F(x0)))+15)+'" text-anchor="middle" style="font-size:9px" fill="#7c5cff" font-weight="700">x₀</text>';
+  // ô điền độ dốc, góc trên
+  var bx = PX0 + 6, by = PY0 + 5;
+  s += '<rect x="'+bx+'" y="'+by+'" width="70" height="26" rx="7" fill="'+(showAns?'#fff3e6':'#fff')+'" stroke="'+(showAns?'#e0aa66':'#b45309')+'" stroke-width="1.6"/>';
+  s += '<text x="'+bx+'" y="'+(by-3)+'" style="font-size:8.5px" fill="#b45309" font-weight="700">độ dốc f\'(x₀) = ✍</text>';
+  if (showAns) s += '<text x="'+(bx+35)+'" y="'+(by+18)+'" text-anchor="middle" style="font-size:14px" fill="#8a3d00" font-weight="700">'+WB.fmtInt(fp)+'</text>';
+  else s += '<text x="'+(bx+35)+'" y="'+(by+17)+'" text-anchor="middle" style="font-size:12px" fill="#c3ccd6">?</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);
+drawParab('figQ', STATE.a, STATE.b, STATE.c, STATE.x0, STATE.fpval, false);
 generate();
 </script>
 </body>

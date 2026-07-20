@@ -5,17 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F2 — Kích thước đầu ra Conv (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
+.page .why,.page .hint,.page .note{margin-top:5px;}
+.page.key .step{margin-top:6px;}
+.page.key .calc.big{line-height:2.1;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,162 +28,225 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F2</span><h1>Kích thước đầu ra Conv <small>— Conv output size (stride, padding)</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Thiết kế CNN phải biết mỗi lớp <b>thu nhỏ ảnh</b> bao nhiêu để khớp lớp sau và lớp fully-connected
-    cuối. Sai một ô là vỡ cả mạng. Công thức này lặp ở mọi lớp conv/pool.
-    <div class="formula">
-      out = ⌊ (W − K + 2P) / S ⌋ + 1 &nbsp;&nbsp;·&nbsp;&nbsp; "same" padding: P = (K−1)/2 giữ nguyên cỡ khi S = 1
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài F2</span>
+    <h1>Kích thước đầu ra Conv <small>— O = ⌊(W−K+2P)/S⌋+1</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Cửa sổ kernel <b>trượt</b> trên ảnh; đếm số vị trí đặt được cửa sổ = kích thước đầu ra. Padding <b>viền thêm 0</b> quanh mép
-    (giữ thông tin biên, không co quá nhanh); stride là <b>bước nhảy</b> mỗi lần trượt (bước to → ra nhỏ).
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Xếp lớp CNN mà tính sai kích thước đầu ra là <b>vỡ cả mạng</b> — lớp sau không khớp chiều.
+    Hãy tự tay tính O cho <b>3 cấu hình</b> (P,S) khác nhau, rồi <b>giải ngược</b> để tìm P giữ nguyên kích thước
+    ("same padding") — kỹ năng dùng lại ở mọi lớp conv/pool.
+    <div class="formula" style="margin-top:5px">O = ⌊(W − K + 2P)/S⌋ + 1</div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">W=<span data-q="W">5</span>, K=<span data-q="K">3</span></span></div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">W=<span data-q="W">7</span>, K=<span data-q="K">3</span></span></div>
     <div class="calc" style="font-size:15px">
-      Ảnh vào <span class="gv" data-q="W">5</span>×<span class="gv" data-q="W">5</span>, kernel <span class="gv" data-q="K">3</span>×<span class="gv" data-q="K">3</span>.
-      Tính cỡ đầu ra cho 3 cấu hình padding/stride dưới đây.
+      Ảnh vào <span class="gv" data-q="W">7</span>×<span class="gv" data-q="W">7</span>, kernel <span class="gv" data-q="K">3</span>×<span class="gv" data-q="K">3</span>.
+      Tính O với 3 cấu hình (P,S) bên dưới, rồi tự giải ngược tìm P.
     </div>
   </div>
 
   <div class="grid2">
     <!-- BƯỚC 1 -->
     <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Không pad, stride 1</h2><span class="tag">P=0, S=1</span></div>
-      <div class="calc">
-        (<span data-q="W">5</span> − <span data-q="K">3</span> + 0)/1 + 1 = <span class="blk" style="min-width:50px"></span> → ra <span class="blk" style="min-width:46px"></span>
+      <div class="step-h"><div class="b">1</div><h2>Không đệm (valid)</h2><span class="tag">P=0, S=1</span></div>
+      <div class="calc big">
+        (<span class="gv" data-q="W">7</span> − <span class="gv" data-q="K">3</span> + 2·0)/1 + 1 = <span class="wcell"></span>
       </div>
       <div class="why"><b>Vì sao:</b> cửa sổ K chỉ đặt vừa ở W−K+1 vị trí trên một hàng → <b>mất viền ngoài</b>, ảnh co lại.</div>
     </div>
 
     <!-- BƯỚC 2 -->
     <div class="step">
-      <div class="step-h"><div class="b">2</div><h2>Same padding, stride 1</h2><span class="tag">P=1, S=1</span></div>
-      <div class="calc">
-        (<span data-q="W">5</span> − <span data-q="K">3</span> + 2·1)/1 + 1 = <span class="blk" style="min-width:50px"></span> → ra <span class="blk" style="min-width:46px"></span>
+      <div class="step-h"><div class="b">2</div><h2>Same padding</h2><span class="tag">P=(K−1)/2, S=1</span></div>
+      <div class="calc big">
+        P = (<span class="gv" data-q="K">3</span>−1)/2 = <span class="wcell" style="min-width:15mm"></span> &nbsp;·&nbsp;
+        O = (<span class="gv" data-q="W">7</span>−<span class="gv" data-q="K">3</span>+2P)/1+1 = <span class="wcell"></span>
       </div>
-      <div class="hint">P = (K−1)/2 = 1 đắp lại đúng phần biên bị mất → đầu ra <b>giữ nguyên</b> cỡ vào.</div>
+      <div class="hint">Đắp đúng phần biên bị mất (P=(K−1)/2) → đầu ra <b>giữ nguyên</b> cỡ = W.</div>
     </div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F2 · Kích thước đầu ra Conv</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Stride làm ảnh co nhanh hơn; padding giữ biên</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F2</span>
+    <h1>Kích thước đầu ra Conv <small>— giải ngược tìm P giữ nguyên cỡ</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
 
   <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Same padding, stride 2</h2><span class="tag">P=1, S=2</span></div>
-    <div class="calc">
-      (<span data-q="W">5</span> − <span data-q="K">3</span> + 2·1)/2 + 1 = <span class="blk" style="min-width:60px"></span>/2 + 1 = <span class="blk" style="min-width:46px"></span> → ra <span class="blk" style="min-width:46px"></span>
+    <div class="step-h"><div class="b">3</div><h2>Same padding, bước nhảy 2</h2><span class="tag">P=(K−1)/2, S=2</span></div>
+    <div class="calc big">
+      tử số = <span class="gv" data-q="W">7</span> − <span class="gv" data-q="K">3</span> + 2P = <span class="wcell" style="min-width:15mm"></span> &nbsp;·&nbsp;
+      O = tử số/2 + 1 = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> bước nhảy 2 lấy mẫu thưa → <b>giảm kích thước ~½</b> (downsample) mỗi chiều.</div>
+    <div class="why"><b>Vì sao:</b> bước nhảy 2 lấy mẫu thưa → ảnh giảm khoảng <b>một nửa</b> (downsample) dù padding vẫn giữ biên.</div>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM: giải ngược same-padding -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — giải ngược tìm P giữ nguyên cỡ</h2><span class="tag">O=W ⇒ P=?</span></div>
+    <div class="note" style="margin-top:0">
+      Muốn O = W khi S=1 (không co, không giãn): thay vào công thức — W = (W−K+2P)+1 (bỏ ⌊⌋ vì kết quả nguyên)
+      ⇒ 2P = K−1 ⇒ <b>P = (K−1)/2</b>. Kiểm với hai kernel:
+    </div>
+    <div class="calc big">
+      K=3 ⇒ P = (3−1)/2 = <span class="wcell" style="min-width:15mm"></span> &nbsp;·&nbsp;
+      K=5 ⇒ P = (5−1)/2 = <span class="wcell" style="min-width:15mm"></span>
+    </div>
+    <div class="note">K phải <b>LẺ</b> thì (K−1)/2 mới ra số nguyên — vì sao kernel CNN hay chọn 3, 5, 7 (không chọn 4, 6).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>"Same padding" làm gì? → <span class="blk" style="min-width:200px"></span></li>
-      <li>Tăng stride ảnh hưởng kích thước ra sao? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao cấu hình P=0, S=1 làm ảnh co lại? → <span class="blk" style="min-width:180px"></span></li>
+      <li>Muốn O=W qua nhiều lớp liên tiếp (S=1), chọn P theo công thức nào? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F2 · Kích thước đầu ra Conv</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — thay số vào công thức và rút gọn ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính 3 cấu hình (P,S)</span>
+    <span><span class="ck"></span>Giải ngược tìm P same-padding</span>
+    <span class="win">🎉 Bạn vừa tự thiết kế một lớp CNN không làm vỡ mạng!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F2 · Kích thước đầu ra Conv</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F2</span><h1>Kích thước đầu ra Conv <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F2</span><h1>Kích thước đầu ra Conv <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="grid2">
-    <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>P=0, S=1</h2></div>
-      <div class="calc ans">(<span data-q="W">5</span>−<span data-q="K">3</span>+0)/1+1 = <span class="blk" data-q="o1">3</span> → <b><span data-q="o1">3</span>×<span data-q="o1">3</span></b></div>
-    </div>
-    <div class="step">
-      <div class="step-h"><div class="b">2</div><h2>P=1, S=1 (same)</h2></div>
-      <div class="calc ans">(<span data-q="W">5</span>−<span data-q="K">3</span>+2)/1+1 = <span class="blk" data-q="o2">5</span> → <b><span data-q="o2">5</span>×<span data-q="o2">5</span></b></div>
-    </div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Không đệm (valid)</h2></div>
+    <div class="calc ans">(W−K+2·0)/1+1 = <span class="wcell ans" data-q="o1">5</span> → ảnh co còn <b><span data-q="o1">5</span>×<span data-q="o1">5</span></b></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>P=1, S=2</h2></div>
-    <div class="calc ans">(<span data-q="W">5</span>−<span data-q="K">3</span>+2)/2+1 = <span data-q="num3">4</span>/2+1 = <span class="blk" data-q="o3">3</span> → <b><span data-q="o3">3</span>×<span data-q="o3">3</span></b> (giảm ~½)</div>
+    <div class="step-h"><div class="b">2</div><h2>Same padding</h2></div>
+    <div class="calc ans">P=(K−1)/2 = <span class="wcell ans" data-q="P">1</span> · O=(W−K+2P)/1+1 = <span class="wcell ans" data-q="o2">7</span> → giữ nguyên <b>W×W</b></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Same padding, bước nhảy 2</h2></div>
+    <div class="calc ans">tử số = W−K+2P = <span class="wcell ans" data-q="num3">6</span> · O = tử số/2+1 = <span class="wcell ans" data-q="o3">4</span> → downsample còn <b><span data-q="o3">4</span>×<span data-q="o3">4</span></b></div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Cửa sổ trượt: same padding giữ cỡ</h2><span class="tag">P=1, S=1</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Valid vs same: ai co, ai giữ?</h2><span class="tag">P=0 vs P=(K−1)/2</span></div>
     <div class="figrow">
-      <svg id="figConv" class="fig" viewBox="0 0 250 150" width="80mm" height="48mm" aria-label="ảnh vào có viền padding, kernel trượt, đầu ra cùng cỡ"></svg>
+      <svg id="figConv" class="fig" viewBox="0 0 260 150" width="92mm" height="53mm" aria-label="so sánh valid (co lại) và same padding (giữ nguyên cỡ)"></svg>
       <div style="flex:1">
-        <div class="note"><b>Lam</b> = ảnh vào W×W; viền nhạt = padding 1 ô số 0. <b>Cam</b> = ô kernel 3×3 đang đặt. Đầu ra (phải) cùng cỡ vào
-          nhờ padding. Pooling cũng dùng đúng công thức này (thường K=2, S=2 → giảm nửa).</div>
+        <div class="note"><b>Lam</b> = ảnh vào; ô mờ nhạt = viền padding. <b>Cam</b> = cửa sổ kernel đang đặt + lưới đầu ra.
+          Trái (valid, P=0): đầu ra <b>nhỏ hơn</b> đầu vào. Phải (same, P=(K−1)/2): đầu ra <b>bằng</b> đầu vào nhờ đệm đúng phần biên mất.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Giải ngược: P=(K−1)/2</h2><span class="tag">O=W ⇒ P=?</span></div>
+    <div class="calc ans">K=3 ⇒ P = <span class="wcell ans" data-q="p3">1</span> &nbsp;·&nbsp; K=5 ⇒ P = <span class="wcell ans" data-q="p5">2</span></div>
+    <div class="why"><b>Vì sao:</b> từ O=W ⇒ 2P=K−1 ⇒ P=(K−1)/2, đúng khi K lẻ. Đây là "same padding" — giữ độ phân giải qua nhiều lớp;
+      còn "valid" (P=0) mỗi lớp co (K−1) pixel, xếp càng sâu ảnh co càng nhanh.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>"Same padding"? → <span class="qa">Giữ kích thước đầu ra = đầu vào (khi S=1), bằng cách đệm viền 0 P=(K−1)/2.</span></li>
-      <li>Tăng stride? → <span class="qa">Giảm kích thước đầu ra (lấy mẫu thưa → downsample).</span></li>
+      <li>Vì sao P=0,S=1 co lại? → <span class="qa">Cửa sổ chỉ đặt vừa ở W−K+1 vị trí (mất K−1 pixel biên) → đầu ra nhỏ hơn.</span></li>
+      <li>Giữ O=W qua nhiều lớp? → <span class="qa">Chọn P=(K−1)/2 ("same padding", cần K lẻ) khi S=1.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> out = ⌊(W−K+2P)/S⌋+1; padding giữ biên, stride thu nhỏ. Biết cỡ rồi mới đếm được tham số
-    (F10) và xếp tầng để tăng vùng tiếp nhận (F6). Bài tiếp <b style="color:var(--accent2)">F3</b>: conv trên ảnh <b>nhiều kênh</b> (RGB).
+    <b style="color:var(--accent2)">Rút ra.</b> O=⌊(W−K+2P)/S⌋+1; "same" P=(K−1)/2 giữ độ phân giải khi xếp sâu, "valid" P=0 co (K−1) mỗi lớp,
+    S&gt;1 chủ động downsample. Biết cỡ ra rồi mới đếm được tham số (F10) và tính vùng tiếp nhận khi xếp tầng (F6).
+    Bài tiếp <b style="color:var(--accent2)">F3</b>: conv trên ảnh <b>nhiều kênh</b> (RGB).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F2 · Kích thước đầu ra Conv</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F2 · Kích thước đầu ra Conv</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var W = WB.pick([5, 7]);
-  var K = 3;
-  var o1 = W - K + 1;            // P=0,S=1
-  var o2 = W;                    // P=1,S=1 (same)
-  var num3 = W - K + 2;          // tử số case 3
-  var o3 = Math.floor(num3/2) + 1;  // P=1,S=2
+  var W = WB.pick([7, 9, 11]);
+  var K = WB.pick([3, 5]);
+  var o1 = W - K + 1;                 // P=0, S=1 (valid)
+  var P  = (K - 1) / 2;               // same padding, K luôn lẻ → P nguyên
+  var o2 = W;                         // P=(K-1)/2, S=1 (same) → giữ nguyên
+  var num3 = W - K + 2 * P;           // = W - 1 (luôn đúng vì 2P = K-1)
+  var o3 = Math.floor(num3 / 2) + 1;  // P=(K-1)/2, S=2 (W lẻ → chia hết)
+  var p3 = 1;                         // K=3 ⇒ P=(3-1)/2=1 (kiểm tra tổng quát, không phụ thuộc random)
+  var p5 = 2;                         // K=5 ⇒ P=(5-1)/2=2
   WB.setAll({
     W: String(W), K: String(K),
-    o1: String(o1), o2: String(o2), num3: String(num3), o3: String(o3)
+    o1: String(o1), P: String(P), o2: String(o2),
+    num3: String(num3), o3: String(o3),
+    p3: String(p3), p5: String(p5)
   });
-  drawConv('figConv', W, K);
+  drawConv('figConv', W, K, P);
 }
 
-// ảnh vào W×W + viền padding 1 ô + kernel 3×3 + đầu ra cùng cỡ (same padding)
-function drawConv(id, W, K){
+// So sánh 2 mini-lưới: trái = valid (P=0, co lại) · phải = same (P=(K-1)/2, giữ cỡ)
+function drawConv(id, W, K, P){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var cell = 13, P = 1;
-  var inX = 16, inY = 22;
+  var block = 60;
+  function grid(ox, oy, n, cell, fill, stroke){
+    var g = '';
+    for (var i=0;i<n;i++) for (var j=0;j<n;j++){
+      g += '<rect x="'+(ox+j*cell)+'" y="'+(oy+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="0.5"/>';
+    }
+    return g;
+  }
   var s = '';
-  // viền padding (W+2)×(W+2)
-  s += '<rect x="'+(inX-P*cell)+'" y="'+(inY-P*cell)+'" width="'+((W+2*P)*cell)+'" height="'+((W+2*P)*cell)+'" fill="#eef6fa" stroke="#cfe3ec"/>';
-  // ảnh vào W×W
-  for (var i=0;i<W;i++) for (var j=0;j<W;j++){
-    s += '<rect x="'+(inX+j*cell)+'" y="'+(inY+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="#d6ecf6" stroke="#a7d3e3"/>';
-  }
-  // kernel K×K (góc trên-trái, ăn cả viền padding)
-  s += '<rect x="'+(inX-cell-0.5)+'" y="'+(inY-cell-0.5)+'" width="'+(K*cell+1)+'" height="'+(K*cell+1)+'" fill="rgba(180,83,9,.16)" stroke="#b45309" stroke-width="2"/>';
-  // đầu ra cùng cỡ (bên phải)
-  var outX = inX + (W+2*P)*cell + 16, outY = inY;
-  for (var a=0;a<W;a++) for (var b=0;b<W;b++){
-    s += '<rect x="'+(outX+b*cell)+'" y="'+(outY+a*cell)+'" width="'+cell+'" height="'+cell+'" fill="#ffe6cc" stroke="#e3a76a"/>';
-  }
-  s += '<text x="'+inX+'" y="'+(inY-cell-4)+'" style="font-size:8px" fill="#0e7490">vào '+W+'×'+W+' (+pad)</text>';
-  s += '<text x="'+outX+'" y="'+(outY-4)+'" style="font-size:8px" fill="#b45309">ra '+W+'×'+W+'</text>';
+  // ---- TRÁI: valid (P=0) ----
+  var o1 = W - K + 1;
+  var cellV = block / W;
+  var oxV = 14, oyV = 26;
+  s += '<text x="'+(oxV+block/2)+'" y="15" text-anchor="middle" style="font-size:9px;font-weight:700" fill="#475569">Valid (P=0) — co lại</text>';
+  s += grid(oxV, oyV, W, cellV, '#d6ecf6', '#a7d3e3');
+  s += '<rect x="'+(oxV-0.5)+'" y="'+(oyV-0.5)+'" width="'+(K*cellV+1)+'" height="'+(K*cellV+1)+'" fill="rgba(180,83,9,.18)" stroke="#b45309" stroke-width="1.6"/>';
+  var outOyV = oyV + block + 14;
+  s += '<text x="'+oxV+'" y="'+(outOyV-4)+'" style="font-size:8px" fill="#b45309">ra '+o1+'×'+o1+'</text>';
+  s += grid(oxV, outOyV, o1, cellV, '#ffe6cc', '#e3a76a');
+
+  // ---- PHẢI: same padding ----
+  var oxS = 152, oyS = 26;
+  var paddedN = W + 2*P;
+  var cellS = block / paddedN;
+  s += '<text x="'+(oxS+block/2)+'" y="15" text-anchor="middle" style="font-size:9px;font-weight:700" fill="#475569">Same (P=(K−1)/2) — giữ cỡ</text>';
+  s += '<rect x="'+oxS+'" y="'+oyS+'" width="'+block+'" height="'+block+'" fill="#eef6fa" stroke="#cfe3ec"/>';
+  var innerOx = oxS + P*cellS, innerOy = oyS + P*cellS;
+  s += grid(innerOx, innerOy, W, cellS, '#d6ecf6', '#a7d3e3');
+  s += '<rect x="'+(oxS-0.5)+'" y="'+(oyS-0.5)+'" width="'+(K*cellS+1)+'" height="'+(K*cellS+1)+'" fill="rgba(180,83,9,.18)" stroke="#b45309" stroke-width="1.6"/>';
+  var outOyS = oyS + block + 14;
+  s += '<text x="'+oxS+'" y="'+(outOyS-4)+'" style="font-size:8px" fill="#b45309">ra '+W+'×'+W+'</text>';
+  s += grid(oxS, outOyS, W, cellS, '#ffe6cc', '#e3a76a');
+
   svg.innerHTML = s;
 }
 WB.wire(generate);

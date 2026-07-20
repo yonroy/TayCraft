@@ -3,199 +3,367 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài I8 — Greedy decode (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài I8 — Greedy Decode (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.55}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
+  <div class="top">
+    <span class="no">I8</span>
+    <h1>Greedy Decode <small>— sinh chuỗi bằng argmax từng bước</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>p · xác suất cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>argmax, chuỗi greedy · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>chuỗi tốt nhất toàn cục</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I8</span><h1>Greedy Decode <small>— sinh trọn một chuỗi</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Đây là vòng lặp sinh cơ bản của mọi LLM: token → mô hình → logits → chọn → nối → lặp. Greedy là cách chọn
-    đơn giản nhất (tất định); hiểu nó là hiểu "LLM viết câu thế nào".
-    <div class="formula">lặp: logitsₜ = Model(token₁…tₜ₋₁) → tokenₜ = argmax(logitsₜ) → nối → tới khi &lt;eos&gt;</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Greedy decode sinh một chuỗi bằng cách lặp: <b>chọn token có xác suất cao nhất</b> (argmax) mỗi
+    bước, rồi nối token đó làm đầu vào cho bước kế (tự hồi quy). Cuối phiếu bạn tự chứng minh: <b>chọn max mỗi bước
+    KHÔNG đảm bảo chuỗi có xác suất tổng lớn nhất</b> — greedy có thể "cận thị", bỏ lỡ một chuỗi tốt hơn nằm ở nhánh
+    nó chưa từng đi qua.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>viết từng chữ</b>, mỗi chữ chọn "khả dĩ nhất ngay lúc đó" rồi đọc lại cả câu để viết chữ kế. Tất định: cùng đầu vào → cùng
-    đầu ra. Nhanh, nhưng thiển cận (không nhìn xa như beam — Bài G8).
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">từ điển {A, B, C} · 3 bước</span></div>
-    <div class="calc" style="font-size:13.5px">
-      logits (A, B, C) mỗi bước:<br>
-      B1: ( <span class="gv" data-q="l11">2</span>, <span class="gv" data-q="l12">1</span>, <span class="gv" data-q="l13">0</span> ) ·
-      B2: ( <span class="gv" data-q="l21">0</span>, <span class="gv" data-q="l22">3</span>, <span class="gv" data-q="l23">1</span> ) ·
-      B3: ( <span class="gv" data-q="l31">1</span>, <span class="gv" data-q="l32">0</span>, <span class="gv" data-q="l33">4</span> )
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">cây xác suất 2 bước · từ điển {A,B} → {X,Y}</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Bước</th><th>Token 1</th><th>p</th><th>Token 2</th><th>p</th></tr>
+        <tr><td class="l">Bước 1</td><td>A</td><td style="color:var(--blue);font-weight:800" data-q="pA">0.55</td><td>B</td><td style="color:var(--blue);font-weight:800" data-q="pB">0.45</td></tr>
+        <tr><td class="l">Bước 2 (đã ở A)</td><td>X</td><td style="color:var(--blue);font-weight:800" data-q="pXA">0.60</td><td>Y</td><td style="color:var(--blue);font-weight:800" data-q="pYA">0.40</td></tr>
+        <tr><td class="l">Bước 2 (đã ở B)</td><td>X</td><td style="color:var(--blue);font-weight:800" data-q="pXB">0.20</td><td>Y</td><td style="color:var(--blue);font-weight:800" data-q="pYB">0.80</td></tr>
+      </table>
+      <div class="cap">p(X|A) = xác suất token X <b>NẾU</b> bước 1 đã chọn A — khác p(X|B). Đây là bản chất "tự hồi quy":
+      xác suất bước 2 phụ thuộc token vừa chọn ở bước 1.</div>
     </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2><span class="tag">argmax</span></div>
-    <div class="calc">
-      argmax( <span data-q="l11">2</span>, <span data-q="l12">1</span>, <span data-q="l13">0</span> ) = token <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> chọn logit lớn nhất → token đầu của chuỗi.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Bước 2 (đầu vào: token vừa sinh)</h2><span class="tag">tự hồi quy</span></div>
-    <div class="calc">
-      argmax( <span data-q="l21">0</span>, <span data-q="l22">3</span>, <span data-q="l23">1</span> ) = token <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="hint">Token vừa sinh được nối vào, thành đầu vào để tính logits bước kế.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước 3 → chuỗi hoàn chỉnh</h2><span class="tag">tới &lt;eos&gt;</span></div>
-    <div class="calc">
-      argmax( <span data-q="l31">1</span>, <span data-q="l32">0</span>, <span data-q="l33">4</span> ) = token <span class="blk" style="min-width:40px"></span> →
-      chuỗi = <span class="blk" style="min-width:70px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> lặp đến khi mô hình phát token kết thúc (&lt;eos&gt;) thì dừng.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Tất định & hạn chế</h2><span class="tag">dễ lặp</span></div>
-    <div class="note">Greedy luôn cho cùng kết quả; dễ ra câu <b>nhạt/lặp</b>. Muốn đa dạng → sampling (I2); muốn tối ưu hơn → beam (G8).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Greedy chọn token thế nào mỗi bước? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Token vừa sinh dùng làm gì? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I8 · Greedy Decode</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài I8</span><h1>Greedy Decode <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2></div>
-    <div class="calc ans">token <span class="blk" data-q="t1">A</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Bước 2</h2></div>
-    <div class="calc ans">token <span class="blk" data-q="t2">B</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước 3 → chuỗi</h2></div>
-    <div class="calc ans">token <span class="blk" data-q="t3">C</span> → chuỗi = <span class="blk" data-q="seq">A B C</span></div>
   </div>
 
   <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Chuỗi token nối dần (tự hồi quy)</h2><span class="tag">argmax mỗi bước</span></div>
-    <div class="figrow">
-      <svg id="figT" class="fig" viewBox="0 0 250 120" width="82mm" height="40mm" aria-label="ba ô token nối tiếp với mũi tên hồi quy quay lại làm đầu vào bước kế"></svg>
-      <div style="flex:1">
-        <div class="note">Mỗi ô = token được chọn (argmax). Mũi tên <b>cam</b> = token vừa sinh quay lại làm đầu vào bước sau → tự hồi quy.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng — cây xác suất</span><span class="f">bước 1 → bước 2 → 4 chuỗi có thể</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 560 170" width="100%" height="46mm"
+           aria-label="cây rẽ nhánh hai bước, bước 1 rẽ A hoặc B, mỗi nhánh rẽ tiếp X hoặc Y ra bốn chuỗi, ô xác suất chuỗi để trống"></svg>
+    </div>
+  </div>
+
+  <!-- ① BƯỚC 1 -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Bước 1 — argmax chọn token đầu</span><span class="f">p lớn nhất thắng</span></div>
+    <div class="pb">
+      <div class="eq">argmax( p(A)=<span data-q="pA">0.55</span> , p(B)=<span data-q="pB">0.45</span> ) = token <span class="slot sm"></span></div>
+      <div class="cap">Token vừa chọn trở thành <b>đầu vào</b> cho bước 2 (tự hồi quy) — bước 2 chỉ tính tiếp theo nhánh này.</div>
+    </div>
+  </div>
+
+  <!-- ② BƯỚC 2 -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Bước 2 — argmax theo nhánh đã chọn</span><span class="f">tự hồi quy → chuỗi greedy</span></div>
+    <div class="pb">
+      <div class="eq">
+        Đã ở nhánh <span class="slot sm"></span> (từ Bước①) → argmax( p(X|·)=<span data-q="pXA">0.60</span> , p(Y|·)=<span data-q="pYA">0.40</span> ) = token <span class="slot sm"></span><br>
+        chuỗi greedy = <span class="slot sm"></span> – <span class="slot sm"></span>
+      </div>
+      <div class="cap">Chú ý: bước 2 <b>không hề nhìn tới</b> p(X|B), p(Y|B) — nhánh B đã "đóng cửa" ngay từ Bước①.</div>
+    </div>
+  </div>
+
+  <!-- ③ XÁC SUẤT CHUỖI GREEDY -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Xác suất chuỗi greedy</span><span class="f">tích 2 bước = P(bước1) × P(bước2|bước1)</span></div>
+    <div class="pb">
+      <div class="eq">P(greedy) = p(A) × p(X|A) = <span class="slot sm"></span> × <span class="slot sm"></span> = <span class="slot"></span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>P(chuỗi greedy)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_pg"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…1.</div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — Greedy có "cận thị" không?</span><span class="f">tính CẢ 4 chuỗi có thể, tìm chuỗi xác suất lớn nhất</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Chuỗi</th><th>Tính</th><th>Xác suất</th></tr>
+        <tr><td class="l">A–X (greedy)</td><td><span data-q="pA">0.55</span>×<span data-q="pXA">0.60</span></td><td><span class="slot sm"></span></td></tr>
+        <tr><td class="l">A–Y</td><td><span data-q="pA">0.55</span>×<span data-q="pYA">0.40</span></td><td><span class="slot sm"></span></td></tr>
+        <tr><td class="l">B–X</td><td><span data-q="pB">0.45</span>×<span data-q="pXB">0.20</span></td><td><span class="slot sm"></span></td></tr>
+        <tr><td class="l">B–Y</td><td><span data-q="pB">0.45</span>×<span data-q="pYB">0.80</span></td><td><span class="slot sm"></span></td></tr>
+      </table>
+      <div class="cap" style="margin-top:1.4mm">Chuỗi xác suất <b>LỚN NHẤT</b> trong bảng trên = <span class="slot sm"></span> ; xác suất = <span class="slot sm"></span><br>
+      So với xác suất chuỗi <b>greedy</b> (Bước③) — chuỗi nào lớn hơn? → <span class="slot" style="min-width:60mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Argmax 2 bước &amp; ghép chuỗi greedy</span>
+    <span><span class="ck"></span>Tính xác suất chuỗi greedy</span>
+    <span><span class="ck"></span>Tính cả 4 chuỗi &amp; tìm chuỗi tốt nhất toàn cục</span>
+    <span class="win">🎉 Bạn vừa thấy greedy "cận thị" như dân LLM thật!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I8 · Greedy Decode</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">I8</span>
+    <h1>Greedy Decode <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>p · xác suất cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>argmax, chuỗi greedy · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>chuỗi tốt nhất toàn cục</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">cam = đường greedy đi qua · tím = chuỗi tốt nhất toàn cục</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 560 170" width="100%" height="46mm" aria-label="sơ đồ cây đã điền đủ xác suất chuỗi, đường greedy tô cam, đường chuỗi tốt nhất tô tím"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Bước 1 — argmax chọn token đầu</span></div>
+    <div class="pb">
+      <div class="eq">argmax( p(A)=<span data-q="pA">0.55</span> , p(B)=<span data-q="pB">0.45</span> ) = token <span class="slot ans sm" data-q="t1">A</span></div>
+      <div class="why"><b>Vì sao:</b> argmax luôn dứt khoát chọn giá trị lớn nhất <b>ngay tại thời điểm đó</b> — không
+      "nhìn trước" xem bước sau sẽ ra sao.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Bước 2 — argmax theo nhánh đã chọn</span></div>
+    <div class="pb">
+      <div class="eq">
+        Đã ở nhánh <span class="slot ans sm" data-q="t1">A</span> (từ Bước①) → argmax( p(X|·)=<span data-q="pXA">0.60</span> , p(Y|·)=<span data-q="pYA">0.40</span> ) = token <span class="slot ans sm" data-q="t2">X</span><br>
+        chuỗi greedy = <span class="slot ans sm" data-q="t1">A</span> – <span class="slot ans sm" data-q="t2">X</span>
+      </div>
+      <div class="why"><b>Vì sao:</b> "tự hồi quy" nghĩa là token vừa sinh (A) được nối vào làm đầu vào — mô hình
+      chỉ còn thấy phần cây phía sau A, nhánh B coi như không tồn tại nữa.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Xác suất chuỗi greedy</span></div>
+    <div class="pb">
+      <div class="eq">P(greedy) = p(A) × p(X|A) = <span data-q="pA">0.55</span> × <span data-q="pXA">0.60</span> = <span class="slot ans" data-q="pAX">0.33</span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>P(chuỗi greedy)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_pg"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao NHÂN:</b> theo quy tắc dây chuyền xác suất, P(token1, token2) = P(token1) × P(token2 | token1)
+      — xác suất cả chuỗi là <b>tích</b> các xác suất từng bước, không phải tổng hay trung bình.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — Greedy có "cận thị" không?</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Chuỗi</th><th>Tính</th><th>Xác suất</th></tr>
+        <tr><td class="l" style="color:var(--orange);font-weight:700">A–X (greedy)</td><td><span data-q="pA">0.55</span>×<span data-q="pXA">0.60</span></td><td><span class="slot ans sm" data-q="pAX" style="color:var(--orange)">0.33</span></td></tr>
+        <tr><td class="l">A–Y</td><td><span data-q="pA">0.55</span>×<span data-q="pYA">0.40</span></td><td><span class="slot ans sm" data-q="pAY">0.22</span></td></tr>
+        <tr><td class="l">B–X</td><td><span data-q="pB">0.45</span>×<span data-q="pXB">0.20</span></td><td><span class="slot ans sm" data-q="pBX">0.09</span></td></tr>
+        <tr><td class="l" style="color:var(--purple);font-weight:700">B–Y (tốt nhất)</td><td><span data-q="pB">0.45</span>×<span data-q="pYB">0.80</span></td><td><span class="slot ans sm" data-q="pBY" style="color:var(--purple)">0.36</span></td></tr>
+      </table>
+      <div class="cap" style="margin-top:1.4mm">Chuỗi xác suất <b>LỚN NHẤT</b> = <span class="slot ans sm" data-q="tBest">B–Y</span> ; xác suất = <span class="slot ans sm" data-q="pBY">0.36</span><br>
+      So với chuỗi <b>greedy</b> (Bước③ = <span class="slot ans sm" data-q="pAX">0.33</span>) — <span class="qa">chuỗi TỐT NHẤT (B–Y) lớn hơn chuỗi GREEDY (A–X)</span>.</div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> greedy chọn A ở bước 1 vì
+    p(A) &gt; p(B) — <b>đúng cho riêng bước đó</b>. Nhưng nó không bao giờ "nhìn thấy" rằng nhánh B có p(Y|B) rất cao,
+    khiến tích cả chuỗi B–Y lớn hơn tích chuỗi A–X. <b>Tối ưu CỤC BỘ (từng bước) ≠ tối ưu TOÀN CỤC (cả chuỗi)</b> — đây
+    chính xác là lý do <b>beam search</b> tồn tại: nó giữ lại nhiều nhánh cùng lúc thay vì "đóng cửa" ngay ở bước 1.
+    Và vì sao khi so chuỗi DÀI (hàng chục bước), người ta không nhân trực tiếp nhiều số &lt;1 liên tiếp (kết quả co lại
+    gần 0, tràn số/underflow) mà <b>cộng LOG xác suất</b> — log biến tích thành tổng, và vì log đơn điệu tăng nên thứ
+    tự so sánh (chuỗi nào lớn hơn) không đổi.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi đọc greedy decode</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Greedy luôn cho chuỗi có xác suất cao nhất toàn cục."</b><br>
+          <span style="color:var(--dim)">Sai — Bước④ vừa chứng minh bằng số: chuỗi B–Y có xác suất lớn hơn chuỗi greedy A–X, dù bước 1 không hề chọn B.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Nhánh không được chọn ở bước 1 không ảnh hưởng gì, bỏ qua luôn được."</b><br>
+          <span style="color:var(--dim)">Đúng là greedy KHÔNG tính tiếp nhánh đó — nhưng đó chính là nhược điểm: nó có thể bỏ lỡ một chuỗi tốt hơn đang nằm trong nhánh bị bỏ.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Muốn chắc ăn, chỉ cần cộng các p lớn nhất mỗi bước lại."</b><br>
+          <span style="color:var(--dim)">Xác suất một chuỗi là <b>tích</b> (quy tắc dây chuyền), không phải tổng — cộng các p riêng lẻ không có ý nghĩa xác suất.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "So xác suất chuỗi dài cứ nhân trực tiếp là được."</b><br>
+          <span style="color:var(--dim)">Nhân hàng chục số &lt;1 liên tiếp → số cực nhỏ, máy tính tràn số (underflow) về 0. Thực tế luôn <b>cộng log xác suất</b>.</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Chọn thế nào? → <span class="qa">argmax logits (xác suất cao nhất) mỗi bước.</span></li>
-      <li>Token vừa sinh? → <span class="qa">Làm đầu vào cho bước kế (tự hồi quy).</span></li>
-    </ol>
+  <div class="why t">
+    <b>Rút ra.</b> Greedy decode = lặp argmax mỗi bước + tự hồi quy — nhanh và tất định, nhưng tối ưu <b>CỤC BỘ</b> không
+    đảm bảo tối ưu <b>TOÀN CỤC</b>: nó có thể bỏ lỡ một chuỗi tốt hơn ở nhánh chưa từng đi qua. Đây là lý do beam search
+    tồn tại (giữ nhiều nhánh) và vì sao mô hình thật so chuỗi bằng <b>tổng log xác suất</b>. Bài tiếp theo <b>I9</b>:
+    <b>repetition penalty</b> — sửa một nhược điểm khác của greedy là dễ lặp từ.
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Greedy decode = lặp argmax + nối + hồi quy tới &lt;eos&gt;; tất định, dễ lặp. Bài tiếp (I9): giảm lặp bằng
-    <b>repetition penalty</b>.
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I8 · Greedy Decode</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I8 · Greedy Decode</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var letters=['A','B','C'];
-  function step(){
-    var win = WB.randInt(0,2);
-    var vals=[0,0,0];
-    var pool=WB.pickDistinct([0,1,2,3],3);  // 3 giá trị phân biệt
-    // gán giá trị lớn nhất cho winner
-    pool.sort(function(a,b){return b-a;});
-    vals[win]=pool[0];
-    var k=1; for(var i=0;i<3;i++){ if(i!==win){ vals[i]=pool[k]; k++; } }
-    return {vals:vals, win:win};
-  }
-  var s1=step(), s2=step(), s3=step();
-  var t=[letters[s1.win], letters[s2.win], letters[s3.win]];
-  WB.setAll({
-    l11:String(s1.vals[0]), l12:String(s1.vals[1]), l13:String(s1.vals[2]),
-    l21:String(s2.vals[0]), l22:String(s2.vals[1]), l23:String(s2.vals[2]),
-    l31:String(s3.vals[0]), l32:String(s3.vals[1]), l33:String(s3.vals[2]),
-    t1:t[0], t2:t[1], t3:t[2], seq:t.join(' ')
-  });
-  drawChain('figT', t);
+var S = {};
+
+function r2(x){ return Math.round(x*100)/100; }
+
+// Hộp giá trị: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var stroke = filled?ORG:INK, fill=filled?'#fff8f0':'#fff';
+  var dash = filled?'':' stroke-dasharray="3 2"';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(filled?1.2:1.4)+'"'+dash+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="8.4" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
 }
-function drawChain(id, t){
-  var svg = document.getElementById(id); if(!svg) return;
-  var y=46, x0=26, bw=44, gap=70;
+
+// Cây rẽ nhánh 2 bước: root -> {A,B} -> {X,Y} -> 4 hộp xác suất chuỗi (để điền).
+// showAns=false: chỉ khung + nhãn token, hộp rỗng (ĐỀ). showAns=true: hộp lộ số +
+// tô đậm đường greedy (cam: root->A->X) và đường chuỗi tốt nhất toàn cục (tím: root->B->Y).
+function drawTree(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2, DIM='#6b7280', INK='#16202e', BLU='#0e7490', ORG='#b45309', PUR='#6d28d9';
+  var rootX=16, rootY=86, nodeX=140, nodeAY=47, nodeBY=125;
+  var leafX=380, leafW=64, leafH=18;
+  var rows={AX:28, AY:66, BX:106, BY:144};
+  function line(x1,y1,x2,y2,col,w){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+w+'"/>'; }
   var s='';
-  for(var i=0;i<3;i++){
-    var bx=x0+i*gap;
-    s+='<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="32" rx="6" fill="#0e749022" stroke="#0e7490" stroke-width="1.6"/>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(y+21)+'" text-anchor="middle" font-size="14" font-weight="700" fill="#0e7490">'+t[i]+'</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="8" fill="#5b6776">B'+(i+1)+'</text>';
-    if(i<2){
-      s+='<line x1="'+(bx+bw)+'" y1="'+(y+16)+'" x2="'+(bx+gap)+'" y2="'+(y+16)+'" stroke="#5b6776" stroke-width="1.4" marker-end="url(#ae)"/>';
-      // mũi tên hồi quy cong xuống
-      s+='<path d="M'+(bx+bw/2)+','+(y+32)+' Q'+(bx+gap-10)+','+(y+58)+' '+(bx+gap+bw/2)+','+(y+32)+'" fill="none" stroke="#b45309" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#ar)"/>';
-    }
+  s+='<text x="78" y="10" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+INK+'">Bước 1</text>';
+  s+='<text x="260" y="10" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+INK+'">Bước 2 (theo nhánh)</text>';
+  s+='<text x="452" y="10" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+INK+'">P(chuỗi) = tích 2 bước</text>';
+  s+=line(rootX,rootY,nodeX,nodeAY,DIM,1.2);
+  s+=line(rootX,rootY,nodeX,nodeBY,DIM,1.2);
+  s+=line(nodeX,nodeAY,leafX,rows.AX,DIM,1.2);
+  s+=line(nodeX,nodeAY,leafX,rows.AY,DIM,1.2);
+  s+=line(nodeX,nodeBY,leafX,rows.BX,DIM,1.2);
+  s+=line(nodeX,nodeBY,leafX,rows.BY,DIM,1.2);
+  s+='<circle cx="'+rootX+'" cy="'+rootY+'" r="3" fill="'+INK+'"/>';
+  s+='<text x="78" y="62.5" text-anchor="middle" font-size="9" font-weight="800" fill="'+BLU+'">A</text>';
+  s+='<text x="78" y="115.5" text-anchor="middle" font-size="9" font-weight="800" fill="'+BLU+'">B</text>';
+  s+='<text x="260" y="34.5" text-anchor="middle" font-size="8" fill="'+BLU+'">X</text>';
+  s+='<text x="260" y="53.5" text-anchor="middle" font-size="8" fill="'+BLU+'">Y</text>';
+  s+='<text x="260" y="112.5" text-anchor="middle" font-size="8" fill="'+BLU+'">X</text>';
+  s+='<text x="260" y="131.5" text-anchor="middle" font-size="8" fill="'+BLU+'">Y</text>';
+  s+=stageBox(leafX, rows.AX-9, leafW, leafH, showAns?f2(S.pAX):'', showAns);
+  s+=stageBox(leafX, rows.AY-9, leafW, leafH, showAns?f2(S.pAY):'', showAns);
+  s+=stageBox(leafX, rows.BX-9, leafW, leafH, showAns?f2(S.pBX):'', showAns);
+  s+=stageBox(leafX, rows.BY-9, leafW, leafH, showAns?f2(S.pBY):'', showAns);
+  s+='<text x="'+(leafX+leafW+6)+'" y="'+(rows.AX+3)+'" font-size="8" fill="'+DIM+'">chuỗi A–X</text>';
+  s+='<text x="'+(leafX+leafW+6)+'" y="'+(rows.AY+3)+'" font-size="8" fill="'+DIM+'">chuỗi A–Y</text>';
+  s+='<text x="'+(leafX+leafW+6)+'" y="'+(rows.BX+3)+'" font-size="8" fill="'+DIM+'">chuỗi B–X</text>';
+  s+='<text x="'+(leafX+leafW+6)+'" y="'+(rows.BY+3)+'" font-size="8" fill="'+DIM+'">chuỗi B–Y</text>';
+  if(showAns){
+    s+=line(rootX,rootY,nodeX,nodeAY,ORG,2.4);
+    s+=line(nodeX,nodeAY,leafX,rows.AX,ORG,2.4);
+    s+=line(rootX,rootY,nodeX,nodeBY,PUR,2.4);
+    s+=line(nodeX,nodeBY,leafX,rows.BY,PUR,2.4);
+    s+='<text x="'+(leafX+leafW+6)+'" y="'+(rows.AX+14)+'" font-size="7.6" font-weight="800" fill="'+ORG+'">← greedy chọn</text>';
+    s+='<text x="'+(leafX+leafW+6)+'" y="'+(rows.BY+14)+'" font-size="7.6" font-weight="800" fill="'+PUR+'">★ tốt nhất toàn cục</text>';
   }
-  s+='<defs><marker id="ae" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#5b6776"/></marker>'+
-     '<marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#b45309"/></marker></defs>';
-  s+='<text x="'+(x0)+'" y="'+(y+72)+'" font-size="8.5" fill="#b45309">↩ token vừa sinh → đầu vào bước kế</text>';
   svg.innerHTML=s;
 }
+
+// Thanh MỘT CHIỀU (0…max, gốc trái). fill=false → chỉ vạch mốc, chừa trống (ĐỀ).
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v>0){
+    var pct = Math.min(v/max,1)*100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
+  }
+  el.innerHTML=h;
+}
+
+function generate(){
+  var f2=WB.fmt2;
+  var pA,pB,pXA,pYA,pXB,pYB,pAX,pAY,pBX,pBY,ok, tries=0;
+  do{
+    pA  = WB.pick([0.55,0.60]);
+    pXA = WB.pick([0.55,0.60]);
+    pB  = WB.pick([0.40,0.45,0.50]);
+    pYB = WB.pick([0.80,0.85,0.90]);
+    pYA = WB.pick([0.20,0.25,0.30,0.35]);
+    pXB = WB.pick([0.10,0.15,0.20]);
+    pAX = r2(pA*pXA); pAY = r2(pA*pYA); pBX = r2(pB*pXB); pBY = r2(pB*pYB);
+    // Guard: bước 1 & bước 2 phải có argmax dứt khoát (auto true theo pool),
+    // và chuỗi B–Y (không greedy) PHẢI thắng chuỗi greedy A–X với biên đủ rõ để tô thanh phân biệt được.
+    ok = (pBY > pAX + 0.03) && (pAX > pAY) && (pBY > pBX);
+    tries++;
+  } while(!ok && tries<200);
+
+  var t1='A', t2='X', seqG='A–X', tBest='B–Y';
+  S = { pA:pA, pB:pB, pXA:pXA, pYA:pYA, pXB:pXB, pYB:pYB, pAX:pAX, pAY:pAY, pBX:pBX, pBY:pBY };
+
+  WB.setAll({
+    pA:f2(pA), pB:f2(pB), pXA:f2(pXA), pYA:f2(pYA), pXB:f2(pXB), pYB:f2(pYB),
+    t1:t1, t2:t2, seqG:seqG, tBest:tBest,
+    pAX:f2(pAX), pAY:f2(pAY), pBX:f2(pBX), pBY:f2(pBY)
+  });
+
+  drawBarUni('t_pg', 0, 1, false);
+  drawBarUni('a_pg', pAX, 1, true);
+
+  drawTree('figQ', false);
+  drawTree('figA', true);
+}
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

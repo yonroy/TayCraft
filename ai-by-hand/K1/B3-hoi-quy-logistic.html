@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B3 — Hồi quy logistic 1 bước (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,110 +22,151 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B3</span><h1>Hồi quy logistic 1 bước <small>— Logistic Regression</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài B3</span>
+    <h1>Hồi quy logistic 1 bước <small>— nén điểm thô về xác suất</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Phân loại "có/không" cần đầu ra trong [0,1]. Sigmoid ép điểm thô z về xác suất; BCE phạt
-    khi xác suất lệch nhãn. Đây là viên gạch của mọi bộ phân loại và của nơ-ron đầu ra nhị phân.
-    <div class="formula">
-      z = w·x + b &nbsp;|&nbsp; p = σ(z) = 1/(1+e<sup>−z</sup>) &nbsp;|&nbsp; BCE = −[y·ln p + (1−y)·ln(1−p)] &nbsp;|&nbsp; ∂L/∂z = p − y
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Phân loại "có/không" cần đầu ra trong [0,1]. Hãy <b>tự tay</b> tính điểm thô z = w·x + b,
+    ép qua <b>sigmoid</b> thành xác suất p, đo phạt <b>BCE</b> và tính <b>gradient</b> p − y — rồi phát hiện tính
+    <b>đối xứng</b> đẹp của sigmoid. Dùng bảng tra bên dưới.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Sigmoid là <b>cái nén</b> hình chữ S: điểm rất âm → ~0, rất dương → ~1, quanh 0 → ~0.5 (lưỡng lự). p là "độ tin" mô
-    hình nghĩ mẫu thuộc lớp 1.
-  </div>
-
-  <!-- GIVEN + bảng tra -->
+  <!-- BƯỚC 0 — CHO SẴN + BẢNG TRA -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn &amp; bảng tra</h2><span class="tag">tra cứu</span></div>
     <div class="note" style="max-width:none">
-      w = <b data-q="w">0.5</b>, x = <b data-q="x">2</b>, b = <b data-q="b">0</b>, nhãn y = <b>1</b>.<br>
-      Bảng σ: σ(−1)=0.27 · σ(0)=0.5 · σ(1)=0.73 · σ(2)=0.88 &nbsp;&nbsp;|&nbsp;&nbsp;
-      ln: ln(0.27)=−1.31 · ln(0.5)=−0.69 · ln(0.73)=−0.31 · ln(0.88)=−0.13
+      w = <b class="gv" data-q="w">0.5</b>, x = <b class="gv" data-q="x">2</b>, b = <b class="gv" data-q="b">0</b>, nhãn y = <b>1</b>.<br>
+      <b>σ:</b> σ(−2)=0.12 · σ(−1)=0.27 · σ(0)=0.5 · σ(1)=0.73 · σ(2)=0.88 &nbsp;|&nbsp;
+      <b>ln:</b> ln(0.27)=−1.31 · ln(0.5)=−0.69 · ln(0.73)=−0.31 · ln(0.88)=−0.13
     </div>
   </div>
 
   <div class="grid2">
-  <!-- STEP 1 -->
+  <!-- BƯỚC 1 — z -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Điểm tuyến tính z</h2><span class="tag">w·x + b</span></div>
-    <div class="calc">
-      z = <span data-q="w">0.5</span>·<span data-q="x">2</span> + <span data-q="b">0</span> = <span class="blk" style="min-width:40px"></span>
+    <div class="calc big">
+      z = <span data-q="w">0.5</span>·<span data-q="x">2</span> + <span data-q="b">0</span> = <span class="wcell"></span>
     </div>
     <div class="why"><b>Vì sao:</b> phần tuyến tính y hệt B2; sigmoid chỉ thêm "ép về xác suất".</div>
   </div>
 
-  <!-- STEP 2 -->
+  <!-- BƯỚC 2 — p -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Xác suất p = σ(z)</h2><span class="tag">tra bảng</span></div>
-    <div class="calc">
-      p = σ(<span data-q="z">1</span>) = <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      p = σ(<span data-q="z">1</span>) = <span class="wcell"></span>
     </div>
-    <div class="hint"><b>Mẹo:</b> σ luôn trong (0,1), không bao giờ chạm 0/1.</div>
+    <div class="why"><b>Vì sao:</b> σ luôn trong (0,1), không bao giờ chạm 0/1 — "độ tin" mẫu thuộc lớp 1.</div>
   </div>
   </div><!-- /grid2 -->
 
-  <!-- STEP 3 -->
+  <div class="scratch" style="height:24mm"><span class="lb">✏️ Nháp — tra σ và ln ở đây</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B3 · Hồi quy logistic</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài B3</span>
+    <h1>Hồi quy logistic <small>— BCE, gradient &amp; đối xứng sigmoid</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+
+  <!-- BƯỚC 3 — BCE & GRADIENT + HERO -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>BCE loss &amp; gradient</h2><span class="tag">p − y</span></div>
     <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 200 140" width="66mm" height="46mm" aria-label="đường sigmoid với điểm tại z"></svg>
-      <div style="flex:1">
-        <div class="calc">
-          y = 1 → BCE = −ln p = −ln(<span data-q="p">0.73</span>) = <span class="blk" style="min-width:46px"></span><br>
-          ∂L/∂z = p − y = <span data-q="p">0.73</span> − 1 = <span class="blk" style="min-width:40px"></span><br>
-          ∂L/∂w = (p−y)·x = <span class="blk" style="min-width:46px"></span>
+      <svg id="figQ" class="fig" viewBox="0 0 230 160" width="92mm" height="64mm" aria-label="đường sigmoid với điểm tại z, ô điền p"></svg>
+      <div style="flex:1;min-width:48mm">
+        <div class="calc big">
+          y = 1 → BCE = −ln p = −ln(<span data-q="p">0.73</span>) = <span class="wcell"></span><br>
+          ∂L/∂z = p − y = <span data-q="p">0.73</span> − 1 = <span class="wcell"></span><br>
+          ∂L/∂w = (p−y)·x = <span class="wcell"></span>
         </div>
-        <div class="why"><b>Vì sao:</b> dạng <b>p − y</b> cực gọn — lý do người ta ghép sigmoid với BCE (giống softmax + CE, Bài D9).</div>
+        <div class="why"><b>Vì sao:</b> dạng <b>p − y</b> cực gọn — lý do ghép sigmoid với BCE (giống softmax + CE, Bài D9). <b>Điền p vào ô trên đường cong.</b></div>
       </div>
     </div>
   </div>
 
-  <!-- TỰ KIỂM TRA -->
+  <!-- BƯỚC 4 — TỰ KIỂM: đối xứng -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — sigmoid có đối xứng?</h2><span class="tag">σ(z)+σ(−z)</span></div>
+    <div class="calc big">
+      σ(<span data-q="z">1</span>) = <span class="wcell"></span> &nbsp;+&nbsp; σ(<span data-q="negz">−1</span>) = <span class="wcell"></span> &nbsp;=&nbsp; <span class="wcell"></span>
+      <small style="color:#7a8794">(phải = 1 ✓)</small>
+    </div>
+    <div class="note"><b>Bất biến:</b> σ(−z) = 1 − σ(z). Nghĩa là "xác suất lớp 1 tại z" và "xác suất lớp 0 tại −z" là một — sigmoid cân đối quanh 0.5.</div>
+  </div>
+
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Đầu ra sigmoid nằm trong khoảng nào? → <span class="blk" style="min-width:120px"></span></li>
-      <li>Vì sao gradient ra gọn p − y? → <span class="blk" style="min-width:190px"></span></li>
+      <li>Vì sao gradient ra gọn p − y? → <span class="blk" style="min-width:180px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B3 · Hồi quy logistic</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Tính z, p, BCE</span>
+    <span><span class="ck"></span>Điền p vào đường cong</span>
+    <span class="win">🎉 Bạn vừa chạy một nơ-ron phân loại!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B3 · Hồi quy logistic</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài B3</span><h1>Hồi quy logistic <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài B3</span><h1>Hồi quy logistic <small>— lời giải</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Điểm z</h2></div>
-    <div class="calc ans">z = <span data-q="w">0.5</span>·<span data-q="x">2</span> + <span data-q="b">0</span> = <span class="blk" data-q="z">1</span></div>
+    <div class="calc ans big">z = <span data-q="w">0.5</span>·<span data-q="x">2</span> + <span data-q="b">0</span> = <span class="wcell ans" data-q="z">1</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Xác suất</h2></div>
-    <div class="calc ans">p = σ(<span data-q="z">1</span>) = <span class="blk" data-q="p">0.73</span></div>
+    <div class="calc ans big">p = σ(<span data-q="z">1</span>) = <span class="wcell ans" data-q="p">0.73</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>BCE &amp; gradient</h2></div>
-    <div class="calc ans">
-      BCE = −ln(<span data-q="p">0.73</span>) = <span class="blk" data-q="bce">0.31</span> &nbsp;|&nbsp;
-      p − y = <span class="blk" data-q="dz">−0.27</span> &nbsp;|&nbsp;
-      ∂L/∂w = (p−y)·x = <span class="blk" data-q="dw">−0.54</span>
+    <div class="figrow">
+      <svg id="figA" class="fig" viewBox="0 0 230 160" width="78mm" height="54.3mm"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans">
+          BCE = −ln(<span data-q="p">0.73</span>) = <span class="wcell ans" data-q="bce">0.31</span><br>
+          p − y = <span class="wcell ans" data-q="dz">−0.27</span><br>
+          ∂L/∂w = (p−y)·x = <span class="wcell ans" data-q="dw">−0.54</span>
+        </div>
+        <div class="note">p − y &lt; 0 (đoán hơi thấp cho nhãn 1) → w ← w − η·(∂L/∂w) sẽ <b>tăng</b> w → đẩy p về gần 1.</div>
+      </div>
     </div>
-    <div class="note">p − y &lt; 0 (đoán hơi thấp cho nhãn 1) → cập nhật w ← w − η·(∂L/∂w) sẽ <b>tăng</b> w → đẩy p về gần 1.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đối xứng</h2></div>
+    <div class="calc ans big">
+      σ(<span data-q="z">1</span>) = <span class="wcell ans" data-q="p2">0.73</span> + σ(<span data-q="negz">−1</span>) = <span class="wcell ans" data-q="pneg">0.27</span> = <span class="wcell ans" data-q="symsum">1</span> ✓
+    </div>
+    <div class="why"><b>Vì sao khớp:</b> σ(−z) = 1/(1+eᶻ) = 1 − 1/(1+e⁻ᶻ) = 1 − σ(z). Cộng lại luôn = 1 với mọi z.</div>
   </div>
 
   <div class="quiz">
@@ -133,17 +178,17 @@
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Logistic = tuyến tính → sigmoid → BCE, gradient gọn <b>p − y</b>. Đây là một nơ-ron phân loại hoàn chỉnh.
-    Bài tiếp (B4): một bộ phân loại <b>không cần học tham số</b> — k-NN.
+    <b style="color:var(--accent2)">Rút ra.</b> Logistic = tuyến tính → sigmoid → BCE, gradient gọn <b>p − y</b>, sigmoid đối xứng quanh 0.5.
+    Đây là một nơ-ron phân loại hoàn chỉnh. Bài tiếp (B4): một bộ phân loại <b>không cần học tham số</b> — k-NN.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B3 · Hồi quy logistic</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B3 · Hồi quy logistic</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var SIG = { '-1': 0.27, '0': 0.5, '1': 0.73, '2': 0.88 };
-var LN = { '0.27': -1.31, '0.5': -0.69, '0.73': -0.31, '0.88': -0.13 };
+var SIG = { '-2':0.12, '-1':0.27, '0':0.5, '1':0.73, '2':0.88 };
+var LN  = { '0.27':-1.31, '0.5':-0.69, '0.73':-0.31, '0.88':-0.13 };
 
 function generate(){
   var w = WB.pick([-0.5, 0, 0.5, 1]);
@@ -153,41 +198,52 @@ function generate(){
   var bce = -LN[String(p)];
   var dz = p - 1;                       // p − y, y = 1
   var dw = dz * x;
+  var negz = -z;
+  var pneg = SIG[String(negz)];         // = 1 − p
+  var symsum = Math.round((p + pneg) * 100) / 100;   // = 1
 
   WB.setAll({
-    w: WB.fmt2(w), x: WB.fmtInt(x), b: WB.fmtInt(b),
-    z: WB.fmtInt(z), p: WB.fmt2(p),
-    bce: WB.fmt2(bce), dz: WB.fmt2(dz), dw: WB.fmt2(dw)
+    w:WB.fmt2(w), x:WB.fmtInt(x), b:WB.fmtInt(b),
+    z:WB.fmtInt(z), p:WB.fmt2(p), p2:WB.fmt2(p),
+    bce:WB.fmt2(bce), dz:WB.fmt2(dz), dw:WB.fmt2(dw),
+    negz:WB.fmtInt(negz), pneg:WB.fmt2(pneg), symsum:WB.fmtInt(symsum)
   });
-  drawSig('figA', z, p);
+  drawSig('figQ', z, p, false);
+  drawSig('figA', z, p, true);
 }
 
-function drawSig(id, z, p){
+// Đường sigmoid + điểm tại z; ô điền p bên cạnh điểm.
+function drawSig(id, z, p, showAns){
   var box = document.getElementById(id); if (!box) return;
-  var W = 200, H = 140, padl = 24, padr = 10, padt = 10, padb = 22;
+  var W = 230, H = 160, padl = 26, padr = 12, padt = 12, padb = 24;
   var pw = W - padl - padr, ph = H - padt - padb;
   var zmin = -4, zmax = 4;
+  var LAM = '#0e7490', CAM = '#b45309';
   function X(t){ return padl + (t - zmin) / (zmax - zmin) * pw; }
   function Y(v){ return padt + ph - v * ph; }   // v ∈ [0,1]
   var s = '';
-  // trục
-  s += '<line x1="' + padl + '" y1="' + Y(0) + '" x2="' + (W - padr) + '" y2="' + Y(0) + '" stroke="#cbd2d9" stroke-width="1"/>';
-  s += '<line x1="' + X(0) + '" y1="' + (H - padb) + '" x2="' + X(0) + '" y2="' + padt + '" stroke="#cbd2d9" stroke-width="1"/>';
-  s += '<line x1="' + padl + '" y1="' + Y(1) + '" x2="' + (W - padr) + '" y2="' + Y(1) + '" stroke="#eee" stroke-width="1" stroke-dasharray="2 2"/>';
-  s += '<text x="' + (padl - 3) + '" y="' + (Y(1) + 3) + '" text-anchor="end" font-size="7" fill="#999">1</text>';
-  s += '<text x="' + (padl - 3) + '" y="' + (Y(0.5) + 3) + '" text-anchor="end" font-size="7" fill="#999">.5</text>';
-  // đường sigmoid
+  s += '<line x1="' + padl + '" y1="' + Y(0).toFixed(1) + '" x2="' + (W - padr) + '" y2="' + Y(0).toFixed(1) + '" stroke="#cbd2d9" stroke-width="1"/>';
+  s += '<line x1="' + X(0).toFixed(1) + '" y1="' + (H - padb) + '" x2="' + X(0).toFixed(1) + '" y2="' + padt + '" stroke="#cbd2d9" stroke-width="1"/>';
+  s += '<line x1="' + padl + '" y1="' + Y(1).toFixed(1) + '" x2="' + (W - padr) + '" y2="' + Y(1).toFixed(1) + '" stroke="#eee" stroke-width="1" stroke-dasharray="2 2"/>';
+  s += '<text x="' + (padl - 4) + '" y="' + (Y(1) + 3).toFixed(1) + '" text-anchor="end" font-size="8" fill="#999">1</text>';
+  s += '<text x="' + (padl - 4) + '" y="' + (Y(0.5) + 3).toFixed(1) + '" text-anchor="end" font-size="8" fill="#999">.5</text>';
   var d = '';
   for (var t = zmin; t <= zmax + 0.01; t += 0.2){
     var v = 1 / (1 + Math.exp(-t));
     d += (d ? ' L' : 'M') + X(t).toFixed(1) + ',' + Y(v).toFixed(1);
   }
-  s += '<path d="' + d + '" fill="none" stroke="#0e7490" stroke-width="2"/>';
+  s += '<path d="' + d + '" fill="none" stroke="' + LAM + '" stroke-width="2"/>';
   // điểm tại z
-  s += '<line x1="' + X(z) + '" y1="' + Y(0) + '" x2="' + X(z) + '" y2="' + Y(p) + '" stroke="#b45309" stroke-width="1" stroke-dasharray="3 2"/>';
-  s += '<circle cx="' + X(z) + '" cy="' + Y(p) + '" r="3.6" fill="#b45309"/>';
-  s += '<text x="' + (X(z) + 5) + '" y="' + (Y(p) - 3) + '" font-size="8.5" fill="#b45309" font-weight="700">σ(' + WB.fmtInt(z) + ')=' + WB.fmt2(p) + '</text>';
-  s += '<text x="' + (W - padr) + '" y="' + (Y(0) + 10) + '" text-anchor="end" font-size="7.5" fill="#5b6776">z</text>';
+  s += '<line x1="' + X(z).toFixed(1) + '" y1="' + Y(0).toFixed(1) + '" x2="' + X(z).toFixed(1) + '" y2="' + Y(p).toFixed(1) + '" stroke="' + CAM + '" stroke-width="1" stroke-dasharray="3 2"/>';
+  s += '<circle cx="' + X(z).toFixed(1) + '" cy="' + Y(p).toFixed(1) + '" r="3.8" fill="' + (showAns ? CAM : '#fff') + '" stroke="' + CAM + '" stroke-width="1.6"/>';
+  // ô điền p
+  var bx = X(z) + 8; if (bx > W - 60) bx = X(z) - 66;
+  var by = Y(p) - 14;
+  s += '<rect x="' + bx.toFixed(1) + '" y="' + by.toFixed(1) + '" width="54" height="24" rx="6" fill="' + (showAns ? '#fff5e9' : '#fff') + '" stroke="' + (showAns ? '#e3b780' : CAM) + '" stroke-width="1.7"/>';
+  s += '<text x="' + (bx + 27).toFixed(1) + '" y="' + (by - 3).toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="' + CAM + '" font-weight="700">p = σ(' + WB.fmtInt(z) + ') ✍</text>';
+  if (showAns) s += '<text x="' + (bx + 27).toFixed(1) + '" y="' + (by + 16).toFixed(1) + '" text-anchor="middle" font-size="13" fill="#7a3d00" font-weight="700">' + WB.fmt2(p) + '</text>';
+  else s += '<text x="' + (bx + 27).toFixed(1) + '" y="' + (by + 16).toFixed(1) + '" text-anchor="middle" font-size="11" fill="#c3ccd6">?</text>';
+  s += '<text x="' + (W - padr) + '" y="' + (Y(0) + 11).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#5b6776">z</text>';
   box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '">' + s + '</svg>';
 }
 

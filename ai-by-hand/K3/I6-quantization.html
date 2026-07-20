@@ -3,202 +3,409 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài I6 — Quantization int8 (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài I6 — Quantization b-bit (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.55}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
+  /* vạch ngưỡng Δ/2 trong thanh giá trị — bổ sung, không sửa wb-dashboard.css */
+  .track .tick.bound{background:var(--orange);width:1.6px}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
+  <div class="top">
+    <span class="no">I6</span>
+    <h1>Quantization b-bit <small>— nén số thực về lưới nguyên</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x · float gốc</span>
+      <span><span class="sw" style="background:var(--orange)"></span>q, x̂, sai số · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>min, max, Δ · dải hiệu chỉnh</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I6</span><h1>Quantization int8 <small>— nén trọng số xuống 8-bit</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mô hình tỉ tham số không vừa bộ nhớ/tốc độ. int8 giảm <b>4× dung lượng</b>, tăng tốc, chỉ mất chút độ chính
-    xác — cách chạy LLM lớn trên phần cứng nhỏ.
-    <div class="formula">scale = absmax(x) / 127 &nbsp;·&nbsp; q = round(x / scale) ∈ [−127, 127] &nbsp;·&nbsp; x̂ = q · scale</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Quantization nén số thực (float32, 32 bit) về lưới <b>b-bit</b>: chia dải hiệu chỉnh <b>[min,max]</b>
+    thành <b>2ᵇ mức</b> đều nhau (bước <b>Δ</b>), làm tròn mỗi x về mức gần nhất ra <b>q</b> (số nguyên thực sự được lưu),
+    rồi phục hồi xấp xỉ <b>x̂ = min + q·Δ</b>. Cuối phiếu bạn tự chứng minh: sai số round-trip <b>|x−x̂| KHÔNG BAO GIỜ vượt Δ/2</b>
+    — đó là cái giá cố định phải trả để đổi lấy bộ nhớ giảm.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>đổi đơn vị đo</b>: tìm giá trị lớn nhất (absmax), chia thang đó thành 255 nấc nguyên. Mỗi số float "rơi" vào nấc gần nhất
-    (làm tròn). Khi dùng, nhân nấc với độ-lớn-một-nấc (scale) để về xấp xỉ giá trị gốc.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 trọng số float</span></div>
-    <div class="calc" style="font-size:14px">
-      x = ( <span class="gv" data-q="x1">5</span>, <span class="gv" data-q="x2">−12.7</span>, <span class="gv" data-q="x3">3.14</span>, <span class="gv" data-q="x4">10</span> )
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Hệ số tỉ lệ (scale)</h2><span class="tag">absmax / 127</span></div>
-    <div class="calc">
-      absmax = <span data-q="absmax">12.7</span> → scale = <span data-q="absmax">12.7</span> / 127 = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> chọn theo giá trị lớn nhất để dùng hết dải [−127, 127], không tràn.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Lượng tử hóa (q)</h2><span class="tag">round(x / scale)</span></div>
-    <div class="calc">
-      q = round(x / <span data-q="scale">0.1</span>) = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )
-    </div>
-    <div class="hint">q là <b>số nguyên 8-bit</b> — phần thực sự được lưu (1 byte mỗi số).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Giải lượng tử (x̂)</h2><span class="tag">q · scale</span></div>
-    <div class="calc">
-      x̂ = q · <span data-q="scale">0.1</span> = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> x̂ ≈ x; sai số chỉ ở chỗ làm tròn (vd 3.14 → 3.1).</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Sai số & dung lượng</h2><span class="tag">4× nhỏ hơn</span></div>
-    <div class="calc">
-      sai số tại x₃: | <span data-q="x3">3.14</span> − <span data-q="dq3">3.1</span> | = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="note">int8 = 1 byte vs float32 = 4 byte → giảm 4×. Trọng số có outlier lớn → scale lớn → mất chính xác (cần per-channel / nhóm).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>scale chọn theo gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Sai số lượng tử lớn nhất cỡ bao nhiêu? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I6 · Quantization int8</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài I6</span><h1>Quantization int8 <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>scale</h2></div>
-    <div class="calc ans">scale = <span data-q="absmax">12.7</span> / 127 = <span class="blk" data-q="scale">0.1</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Lượng tử hóa</h2></div>
-    <div class="calc ans">q = ( <span class="blk" data-q="q1">50</span>, <span class="blk" data-q="q2">−127</span>, <span class="blk" data-q="q3">31</span>, <span class="blk" data-q="q4">100</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Giải lượng tử</h2></div>
-    <div class="calc ans">x̂ = ( <span class="blk" data-q="dq1">5</span>, <span class="blk" data-q="dq2">−12.7</span>, <span class="blk" data-q="dq3">3.1</span>, <span class="blk" data-q="dq4">10</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Sai số tại x₃</h2></div>
-    <div class="calc ans">| <span data-q="x3">3.14</span> − <span data-q="dq3">3.1</span> | = <span class="blk" data-q="err">0.04</span> (≤ nửa nấc)</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trục số chia nấc, x rơi vào nấc</h2><span class="tag">làm tròn</span></div>
-    <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 240 120" width="80mm" height="40mm" aria-label="trục số từ âm absmax tới dương absmax, các trọng số x rơi vào nấc nguyên gần nhất"></svg>
-      <div style="flex:1">
-        <div class="note">Dải [−absmax, +absmax] chia thành các nấc đều (scale). Mỗi x (lam) làm tròn về nấc gần nhất (cam) → đó là x̂.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">b = 2 bit · dải hiệu chỉnh [min,max]</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Đại lượng</th><th>Giá trị</th></tr>
+          <tr><td class="l">Số bit b</td><td style="color:var(--purple);font-weight:800">2</td></tr>
+          <tr><td class="l">Số mức 2ᵇ</td><td style="color:var(--purple);font-weight:800">4 &nbsp;(q ∈ {0,1,2,3})</td></tr>
+          <tr><td class="l">min</td><td style="color:var(--purple);font-weight:800" data-q="minv">0</td></tr>
+          <tr><td class="l">max</td><td style="color:var(--purple);font-weight:800" data-q="maxv">6</td></tr>
+        </table>
+        <div class="cap">Dải [min,max] = khoảng giá trị thực cần biểu diễn. 2 bit/số so với float32 (32 bit/số) →
+          nén <b>16×</b> (32 ÷ 2) bộ nhớ.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table>
+          <tr><th class="l">Giá trị thực</th><th>x</th></tr>
+          <tr><td class="l">x₁</td><td style="color:var(--blue);font-weight:800" data-q="x1">0.20</td></tr>
+          <tr><td class="l">x₂</td><td style="color:var(--blue);font-weight:800" data-q="x2">1.60</td></tr>
+          <tr><td class="l">x₃</td><td style="color:var(--blue);font-weight:800" data-q="x3">3.40</td></tr>
+        </table>
+        <div class="cap">3 giá trị thực (float32) cần lượng tử hóa — cả ba đều nằm trong [min,max].</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>scale? → <span class="qa">absmax / 127 (giá trị lớn nhất chia mức nguyên).</span></li>
-      <li>Sai số lớn nhất? → <span class="qa">Nửa nấc (½·scale) — do làm tròn.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">round((x−min)/Δ) → q → x̂=min+q·Δ → sai số</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 92" width="100%" height="30mm"
+           aria-label="ba token qua lượng tử hóa ra q, giải lượng tử ra x-mu, rồi sai số, các ô số để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> int8 = scale + làm tròn + nhân lại; giảm 4× bộ nhớ, mất ít chính xác. Bài tiếp (I7): truy hồi tài liệu bằng
-    cosine — <b>RAG</b>.
+  <!-- ① Δ -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Bước lượng tử Δ</span><span class="f">Δ = (max−min) ÷ (2ᵇ−1)</span></div>
+    <div class="pb">
+      <div class="eq">Δ = ( <span data-q="maxv">6</span> − <span data-q="minvw">0</span> ) ÷ ( 4 − 1 ) = <span class="slot sm"></span> ÷ 3 = <span class="slot"></span></div>
+      <div class="cap">Δ = độ dài một nấc — chia dải thành 2ᵇ−1 = 3 <b>khoảng</b> đều nhau (tạo ra 2ᵇ = 4 <b>mức</b> 0,1,2,3).</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I6 · Quantization int8</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② LƯỢNG TỬ HÓA -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Lượng tử hóa</span><span class="f">q = round((x−min)/Δ)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">x (cho sẵn)</th><th>(x−min) ÷ Δ</th><th>q = round(...)</th></tr>
+        <tr><td class="l">x₁ = <span data-q="x1">0.20</span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">x₂ = <span data-q="x2">1.60</span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">x₃ = <span data-q="x3">3.40</span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+      </table>
+      <div class="cap">Δ lấy từ Bước①. q là số nguyên <b>thực sự được lưu</b> (2 bit/số) — làm tròn về mức gần nhất trong {0,1,2,3}.</div>
+    </div>
+  </div>
+
+  <!-- ③ GIẢI LƯỢNG TỬ -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Giải lượng tử &amp; sai số</span><span class="f">x̂ = min + q·Δ &nbsp;·&nbsp; sai số = |x−x̂|</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Mức q</th><th>x̂ = min + q·Δ</th><th>sai số = |x−x̂|</th></tr>
+        <tr><td class="l">q₁ (Bước②)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">q₂ (Bước②)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">q₃ (Bước②)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+      </table>
+      <div class="cap">x̂ là xấp xỉ khôi phục — dùng q &amp; Δ &amp; min từ các bước trước, KHÔNG dùng lại x gốc.</div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — sai số round-trip LUÔN ≤ Δ/2</span><span class="f">cận trên cố định của lượng tử hóa</span></div>
+    <div class="pb">
+      <div class="eq">Δ/2 = <span class="slot sm"></span> ÷ 2 = <span class="slot"></span></div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">So sánh</th><th>sai số (Bước③)</th><th>Tô thanh 0…Δ · vạch cam = Δ/2</th></tr>
+        <tr><td class="l">x₁</td><td><span class="cellb"></span></td><td><div class="track uni" id="t_e1"></div></td></tr>
+        <tr><td class="l">x₂</td><td><span class="cellb"></span></td><td><div class="track uni" id="t_e2"></div></td></tr>
+        <tr><td class="l">x₃</td><td><span class="cellb"></span></td><td><div class="track uni" id="t_e3"></div></td></tr>
+      </table>
+      <div class="cap">Thang mỗi thanh: 0…Δ. Không thanh nào được vượt vạch cam giữa — vì sao round không bao giờ để điều đó xảy ra?
+        → <span class="slot" style="min-width:70mm"></span></div>
+      <div class="cap">Nếu dùng thêm 1 bit (b=3 → 8 mức thay 4 mức, cùng dải), Δ và cận Δ/2 thay đổi ra sao?
+        → <span class="slot" style="min-width:70mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:11mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính Δ từ dải</span>
+    <span><span class="ck"></span>Lượng tử hóa q &amp; giải lượng tử x̂</span>
+    <span><span class="ck"></span>Chứng minh sai số ≤ Δ/2</span>
+    <span class="win">🎉 Bạn vừa làm phép nén số mà mọi LLM lượng tử hóa đều dùng!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I6 · Quantization b-bit</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">I6</span>
+    <h1>Quantization b-bit <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x · float gốc</span>
+      <span><span class="sw" style="background:var(--orange)"></span>q, x̂, sai số · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>min, max, Δ · dải hiệu chỉnh</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">round((x−min)/Δ) → q → x̂=min+q·Δ → sai số</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 92" width="100%" height="30mm" aria-label="sơ đồ ba stage đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Bước lượng tử Δ</span></div>
+    <div class="pb">
+      <div class="eq">Δ = ( <span data-q="maxv">6</span> − <span data-q="minvw">0</span> ) ÷ ( 4 − 1 ) = <span class="slot ans sm" data-q="rangev">6</span> ÷ 3 = <span class="slot ans" data-q="delta">2</span></div>
+      <div class="why"><b>Vì sao ÷(2ᵇ−1) chứ không ÷2ᵇ:</b> 2ᵇ mức tạo ra đúng 2ᵇ−1 <b>khoảng cách</b> giữa chúng (như hàng rào: 4 cột → 3 khoảng) —
+        chia cho số khoảng mới ra đúng độ dài một nấc.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Lượng tử hóa</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">x (cho sẵn)</th><th>(x−min) ÷ Δ</th><th>q = round(...)</th></tr>
+        <tr><td class="l">x₁ = <span data-q="x1">0.20</span></td><td><span class="cellb ans" data-q="r1">0.20</span></td><td><span class="cellb ans" data-q="q1">0</span></td></tr>
+        <tr><td class="l">x₂ = <span data-q="x2">1.60</span></td><td><span class="cellb ans" data-q="r2">0.80</span></td><td><span class="cellb ans" data-q="q2">1</span></td></tr>
+        <tr><td class="l">x₃ = <span data-q="x3">3.40</span></td><td><span class="cellb ans" data-q="r3">1.70</span></td><td><span class="cellb ans" data-q="q3">2</span></td></tr>
+      </table>
+      <div class="why"><b>Vì sao lưu q rẻ:</b> q chỉ cần 2 bit (4 giá trị 0–3); x gốc là float32 (32 bit) — mỗi số lưu rẻ hơn 16×.
+        q <b>không phải</b> giá trị dùng để tính toán tiếp — nó là <b>mã hiệu mức</b>, phải giải lượng tử (Bước③) mới ra số thực dùng được.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Giải lượng tử &amp; sai số</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Mức q</th><th>x̂ = min + q·Δ</th><th>sai số = |x−x̂|</th></tr>
+        <tr><td class="l">q₁ = <span data-q="q1">0</span></td><td><span class="cellb ans" data-q="dq1">0</span></td><td><span class="cellb ans" data-q="err1">0.20</span></td></tr>
+        <tr><td class="l">q₂ = <span data-q="q2">1</span></td><td><span class="cellb ans" data-q="dq2">2</span></td><td><span class="cellb ans" data-q="err2">0.40</span></td></tr>
+        <tr><td class="l">q₃ = <span data-q="q3">2</span></td><td><span class="cellb ans" data-q="dq3">4</span></td><td><span class="cellb ans" data-q="err3">0.60</span></td></tr>
+      </table>
+      <div class="why"><b>Vì sao x̂ ≠ x:</b> x̂ chỉ có thể rơi đúng vào một trong 4 mức {min, min+Δ, min+2Δ, min+3Δ} — mọi x nằm giữa hai mức
+        đều bị "bó" về mức gần nhất, sinh ra sai số làm tròn.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — sai số round-trip LUÔN ≤ Δ/2</span></div>
+    <div class="pb">
+      <div class="eq">Δ/2 = <span class="slot ans sm" data-q="delta">2</span> ÷ 2 = <span class="slot ans" data-q="half">1</span></div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">So sánh</th><th>sai số</th><th>Tô thanh 0…Δ · vạch cam = Δ/2</th></tr>
+        <tr><td class="l">x₁</td><td><span class="cellb ans" data-q="err1">0.20</span></td><td><div class="track uni" id="a_e1"></div></td></tr>
+        <tr><td class="l">x₂</td><td><span class="cellb ans" data-q="err2">0.40</span></td><td><div class="track uni" id="a_e2"></div></td></tr>
+        <tr><td class="l">x₃</td><td><span class="cellb ans" data-q="err3">0.60</span></td><td><div class="track uni" id="a_e3"></div></td></tr>
+      </table>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> cả 3 thanh sai số đều dừng lại <b>trước</b> vạch cam Δ/2 —
+      không phải trùng hợp mà là <b>định nghĩa của round</b>: mọi x cách mức gần nhất KHÔNG QUÁ nửa nấc, nên |x−x̂| ≤ Δ/2 <b>với mọi x</b>
+      trong dải, không riêng 3 số này. Đây chính là "giá" lượng tử hóa: đổi <b>độ chính xác bị chặn trên bởi Δ/2</b> lấy <b>bộ nhớ giảm</b>
+      (32 bit → b bit). Nếu dùng thêm 1 bit (b=3, số mức tăng gấp đôi 4→8), Δ xấp xỉ giảm còn một nửa → cận sai số Δ/2 cũng xấp xỉ
+      giảm còn một nửa — <b>không cần tính lại</b>: gấp đôi số mức luôn kéo bước Δ về gần một nửa.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi tính quantization</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "q chính là giá trị dùng để tính toán tiếp."</b><br>
+          <span style="color:var(--dim)">Sai — q chỉ là <b>mã hiệu mức</b> (index 0..2ᵇ−1). Phải giải lượng tử <b>x̂=min+q·Δ</b> mới ra con số
+          thực dùng trong phép nhân/cộng của mạng.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "2ᵇ mức thì chia dải cho 2ᵇ."</b><br>
+          <span style="color:var(--dim)">Sai — 2ᵇ mức chỉ tạo ra <b>2ᵇ−1 khoảng</b> giữa chúng (lỗi kinh điển "đếm cột thay vì đếm hàng rào").
+          Chia cho 2ᵇ sẽ làm Δ hụt, mức cuối không bao giờ chạm max.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "x càng lệch xa min thì sai số làm tròn càng lớn."</b><br>
+          <span style="color:var(--dim)">Sai — round luôn chọn mức <b>gần nhất</b>, nên sai số chỉ phụ thuộc x <b>cách mức gần nhất bao xa</b>
+          (tối đa Δ/2), không phụ thuộc x xa hay gần min.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Tăng gấp đôi bit (2→4 bit) thì sai số giảm gấp đôi."</b><br>
+          <span style="color:var(--dim)">Sai — phải tăng THÊM 1 bit (b→b+1, không phải nhân đôi b) mới xấp xỉ giảm sai số một nửa, vì số mức
+          tăng gấp đôi (2ᵇ→2ᵇ⁺¹) chứ không phải b tăng gấp đôi.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Quantization = chia dải [min,max] thành 2ᵇ mức đều (bước Δ), làm tròn về mức gần nhất ra q (mã lưu trữ b-bit),
+    phục hồi bằng x̂=min+q·Δ. Vì round luôn chọn mức gần nhất, sai số round-trip bị chặn cố định bởi <b>Δ/2</b> — cái giá trả cho
+    bộ nhớ giảm. Bài tiếp theo <b>I7 (RAG Retrieval)</b>: tìm tài liệu giống nhất bằng <b>cosine similarity</b>.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I6 · Quantization b-bit</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var S = {};
+
+function round2(v){ return Math.round(v*100)/100; }
+
 function generate(){
-  var f2 = WB.fmt2;
-  // x₂ = −12.7 (absmax, scale=0.1); x₃ = 3.14 (giá trị lẻ minh họa sai số)
-  var x1 = WB.pick([5, 6, 9, -4, -8]);
-  var x4 = WB.pick([10, 7, 4, -10, -6]);
-  var x2 = -12.7, x3 = 3.14;
-  var absmax = 12.7, scale = 0.1;
-  function q(v){return Math.round(v/scale);}
-  var q1=q(x1), q2=q(x2), q3=q(x3), q4=q(x4);
-  function dq(qq){return Math.round(qq*scale*100)/100;}
-  var dq1=dq(q1), dq2=dq(q2), dq3=dq(q3), dq4=dq(q4);
-  var err = Math.round(Math.abs(x3-dq3)*100)/100;
+  var f2 = WB.fmt2, fI = WB.fmtInt, fT = WB.fmtTrim;
+
+  var delta = WB.pick([1,2]);
+  var minv = WB.pick([-4,-2,0,3]);
+  var maxv = minv + 3*delta;
+
+  var frac1 = WB.pick([0, 0.1, 0.2]);
+  var frac2 = WB.pick([-0.3,-0.2,0.2,0.3]);
+  var frac3 = WB.pick([0.3,0.4]);
+
+  var x1 = round2(minv + frac1*delta);
+  var x2 = round2(minv + (1+frac2)*delta);
+  var x3 = round2(minv + (2-frac3)*delta);
+
+  var r1 = round2((x1-minv)/delta);
+  var r2 = round2((x2-minv)/delta);
+  var r3 = round2((x3-minv)/delta);
+
+  var q1 = Math.round((x1-minv)/delta);
+  var q2 = Math.round((x2-minv)/delta);
+  var q3 = Math.round((x3-minv)/delta);
+
+  var dq1 = minv + q1*delta;
+  var dq2 = minv + q2*delta;
+  var dq3 = minv + q3*delta;
+
+  var err1 = round2(Math.abs(x1-dq1));
+  var err2 = round2(Math.abs(x2-dq2));
+  var err3 = round2(Math.abs(x3-dq3));
+
+  var half = delta/2;
+  var rangev = maxv - minv;
+
+  S = {delta:delta, minv:minv, maxv:maxv, x1:x1, x2:x2, x3:x3, q1:q1, q2:q2, q3:q3,
+       dq1:dq1, dq2:dq2, dq3:dq3, err1:err1, err2:err2, err3:err3, half:half};
+
   WB.setAll({
-    x1:f2(x1).replace('.00',''), x2:f2(x2), x3:f2(x3), x4:f2(x4).replace('.00',''),
-    absmax:f2(absmax), scale:'0.1',
-    q1:String(q1).replace('-','−'), q2:String(q2).replace('-','−'), q3:String(q3).replace('-','−'), q4:String(q4).replace('-','−'),
-    dq1:f2(dq1).replace('.00',''), dq2:f2(dq2), dq3:f2(dq3), dq4:f2(dq4).replace('.00',''),
-    err:f2(err)
+    minv: fI(minv), minvw: WB.wrap(fI(minv)), maxv: fI(maxv), rangev: fI(rangev), delta: fT(delta), half: fT(half),
+    x1: f2(x1), x2: f2(x2), x3: f2(x3),
+    r1: f2(r1), r2: f2(r2), r3: f2(r3),
+    q1: fI(q1), q2: fI(q2), q3: fI(q3),
+    dq1: fI(dq1), dq2: fI(dq2), dq3: fI(dq3),
+    err1: f2(err1), err2: f2(err2), err3: f2(err3)
   });
-  drawAxis('figQ', [x1,x2,x3,x4], [dq1,dq2,dq3,dq4]);
+
+  drawBarUni('t_e1', 0, delta, false, true); drawBarUni('t_e2', 0, delta, false, true); drawBarUni('t_e3', 0, delta, false, true);
+  drawBarUni('a_e1', err1, delta, true, true); drawBarUni('a_e2', err2, delta, true, true); drawBarUni('a_e3', err3, delta, true, true);
+
+  drawPipe('figQ', false);
+  drawPipe('figA', true);
 }
-function drawAxis(id, x, dq){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=20, x1=220, cy=60, A=12.7;
-  function px(v){return x0 + (v+A)/(2*A)*(x1-x0);}
-  var s='<line x1="'+x0+'" y1="'+cy+'" x2="'+x1+'" y2="'+cy+'" stroke="#9aa3ad" stroke-width="1.2"/>';
-  // vài vạch nấc
-  for(var t=-12;t<=12;t+=4){ var xx=px(t); s+='<line x1="'+xx.toFixed(1)+'" y1="'+(cy-3)+'" x2="'+xx.toFixed(1)+'" y2="'+(cy+3)+'" stroke="#cfd6dd" stroke-width="1"/>'; }
-  s+='<text x="'+px(-A).toFixed(1)+'" y="'+(cy+16)+'" text-anchor="middle" font-size="8" fill="#5b6776">−12.7</text>';
-  s+='<text x="'+px(A).toFixed(1)+'" y="'+(cy+16)+'" text-anchor="middle" font-size="8" fill="#5b6776">+12.7</text>';
-  for(var i=0;i<4;i++){
-    var ax=px(x[i]), dxp=px(dq[i]);
-    s+='<circle cx="'+ax.toFixed(1)+'" cy="'+(cy-12)+'" r="3" fill="#0e7490"/>';
-    s+='<line x1="'+ax.toFixed(1)+'" y1="'+(cy-12)+'" x2="'+dxp.toFixed(1)+'" y2="'+cy+'" stroke="#b45309" stroke-width="1" stroke-dasharray="2 2"/>';
-    s+='<circle cx="'+dxp.toFixed(1)+'" cy="'+cy+'" r="2.6" fill="#b45309"/>';
-    s+='<text x="'+ax.toFixed(1)+'" y="'+(cy-18)+'" text-anchor="middle" font-size="7.5" fill="#0e7490">x'+(i+1)+'</text>';
+
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho sai số (chỉ dương).
+// fill=false → chỉ vạch mốc, chừa trống cho người học tô bút chì (ĐỀ).
+// showBound=true → thêm vạch cam đậm ở 50% (= max/2, dùng làm ngưỡng Δ/2).
+function drawBarUni(id, v, max, fill, showBound){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(showBound) h += '<div class="tick bound" style="left:50%"></div>';
+  if(fill && v>0){
+    var pct = Math.min(v/max,1)*100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
   }
-  s+='<text x="'+x0+'" y="18" font-size="8.5" fill="#0e7490" font-weight="700">● x (float)</text>';
-  s+='<text x="'+(x0+78)+'" y="18" font-size="8.5" fill="#b45309" font-weight="700">● x̂ (nấc gần nhất)</text>';
+  el.innerHTML=h;
+}
+
+// Hộp giá trị của sơ đồ: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var stroke = filled?ORG:INK, fill=filled?'#fff8f0':'#fff';
+  var dash = filled?'':' stroke-dasharray="3 2"';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(filled?1.2:1.4)+'"'+dash+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ 3 stage: ①q=round((x−min)/Δ) (3 hàng) → ②x̂=min+qΔ → ③sai số=|x−x̂|. showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawPipe(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var fI=WB.fmtInt, f2=WB.fmt2, DIM='#6b7280', INK='#16202e', BLU='#0e7490';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  var Ax=6, Aw=222, Bx=252, Bw=150, Cx=418, Cw=128;
+
+  s+='<text x="'+(Ax+Aw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">① q = round((x−min)/Δ)</text>';
+  var qv=[S.q1,S.q2,S.q3], xv=[S.x1,S.x2,S.x3];
+  for(var i=0;i<3;i++){
+    var ry=24+i*24;
+    s+='<text x="'+(Ax+2)+'" y="'+(ry+11)+'" font-size="7.6" fill="'+BLU+'">x'+(i+1)+' = '+f2(xv[i])+'</text>';
+    s+=stageBox(Ax+Aw-46, ry, 44, 17, fI(qv[i]), showAns);
+  }
+
+  s+='<line x1="'+(Ax+Aw+1)+'" y1="60" x2="'+(Bx-1)+'" y2="60" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="'+((Ax+Aw+Bx)/2)+'" y="54" text-anchor="middle" font-size="7.4" fill="'+DIM+'">min+q·Δ</text>';
+
+  s+='<text x="'+(Bx+Bw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">② x̂ = min + q·Δ</text>';
+  var dqv=[S.dq1,S.dq2,S.dq3];
+  for(var j=0;j<3;j++){
+    var ry2=24+j*24;
+    s+='<text x="'+(Bx+2)+'" y="'+(ry2+11)+'" font-size="7.6" fill="'+DIM+'">x̂'+(j+1)+'</text>';
+    s+=stageBox(Bx+Bw-46, ry2, 44, 17, fI(dqv[j]), showAns);
+  }
+
+  s+='<line x1="'+(Bx+Bw+1)+'" y1="60" x2="'+(Cx-1)+'" y2="60" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="'+((Bx+Bw+Cx)/2)+'" y="54" text-anchor="middle" font-size="7.4" fill="'+DIM+'">|x−x̂|</text>';
+
+  s+='<text x="'+(Cx+Cw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">③ sai số</text>';
+  var ev=[S.err1,S.err2,S.err3];
+  for(var k=0;k<3;k++){
+    var ry3=24+k*24;
+    s+='<text x="'+(Cx+2)+'" y="'+(ry3+11)+'" font-size="7.6" fill="'+DIM+'">e'+(k+1)+'</text>';
+    s+=stageBox(Cx+Cw-46, ry3, 44, 17, f2(ev[k]), showAns);
+  }
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

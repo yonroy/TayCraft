@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B5 — k-means 1 vòng (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,68 +22,47 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B5</span><h1>k-means 1 vòng <small>— k-means clustering</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nhiều khi ta có dữ liệu nhưng <b>không có nhãn</b>. k-means tự tìm cấu trúc nhóm — nền của
-    phân khúc khách hàng, nén màu ảnh, khởi tạo cho nhiều thuật toán khác.
-    <div class="formula">
-      Gán: cụm(xᵢ) = argminⱼ ‖xᵢ − μⱼ‖ &nbsp;&nbsp;|&nbsp;&nbsp; Cập nhật: μⱼ = trung bình các điểm thuộc cụm j
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài B5</span>
+    <h1>k-means 1 vòng <small>— tự tìm nhóm khi không có nhãn</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hai vòng xen kẽ: (1) mỗi điểm <b>chọn tâm gần nhất</b> làm nhà; (2) mỗi tâm <b>dời về giữa</b> đám con của mình.
-    Lặp tới khi không ai đổi nhà → cụm ổn định.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho <b>4 điểm</b> chưa có nhãn và <b>2 tâm khởi tạo</b>. Hãy <b>tự tay</b> chạy đúng
+    <b>một vòng</b> k-means: gán mỗi điểm về tâm gần nhất, rồi dời hai tâm về trung bình cụm.
+    Phần thưởng: chứng minh <b>quán tính giảm</b> — dời tâm về trung bình luôn thu nhỏ tổng bình phương nội cụm.
   </div>
 
   <!-- BƯỚC 0 — cho sẵn -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn &amp; tâm khởi tạo</h2><span class="tag">4 điểm, k=2</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">điểm (x, y)</div>
-        <div class="mtx c2" style="--cell:16mm">
-          <div class="cell given" data-q="x1">1</div><div class="cell given" data-q="y1">1</div>
-          <div class="cell given" data-q="x2">2</div><div class="cell given" data-q="y2">1</div>
-          <div class="cell given" data-q="x3">5</div><div class="cell given" data-q="y3">4</div>
-          <div class="cell given" data-q="x4">6</div><div class="cell given" data-q="y4">5</div>
-        </div></div>
-      <div class="calc" style="flex:1">
-        P₁(<span data-q="x1">1</span>,<span data-q="y1">1</span>) · P₂(<span data-q="x2">2</span>,<span data-q="y2">1</span>) ·
-        P₃(<span data-q="x3">5</span>,<span data-q="y3">4</span>) · P₄(<span data-q="x4">6</span>,<span data-q="y4">5</span>)<br>
-        Tâm đầu: μ₁ = (<span data-q="x1">1</span>,<span data-q="y1">1</span>) &nbsp; μ₂ = (<span data-q="x4">6</span>,<span data-q="y4">5</span>)
-        <div class="why" style="margin-top:5px"><b>Vì sao:</b> dùng <b>d²</b> (bình phương khoảng cách) để so — đỡ phải khai căn, kết quả so sánh vẫn đúng.</div>
-      </div>
+    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn &amp; tâm khởi tạo</h2><span class="tag">4 điểm · k=2</span></div>
+    <div class="calc" style="line-height:1.9">
+      P₁(<span data-q="x1">1</span>,<span data-q="y1">1</span>) · P₂(<span data-q="x2">2</span>,<span data-q="y2">1</span>) ·
+      P₃(<span data-q="x3">5</span>,<span data-q="y3">4</span>) · P₄(<span data-q="x4">6</span>,<span data-q="y4">5</span>)<br>
+      Tâm đầu: μ₁ = P₁ = (<span data-q="x1">1</span>,<span data-q="y1">1</span>) &nbsp;·&nbsp; μ₂ = P₄ = (<span data-q="x4">6</span>,<span data-q="y4">5</span>)
     </div>
+    <div class="why"><b>Vì sao:</b> dùng <b>d²</b> (bình phương khoảng cách) để so — khỏi khai căn, thứ tự so sánh vẫn đúng. k-means là học <b>không giám sát</b>: không dùng nhãn.</div>
   </div>
 
-  <div class="grid2">
-  <!-- BƯỚC 1 -->
+  <!-- BƯỚC 1 — gán -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Gán theo tâm gần nhất</h2><span class="tag">so d²</span></div>
-    <div class="calc">
-      P₂→μ₁: d² = <span class="blk"></span> &nbsp;|&nbsp; →μ₂: <span class="blk"></span> → cụm <span class="blk" style="min-width:24px"></span><br>
-      P₃→μ₁: d² = <span class="blk"></span> &nbsp;|&nbsp; →μ₂: <span class="blk"></span> → cụm <span class="blk" style="min-width:24px"></span><br>
-      Cụm 1 = <span class="blk" style="min-width:70px"></span> &nbsp; Cụm 2 = <span class="blk" style="min-width:70px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Gán mỗi điểm về tâm gần nhất</h2><span class="tag">so d² · 4 điểm</span></div>
+    <div class="calc" style="line-height:2.05">
+      P₁ → μ₁: <span class="wcell"></span> &nbsp;|&nbsp; → μ₂: <span class="wcell"></span> → cụm <span class="wcell" style="min-width:24px"></span> &nbsp;&nbsp;
+      P₂ → μ₁: <span class="wcell"></span> &nbsp;|&nbsp; → μ₂: <span class="wcell"></span> → cụm <span class="wcell" style="min-width:24px"></span><br>
+      P₃ → μ₁: <span class="wcell"></span> &nbsp;|&nbsp; → μ₂: <span class="wcell"></span> → cụm <span class="wcell" style="min-width:24px"></span> &nbsp;&nbsp;
+      P₄ → μ₁: <span class="wcell"></span> &nbsp;|&nbsp; → μ₂: <span class="wcell"></span> → cụm <span class="wcell" style="min-width:24px"></span><br>
+      → Cụm 1 = <span class="wcell" style="min-width:74px"></span> &nbsp; Cụm 2 = <span class="wcell" style="min-width:74px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> mỗi điểm về tâm gần hơn để giảm tổng khoảng cách <i>nội cụm</i> (within-cluster).</div>
+    <div class="hint"><b>Mẹo:</b> P₁, P₄ đang <b>là</b> tâm nên d² tới chính nó = 0 — điền 0 và tự tin gán ngay.</div>
   </div>
 
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Dời tâm về trung bình</h2><span class="tag">mean cụm</span></div>
-    <div class="calc">
-      μ₁ = ((<span data-q="x1">1</span>+<span data-q="x2">2</span>)/2, (<span data-q="y1">1</span>+<span data-q="y2">1</span>)/2) = (<span class="blk"></span>, <span class="blk"></span>)<br>
-      μ₂ = ((<span data-q="x3">5</span>+<span data-q="x4">6</span>)/2, (<span data-q="y3">4</span>+<span data-q="y4">5</span>)/2) = (<span class="blk"></span>, <span class="blk"></span>)
-    </div>
-    <div class="hint"><b>Mẹo:</b> tâm mới = trung bình tọa độ các điểm trong cụm; chỉ tính trên đúng các điểm đã gán.</div>
-  </div>
-  </div><!-- /grid2 -->
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — tính (Δx)²+(Δy)² cho từng cặp điểm–tâm ở đây</span></div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B5 · k-means 1 vòng</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
@@ -88,45 +71,66 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>k-means — tiếp theo</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
-  <div class="wb-title"><span class="no">Bài B5</span><h1>k-means 1 vòng <small>— hội tụ &amp; hình</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài B5</span>
+    <h1>k-means 1 vòng <small>— dời tâm, chứng minh quán tính giảm</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
 
-  <!-- BƯỚC 3 -->
+  <!-- BƯỚC 2 — dời tâm -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vòng tiếp có đổi cụm?</h2><span class="tag">kiểm hội tụ</span></div>
-    <div class="calc">
-      Gán lại 4 điểm với tâm mới (μ₁, μ₂ ở Bước 2): có điểm nào đổi cụm không? → <span class="blk" style="min-width:60px"></span><br>
-      Kết luận: <span class="blk" style="min-width:200px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Dời tâm về trung bình cụm</h2><span class="tag">mean</span></div>
+    <div class="calc big">
+      μ₁ = ( (<span data-q="x1">1</span>+<span data-q="x2">2</span>)/2 , (<span data-q="y1">1</span>+<span data-q="y2">1</span>)/2 ) = ( <span class="wcell"></span> , <span class="wcell"></span> )<br>
+      μ₂ = ( (<span data-q="x3">5</span>+<span data-q="x4">6</span>)/2 , (<span data-q="y3">4</span>+<span data-q="y4">5</span>)/2 ) = ( <span class="wcell"></span> , <span class="wcell"></span> )
     </div>
-    <div class="why"><b>Vì sao:</b> khi không điểm nào đổi nhà, tâm không dời nữa → thuật toán <b>hội tụ</b>, dừng.</div>
+    <div class="why"><b>Vì sao:</b> tâm mới = trung bình tọa độ các điểm trong cụm — chỉ tính trên đúng các điểm đã gán ở Bước 1.</div>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM: quán tính giảm -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — quán tính có giảm?</h2><span class="tag">mean ⇒ SSE nhỏ nhất</span></div>
+    <div class="calc big">
+      Quán tính J = Σ d²(điểm, tâm cụm của nó).<br>
+      <b>Trước</b> (tâm cũ P₁, P₄): J_cũ = d²(P₂,P₁) + d²(P₃,P₄) = <span class="wcell"></span> + <span class="wcell"></span> = <span class="wcell"></span><br>
+      <b>Sau</b> (tâm mới μ₁, μ₂): J_mới = [d²(P₁,μ₁)+d²(P₂,μ₁)] + [d²(P₃,μ₂)+d²(P₄,μ₂)] = <span class="wcell"></span><br>
+      So sánh: J_mới <span class="wcell" style="min-width:34px"></span> J_cũ &nbsp;<small style="color:#7a8794">(điền &lt; / = / &gt;)</small>
+    </div>
+    <div class="note">Điểm giữa (trung bình) là nơi <b>tổng bình phương khoảng cách nhỏ nhất</b> — nên dời tâm về trung bình <b>luôn</b> làm J giảm (hoặc giữ nguyên). J giảm đơn điệu ⇒ k-means chắc chắn <b>hội tụ</b>.</div>
   </div>
 
   <!-- BƯỚC 4 -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vẽ 4 điểm &amp; đánh dấu tâm</h2><span class="tag">2 cụm</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Kiểm bằng hình — tâm dời về giữa</h2><span class="tag">2 cụm</span></div>
     <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="bốn điểm cho sẵn, khung trống để tự đánh dấu tâm và tô cụm"></svg>
-      <div style="flex:1">
-        <div class="why"><b>Vì sao:</b> nhìn hình thấy rõ hai cụm tách nhau → tâm dời về giữa mỗi đám.</div>
-        <div class="note">Tự đánh dấu tâm cũ (× lam = P₁, P₄), tâm mới (★ cam) và tô màu cụm cho 4 điểm.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="66mm" height="49.5mm" aria-label="bốn điểm cho sẵn, khung trống để tự đánh dấu tâm và tô cụm"></svg>
+      <div style="flex:1;min-width:46mm">
+        <div class="note">Tự đánh dấu <b>tâm cũ</b> (× lam = P₁, P₄), <b>tâm mới</b> (★ cam) và tô màu cụm cho 4 điểm.</div>
+        <div class="note" style="margin-top:6px">Thấy rõ hai cụm tách nhau → mỗi tâm dời về <b>giữa</b> đám con của mình.</div>
       </div>
     </div>
   </div>
 
-  <!-- TỰ KIỂM TRA -->
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>k-means có cần nhãn không? → <span class="blk" style="min-width:200px"></span></li>
-      <li>Khi nào dừng vòng lặp? → <span class="blk" style="min-width:200px"></span></li>
+      <li>k-means có cần nhãn không? → <span class="blk" style="min-width:190px"></span></li>
+      <li>Khi nào dừng vòng lặp? → <span class="blk" style="min-width:180px"></span></li>
     </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Gán xong 4 điểm</span>
+    <span><span class="ck"></span>Dời tâm &amp; kiểm J giảm</span>
+    <span class="win">🎉 Bạn vừa gom cụm không cần nhãn!</span>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B5 · k-means 1 vòng</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -136,37 +140,39 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Gán theo tâm gần nhất</h2></div>
-    <div class="calc ans">
-      P₂→μ₁: <span class="blk" data-q="dP2m1">1</span> &nbsp;|&nbsp; →μ₂: <span class="blk" data-q="dP2m2">32</span> → <span class="blk" data-q="cP2">cụm 1</span><br>
-      P₃→μ₁: <span class="blk" data-q="dP3m1">25</span> &nbsp;|&nbsp; →μ₂: <span class="blk" data-q="dP3m2">2</span> → <span class="blk" data-q="cP3">cụm 2</span><br>
-      Cụm 1 = <span class="blk" data-q="c1">{P₁, P₂}</span> &nbsp; Cụm 2 = <span class="blk" data-q="c2">{P₃, P₄}</span>
+    <div class="calc ans big" style="line-height:1.95">
+      P₁ → μ₁: <span class="wcell ans" data-q="dP1m1">0</span> | μ₂: <span class="wcell ans" data-q="dP1m2">41</span> → <span class="wcell ans" data-q="cP1">cụm 1</span> &nbsp;·&nbsp;
+      P₂ → μ₁: <span class="wcell ans" data-q="dP2m1">1</span> | μ₂: <span class="wcell ans" data-q="dP2m2">32</span> → <span class="wcell ans" data-q="cP2">cụm 1</span><br>
+      P₃ → μ₁: <span class="wcell ans" data-q="dP3m1">25</span> | μ₂: <span class="wcell ans" data-q="dP3m2">2</span> → <span class="wcell ans" data-q="cP3">cụm 2</span> &nbsp;·&nbsp;
+      P₄ → μ₁: <span class="wcell ans" data-q="dP4m1">41</span> | μ₂: <span class="wcell ans" data-q="dP4m2">0</span> → <span class="wcell ans" data-q="cP4">cụm 2</span><br>
+      Cụm 1 = <span class="wcell ans" data-q="c1">{P₁, P₂}</span> &nbsp; Cụm 2 = <span class="wcell ans" data-q="c2">{P₃, P₄}</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tâm mới</h2></div>
-    <div class="calc ans">
-      μ₁ = (<span class="blk" data-q="m1x">1.5</span>, <span class="blk" data-q="m1y">1</span>) &nbsp;|&nbsp;
-      μ₂ = (<span class="blk" data-q="m2x">5.5</span>, <span class="blk" data-q="m2y">4.5</span>)
+    <div class="step-h"><div class="b">2</div><h2>Tâm mới (trung bình)</h2></div>
+    <div class="calc ans big">
+      μ₁ = ( <span class="wcell ans" data-q="m1x">1.5</span> , <span class="wcell ans" data-q="m1y">1</span> ) &nbsp;|&nbsp;
+      μ₂ = ( <span class="wcell ans" data-q="m2x">5.5</span> , <span class="wcell ans" data-q="m2y">4.5</span> )
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vòng tiếp có đổi cụm?</h2></div>
-    <div class="calc ans">
-      Gán lại với tâm mới → các điểm <b>giữ nguyên cụm</b> → đã <b>hội tụ</b>, dừng.
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — quán tính giảm</h2></div>
+    <div class="calc ans big">
+      J_cũ = <span class="wcell ans" data-q="jOldA">1</span> + <span class="wcell ans" data-q="jOldB">2</span> = <span class="wcell ans" data-q="jOld">3</span> &nbsp;·&nbsp;
+      J_mới = <span class="wcell ans" data-q="jNew">1.5</span> &nbsp;→&nbsp; J_mới <span class="wcell ans" data-q="jcmp">&lt;</span> J_cũ ✓
     </div>
-    <div class="why"><b>Vì sao:</b> khi không điểm nào đổi nhà, tâm không dời nữa → thuật toán dừng.</div>
+    <div class="why"><b>Vì sao khớp:</b> trung bình là điểm cực tiểu của Σd² (đạo hàm = 0 tại mean). Dời tâm về mean ⇒ J giảm; gán-lại cũng chỉ giảm J. Hai bước đều không tăng J → hội tụ. Ở đây J giảm còn <b>một nửa</b>.</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Hình minh họa</h2><span class="tag">2 cụm</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Hình minh họa</h2></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="bốn điểm, tâm cũ dấu × và tâm mới dấu sao, nối điểm tới tâm"></svg>
-      <div style="flex:1">
-        <div class="note"><b style="color:var(--accent)">× lam</b> = tâm cũ, <b style="color:var(--accent2)">★ cam</b> = tâm mới đã dời về giữa cụm.
-        Mỗi đường nối điểm tới tâm cụm của nó.</div>
-        <div class="why"><b>Vì sao:</b> k-means nhạy với <b>tâm khởi tạo</b>; khởi tạo xấu có thể ra cụm kém → chạy nhiều lần, chọn kết quả tốt nhất.</div>
+      <svg id="figK" class="fig" viewBox="0 0 200 150" width="64mm" height="48mm" aria-label="bốn điểm, tâm cũ dấu × và tâm mới dấu sao, nối điểm tới tâm"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="note"><b style="color:var(--accent)">× lam</b> = tâm cũ (P₁, P₄), <b style="color:var(--accent2)">★ cam</b> = tâm mới đã dời về giữa cụm.</div>
+        <div class="why"><b>Vì sao:</b> k-means nhạy với <b>tâm khởi tạo</b>; khởi tạo xấu → cụm kém. Cách khắc: chạy nhiều lần, chọn J nhỏ nhất.</div>
       </div>
     </div>
   </div>
@@ -174,14 +180,14 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>k-means có cần nhãn không? → <span class="qa">Không — đây là học không giám sát.</span></li>
-      <li>Khi nào dừng? → <span class="qa">Khi không điểm nào đổi cụm (tâm không dời nữa).</span></li>
+      <li>Cần nhãn không? → <span class="qa">Không — học không giám sát, chỉ dùng khoảng cách.</span></li>
+      <li>Khi nào dừng? → <span class="qa">Khi không điểm nào đổi cụm (tâm không dời, J không giảm nữa).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> k-means = lặp <b>gán-rồi-dời-tâm</b> tới hội tụ; đơn giản nhưng phụ thuộc khởi tạo &amp; số cụm k.
-    Bài tiếp (B6): giảm chiều dữ liệu bằng <b>PCA</b> (dùng trị riêng A11).
+    <b style="color:var(--accent2)">Rút ra.</b> k-means = lặp <b>gán-rồi-dời-tâm</b>; mỗi bước làm quán tính J giảm nên chắc chắn hội tụ (dù có thể vào cực tiểu địa phương).
+    Phụ thuộc khởi tạo &amp; số cụm k. Bài tiếp (B6): giảm chiều dữ liệu bằng <b>PCA</b> (dùng trị riêng A11).
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B5 · k-means 1 vòng</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
@@ -189,27 +195,39 @@
 
 <script src="../wb-random.js"></script>
 <script>
+function d2(ax, ay, bx, by){ return (ax-bx)*(ax-bx) + (ay-by)*(ay-by); }
+
 function generate(){
   // cụm 1 (dưới-trái), cụm 2 (trên-phải) — tách rõ để hội tụ sau 1 vòng
   var x1 = WB.randInt(1, 2), y1 = WB.randInt(1, 2);
-  var x2 = x1 + 1,           y2 = y1;
+  var a  = WB.pick([1, 2]);          // độ trải ngang cụm 1 → quán tính đổi theo 🎲
+  var x2 = x1 + a,           y2 = y1;
   var x3 = WB.randInt(5, 6), y3 = WB.randInt(4, 5);
   var x4 = x3 + 1,           y4 = y3 + 1;
   // tâm khởi tạo: μ1 = P1, μ2 = P4
-  function d2(ax, ay, bx, by){ return (ax-bx)*(ax-bx) + (ay-by)*(ay-by); }
-  var dP2m1 = d2(x2,y2, x1,y1), dP2m2 = d2(x2,y2, x4,y4);
-  var dP3m1 = d2(x3,y3, x1,y1), dP3m2 = d2(x3,y3, x4,y4);
-  // tâm mới
+  var dP1m1 = 0,                  dP1m2 = d2(x1,y1, x4,y4);
+  var dP2m1 = d2(x2,y2, x1,y1),   dP2m2 = d2(x2,y2, x4,y4);
+  var dP3m1 = d2(x3,y3, x1,y1),   dP3m2 = d2(x3,y3, x4,y4);
+  var dP4m1 = d2(x4,y4, x1,y1),   dP4m2 = 0;
+  // tâm mới = trung bình cụm
   var m1x = (x1+x2)/2, m1y = (y1+y2)/2;
   var m2x = (x3+x4)/2, m2y = (y3+y4)/2;
+  // quán tính trước/sau
+  var jOldA = dP2m1, jOldB = dP3m2, jOld = jOldA + jOldB;
+  var jNew = d2(x1,y1,m1x,m1y) + d2(x2,y2,m1x,m1y) + d2(x3,y3,m2x,m2y) + d2(x4,y4,m2x,m2y);
 
   WB.setAll({
     x1: WB.fmtInt(x1), y1: WB.fmtInt(y1), x2: WB.fmtInt(x2), y2: WB.fmtInt(y2),
     x3: WB.fmtInt(x3), y3: WB.fmtInt(y3), x4: WB.fmtInt(x4), y4: WB.fmtInt(y4),
-    dP2m1: WB.fmtInt(dP2m1), dP2m2: WB.fmtInt(dP2m2), cP2: 'cụm 1',
-    dP3m1: WB.fmtInt(dP3m1), dP3m2: WB.fmtInt(dP3m2), cP3: 'cụm 2',
+    dP1m1: String(dP1m1), dP1m2: String(dP1m2),
+    dP2m1: String(dP2m1), dP2m2: String(dP2m2),
+    dP3m1: String(dP3m1), dP3m2: String(dP3m2),
+    dP4m1: String(dP4m1), dP4m2: String(dP4m2),
+    cP1: 'cụm 1', cP2: 'cụm 1', cP3: 'cụm 2', cP4: 'cụm 2',
     c1: '{P₁, P₂}', c2: '{P₃, P₄}',
-    m1x: WB.fmtTrim(m1x), m1y: WB.fmtTrim(m1y), m2x: WB.fmtTrim(m2x), m2y: WB.fmtTrim(m2y)
+    m1x: WB.fmtTrim(m1x), m1y: WB.fmtTrim(m1y), m2x: WB.fmtTrim(m2x), m2y: WB.fmtTrim(m2y),
+    jOldA: String(jOldA), jOldB: String(jOldB), jOld: String(jOld),
+    jNew: WB.fmtTrim(jNew), jcmp: '<'
   });
 
   drawKmeans('figK',

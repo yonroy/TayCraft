@@ -5,17 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài G9 — Teacher forcing (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .step{margin-top:7px;}
 .page .calc{line-height:1.85;}
-.page .why{margin-top:5px;}
+.page .why,.page .hint{margin-top:5px;}
 .page .note{margin-top:4px;}
-.gtab{font-family:var(--mono);font-size:13px;background:var(--given);border:1px solid var(--givenline);border-radius:5px;padding:4px 8px;display:inline-block;}
+.gtab{font-family:var(--mono);font-size:12.5px;background:var(--given);border:1px solid var(--givenline);border-radius:5px;padding:3px 8px;display:inline-block;}
+.eb-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.eb-card{flex:1;min-width:160px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;background:#fbfcfe;}
+.eb-card b{font-family:var(--mono);font-size:11px;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,155 +32,242 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G9</span><h1>Teacher forcing <small>— mẹo huấn luyện decoder</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nếu train mà cho decoder ăn <b>dự đoán sai của chính nó</b>, lỗi <b>dồn</b> ngay đầu → học rất chậm. Teacher forcing dùng
-    đáp án đúng làm đầu vào → mỗi bước học độc lập, nhanh. Cái giá: lúc <b>suy luận</b> không có đáp án → <b>exposure bias</b>.
-    <div class="formula">
-      Train (TF): đầu vào bước t = y<sub>t−1</sub> (token THẬT) &nbsp;·&nbsp; Suy luận: đầu vào bước t = ŷ<sub>t−1</sub> (token MÔ HÌNH tự sinh)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài G9</span>
+    <h1>Teacher forcing <small>— đầu vào lúc train vs lúc suy luận</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>tập đàn có thầy bẻ tay</b>: mỗi nốt sai được thầy chỉnh ngay nên trò tiến nhanh. Nhưng khi <b>biểu diễn một mình</b>, một nốt sai
-    kéo theo cả đoạn lệch — vì lúc tập chưa quen tự sửa lỗi của chính mình.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cùng một mô hình g, cùng một chuỗi — nhưng <b>nguồn đầu vào</b> mỗi bước khác nhau giữa train và suy luận.
+    Hãy tự tay chạy CẢ HAI kịch bản trên cùng chuỗi để thấy khi nào chúng giống nhau, và khi nào chúng <b>tách ra</b>.
+    <div class="formula" style="margin-top:5px">
+      Train (TF): input bước t = y<sub>t−1</sub> (nhãn THẬT) &nbsp;·&nbsp; Suy luận: input bước t = ŷ<sub>t−1</sub> (model TỰ SINH)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">mô hình g · 3 bước</span></div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">mô hình g (bảng cố định)</span></div>
     <div class="calc" style="font-size:14px">
-      Mô hình (chưa hoàn hảo) g: <span class="gtab">0→<span data-q="g0">2</span> · 1→<span data-q="g1">1</span> · 2→<span data-q="g2">1</span></span> &nbsp; start = <span class="gv" data-q="st">0</span> &nbsp; nhãn đúng y = ( <span class="gv" data-q="y1">2</span>, <span class="gv" data-q="y2">0</span>, <span class="gv" data-q="y3">2</span> ).
+      g: <span class="gtab">0→<span data-q="g0">1</span> · 1→<span data-q="g1">2</span> · 2→<span data-q="g2">3</span> · 3→<span data-q="g3">0</span></span>
+      &nbsp; start = <span class="gv" data-q="st">0</span>
+      &nbsp; nhãn thật y = ( <span class="gv" data-q="y1">1</span>, <span class="gv" data-q="y2">2</span>, <span class="gv" data-q="y3">0</span>, <span class="gv" data-q="y4">3</span> )
     </div>
-    <div class="note">ŷ ở mỗi bước = g(đầu vào). Khớp khi ŷ = nhãn y của bước đó.</div>
+    <div class="note">ŷ ở mỗi bước = g(input bước đó). Bảng g <b>không đổi</b> giữa hai kịch bản dưới đây — chỉ nguồn input khác.</div>
   </div>
 
-  <!-- BƯỚC 1 -->
+  <!-- BƯỚC 1 — TRAIN -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Có teacher forcing</h2><span class="tag">đầu vào = nhãn THẬT trước</span></div>
-    <div class="calc">
-      b1: g(start=<span data-q="st">0</span>) = <span class="blk" style="min-width:30px"></span> · b2: g(y₁=<span data-q="y1">2</span>) = <span class="blk" style="min-width:30px"></span> · b3: g(y₂=<span data-q="y2">0</span>) = <span class="blk" style="min-width:30px"></span> → số khớp = <span class="blk" style="min-width:30px"></span>/3
+    <div class="step-h"><div class="b">1</div><h2>Train — CÓ teacher forcing</h2><span class="tag">input = nhãn THẬT</span></div>
+    <div class="calc big">
+      b1: g(start=<span data-q="st">0</span>) = <span class="wcell" style="min-width:32px"></span> &nbsp;
+      b2: g(y₁=<span data-q="y1">1</span>) = <span class="wcell" style="min-width:32px"></span><br>
+      b3: g(y₂=<span data-q="y2">2</span>) = <span class="wcell" style="min-width:32px"></span> &nbsp;
+      b4: g(y₃=<span data-q="y3">0</span>) = <span class="wcell" style="min-width:32px"></span>
+      &nbsp;→ khớp với y = <span class="wcell" style="min-width:26px"></span>/4
     </div>
-    <div class="why"><b>Vì sao:</b> mỗi bước được "đặt lại" về đường đúng (ngữ cảnh đúng) → lỗi bước trước <b>không lan</b>, gradient sạch, hội tụ nhanh.</div>
+    <div class="why"><b>Vì sao:</b> mỗi bước luôn được "đặt lại" đúng token thật của bước trước — không phụ thuộc model vừa đoán gì. Vì input toàn bộ 4 bước đã biết trước (chính là y có sẵn), cả 4 bước có thể tính <b>đồng thời</b>.</div>
   </div>
 
-  <!-- BƯỚC 2 -->
+  <!-- BƯỚC 2 — TEST -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Không teacher forcing (free-running)</h2><span class="tag">đầu vào = ŷ trước</span></div>
-    <div class="calc">
-      b1: g(<span data-q="st">0</span>) = <span class="blk" style="min-width:30px"></span> · b2: g(ŷ₁) = <span class="blk" style="min-width:30px"></span> · b3: g(ŷ₂) = <span class="blk" style="min-width:30px"></span> → số khớp = <span class="blk" style="min-width:30px"></span>/3
+    <div class="step-h"><div class="b">2</div><h2>Suy luận — KHÔNG teacher forcing</h2><span class="tag">input = model TỰ SINH</span></div>
+    <div class="calc big">
+      b1: g(start=<span data-q="st">0</span>) = <span class="wcell" style="min-width:32px"></span> &nbsp;
+      b2: g(ŷ₁) = <span class="wcell" style="min-width:32px"></span> &nbsp;
+      b3: g(ŷ₂) = <span class="wcell" style="min-width:32px"></span> &nbsp;
+      b4: g(ŷ₃) = <span class="wcell" style="min-width:32px"></span>
+      &nbsp;→ khớp với y = <span class="wcell" style="min-width:26px"></span>/4
     </div>
-    <div class="hint">đây đúng là cảnh lúc suy luận: ăn chính dự đoán của mình → lỗi sớm <b>dồn</b> sang bước sau.</div>
+    <div class="hint">mỗi bước phải <b>chờ</b> đầu ra bước trước rồi mới có input → không song song hoá được. Nếu ŷ trước SAI, bước sau ăn luôn cái sai đó làm input.</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G9 · Teacher forcing</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Tự kiểm: lỗi có lan không?</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G9</span>
+    <h1>Teacher forcing <small>— exposure bias: lỗi lan hay không lan?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM LÕI -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Exposure bias</h2><span class="tag">lệch train ↔ test</span></div>
-    <div class="note">Train luôn thấy token đúng (TF), test phải tự đi bằng dự đoán → <b>lệch phân phối</b> → dễ trượt dài khi sinh, vì mô hình chưa từng tập "phục hồi sau lỗi".</div>
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — lỗi ở bước 3 có LAN sang bước 4 không?</h2><span class="tag">exposure bias</span></div>
+    <div class="note" style="margin-top:0">
+      Nhìn lại Bước 1 &amp; 2: ở <b>bước 3</b>, input hai bên vẫn giống nhau (ŷ₂ = y₂) nên CẢ HAI cách cho ra <b>cùng một</b> ŷ₃ — và đó lại là dự đoán <b>SAI</b> (ŷ₃ ≠ y₃ thật). Bước 4 mới là lúc khác biệt lộ ra:
+    </div>
+    <div class="eb-row">
+      <div class="eb-card"><b>TRAIN — bước 4</b><br>input = y₃ (nhãn thật) → ŷ₄(train) = kết quả Bước 1, ô b4</div>
+      <div class="eb-card"><b>TEST — bước 4</b><br>input = ŷ₃ (dự đoán SAI của chính model) → ŷ₄(test) = kết quả Bước 2, ô b4</div>
+    </div>
+    <div class="calc" style="margin-top:6px">
+      So hai ô b4 vừa tính: ŷ₄(train) và ŷ₄(test) — <b>bằng nhau</b> hay <b>khác nhau</b>? → <span class="blk" style="min-width:110px"></span><br>
+      Vì sao lại vậy? → <span class="blk" style="min-width:220px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> input bước 4 của TRAIN luôn là token THẬT (dù bước 3 đoán sai) nên bước 4 <b>không hề hấn gì</b> — lỗi <b>KHÔNG LAN</b>. Input bước 4 của TEST chính là dự đoán sai ở bước 3 → lỗi <b>LAN</b> sang bước 4 (chuỗi càng dài, càng lan xa). Đây gọi là <b>exposure bias</b>: model chưa từng "tập" với input sai lúc train, nên khi tự ăn lỗi của mình lúc test, nó lúng túng.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Teacher forcing cho decoder ăn gì lúc train? → <span class="blk" style="min-width:160px"></span></li>
-      <li>"Exposure bias" là gì? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao teacher forcing giúp train nhanh hơn <b>và</b> tính song song được? → <span class="blk" style="min-width:180px"></span></li>
+      <li>Nếu chuỗi thật dài 10 bước, một lỗi ở bước 3 lúc suy luận sẽ ảnh hưởng bao nhiêu bước sau đó? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G9 · Teacher forcing</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:15mm"><span class="lb">✏️ Nháp — tra bảng g theo dây chuyền ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Chạy train CÓ teacher forcing</span>
+    <span><span class="ck"></span>Chạy suy luận KHÔNG teacher forcing</span>
+    <span class="win">🎉 Bạn vừa thấy tận mắt exposure bias!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G9 · Teacher forcing</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G9</span><h1>Teacher forcing <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G9</span><h1>Teacher forcing <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Có teacher forcing</h2></div>
-    <div class="calc ans">g(<span data-q="st">0</span>)=<span data-q="tf1">2</span> · g(<span data-q="y1">2</span>)=<span data-q="tf2">1</span> · g(<span data-q="y2">0</span>)=<span data-q="tf3">2</span> → khớp = <span class="blk" data-q="tfc">2</span>/3 (lỗi không lan)</div>
+  <div class="intro" style="margin-top:8px">
+    <b>Vì sao quan trọng.</b> Nếu train mà cho decoder ăn <b>dự đoán sai của chính nó</b>, lỗi dồn ngay từ đầu → học rất chậm và khó song song hoá.
+    Teacher forcing (TF) cho ăn <b>token thật</b> làm input mỗi bước → mỗi bước học độc lập, nhanh, tính song song được. Cái giá: lúc suy luận không có "đáp án" để ăn, nên
+    phải tự ăn dự đoán của chính mình — <b>exposure bias</b>.
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Free-running</h2></div>
-    <div class="calc ans">g(<span data-q="st">0</span>)=<span data-q="fr1">2</span> · g(ŷ₁=<span data-q="fr1">2</span>)=<span data-q="fr2">1</span> · g(ŷ₂=<span data-q="fr2">1</span>)=<span data-q="fr3">1</span> → khớp = <span class="blk" data-q="frc">1</span>/3 (lỗi dồn)</div>
+    <div class="step-h"><div class="b">1</div><h2>Train — CÓ teacher forcing</h2></div>
+    <div class="calc ans">
+      g(<span data-q="st">0</span>)=<span class="wcell ans" data-q="tf1">1</span> ·
+      g(<span data-q="y1">1</span>)=<span class="wcell ans" data-q="tf2">2</span> ·
+      g(<span data-q="y2">2</span>)=<span class="wcell ans" data-q="tf3">3</span> ·
+      g(<span data-q="y3">0</span>)=<span class="wcell ans" data-q="tf4">1</span>
+      &nbsp;→ khớp = <span class="wcell ans" data-q="tfc">2</span>/4
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Suy luận — KHÔNG teacher forcing</h2></div>
+    <div class="calc ans">
+      g(<span data-q="st">0</span>)=<span class="wcell ans" data-q="fr1">1</span> ·
+      g(ŷ₁=<span data-q="fr1">1</span>)=<span class="wcell ans" data-q="fr2">2</span> ·
+      g(ŷ₂=<span data-q="fr2">2</span>)=<span class="wcell ans" data-q="fr3">3</span> ·
+      g(ŷ₃=<span data-q="fr3">3</span>)=<span class="wcell ans" data-q="fr4">0</span>
+      &nbsp;→ khớp = <span class="wcell ans" data-q="frc">2</span>/4
+    </div>
+    <div class="note">Bước 1–3 giống hệt Bước 1 (cùng input, cùng ŷ) — kể cả cùng dự đoán <b>SAI</b> ở bước 3 (ŷ₃≠y₃). Chỉ bước 4 mới tách ra vì input khác nhau.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hai luồng decoder</h2><span class="tag">lam TF · cam free</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hai băng chuyền song song</h2><span class="tag">lam TF · cam free</span></div>
     <div class="figrow">
-      <svg id="figTF" class="fig" viewBox="0 0 220 120" width="70mm" height="38mm" aria-label="so sánh teacher forcing và free-running"></svg>
+      <svg id="figTF" class="fig" viewBox="0 0 300 132" width="92mm" height="41mm" aria-label="so sánh teacher forcing và free-running trên cùng chuỗi"></svg>
       <div style="flex:1">
-        <div class="note">Cùng mô hình g, khác <b>nguồn đầu vào</b>: TF lấy token thật (ngữ cảnh đúng), free lấy ŷ trước (lỗi lan). Dung hòa: <b>scheduled sampling</b>
-          — trộn dần token tự sinh vào lúc train. Transformer vẫn dùng TF + masking song song.</div>
+        <div class="calc ans">ŷ₄(train) = <span class="wcell ans" data-q="tf4b">1</span> &nbsp;≠&nbsp; ŷ₄(test) = <span class="wcell ans" data-q="fr4b">0</span> &nbsp;<b>KHÁC NHAU</b></div>
+        <div class="why"><b>Vì sao:</b> bước 4 của TRAIN vẫn ăn token thật y₃ (chấm lam) nên đi đúng đường; bước 4 của TEST ăn chính ŷ₃ sai (chấm cam viền đỏ) → lệch tiếp. Cùng model g, cùng chuỗi, chỉ khác <b>nguồn input</b> mà ra hai kết quả khác nhau.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đáp án</h2></div>
+    <div class="calc ans">ŷ₄(train) ≠ ŷ₄(test) → <span class="qa">KHÁC NHAU</span>. Vì → <span class="qa">input bước 4 khác nhau: TRAIN dùng token thật y₃, TEST dùng chính dự đoán sai ŷ₃ của mình.</span></div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>TF ăn gì lúc train? → <span class="qa">Token đúng (ground-truth) của bước trước.</span></li>
-      <li>Exposure bias? → <span class="qa">Lệch train–test: train thấy token đúng, test phải tự đi bằng dự đoán.</span></li>
+      <li>Vì sao TF nhanh &amp; song song? → <span class="qa">Input mọi bước đã biết trước (là y có sẵn), không phải chờ model tự sinh → 4 bước tính đồng thời được.</span></li>
+      <li>Lỗi ở bước 3 ảnh hưởng bao nhiêu bước sau (chuỗi 10 bước)? → <span class="qa">Cả 7 bước còn lại (4→10) — vì mỗi bước ăn input từ chính bước ngay trước, lỗi truyền theo dây chuyền liên tục.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Teacher forcing = cho ăn token thật khi train → nhanh, nhưng gây exposure bias (dung hòa bằng scheduled sampling).
-    <b>Hết Phần G & khóa K2.</b> Tiếp theo (K3): cơ chế <b style="color:var(--accent2)">attention</b> & Transformer (Phần H).
+    <b style="color:var(--accent2)">Rút ra.</b> Teacher forcing = train nhanh + song song hoá được, nhưng gây lệch train↔test (exposure bias) vì test phải tự ăn dự đoán của chính mình.
+    Cách giảm: <b>scheduled sampling</b> — thỉnh thoảng cho model ăn đầu ra của chính nó ngay lúc train, để nó quen "phục hồi sau lỗi".
+    <b>Hết Phần G &amp; khóa K2.</b> Tiếp theo (K3): cơ chế <b style="color:var(--accent2)">attention</b> &amp; Transformer (Phần H).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G9 · Teacher forcing</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G9 · Teacher forcing</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var PRE=[
-  {g:{0:2,1:1,2:1}, st:0, y:[2,0,2]},
-  {g:{0:1,1:1,2:0}, st:0, y:[1,2,0]}
-];
 function generate(){
-  var p=WB.pick(PRE), g=p.g, st=p.st, y=p.y;
-  // TF: đầu vào = nhãn thật trước
-  var tf=[ g[st], g[y[0]], g[y[1]] ];
-  var tfc = (tf[0]===y[0]) + (tf[1]===y[1]) + (tf[2]===y[2]);
-  // Free: đầu vào = ŷ trước
-  var f1=g[st], f2=g[f1], f3=g[f2];
-  var frc = (f1===y[0]) + (f2===y[1]) + (f3===y[2]);
-  var S=String;
+  // g = hoán vị ngẫu nhiên của {0,1,2,3} → đảm bảo input khác nhau chắc chắn cho output khác nhau
+  var g = [0,1,2,3];
+  for (var i=g.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=g[i]; g[i]=g[j]; g[j]=t; }
+
+  var st = WB.randInt(0,3);
+  var y1 = g[st];
+  var y2 = g[y1];
+  var w  = g[y2];                                  // ŷ₃ mà CẢ hai kịch bản đều cho ra
+  var cand3 = [0,1,2,3].filter(function(v){ return v!==w; });
+  var y3 = WB.pick(cand3);                          // nhãn thật y₃ ≠ w → bước 3 chắc chắn đoán SAI
+  var y4 = WB.randInt(0,3);                         // nhãn thật y₄ (chỉ để đối chiếu khớp, không bắt buộc trùng)
+
+  // TRAIN (teacher forcing): input luôn = nhãn thật
+  var tf1=g[st], tf2=g[y1], tf3=g[y2], tf4=g[y3];
+  // TEST (free-running): input = chính model tự sinh (dây chuyền)
+  var fr1=g[st], fr2=g[fr1], fr3=g[fr2], fr4=g[fr3];
+  // (tf1=fr1=y1, tf2=fr2=y2, tf3=fr3=w luôn — chỉ tf4≠fr4 vì y₃≠w và g là hoán vị)
+
+  var tfc = (tf1===y1?1:0)+(tf2===y2?1:0)+(tf3===y3?1:0)+(tf4===y4?1:0);
+  var frc = (fr1===y1?1:0)+(fr2===y2?1:0)+(fr3===y3?1:0)+(fr4===y4?1:0);
+
+  var S = String;
   WB.setAll({
-    g0:S(g[0]), g1:S(g[1]), g2:S(g[2]), st:S(st),
-    y1:S(y[0]), y2:S(y[1]), y3:S(y[2]),
-    tf1:S(tf[0]), tf2:S(tf[1]), tf3:S(tf[2]), tfc:S(tfc),
-    fr1:S(f1), fr2:S(f2), fr3:S(f3), frc:S(frc)
+    g0:S(g[0]), g1:S(g[1]), g2:S(g[2]), g3:S(g[3]),
+    st:S(st), y1:S(y1), y2:S(y2), y3:S(y3), y4:S(y4),
+    tf1:S(tf1), tf2:S(tf2), tf3:S(tf3), tf4:S(tf4), tf4b:S(tf4), tfc:S(tfc),
+    fr1:S(fr1), fr2:S(fr2), fr3:S(fr3), fr4:S(fr4), fr4b:S(fr4), frc:S(frc)
   });
-  drawTF('figTF', y, tf, [f1,f2,f3]);
+  drawTF('figTF', [st,y1,y2,y3], [tf1,tf2,tf3,tf4], [fr1,fr2,fr3,fr4]);
 }
 
-function drawTF(id, y, tf, fr){
+// 2 băng chuyền: TRAIN (input luôn = nhãn thật, lam) · TEST (input = tự sinh, cam) — đánh dấu bước 4 lệch
+function drawTF(id, trueIn, tf, fr){
   var svg=document.getElementById(id); if(!svg) return;
-  var defs='<defs><marker id="aTF9" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#888"/></marker></defs>';
-  var xs=[54,112,170];
+  var defs='<defs><marker id="aTF9" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#94a3b8"/></marker></defs>';
+  var xs=[40,110,180,250];
   var s='';
-  for(var t=0;t<3;t++){
-    var tfok = tf[t]===y[t], frok = fr[t]===y[t];
-    s += '<circle cx="'+xs[t]+'" cy="34" r="12" fill="#d6ecf6" stroke="#0e7490"/><text x="'+xs[t]+'" y="38" text-anchor="middle" font-size="10" font-weight="700" fill="'+(tfok?'#0a8a3a':'#b00')+'">'+tf[t]+'</text>';
-    s += '<circle cx="'+xs[t]+'" cy="86" r="12" fill="#ffe6cc" stroke="#b45309"/><text x="'+xs[t]+'" y="90" text-anchor="middle" font-size="10" font-weight="700" fill="'+(frok?'#0a8a3a':'#b00')+'">'+fr[t]+'</text>';
-    if(t<2){
-      s += '<line x1="'+(xs[t]+12)+'" y1="34" x2="'+(xs[t+1]-12)+'" y2="34" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aTF9)"/>';
+  s += '<text x="150" y="12" text-anchor="middle" style="font-size:8.5px" fill="#6b7280">cùng model g, cùng chuỗi — khác nguồn input</text>';
+  s += '<text x="8" y="42" style="font-size:9px" fill="#0e7490" font-weight="700">TRAIN</text>';
+  s += '<text x="8" y="94" style="font-size:9px" fill="#b45309" font-weight="700">TEST</text>';
+  for (var t=0;t<4;t++){
+    var wrong = (t===2);              // bước 3 (index 2): cả hai đều đoán sai
+    var diverge = (t===3);            // bước 4 (index 3): input đã khác nhau
+    // TRAIN row (input dùng ở bước này)
+    var trainVal = (t===0)? trueIn[0] : trueIn[t];   // trueIn = [st,y1,y2,y3]
+    s += '<circle cx="'+xs[t]+'" cy="30" r="12" fill="#d6ecf6" stroke="#0e7490" stroke-width="'+(diverge?2.4:1.4)+'"/>';
+    s += '<text x="'+xs[t]+'" y="34" text-anchor="middle" font-size="10" font-weight="700" fill="#0e7490">'+trainVal+'</text>';
+    // TEST row (input dùng ở bước này = tự sinh trước đó)
+    var testVal = (t===0)? trueIn[0] : fr[t-1];
+    var testBad = diverge;
+    s += '<circle cx="'+xs[t]+'" cy="86" r="12" fill="#ffe6cc" stroke="'+(testBad?'#b00020':'#b45309')+'" stroke-width="'+(testBad?2.4:1.4)+'"'+(testBad?' stroke-dasharray="2 2"':'')+'/>';
+    s += '<text x="'+xs[t]+'" y="90" text-anchor="middle" font-size="10" font-weight="700" fill="'+(testBad?'#b00020':'#b45309')+'">'+testVal+'</text>';
+    s += '<text x="'+xs[t]+'" y="106" text-anchor="middle" font-size="7.5" fill="'+(wrong?'#b00020':'#94a3b8')+'">b'+(t+1)+(wrong?' (sai)':'')+'</text>';
+    if (t<3){
+      s += '<line x1="'+(xs[t]+12)+'" y1="30" x2="'+(xs[t+1]-12)+'" y2="30" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aTF9)"/>';
       s += '<line x1="'+(xs[t]+12)+'" y1="86" x2="'+(xs[t+1]-12)+'" y2="86" stroke="#b45309" stroke-width="1.4" stroke-dasharray="3 2" marker-end="url(#aTF9)"/>';
     }
   }
-  s += '<text x="16" y="38" style="font-size:9px" fill="#0e7490">TF</text>';
-  s += '<text x="10" y="90" style="font-size:9px" fill="#b45309">Free</text>';
-  s += '<text x="112" y="16" text-anchor="middle" style="font-size:8px" fill="#6b7280">cùng mô hình, khác nguồn input</text>';
-  s += '<text x="112" y="110" text-anchor="middle" style="font-size:8px" fill="#b00">free: lỗi sớm → lan tiếp</text>';
+  s += '<text x="250" y="120" text-anchor="middle" style="font-size:7.5px" fill="#b00020">test: input b4 = ŷ₃ sai → lệch</text>';
   svg.innerHTML=defs+s;
 }
 WB.wire(generate);

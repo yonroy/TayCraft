@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B1 — Hồi quy tuyến tính 1 biến (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,203 +22,265 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B1</span><h1>Hồi quy tuyến tính 1 biến <small>— Linear Regression</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài B1</span>
+    <h1>Hồi quy tuyến tính 1 biến <small>— đặt cây thước lên đám điểm</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> "Học" trong ML = <b>chọn tham số</b> để dự đoán khớp dữ liệu. Hồi quy tuyến tính cho thấy
-    trọn vòng: có dữ liệu → chọn w, b → đo sai số. Đây cũng là khung của <b>một nơ-ron</b> sau này.
-    <div class="formula">
-      ŷ = w·x + b &nbsp;&nbsp;|&nbsp;&nbsp; w = <span style="font-size:15px">Σ</span>(xᵢ−x̄)(yᵢ−ȳ) / <span style="font-size:15px">Σ</span>(xᵢ−x̄)² &nbsp;&nbsp;|&nbsp;&nbsp; b = ȳ − w·x̄
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho <b>3 điểm</b> dữ liệu (x, y). Hãy <b>tự tay</b> tìm đường thẳng ŷ = w·x + b
+    khớp nhất: tính trung bình, tính <b>độ dốc w</b> theo từng điểm, tìm <b>chặn b</b>, rồi <b>dự đoán</b> điểm mới.
+    Phần thưởng: kiểm bằng hình — đường của bạn có đi qua <b>điểm trung bình (x̄, ȳ)</b> không?
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Đặt một <b>cây thước</b> lên đám điểm sao cho tổng "khoảng hụt" nhỏ nhất. Độ dốc w cho biết x tăng 1 thì y tăng mấy;
-    b là điểm cắt trục y. Công thức trên chính là vị trí thước <b>tối ưu</b> (bình phương nhỏ nhất).
-  </div>
-
-  <!-- GIVEN + STEP 1 -->
+  <!-- BƯỚC 0 — CHO SẴN + TRUNG BÌNH -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn &amp; trung bình</h2><span class="tag">3 điểm</span></div>
+    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn &amp; điểm trung bình</h2><span class="tag">3 điểm</span></div>
     <div class="row">
       <div class="mwrap"><div class="mlabel">(xᵢ, yᵢ)</div>
-        <div class="mtx c2" style="--cell:17mm">
+        <div class="mtx c2" style="--cell:16mm">
           <div class="cell given" data-q="x1">1</div><div class="cell given" data-q="y1">1</div>
           <div class="cell given" data-q="x2">2</div><div class="cell given" data-q="y2">3</div>
           <div class="cell given" data-q="x3">3</div><div class="cell given" data-q="y3">5</div>
         </div></div>
-      <div class="calc" style="flex:1">
-        x̄ = (<span data-q="x1">1</span>+<span data-q="x2">2</span>+<span data-q="x3">3</span>)/3 = <span class="blk"></span><br>
-        ȳ = (<span data-q="y1">1</span>+<span data-q="y2">3</span>+<span data-q="y3">5</span>)/3 = <span class="blk"></span>
-        <div class="why" style="margin-top:5px"><b>Vì sao:</b> hồi quy "xoay quanh" điểm trung bình (x̄, ȳ) — mọi công thức đo lệch khỏi điểm này.</div>
+      <div class="calc big" style="flex:1">
+        x̄ = (<span data-q="x1">1</span>+<span data-q="x2">2</span>+<span data-q="x3">3</span>)/3 = <span class="wcell"></span><br>
+        ȳ = (<span data-q="y1">1</span>+<span data-q="y2">3</span>+<span data-q="y3">5</span>)/3 = <span class="wcell"></span>
+        <div class="why" style="margin-top:5px"><b>Vì sao:</b> đường khớp luôn "xoay quanh" điểm trung bình (x̄, ȳ); mọi công thức đo lệch khỏi điểm này.</div>
       </div>
     </div>
   </div>
 
-  <div class="grid2">
-  <!-- STEP 2 -->
+  <!-- BƯỚC 1 — ĐỘ DỐC w -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Độ dốc w</h2><span class="tag">cov / var</span></div>
-    <div class="calc">
-      tử = <span style="font-size:14px">Σ</span>(xᵢ−x̄)(yᵢ−ȳ) = <span class="blk"></span><br>
-      mẫu = <span style="font-size:14px">Σ</span>(xᵢ−x̄)² = <span class="blk"></span><br>
-      w = tử / mẫu = <span class="blk" style="min-width:46px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Độ dốc w — cộng đóng góp từng điểm</h2><span class="tag">cov / var</span></div>
+    <div class="calc big">
+      <span class="lead">tử</span> = Σ(xᵢ−x̄)(yᵢ−ȳ):
+        (<span data-q="dx1">−1</span>)(<span data-q="dy1">−2</span>)=<span class="wcell"></span> ·
+        (<span data-q="dx2">0</span>)(<span data-q="dy2">0</span>)=<span class="wcell"></span> ·
+        (<span data-q="dx3">1</span>)(<span data-q="dy3">2</span>)=<span class="wcell"></span> → tử = <span class="wcell"></span><br>
+      <span class="lead">mẫu</span> = Σ(xᵢ−x̄)² = 1 + 0 + 1 = <span class="wcell"></span><br>
+      <span class="lead">w</span> = tử / mẫu = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> tử số đo "x và y cùng lệch trung bình thế nào" (hiệp phương sai); chia cho độ trải của x → độ dốc.</div>
+    <div class="note">Tử đo "x và y <b>cùng lệch</b> trung bình thế nào" (hiệp phương sai); chia cho độ trải của x → độ dốc.</div>
   </div>
 
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chặn b &amp; dự đoán</h2><span class="tag">đường khớp</span></div>
-    <div class="calc">
-      b = ȳ − w·x̄ = <span class="blk"></span><br>
-      → đường: ŷ = <span class="blk" style="min-width:30px"></span>·x + <span class="blk" style="min-width:30px"></span><br>
-      Dự đoán x = <span data-q="xp">4</span>: ŷ = <span class="blk" style="min-width:46px"></span>
-    </div>
-    <div class="hint"><b>Mẹo:</b> thử lại 3 điểm vào đường — nếu khớp cả ba thì MSE = 0 (dữ liệu thẳng hàng).</div>
-  </div>
-  </div><!-- /grid2 -->
+  <div class="scratch" style="height:26mm"><span class="lb">✏️ Nháp — tính (xᵢ−x̄), (yᵢ−ȳ) từng điểm ở đây</span></div>
 
-  <!-- STEP 4 — hình -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B1 · Hồi quy tuyến tính 1 biến</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài B1</span>
+    <h1>Hồi quy tuyến tính 1 biến <small>— chặn b, dự đoán &amp; kiểm bằng hình</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+
+  <!-- BƯỚC 2 — CHẶN b & DỰ ĐOÁN -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đồ thị đường khớp</h2><span class="tag">điểm + đường</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Chặn b &amp; dự đoán điểm mới</h2><span class="tag">đường khớp</span></div>
+    <div class="calc big">
+      b = ȳ − w·x̄ = <span data-q="ybar">3</span> − <span data-q="ww">2</span>·<span data-q="xbar">2</span> = <span class="wcell"></span><br>
+      → đường: ŷ = <span class="wcell"></span>·x + <span class="wcell"></span><br>
+      Dự đoán x = <span data-q="xp">4</span>: ŷ = w·4 + b = <span class="wcell"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> b là điểm cắt trục y; biết w rồi thì b buộc đường đi qua đúng điểm trung bình.</div>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM: đường qua (x̄, ȳ) -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đường có qua điểm trung bình?</h2><span class="tag">bất biến lõi</span></div>
+    <div class="calc big">
+      Thay x = x̄ = <span data-q="xbar">2</span> vào đường: ŷ(x̄) = <span data-q="ww">2</span>·<span data-q="xbar">2</span> + <span data-q="bb2">−1</span> = <span class="wcell"></span>
+      <small style="color:#7a8794">(phải = ȳ = <span data-q="ybar">3</span> ✓)</small>
+    </div>
+    <div class="note">Đây là <b>bất biến</b> của mọi đường bình phương nhỏ nhất: nó <b>luôn</b> đi qua (x̄, ȳ). Nếu ŷ(x̄) ≠ ȳ thì b tính sai.</div>
+  </div>
+
+  <!-- HERO — đồ thị đường khớp, điền toạ độ điểm dự đoán vào hình -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Kiểm bằng hình — vẽ đường qua 3 điểm</h2><span class="tag">điểm + đường</span></div>
     <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 200 150" width="74mm" height="55mm" aria-label="đồ thị hồi quy: ba điểm dữ liệu và đường thẳng khớp"></svg>
-      <div style="flex:1">
-        <div class="note">Mỗi <b style="color:var(--accent2)">chấm cam</b> là một điểm dữ liệu; <b style="color:var(--accent)">đường lam</b> là ŷ = w·x + b.
-        Khoảng cách dọc từ điểm tới đường là <b>phần dư</b> (residual); least squares tối thiểu <b>tổng bình phương</b> phần dư (MSE, Bài D1).</div>
-        <div class="why"><b>Vì sao:</b> ở đây dữ liệu thẳng hàng nên đường đi qua đúng cả 3 điểm → phần dư = 0. Dữ liệu thật thường có dư ≠ 0.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 240 170" width="100mm" height="70.8mm" aria-label="đồ thị hồi quy: ba điểm dữ liệu, đường khớp, ô điền điểm dự đoán"></svg>
+      <div style="flex:1;min-width:48mm">
+        <div class="note"><b style="color:#b45309">Chấm cam</b> = điểm dữ liệu; <b style="color:#0e7490">đường lam</b> = ŷ = w·x + b.
+          Vẽ đường qua 3 chấm, kéo dài tới x = 4 rồi <b>điền toạ độ điểm dự đoán vào ô trong hình</b>.</div>
+        <div class="note" style="margin-top:8px">Khoảng cách dọc từ chấm tới đường là <b>phần dư</b>; least squares tối thiểu <b>tổng bình phương</b> phần dư (Bài D1).</div>
       </div>
     </div>
   </div>
 
-  <!-- TỰ KIỂM TRA -->
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>w cho biết điều gì về quan hệ x–y? → <span class="blk" style="min-width:210px"></span></li>
-      <li>Vì sao bình phương sai số (không phải trị tuyệt đối)? → <span class="blk" style="min-width:190px"></span></li>
+      <li>w cho biết điều gì về quan hệ x–y? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Vì sao bình phương sai số (không phải trị tuyệt đối)? → <span class="blk" style="min-width:170px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B1 · Hồi quy tuyến tính 1 biến</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Tính xong w, b</span>
+    <span><span class="ck"></span>Điền điểm dự đoán</span>
+    <span class="win">🎉 Bạn vừa huấn luyện mô hình ML đầu tiên!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B1 · Hồi quy tuyến tính 1 biến</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài B1</span><h1>Hồi quy tuyến tính 1 biến <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="wb-title"><span class="no">Bài B1</span><h1>Hồi quy tuyến tính 1 biến <small>— lời giải</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Trung bình</h2></div>
-    <div class="calc ans">
-      x̄ = <span class="blk" data-q="xbar">2</span> &nbsp;|&nbsp; ȳ = <span class="blk" data-q="ybar">3</span>
+    <div class="step-h"><div class="b">0</div><h2>Điểm trung bình</h2></div>
+    <div class="calc ans big">
+      x̄ = <span class="wcell ans" data-q="xbar">2</span> &nbsp;&nbsp; ȳ = <span class="wcell ans" data-q="ybar">3</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Độ dốc w</h2></div>
-    <div class="calc ans">
-      tử = <span data-q="numExpr">(−1)(−2)+0+(1)(2)</span> = <span class="blk" data-q="num">4</span> &nbsp;|&nbsp;
-      mẫu = <span class="blk" data-q="den">2</span> &nbsp;|&nbsp;
-      w = <span class="blk" data-q="w">2</span>
+    <div class="calc ans big">
+      tử: <span class="wcell ans" data-q="t1">2</span><span class="wcell ans" data-q="t2">0</span><span class="wcell ans" data-q="t3">2</span>
+        → tử = <span class="wcell ans" data-q="num">4</span> &nbsp;·&nbsp; mẫu = <span class="wcell ans" data-q="den">2</span> &nbsp;·&nbsp;
+      w = <span class="wcell ans" data-q="w">2</span>
     </div>
+    <div class="why"><b>Vì sao:</b> tử = Σ(xᵢ−x̄)(yᵢ−ȳ) đo hiệp phương sai; mẫu = Σ(xᵢ−x̄)² là độ trải của x. Điểm giữa (x̄) có đóng góp 0.</div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Chặn b &amp; dự đoán</h2></div>
-    <div class="calc ans">
-      b = <span data-q="ybar">3</span> − <span data-q="w">2</span>·<span data-q="xbar">2</span> = <span class="blk" data-q="bb">−1</span> &nbsp;→&nbsp;
-      ŷ = <span data-q="w">2</span>·x + (<span data-q="bb">−1</span>)<br>
-      Dự đoán x = <span data-q="xp">4</span>: ŷ = <span class="blk" data-q="pred">7</span> &nbsp;<span style="color:var(--dim);font-weight:400" data-q="mseNote">(MSE = 0 — khớp hoàn hảo)</span>
+    <div class="calc ans big">
+      b = <span data-q="ybar">3</span> − <span data-q="w">2</span>·<span data-q="xbar">2</span> = <span class="wcell ans" data-q="bb">−1</span> &nbsp;→&nbsp;
+      ŷ = <span class="wcell ans" data-q="wa">2</span>·x + (<span class="wcell ans" data-q="ba">−1</span>)<br>
+      Dự đoán x = <span data-q="xp">4</span>: ŷ = <span class="wcell ans" data-q="pred">7</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đồ thị</h2></div>
-    <svg id="figK" class="fig" viewBox="0 0 200 150" width="66mm" height="49mm"></svg>
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đường qua (x̄, ȳ)</h2></div>
+    <div class="calc ans big">
+      ŷ(x̄) = <span data-q="w">2</span>·<span data-q="xbar">2</span> + (<span data-q="bb">−1</span>) = <span class="wcell ans" data-q="chk">3</span> = ȳ ✓
+    </div>
+    <div class="why"><b>Vì sao khớp:</b> b = ȳ − w·x̄ ⇒ w·x̄ + b = ȳ luôn đúng. Đường bình phương nhỏ nhất <b>bắt buộc</b> qua điểm trọng tâm dữ liệu.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Đồ thị — điểm dự đoán</h2></div>
+    <div class="figrow">
+      <svg id="figA" class="fig" viewBox="0 0 240 170" width="88mm" height="62.3mm"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans">điểm dự đoán = ( <span class="wcell ans" data-q="px">4</span><span class="wcell ans" data-q="py">7</span> )</div>
+        <div class="why"><b>Vì sao khớp:</b> dữ liệu thẳng hàng nên đường đi qua đúng cả 3 chấm (phần dư = 0). Dữ liệu thật thường có dư ≠ 0.</div>
+      </div>
+    </div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>w cho biết → <span class="qa">độ dốc: x tăng 1 đơn vị thì ŷ đổi w đơn vị</span></li>
-      <li>Bình phương sai số vì → <span class="qa">phạt mạnh sai lớn & có công thức đóng (đạo hàm gọn)</span></li>
+      <li>Bình phương sai số vì → <span class="qa">phạt mạnh sai lớn &amp; có công thức đóng (đạo hàm gọn)</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Hồi quy tuyến tính = chọn w, b tối thiểu sai số bình phương; đây là "nguyên tử" của học có giám sát.
-    Bài tiếp (B2): nhiều đặc trưng → ŷ = <b>w·x</b> + b với x là vectơ.
+    <b style="color:var(--accent2)">Rút ra.</b> Hồi quy tuyến tính = chọn w, b tối thiểu sai số bình phương; đường luôn qua (x̄, ȳ).
+    Đây là "nguyên tử" của học có giám sát. Bài tiếp (B2): nhiều đặc trưng → ŷ = <b>w·x</b> + b với x là vectơ.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B1 · Hồi quy tuyến tính 1 biến</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B1 · Hồi quy tuyến tính 1 biến</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var DATA = { xs:[1,2,3], ys:[1,3,5], w:2, b:-1 };  // cập nhật trong generate
+
 function generate(){
   var wTrue = WB.pick([2, 3]);
-  var bTrue = WB.randInt(-1, 2);        // −1, 0, 1
+  var bTrue = WB.randInt(-1, 2);        // −1, 0, 1, 2
   var xs = [1, 2, 3];
   var ys = xs.map(function(x){ return wTrue * x + bTrue; });
-  var xbar = 2;                          // trung bình của 1,2,3
+  var xbar = 2;                          // trung bình 1,2,3
   var ybar = (ys[0] + ys[1] + ys[2]) / 3;
-  var num = xs.reduce(function(s, x, i){ return s + (x - xbar) * (ys[i] - ybar); }, 0);
-  var den = xs.reduce(function(s, x){ return s + (x - xbar) * (x - xbar); }, 0);  // = 2
-  var w = num / den;
-  var b = ybar - w * xbar;
+  var dx = xs.map(function(x){ return x - xbar; });        // [−1,0,1]
+  var dy = ys.map(function(y){ return y - ybar; });        // [−w,0,w]
+  var t  = dx.map(function(d, i){ return d * dy[i]; });    // [w,0,w]
+  var num = t[0] + t[1] + t[2];
+  var den = 2;
+  var w = num / den;                     // = wTrue
+  var b = ybar - w * xbar;               // = bTrue
   var xp = 4;
   var pred = w * xp + b;
+  var chk = w * xbar + b;                // = ybar (tự kiểm)
 
-  // biểu thức tử số (x−x̄)(y−ȳ)
-  var dy = ys.map(function(y){ return y - ybar; });
-  var numExpr = '(−1)(' + WB.fmtInt(dy[0]) + ') + 0 + (1)(' + WB.fmtInt(dy[2]) + ')';
+  DATA = { xs:xs, ys:ys, w:w, b:b, xp:xp, pred:pred };
 
   WB.setAll({
-    x1: '1', x2: '2', x3: '3',
-    y1: WB.fmtInt(ys[0]), y2: WB.fmtInt(ys[1]), y3: WB.fmtInt(ys[2]),
-    xbar: WB.fmtInt(xbar), ybar: WB.fmtInt(ybar),
-    numExpr: numExpr, num: WB.fmtInt(num), den: WB.fmtInt(den), w: WB.fmtInt(w),
-    bb: WB.fmtInt(b), xp: WB.fmtInt(xp), pred: WB.fmtInt(pred),
-    mseNote: '(MSE = 0 — khớp hoàn hảo)'
+    x1:'1', x2:'2', x3:'3',
+    y1:WB.fmtInt(ys[0]), y2:WB.fmtInt(ys[1]), y3:WB.fmtInt(ys[2]),
+    dx1:WB.fmtInt(dx[0]), dx2:WB.fmtInt(dx[1]), dx3:WB.fmtInt(dx[2]),
+    dy1:WB.fmtInt(dy[0]), dy2:WB.fmtInt(dy[1]), dy3:WB.fmtInt(dy[2]),
+    t1:WB.fmtInt(t[0]), t2:WB.fmtInt(t[1]), t3:WB.fmtInt(t[2]),
+    xbar:WB.fmtInt(xbar), ybar:WB.fmtInt(ybar),
+    num:WB.fmtInt(num), den:WB.fmtInt(den),
+    w:WB.fmtInt(w), ww:WB.fmtInt(w), wa:WB.fmtInt(w),
+    bb:WB.fmtInt(b), bb2:WB.wrap(WB.fmtInt(b)), ba:WB.fmtInt(b),
+    xp:WB.fmtInt(xp), pred:WB.fmtInt(pred), chk:WB.fmtInt(chk),
+    px:WB.fmtInt(xp), py:WB.fmtInt(pred)
   });
 
-  drawReg('figA', xs, ys, w, b, false);
-  drawReg('figK', xs, ys, w, b, true);
+  drawReg('figQ', xs, ys, w, b, xp, pred, false);
+  drawReg('figA', xs, ys, w, b, xp, pred, true);
 }
 
-function drawReg(id, xs, ys, a, b, showResid){
+// Đồ thị: 3 chấm cam + đường lam; ô điền toạ độ điểm dự đoán (x=4) trong hình.
+function drawReg(id, xs, ys, a, b, xp, pred, showAns){
   var box = document.getElementById(id); if (!box) return;
-  var W = 200, H = 150, padl = 22, padr = 12, padt = 12, padb = 20;
+  var W = 240, H = 170, padl = 24, padr = 14, padt = 12, padb = 22;
   var pw = W - padl - padr, ph = H - padt - padb;
   var xmin = 0, xmax = 5;
-  var yall = ys.concat([a * xmin + b, a * xmax + b, 0]);
+  var yall = ys.concat([a * xmin + b, a * xmax + b, 0, pred]);
   var ymin = Math.min.apply(null, yall) - 1, ymax = Math.max.apply(null, yall) + 1;
-  function X(x){ return (padl + (x - xmin) / (xmax - xmin) * pw).toFixed(1); }
-  function Y(y){ return (padt + ph - (y - ymin) / (ymax - ymin) * ph).toFixed(1); }
+  function X(x){ return (padl + (x - xmin) / (xmax - xmin) * pw); }
+  function Y(y){ return (padt + ph - (y - ymin) / (ymax - ymin) * ph); }
+  var LAM = '#0e7490', CAM = '#b45309';
   var s = '<defs><marker id="ar' + id + '" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9aa3af"/></marker></defs>';
   // trục
-  s += '<line x1="' + X(xmin) + '" y1="' + Y(0) + '" x2="' + (W - padr + 4) + '" y2="' + Y(0) + '" stroke="#cbd2d9" stroke-width="1" marker-end="url(#ar' + id + ')"/>';
-  s += '<line x1="' + X(0) + '" y1="' + (H - padb) + '" x2="' + X(0) + '" y2="' + padt + '" stroke="#cbd2d9" stroke-width="1" marker-end="url(#ar' + id + ')"/>';
+  s += '<line x1="' + X(xmin).toFixed(1) + '" y1="' + Y(ymin).toFixed(1) + '" x2="' + (W - padr + 4).toFixed(1) + '" y2="' + Y(ymin).toFixed(1) + '" stroke="#cbd2d9" stroke-width="1" marker-end="url(#ar' + id + ')"/>';
+  s += '<line x1="' + X(0).toFixed(1) + '" y1="' + (H - padb).toFixed(1) + '" x2="' + X(0).toFixed(1) + '" y2="' + padt.toFixed(1) + '" stroke="#cbd2d9" stroke-width="1" marker-end="url(#ar' + id + ')"/>';
   // đường hồi quy
-  s += '<line x1="' + X(xmin) + '" y1="' + Y(a * xmin + b) + '" x2="' + X(xmax) + '" y2="' + Y(a * xmax + b) + '" stroke="#0e7490" stroke-width="2"/>';
-  s += '<text x="' + (W - padr - 2) + '" y="' + (parseFloat(Y(a * xmax + b)) - 4) + '" text-anchor="end" font-size="8.5" fill="#0e7490" font-weight="700">ŷ=' + WB.fmtInt(a) + 'x' + (b < 0 ? '−' + (-b) : '+' + b) + '</text>';
-  // điểm + residual
+  s += '<line x1="' + X(xmin).toFixed(1) + '" y1="' + Y(a * xmin + b).toFixed(1) + '" x2="' + X(xmax).toFixed(1) + '" y2="' + Y(a * xmax + b).toFixed(1) + '" stroke="' + LAM + '" stroke-width="2"/>';
+  s += '<text x="' + (X(xmax) - 2).toFixed(1) + '" y="' + (Y(a * xmax + b) - 5).toFixed(1) + '" text-anchor="end" font-size="9" fill="' + LAM + '" font-weight="700">ŷ=' + WB.fmtInt(a) + 'x' + (b < 0 ? '−' + (-b) : '+' + b) + '</text>';
+  // điểm dữ liệu
   xs.forEach(function(x, i){
-    var yhat = a * x + b;
-    if (showResid) s += '<line x1="' + X(x) + '" y1="' + Y(ys[i]) + '" x2="' + X(x) + '" y2="' + Y(yhat) + '" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="3 2"/>';
-    s += '<circle cx="' + X(x) + '" cy="' + Y(ys[i]) + '" r="3.4" fill="#b45309"/>';
-    s += '<text x="' + (parseFloat(X(x)) + 4) + '" y="' + (parseFloat(Y(ys[i])) - 3) + '" font-size="8" fill="#b45309">(' + x + ',' + WB.fmtInt(ys[i]) + ')</text>';
+    s += '<circle cx="' + X(x).toFixed(1) + '" cy="' + Y(ys[i]).toFixed(1) + '" r="3.6" fill="' + CAM + '"/>';
+    s += '<text x="' + (X(x) + 4).toFixed(1) + '" y="' + (Y(ys[i]) + 11).toFixed(1) + '" font-size="8" fill="' + CAM + '">(' + x + ',' + WB.fmtInt(ys[i]) + ')</text>';
   });
+  // điểm dự đoán x=4: chấm rỗng + ô điền
+  s += '<circle cx="' + X(xp).toFixed(1) + '" cy="' + Y(pred).toFixed(1) + '" r="3.6" fill="' + (showAns ? CAM : '#fff') + '" stroke="' + CAM + '" stroke-width="1.6"/>';
+  s += '<line x1="' + X(xp).toFixed(1) + '" y1="' + Y(ymin).toFixed(1) + '" x2="' + X(xp).toFixed(1) + '" y2="' + Y(pred).toFixed(1) + '" stroke="' + CAM + '" stroke-width="1" stroke-dasharray="3 2"/>';
+  var bx = Math.min(X(xp) + 6, W - 66), by = Y(pred) - 30;
+  if (by < padt) by = Y(pred) + 8;
+  s += '<rect x="' + bx.toFixed(1) + '" y="' + by.toFixed(1) + '" width="60" height="24" rx="6" fill="' + (showAns ? '#fff5e9' : '#fff') + '" stroke="' + (showAns ? '#e3b780' : CAM) + '" stroke-width="1.7"/>';
+  if (showAns) s += '<text x="' + (bx + 30).toFixed(1) + '" y="' + (by + 16).toFixed(1) + '" text-anchor="middle" font-size="12.5" fill="#7a3d00" font-weight="700">(4,' + WB.fmtInt(pred) + ')</text>';
+  else s += '<text x="' + (bx + 30).toFixed(1) + '" y="' + (by + 15).toFixed(1) + '" text-anchor="middle" font-size="9" fill="#c3ccd6">(4, __)</text>';
+  s += '<text x="' + bx.toFixed(1) + '" y="' + (by - 4).toFixed(1) + '" font-size="8.5" fill="' + CAM + '" font-weight="700">dự đoán ✍</text>';
   box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '">' + s + '</svg>';
 }
 

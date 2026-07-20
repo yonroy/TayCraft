@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D10 — SGD (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,105 +25,130 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D10</span><h1>SGD <small>— Stochastic Gradient Descent</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Tính gradient trên <b>toàn bộ</b> dữ liệu mỗi bước quá đắt. SGD lấy <b>mẫu nhỏ</b> (mini-batch) ước lượng
-    gradient → cập nhật thường xuyên, nhanh hơn; nhiễu của mini-batch còn giúp <b>thoát điểm yên ngựa</b>.
-    <div class="formula">
-      g = (1/|B|) Σ<sub>i∈B</sub> ∇Lᵢ &nbsp;&nbsp; w ← w − η·g
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài D10</span>
+    <h1>SGD <small>— gradient trên mini-batch → cập nhật ngay</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Thay vì hỏi <b>cả lớp</b> rồi mới bước (đắt, chính xác), SGD hỏi <b>vài người</b> rồi bước ngay. Mỗi bước hơi lệch (nhiễu) nhưng đi
-    được <b>nhiều bước</b> hơn trong cùng thời gian → tổng thể tới đáy nhanh hơn.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Tính gradient trên <b>toàn bộ</b> dữ liệu mỗi bước quá đắt. SGD chỉ lấy một <b>mini-batch</b> nhỏ để ước lượng gradient rồi <b>bước ngay</b> —
+    đi được nhiều bước hơn trong cùng thời gian. Hãy <b>tự tay</b> lấy trung bình mini-batch và cập nhật w. Phần thưởng: kiểm rằng ước lượng này <b>không chệch</b> — trung bình các mini-batch đúng bằng gradient thật.
+    <div class="formula" style="margin-top:5px">
+      ḡ<sub>B</sub> = (1/|B|) Σ<sub>i∈B</sub> gᵢ &nbsp;·&nbsp; w ← w − η·ḡ<sub>B</sub>
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">batch 3 mẫu</span></div>
-    <div class="calc" style="font-size:15px">
-      trọng số w = <span class="gv" data-q="w">0.5</span> ; gradient từng mẫu g = ( <span class="gv" data-q="g1">0.2</span>, <span class="gv" data-q="g2">−0.4</span>, <span class="gv" data-q="g3">0.6</span> ) ; η = <span class="gv" data-q="eta">0.3</span>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (4 mẫu, mỗi mẫu 1 gradient)</h2><span class="tag">η = <span class="gv" data-q="eta">0.3</span></span></div>
+    <div class="calc big">
+      w = <span class="gv" data-q="w">0.5</span> &nbsp;·&nbsp; gradient từng mẫu g = ( <span class="gv" data-q="g1">0.2</span>, <span class="gv" data-q="g2">0.6</span>, <span class="gv" data-q="g3">−0.4</span>, <span class="gv" data-q="g4">0.4</span> )
     </div>
-    <div class="note">Mini-batch 3 mẫu; mỗi mẫu cho một gradient. SGD lấy trung bình rồi bước một lần.</div>
+    <div class="note">SGD sẽ dùng <b>mini-batch B = {mẫu 1, 2}</b> để bước; hai mẫu còn lại để dành cho bước tự-kiểm.</div>
   </div>
 
-  <!-- BƯỚC 1 — gradient mini-batch -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Gradient mini-batch</h2><span class="tag">trung bình</span></div>
-    <div class="calc">
-      g = ( <span data-q="gExpr">0.2 − 0.4 + 0.6</span> )/3 = <span data-q="gsum">0.4</span>/3 = <span class="blk" style="min-width:50px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Gradient mini-batch = trung bình</h2><span class="tag">batch {1,2}</span></div>
+    <div class="calc big">
+      ḡ<sub>B</sub> = ( <span data-q="g1">0.2</span> + <span data-q="g2">0.6</span> ) / 2 = <span class="wcell" style="min-width:48px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> trung bình gradient các mẫu = ước lượng gradient thật (không thiên lệch), rẻ hơn nhiều so với cả tập.</div>
+    <div class="why"><b>Vì sao:</b> trung bình gradient của vài mẫu = ước lượng gradient thật, rẻ hơn nhiều so với cả tập dữ liệu.</div>
   </div>
 
-  <!-- BƯỚC 2 — cập nhật -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cập nhật trọng số</h2><span class="tag">w − η·g</span></div>
-    <div class="calc">
-      w ← <span data-q="w">0.5</span> − <span data-q="eta">0.3</span>·g = <span class="blk" style="min-width:56px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Cập nhật trọng số</h2><span class="tag">w − η·ḡ<sub>B</sub></span></div>
+    <div class="calc big">
+      w ← <span data-q="w">0.5</span> − <span data-q="eta">0.3</span> · ḡ<sub>B</sub> = <span class="wcell" style="min-width:56px"></span>
     </div>
-    <div class="hint">Bước ngược gradient một đoạn η; g là gradient mini-batch vừa tính.</div>
+    <div class="hint">Bước ngược gradient một đoạn η; ḡ<sub>B</sub> là gradient mini-batch vừa tính ở Bước 1.</div>
   </div>
 
-  <!-- BƯỚC 3 — vì sao stochastic -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vì sao "stochastic"</h2><span class="tag">răng cưa</span></div>
-    <div class="note">Đổi batch khác → g khác chút → đường đi <b>răng cưa</b> nhưng vẫn hướng đáy. Nhiễu mini-batch là <b>tính năng</b>, không phải lỗi:
-      giúp tránh kẹt cực tiểu địa phương nông.</div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D10 · SGD</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>SGD — mini-batch là ước lượng KHÔNG chệch</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D10</span>
+    <h1>SGD <small>— trung bình các mini-batch = gradient thật</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
 
-  <!-- BƯỚC 4 — batch size -->
+  <!-- STEP 3 — TỰ KIỂM: ước lượng không chệch -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Kích thước batch</h2><span class="tag">nhỏ vs lớn</span></div>
-    <div class="note">Batch <b>nhỏ</b> → nhiễu nhiều, cập nhật nhanh, ít bộ nhớ. Batch <b>lớn</b> → mượt, hợp GPU, thường cần η lớn hơn.
-      Đánh đổi giữa tốc độ–độ ổn định.</div>
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — mini-batch không làm chệch</h2><span class="tag">unbiased</span></div>
+    <div class="note" style="margin-top:0">
+      Mỗi mini-batch cho một gradient <b>hơi lệch</b>. Nhưng nếu lấy trung bình <b>mọi</b> mini-batch, ta thu lại đúng gradient của <b>cả tập</b>.
+      Kiểm với batch còn lại B′ = {mẫu 3, 4}:
+    </div>
+    <div class="calc big">
+      ḡ<sub>B′</sub> = ( <span data-q="g3">−0.4</span> + <span data-q="g4">0.4</span> ) / 2 = <span class="wcell" style="min-width:44px"></span><br>
+      gradient thật (cả 4 mẫu) = ( <span data-q="g1">0.2</span>+<span data-q="g2">0.6</span>+<span data-q="g3">−0.4</span>+<span data-q="g4">0.4</span> ) / 4 = <span class="wcell" style="min-width:44px"></span><br>
+      trung bình 2 batch = ( ḡ<sub>B</sub> + ḡ<sub>B′</sub> ) / 2 = <span class="wcell" style="min-width:44px"></span>
+      &nbsp;<small style="color:#7a8794">— khớp gradient thật?</small>
+    </div>
+    <div class="note">Trung bình hai mini-batch <b>bằng đúng</b> gradient cả tập ⇒ mỗi bước SGD lệch, nhưng <b>trung bình thì đúng</b> (không chệch). Nhiễu tự bù trừ qua nhiều bước.</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Vì sao "stochastic" — và chọn cỡ batch</h2><span class="tag">răng cưa</span></div>
+    <div class="note" style="margin-top:2px">Đổi batch khác → ḡ khác chút → đường đi <b>răng cưa</b> nhưng vẫn hướng đáy; nhiễu còn giúp thoát cực tiểu địa phương nông.
+      Batch <b>nhỏ</b>: nhiễu nhiều, cập nhật nhanh, ít bộ nhớ. Batch <b>lớn</b>: mượt, hợp GPU, thường cần η lớn hơn.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>SGD ước lượng gradient từ đâu? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Nhiễu mini-batch có lợi gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Trung bình mọi mini-batch cho ra gì? → <span class="blk" style="min-width:130px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D10 · SGD</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — cộng &amp; chia trung bình ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Bước SGD</span>
+    <span><span class="ck"></span>Kiểm không chệch</span>
+    <span class="win">🎉 Bạn vừa chạy một bước SGD!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D10 · SGD</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D10</span><h1>SGD <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D10</span><h1>SGD <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Gradient mini-batch</h2></div>
-    <div class="calc ans">
-      g = <span data-q="gsum">0.4</span>/3 = <span class="blk" data-q="gAvg">0.133</span>
-    </div>
+    <div class="calc ans">ḡ<sub>B</sub> = ( <span data-q="g1">0.2</span> + <span data-q="g2">0.6</span> ) / 2 = <span class="wcell ans" data-q="b1">0.4</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Cập nhật</h2></div>
-    <div class="calc ans">
-      w ← <span data-q="w">0.5</span> − <span data-q="eta">0.3</span>·<span data-q="gAvgw">0.133</span> = <span data-q="w">0.5</span> − <span data-q="stepvw">0.04</span> = <span class="blk" data-q="wNew">0.46</span>
-    </div>
+    <div class="calc ans">w ← <span data-q="w">0.5</span> − <span data-q="eta">0.3</span>·<span data-q="b1">0.4</span> = <span data-q="w">0.5</span> − <span data-q="stepv">0.12</span> = <span class="wcell ans" data-q="w1">0.38</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>SGD răng cưa vs full-batch mượt</h2><span class="tag">về đáy</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Không chệch: 2 batch → gradient thật</h2><span class="tag">unbiased</span></div>
     <div class="figrow">
-      <svg id="figS" class="fig" viewBox="0 0 200 150" width="64mm" height="48mm" aria-label="quỹ đạo răng cưa của SGD và đường mượt của full-batch cùng về đáy"></svg>
+      <svg id="figS" class="fig" viewBox="0 0 250 132" width="76mm" height="40mm" aria-label="4 gradient mẫu rải quanh gradient thật; hai trung bình mini-batch nằm hai bên và trung bình của chúng trùng gradient thật"></svg>
       <div style="flex:1">
-        <div class="note">Đường <b>cam</b> = SGD (răng cưa do nhiễu mini-batch); đường <b>lam</b> = full-batch (mượt). Cả hai về <b>đáy</b>,
-          SGD đi nhiều bước rẻ hơn nên thường tới trước theo thời gian.</div>
+        <div class="calc ans">ḡ<sub>B′</sub> = <span class="wcell ans" data-q="b2">0</span> &nbsp;·&nbsp; thật = <span class="wcell ans" data-q="full">0.2</span> &nbsp;·&nbsp; (ḡ<sub>B</sub>+ḡ<sub>B′</sub>)/2 = <span class="wcell ans" data-q="avg">0.2</span> ✓</div>
+        <div class="note">Chấm <b>lam</b> = gradient 4 mẫu (rải rộng); <b>tím</b> = 2 trung bình mini-batch; vạch <b>cam</b> = gradient thật. Hai chấm tím nằm hai bên nhưng <b>trung bình lại trùng</b> vạch cam.</div>
       </div>
     </div>
   </div>
@@ -136,63 +156,66 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Ước lượng gradient từ? → <span class="qa">Một mini-batch nhỏ (không phải cả tập).</span></li>
-      <li>Lợi của nhiễu? → <span class="qa">Giúp thoát điểm yên ngựa / cực tiểu địa phương nông.</span></li>
+      <li>Ước lượng gradient từ? → <span class="qa">Một mini-batch nhỏ (không phải cả tập dữ liệu).</span></li>
+      <li>Trung bình mọi mini-batch? → <span class="qa">Đúng bằng gradient cả tập — ước lượng không chệch.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> SGD = gradient trên mini-batch → w ← w − ηg; nhanh &amp; nhiễu có ích. Nhưng nhiễu cũng làm chậm hội tụ → Bài tiếp
-    (D11): <b>Momentum</b> làm mượt đường đi.
+    <b style="color:var(--accent2)">Rút ra.</b> SGD = gradient trên mini-batch → w ← w − η·ḡ<sub>B</sub>; mỗi bước nhiễu nhưng <b>trung bình không chệch</b>, nhanh &amp; rẻ.
+    Nhiễu cũng làm đường răng cưa → Bài D11: <b>Momentum</b> cộng dồn đà để đi mượt và nhanh hơn.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D10 · SGD</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D10 · SGD</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
   var ft = WB.fmtTrim;
-  var w = WB.pick([0.3, 0.4, 0.5, 0.6]);
+  var w  = WB.pick([0.4, 0.5, 0.6]);
   var eta = WB.pick([0.2, 0.3, 0.5]);
   var pool = [-0.6,-0.4,-0.2,0.2,0.4,0.6];
-  var g = WB.pickDistinct(pool, 3);
-  var gsum = Math.round((g[0]+g[1]+g[2])*10)/10;
-  var gAvg = Math.round(gsum/3*1000)/1000;
-  var stepv = Math.round(eta*gAvg*100)/100;
-  var wNew = Math.round((w - stepv)*100)/100;
+  var g = WB.pickDistinct(pool, 4);          // 4 gradient mẫu (bội của 0.2 → trung bình gọn)
+  var b1 = Math.round((g[0]+g[1])/2*100)/100;   // mini-batch {1,2}
+  var b2 = Math.round((g[2]+g[3])/2*100)/100;   // mini-batch {3,4}
+  var full = Math.round((g[0]+g[1]+g[2]+g[3])/4*100)/100;
+  var avg = Math.round((b1+b2)/2*100)/100;       // = full (đồng nhất)
+  var stepv = Math.round(eta*b1*100)/100;
+  var w1 = Math.round((w - stepv)*100)/100;
 
-  function f1(v){ return ft(v); }
   WB.setAll({
     w: ft(w), eta: ft(eta),
-    g1: ft(g[0]), g2: ft(g[1]), g3: ft(g[2]),
-    gExpr: WB.sumExpr(g, ft),
-    gsum: ft(gsum), gAvg: ft(gAvg), gAvgw: WB.wrap(ft(gAvg)),
-    stepv: ft(stepv), stepvw: WB.wrap(ft(stepv)), wNew: ft(wNew)
+    g1: ft(g[0]), g2: ft(g[1]), g3: ft(g[2]), g4: ft(g[3]),
+    b1: ft(b1), stepv: ft(stepv), w1: ft(w1),
+    b2: ft(b2), full: ft(full), avg: ft(avg)
   });
-  drawPaths('figS');
+  drawScatter('figS', g, b1, b2, full);
 }
 
-// SGD răng cưa (cam) vs full-batch mượt (lam) cùng tiến về đáy
-function drawPaths(id){
+// trục ngang: 4 gradient mẫu (lam) rải quanh gradient thật (cam); 2 trung bình batch (tím)
+function drawScatter(id, g, b1, b2, full){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var O = {x: 100, y: 78}, u = 20;
-  function X(v){ return (O.x + v*u).toFixed(1); }
-  function Y(v){ return (O.y - v*u).toFixed(1); }
-  var s = '<defs><marker id="sp'+id+'" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L5.5,3 L0,6 Z" fill="#b45309"/></marker></defs>';
-  // đường đồng mức tròn
-  [3, 2, 1].forEach(function(r){ s += '<circle cx="'+X(0)+'" cy="'+Y(0)+'" r="'+(r*u)+'" fill="none" stroke="#e3e7ea" stroke-width="1"/>'; });
-  // full-batch mượt (lam): đường cong trơn từ (−3,2.6) về 0
-  s += '<path d="M'+X(-3)+','+Y(2.6)+' Q'+X(-1.4)+','+Y(0.5)+' '+X(0)+','+Y(0)+'" fill="none" stroke="#0e7490" stroke-width="2.2"/>';
-  // SGD răng cưa (cam)
-  var pts = [[-3,2.6],[-2.1,1.2],[-2.4,0.5],[-1.3,0.9],[-1.5,0.1],[-0.6,0.5],[-0.7,-0.1],[0,0]];
-  var d = 'M'+X(pts[0][0])+','+Y(pts[0][1]);
-  for (var i=1;i<pts.length;i++) d += ' L'+X(pts[i][0])+','+Y(pts[i][1]);
-  s += '<path d="'+d+'" fill="none" stroke="#b45309" stroke-width="1.8" marker-end="url(#sp'+id+')"/>';
-  s += '<circle cx="'+X(0)+'" cy="'+Y(0)+'" r="2.6" fill="#0e7490"/>';
-  s += '<text x="'+X(0)+'" y="'+(O.y+13)+'" text-anchor="middle" style="font-size:8px" fill="#0e7490">đáy</text>';
-  s += '<text x="'+X(-3)+'" y="'+(Y(2.6)-3)+'" style="font-size:8px" fill="#5b6776">bắt đầu</text>';
+  var x0 = 20, x1 = 234, cx = 127, u = 150, axisY = 78;
+  function X(v){ var x = cx + v*u; return Math.max(x0+4, Math.min(x1-4, x)).toFixed(1); }
+  var s = '<line x1="'+x0+'" y1="'+axisY+'" x2="'+x1+'" y2="'+axisY+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<text x="'+cx+'" y="'+(axisY+14)+'" text-anchor="middle" style="font-size:7px" fill="#9aa3ad">0</text>';
+  s += '<line x1="'+cx+'" y1="'+(axisY-4)+'" x2="'+cx+'" y2="'+(axisY+4)+'" stroke="#9aa3ad" stroke-width="1"/>';
+  // gradient thật (cam) — vạch dọc
+  s += '<line x1="'+X(full)+'" y1="24" x2="'+X(full)+'" y2="'+(axisY+2)+'" stroke="#b45309" stroke-width="2"/>';
+  s += '<text x="'+X(full)+'" y="20" text-anchor="middle" style="font-size:7.5px" fill="#b45309" font-weight="700">gradient thật</text>';
+  // 4 gradient mẫu (lam)
+  for (var i = 0; i < 4; i++){
+    s += '<circle cx="'+X(g[i])+'" cy="'+axisY+'" r="3.4" fill="#0e749033" stroke="#0e7490" stroke-width="1.4"/>';
+  }
+  // 2 trung bình mini-batch (tím) — hơi cao hơn trục
+  [b1, b2].forEach(function(v){
+    s += '<circle cx="'+X(v)+'" cy="'+(axisY-16)+'" r="3.8" fill="#7c5cff33" stroke="#7c5cff" stroke-width="1.6"/>';
+    s += '<line x1="'+X(v)+'" y1="'+(axisY-12)+'" x2="'+X(v)+'" y2="'+(axisY-2)+'" stroke="#7c5cff" stroke-width="1" stroke-dasharray="2 2"/>';
+  });
+  s += '<text x="'+(x0+2)+'" y="'+(axisY-26)+'" style="font-size:7.5px" fill="#7c5cff" font-weight="700">■ trung bình batch</text>';
+  s += '<text x="'+(x0+2)+'" y="'+(axisY+26)+'" style="font-size:7.5px" fill="#0e7490" font-weight="700">■ gradient mẫu</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

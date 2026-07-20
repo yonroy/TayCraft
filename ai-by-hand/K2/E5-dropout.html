@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E5 — Dropout (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,121 +25,164 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E5</span><h1>Dropout <small>— tắt ngẫu nhiên + scale</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mạng dễ "ỷ lại" vài nơ-ron mạnh (đồng thích nghi). Dropout <b>tắt ngẫu nhiên</b> một phần nơ-ron mỗi
-    bước → buộc mỗi nơ-ron tự lực vì bạn của nó có thể biến mất → đặc trưng dư thừa, mạnh mẽ hơn, như huấn luyện một <b>tập hợp</b> mạng con.
-    <div class="formula">
-      Huấn luyện: h' = (mask · h) / (1 − p) &nbsp; (mask ∈ {0,1}, P(0)=p) &nbsp;&nbsp; Suy luận: dùng h nguyên
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E5</span>
+    <h1>Dropout <small>— tắt ngẫu nhiên + scale giữ kỳ vọng</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi bước như <b>điểm danh ngẫu nhiên</b>: p phần nơ-ron "nghỉ" (×0), số còn lại làm bù bằng cách <b>phóng to 1/(1−p)</b> để tổng
-    kỳ vọng giữ nguyên. Mạng học cách hoạt động dù thiếu người → bền hơn.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mạng dễ "ỷ lại" vài nơ-ron mạnh (đồng thích nghi). Dropout <b>tắt ngẫu nhiên</b> một phần nơ-ron mỗi bước → buộc mỗi nơ-ron tự lực → đặc trưng bền hơn.
+    Hãy <b>tự tay</b> áp mặt nạ + scale. Phần thưởng: thấy scale giữ <b>kỳ vọng</b> nhưng <b>bơm phương sai</b> — chính nhiễu đó là "liều" chống overfit.
+    <div class="formula" style="margin-top:5px">
+      Train: h' = (mask · h) / (1 − p) &nbsp; (mask ∈ {0,1}, P(0) = p) &nbsp;·&nbsp; Suy luận: dùng h nguyên
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">p = <span data-q="p">0.5</span></span></div>
-    <div class="calc" style="font-size:15px">
-      Kích hoạt h = (<span class="gv" data-q="h1">2</span>, <span class="gv" data-q="h2">4</span>, <span class="gv" data-q="h3">6</span>, <span class="gv" data-q="h4">8</span>) ·
-      mặt nạ rớt mẫu mask = (<span class="gv" data-q="m1">1</span>, <span class="gv" data-q="m2">0</span>, <span class="gv" data-q="m3">1</span>, <span class="gv" data-q="m4">0</span>)
+    <div class="calc big">
+      h = (<span class="gv" data-q="h1">2</span>, <span class="gv" data-q="h2">4</span>, <span class="gv" data-q="h3">6</span>, <span class="gv" data-q="h4">8</span>) &nbsp;·&nbsp;
+      mask = (<span class="gv" data-q="m1">1</span>, <span class="gv" data-q="m2">0</span>, <span class="gv" data-q="m3">1</span>, <span class="gv" data-q="m4">0</span>)
     </div>
     <div class="note">mask = 1 giữ nơ-ron, = 0 tắt. Tỉ lệ tắt p = <span class="gv" data-q="p">0.5</span>.</div>
   </div>
 
-  <!-- BƯỚC 1 — áp mặt nạ -->
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Áp mặt nạ</h2><span class="tag">mask · h</span></div>
-    <div class="calc">
-      mask · h = (<span class="blk" style="min-width:38px"></span>, <span class="blk" style="min-width:38px"></span>, <span class="blk" style="min-width:38px"></span>, <span class="blk" style="min-width:38px"></span>)
+    <div class="calc big">
+      mask · h = (<span class="wcell" style="min-width:38px"></span>, <span class="wcell" style="min-width:38px"></span>, <span class="wcell" style="min-width:38px"></span>, <span class="wcell" style="min-width:38px"></span>)
     </div>
     <div class="why"><b>Vì sao:</b> nơ-ron bị tắt đóng góp 0 cho bước này → mạng buộc dùng nơ-ron khác.</div>
   </div>
 
-  <!-- BƯỚC 2 — scale -->
+  <!-- STEP 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Scale 1/(1−p)</h2><span class="tag">bù lại</span></div>
-    <div class="calc">
-      hệ số = 1/(1 − <span data-q="p">0.5</span>) = <span class="blk" style="min-width:34px"></span>;
-      h' = hệ số · (mask·h) = (<span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:34px"></span>)
+    <div class="calc big">
+      hệ số = 1/(1 − <span data-q="p">0.5</span>) = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      h' = hệ số·(mask·h) = (<span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:32px"></span>, <span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:32px"></span>)
     </div>
     <div class="hint">Phóng to để <b>kỳ vọng</b> đầu ra không đổi giữa train và test.</div>
   </div>
 
-  <!-- BƯỚC 3 — kiểm kỳ vọng -->
+  <!-- STEP 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Kiểm kỳ vọng</h2><span class="tag">E[h'ᵢ] = hᵢ</span></div>
-    <div class="calc">
-      E[h'ᵢ] = (1−p)·(hᵢ/(1−p)) + p·0 = <span class="blk" style="min-width:34px"></span>
+    <div class="calc big">
+      E[h'ᵢ] = (1−p)·(hᵢ/(1−p)) + p·0 = <span class="wcell" style="min-width:36px"></span> &nbsp;<small style="color:#7a8794">(vd vị trí 1)</small>
     </div>
     <div class="why"><b>Vì sao:</b> nhờ scale, trung bình giữ nguyên → không cần chỉnh gì lúc suy luận.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Giữ kỳ vọng nhưng bơm phương sai (nhiễu)</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E5</span>
+    <h1>Dropout <small>— nhiễu giữ-trung-bình chính là liều regularize</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: bơm phương sai -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — dropout bơm bao nhiêu nhiễu?</h2><span class="tag">Var</span></div>
+    <div class="note" style="margin-top:0">
+      Scale giữ E[h'ᵢ] = hᵢ (Bước 3). Nhưng h'ᵢ còn <b>ngẫu nhiên</b> — nó bơm phương sai: Var(h'ᵢ) = E[h'²] − hᵢ² = hᵢ²·<b>p/(1−p)</b>. Lấy p = 0.5:
+    </div>
+    <div class="calc big">
+      Var(h₁) = h₁²·(0.5/0.5) = h₁²·1 = <span class="wcell" style="min-width:44px"></span><br>
+      std(h₁) = √Var = <span class="wcell" style="min-width:36px"></span> &nbsp;<small style="color:#7a8794">(bằng chính h₁ → nhiễu rất mạnh)</small><br>
+      p = 0.8 (tắt nhiều hơn): hệ số nhiễu = 0.8/0.2 = <span class="wcell" style="min-width:36px"></span>
+      &nbsp;<small style="color:#7a8794">— p lớn thì nhiễu thế nào?</small>
+    </div>
+    <div class="note">Dropout giữ <b>trung bình</b> nhưng bơm <b>nhiễu</b> (mean-preserving noise): std ≈ h₁ khi p=0.5, và p càng lớn nhiễu càng mạnh (×4 ở p=0.8). Chính nhiễu đó ngăn mạng ỷ lại vài nơ-ron → chống overfit.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Train tắt · Suy luận đầy đủ</h2><span class="tag">chỉ train mới tắt</span></div>
+    <div class="note" style="margin-top:2px">Lúc <b>suy luận</b> KHÔNG tắt, KHÔNG scale → dùng cả mạng, tất định. Dropout chỉ là "nhiễu huấn luyện";
+      như huấn luyện một <b>tập hợp</b> nhiều mạng con rồi lấy trung bình lúc test.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vì sao phải scale 1/(1−p)? → <span class="blk" style="min-width:170px"></span></li>
-      <li>Lúc suy luận có tắt nơ-ron không? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Vì sao phải scale 1/(1−p)? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Dropout bơm gì ngoài giữ kỳ vọng? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — nhân mask, chia (1−p), bình phương ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Áp mask + scale</span>
+    <span><span class="ck"></span>Kiểm nhiễu bơm vào</span>
+    <span class="win">🎉 Bạn vừa huấn luyện một tập hợp mạng!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E5</span><h1>Dropout <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E5</span><h1>Dropout <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>mask · h</h2></div>
-    <div class="calc ans">(<span class="blk" data-q="mh1">2</span>, <span class="blk" data-q="mh2">0</span>, <span class="blk" data-q="mh3">6</span>, <span class="blk" data-q="mh4">0</span>)</div>
+    <div class="calc ans">(<span class="wcell ans" data-q="mh1">2</span>, <span class="wcell ans" data-q="mh2">0</span>, <span class="wcell ans" data-q="mh3">6</span>, <span class="wcell ans" data-q="mh4">0</span>)</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Scale & h'</h2></div>
-    <div class="calc ans">hệ số = <span class="blk" data-q="scale">2</span>; h' = (<span class="blk" data-q="o1">4</span>, <span class="blk" data-q="o2">0</span>, <span class="blk" data-q="o3">12</span>, <span class="blk" data-q="o4">0</span>)</div>
+    <div class="step-h"><div class="b">2</div><h2>Scale &amp; h'</h2></div>
+    <div class="calc ans">hệ số = <span class="wcell ans" data-q="scale">2</span> · h' = (<span class="wcell ans" data-q="o1">4</span>, <span class="wcell ans" data-q="o2">0</span>, <span class="wcell ans" data-q="o3">12</span>, <span class="wcell ans" data-q="o4">0</span>)</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Kỳ vọng</h2></div>
-    <div class="calc ans">E[h'ᵢ] = hᵢ → giữ nguyên trung bình (vd vị trí 1: <span class="blk" data-q="h1b">2</span>)</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Train (tắt + scale) vs Suy luận (đầy đủ)</h2><span class="tag">chỉ train mới tắt</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Kỳ vọng giữ nguyên</h2></div>
     <div class="figrow">
-      <svg id="figD" class="fig" viewBox="0 0 260 150" width="80mm" height="46mm" aria-label="lúc train vài nơ-ron bị tắt và scale, lúc suy luận dùng cả mạng"></svg>
+      <svg id="figD" class="fig" viewBox="0 0 260 150" width="78mm" height="45mm" aria-label="lúc train vài nơ-ron bị tắt và scale, lúc suy luận dùng cả mạng"></svg>
       <div style="flex:1">
-        <div class="note">Lúc <b>train</b>: nơ-ron <b>mờ/gạch</b> bị tắt, phần còn lại phóng to ×1/(1−p). Lúc <b>suy luận</b>: dùng <b>cả mạng</b>
-          (không tắt, không scale) → ổn định, tất định. Dropout chỉ là "nhiễu huấn luyện".</div>
+        <div class="calc ans">E[h'ᵢ] = hᵢ → giữ trung bình (vd vị trí 1: <span class="wcell ans" data-q="h1b">2</span>)</div>
+        <div class="note">Lúc <b>train</b>: nơ-ron <b>gạch/mờ</b> bị tắt, phần còn lại phóng to ×1/(1−p). Lúc <b>suy luận</b>: dùng <b>cả mạng</b> (không tắt/scale) → tất định.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Phương sai bơm vào (p=0.5)</h2><span class="tag">nhiễu = liều</span></div>
+    <div class="calc ans">Var(h₁) = h₁²·1 = <span class="wcell ans" data-q="var1">4</span> · std = <span class="wcell ans" data-q="std1">2</span> &nbsp;·&nbsp; p=0.8: hệ số = <span class="wcell ans" data-q="f08">4</span> (nhiễu ×4)</div>
+    <div class="why"><b>Vì sao:</b> Var(h') = h²·p/(1−p) — mean giữ nguyên nhưng nhiễu ≠ 0, tăng theo p. Nhiễu đó chính là cơ chế regularize.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>Vì sao scale 1/(1−p)? → <span class="qa">Giữ kỳ vọng đầu ra bằng nhau giữa train và test.</span></li>
-      <li>Suy luận có tắt không? → <span class="qa">Không — dùng cả mạng.</span></li>
+      <li>Bơm gì? → <span class="qa">Phương sai (nhiễu) h²·p/(1−p) — mean-preserving noise, chính là regularize.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Dropout = tắt ngẫu nhiên + scale lúc train; như huấn luyện tập hợp mạng con → chống overfit.
-    Bài tiếp (E6): chuẩn hóa kích hoạt theo batch — <b style="color:var(--accent2)">BatchNorm</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> Dropout = tắt ngẫu nhiên + scale; giữ kỳ vọng nhưng bơm nhiễu h²·p/(1−p) → như huấn luyện tập hợp mạng con, chống overfit.
+    Bài E6: chuẩn hóa kích hoạt theo batch — <b>BatchNorm</b>.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E5 · Dropout</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -152,10 +190,9 @@
 function generate(){
   var p = 0.5, scale = 1/(1-p);
   var h = [WB.randInt(1,9), WB.randInt(1,9), WB.randInt(1,9), WB.randInt(1,9)];
-  // chọn đúng 2 trong 4 vị trí để tắt (đúng tỉ lệ p=0.5)
   var idx = [0,1,2,3];
   for (var i=idx.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=idx[i]; idx[i]=idx[j]; idx[j]=t; }
-  var off = {}; off[idx[0]]=1; off[idx[1]]=1;        // hai vị trí tắt
+  var off = {}; off[idx[0]]=1; off[idx[1]]=1;        // hai vị trí tắt (p=0.5)
   var mask = [0,1,2,3].map(function(k){ return off[k]?0:1; });
   var mh = [0,1,2,3].map(function(k){ return mask[k]*h[k]; });
   var o  = mh.map(function(v){ return v*scale; });
@@ -167,6 +204,9 @@ function generate(){
     set['o'+(k+1)] = WB.fmtTrim(o[k]);
   }
   set['h1b'] = String(h[0]);
+  set['var1'] = String(h[0]*h[0]);      // Var(h₁) = h₁²·(p/(1−p)) = h₁²·1 tại p=0.5
+  set['std1'] = String(h[0]);           // std = h₁
+  set['f08'] = '4';                     // hệ số nhiễu tại p=0.8
   WB.setAll(set);
   drawDrop('figD', mask);
 }
@@ -179,7 +219,6 @@ function drawDrop(id, mask){
     var s = '<text x="'+(ox+34)+'" y="14" text-anchor="middle" style="font-size:9px" fill="#475569" font-weight="700">'+label+'</text>';
     var xin = ox+8, xh = ox+38, xo = ox+68;
     var yin = [40, 100], yh = [28, 64, 100, 130], yo = [64, 100];
-    // cạnh
     for (var a=0;a<yin.length;a++) for (var b=0;b<yh.length;b++){
       var faded = dim && (mask[b]===0);
       s += '<line x1="'+xin+'" y1="'+yin[a]+'" x2="'+xh+'" y2="'+yh[b]+'" stroke="'+(faded?'#e2e8f0':'#cbd2da')+'" stroke-width="0.8"/>';

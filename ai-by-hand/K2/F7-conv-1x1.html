@@ -5,18 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F7 — Conv 1×1 (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.mrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;}
-.mrow .lab{font-family:var(--mono);font-size:12px;font-weight:700;}
+.page .step{margin-top:7px;}
+.mrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
+.mrow .lab{font-family:var(--mono);font-size:11px;font-weight:700;margin-bottom:2px;}
+.calc.big .gv{margin:0 1px;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -31,99 +28,153 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F7</span><h1>Conv 1×1 <small>— trộn kênh tại mỗi pixel</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Conv 1×1 là cách <b>giảm/tăng số kênh</b> rẻ tiền (bottleneck trong ResNet, Inception) và <b>trộn thông tin
-    giữa các kênh</b>. Nó cho mạng "nén đặc trưng" trước các conv đắt → tiết kiệm tính toán lớn.
-    <div class="formula">
-      out<sub>k</sub>(pixel) = Σ<sub>c</sub> W[k,c]·X<sub>c</sub>(pixel) + b<sub>k</sub> &nbsp;&nbsp;(C<sub>in</sub> → C<sub>out</sub>, không nhìn lân cận)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài F7</span>
+    <h1>Conv 1×1 <small>— trộn kênh tại mỗi pixel</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Tại <b>mỗi pixel</b> có C<sub>in</sub> con số (một cho mỗi kênh). Conv 1×1 = một <b>lớp fully-connected nhỏ</b> trộn C<sub>in</sub> số đó thành
-    C<sub>out</sub> số mới. Không nhìn hàng xóm, chỉ "phối lại màu/đặc trưng" theo chiều sâu.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Conv 1×1 <b>không nhìn hàng xóm</b> — tại <b>mỗi pixel</b>, nó chỉ trộn C<sub>in</sub> con số (các kênh)
+    thành C<sub>out</sub> con số mới bằng đúng <b>một lớp tuyến tính</b> (tích vô hướng, nối Bài C1). Hãy tự tay tính đầu ra tại
+    một pixel, rồi tự kiểm xem kernel có "học lại" khi sang pixel khác không.
+    <div class="formula" style="margin-top:5px">
+      out<sub>k</sub>(pixel) = Σ<sub>c</sub> W[k,c]·X<sub>c</sub>(pixel) + b<sub>k</sub> &nbsp; (C<sub>in</sub>→C<sub>out</sub> · không nhìn lân cận · CÙNG W mọi pixel)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">C<sub>in</sub>=3 → C<sub>out</sub>=2 · b=(<span data-q="bs">1, 0</span>)</span></div>
     <div class="mrow">
-      <div><div class="lab">x (3 kênh)</div><div class="mtx c1" id="x" style="--cell:10mm"></div></div>
+      <div><div class="lab" style="color:#0e7490">x tại pixel A (3 kênh)</div><div class="mtx c1" id="xA" style="--cell:10mm"></div></div>
       <div><div class="lab" style="color:#7c5cff">W (2×3)</div><div class="mtx c3" id="W" style="--cell:10mm"></div></div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Kênh ra 1</h2><span class="tag">hàng 1 của W · x</span></div>
-    <div class="calc">
-      o₁ = <span data-q="w11">1</span>·<span data-q="x1">2</span> + <span data-q="w12">0</span>·<span data-q="x2">4</span> + <span data-q="w13">1</span>·<span data-q="x3">6</span> + <span data-q="b1">1</span> = <span class="blk" style="min-width:50px"></span>
+  <div class="grid2">
+    <!-- BƯỚC 1 -->
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Kênh ra 1</h2><span class="tag">hàng 1 · x</span></div>
+      <div class="calc big">
+        o₁ = <span class="gv" data-q="w11">1</span>·<span class="gv" data-q="xA1">2</span> + <span class="gv" data-q="w12">0</span>·<span class="gv" data-q="xA2">4</span> + <span class="gv" data-q="w13">1</span>·<span class="gv" data-q="xA3">6</span> + <span class="gv" data-q="b1">1</span>
+        = <span class="wcell" style="min-width:34px"></span>
+      </div>
+      <div class="why"><b>Vì sao:</b> đúng một tích vô hướng qua chiều kênh — không đụng pixel lân cận.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> đúng một tích vô hướng qua chiều kênh — không đụng pixel lân cận.</div>
-  </div>
 
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Kênh ra 2</h2><span class="tag">hàng 2 của W · x</span></div>
-    <div class="calc">
-      o₂ = <span data-q="w21">0</span>·<span data-q="x1">2</span> + <span data-q="w22">1</span>·<span data-q="x2">4</span> + <span data-q="w23">0</span>·<span data-q="x3">6</span> + <span data-q="b2">0</span> = <span class="blk" style="min-width:50px"></span>
+    <!-- BƯỚC 2 -->
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Kênh ra 2</h2><span class="tag">hàng 2 · x</span></div>
+      <div class="calc big">
+        o₂ = <span class="gv" data-q="w21">0</span>·<span class="gv" data-q="xA1">2</span> + <span class="gv" data-q="w22">1</span>·<span class="gv" data-q="xA2">4</span> + <span class="gv" data-q="w23">0</span>·<span class="gv" data-q="xA3">6</span> + <span class="gv" data-q="b2">0</span>
+        = <span class="wcell" style="min-width:34px"></span>
+      </div>
+      <div class="hint">mỗi filter 1×1 = một "công thức trộn kênh" riêng, dùng hàng khác của W.</div>
     </div>
-    <div class="hint">mỗi filter 1×1 = một "công thức trộn kênh" riêng.</div>
   </div>
 
   <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đầu ra pixel</h2><span class="tag">3 kênh → 2 kênh</span></div>
-    <div class="calc">o = ( <span class="blk" style="min-width:90px"></span> ) → từ 3 kênh xuống <b>2 kênh</b>, vẫn 1 pixel.</div>
-    <div class="why"><b>Vì sao:</b> 1×1 đổi độ sâu C<sub>in</sub>→C<sub>out</sub> mà giữ nguyên kích thước không gian.</div>
+    <div class="step-h"><div class="b">3</div><h2>Đầu ra tại pixel A</h2><span class="tag">3 kênh → 2 kênh, vẫn 1 pixel</span></div>
+    <div class="calc big">o = ( <span class="wcell" style="min-width:34px"></span> , <span class="wcell" style="min-width:34px"></span> )</div>
+    <div class="why"><b>Vì sao:</b> 1×1 đổi độ sâu C<sub>in</sub>→C<sub>out</sub> mà giữ nguyên vị trí/kích thước không gian.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F7 · Conv 1×1</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Cùng W mọi pixel ⇒ chia sẻ theo không gian</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F7</span>
+    <h1>Conv 1×1 <small>— kernel có "học lại" ở pixel khác không?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM: cùng W cho mọi pixel -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — dùng lại W ở một pixel khác</h2><span class="tag">weight sharing theo không gian</span></div>
+    <div class="note" style="margin-top:0">
+      Conv 1×1 không nhìn hàng xóm — nó chỉ <b>trộn kênh</b>. Áp <b>ĐÚNG</b> W, b của Bước 1–2 cho pixel B (vị trí khác, kênh khác):
+    </div>
+    <div class="mrow">
+      <div><div class="lab" style="color:#0e7490">x tại pixel B (vị trí khác)</div><div class="mtx c1" id="xB" style="--cell:9mm"></div></div>
+    </div>
+    <div class="calc big" style="margin-top:6px">
+      o′₁ = <span class="gv" data-q="w11">1</span>·<span class="gv" data-q="xB1">3</span> + <span class="gv" data-q="w12">0</span>·<span class="gv" data-q="xB2">1</span> + <span class="gv" data-q="w13">1</span>·<span class="gv" data-q="xB3">2</span> + <span class="gv" data-q="b1">1</span> = <span class="wcell" style="min-width:34px"></span><br>
+      o′₂ = <span class="gv" data-q="w21">0</span>·<span class="gv" data-q="xB1">3</span> + <span class="gv" data-q="w22">1</span>·<span class="gv" data-q="xB2">1</span> + <span class="gv" data-q="w23">0</span>·<span class="gv" data-q="xB3">2</span> + <span class="gv" data-q="b2">0</span> = <span class="wcell" style="min-width:34px"></span>
+    </div>
+    <div class="note">Số phép nhân mỗi pixel = C<sub>in</sub>·C<sub>out</sub> = 3·2 = 6 (rẻ). Vì vậy 1×1 thường dùng để <b>đổi số kênh</b>
+      (giảm C<sub>in</sub>→C<sub>out</sub> nhỏ = "nút cổ chai" bottleneck, hoặc tăng lại).</div>
+    <div class="why"><b>Vì sao:</b> W, b y hệt Bước 1–2 — không học lại theo vị trí. Đó là <b>chia sẻ trọng số theo không gian</b>:
+      conv 1×1 = một lớp tuyến tính trên trục <b>kênh</b>, dùng CHUNG cho mọi pixel (i,j) — không trộn không gian, chỉ trộn kênh.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Conv 1×1 trộn theo chiều nào? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Công dụng chính của 1×1 conv? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Conv 1×1 trộn theo trục nào — không gian hay kênh? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao W ở pixel B giống hệt pixel A? Công dụng thường gặp? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F7 · Conv 1×1</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:15mm"><span class="lb">✏️ Nháp — nhân W·x tại pixel B, so khớp Bước 1–2 ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính o tại pixel A</span>
+    <span><span class="ck"></span>Kiểm cùng W ở pixel B</span>
+    <span class="win">🎉 Bạn vừa thấy vì sao 1×1 conv = "FC theo kênh, share toàn ảnh"!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F7 · Conv 1×1</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F7</span><h1>Conv 1×1 <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F7</span><h1>Conv 1×1 <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Kênh ra 1</h2></div>
-    <div class="calc ans">o₁ = <span data-q="w11">1</span>·<span data-q="x1">2</span> + <span data-q="w12">0</span>·<span data-q="x2">4</span> + <span data-q="w13">1</span>·<span data-q="x3">6</span> + <span data-q="b1">1</span> = <span class="blk" data-q="o1">9</span></div>
+  <div class="grid2">
+    <div class="step">
+      <div class="step-h"><div class="b">1</div><h2>Kênh ra 1</h2></div>
+      <div class="calc ans">o₁ = <span class="wcell ans" data-q="oA1">9</span></div>
+    </div>
+    <div class="step">
+      <div class="step-h"><div class="b">2</div><h2>Kênh ra 2</h2></div>
+      <div class="calc ans">o₂ = <span class="wcell ans" data-q="oA2">4</span></div>
+    </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Kênh ra 2</h2></div>
-    <div class="calc ans">o₂ = <span data-q="w21">0</span>·<span data-q="x1">2</span> + <span data-q="w22">1</span>·<span data-q="x2">4</span> + <span data-q="w23">0</span>·<span data-q="x3">6</span> + <span data-q="b2">0</span> = <span class="blk" data-q="o2">4</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Đầu ra pixel A</h2></div>
+    <div class="calc ans">o = ( <span class="wcell ans" data-q="oA1">9</span> , <span class="wcell ans" data-q="oA2">4</span> ) → 3 kênh nén còn <b>2 kênh</b> (vẫn 1 pixel)</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đầu ra pixel</h2></div>
-    <div class="calc ans">o = ( <span data-q="o1">9</span>, <span data-q="o2">4</span> ) → 3 kênh nén còn <b>2 kênh</b> (vẫn 1 pixel)</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — cùng W ở pixel B</h2></div>
+    <div class="calc ans">o′ = ( <span class="wcell ans" data-q="oB1">7</span> , <span class="wcell ans" data-q="oB2">1</span> ) — dùng đúng W, b của Bước 1–2, chỉ đổi x</div>
+    <div class="why"><b>Vì sao:</b> C<sub>in</sub>·C<sub>out</sub>=6 phép nhân mỗi pixel (rẻ). Không có W riêng cho từng vị trí — đây chính là
+      <b>weight sharing theo không gian</b> mà ResNet/MobileNet khai thác: 1×1 hạ kênh (256→64) trước conv 3×3 (rẻ hơn), rồi 1×1 nâng lại
+      (bottleneck); hoặc dùng độc lập làm lớp "pointwise" (MobileNet).</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>3 kênh → 2 kênh tại một pixel</h2><span class="tag">trộn kênh</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>3 kênh → 2 kênh tại một pixel — CÙNG W dùng lại</h2><span class="tag">trộn kênh, share không gian</span></div>
     <div class="figrow">
-      <svg id="figMix" class="fig" viewBox="0 0 190 130" width="60mm" height="41mm" aria-label="conv 1x1 trộn 3 kênh thành 2 kênh tại một pixel"></svg>
+      <svg id="figMix" class="fig" viewBox="0 0 210 150" width="66mm" height="47mm" aria-label="conv 1x1 trộn 3 kênh thành 2 kênh tại một pixel, cùng W dùng lại cho mọi pixel khác (ô mờ)"></svg>
       <div style="flex:1">
-        <div class="note">Cùng ma trận W được áp cho <b>tất cả</b> pixel (weight sharing) → đúng tinh thần convolution.
-          ResNet dùng 1×1 hạ kênh (256→64) → conv 3×3 trên 64 (rẻ) → 1×1 nâng lại 256. Là "pointwise" trong MobileNet.</div>
+        <div class="note">Ô đậm = pixel đang tính; ô <b>mờ</b> phía sau = các pixel khác trong ảnh — tất cả đi qua <b>ĐÚNG MỘT</b> W
+          (weight sharing). Không nhìn lân cận (không trộn không gian) — chỉ trộn theo trục kênh, tại từng pixel riêng.</div>
       </div>
     </div>
   </div>
@@ -131,17 +182,19 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Trộn theo chiều nào? → <span class="qa">Chiều kênh (không trộn không gian).</span></li>
-      <li>Công dụng chính? → <span class="qa">Đổi số kênh (giảm/tăng) & trộn kênh — bottleneck rẻ.</span></li>
+      <li>Trộn theo trục nào? → <span class="qa">Trục kênh — không trộn không gian, không nhìn pixel lân cận.</span></li>
+      <li>Vì sao W ở pixel B giống hệt A? Công dụng? → <span class="qa">W được chia sẻ theo không gian (học một lần, dùng lại mọi pixel); dùng để đổi số kênh (bottleneck) & trộn thông tin giữa các bản đồ đặc trưng.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Conv 1×1 = lớp tuyến tính theo kênh tại mỗi pixel; đổi độ sâu, trộn kênh, làm bottleneck.
+    <b style="color:var(--accent2)">Rút ra.</b> Conv 1×1 = một <b>lớp tuyến tính trên trục kênh tại mỗi pixel</b>, dùng CHUNG một W
+    (chia sẻ theo không gian) — không trộn không gian, chỉ trộn kênh; rẻ (C<sub>in</sub>·C<sub>out</sub> phép nhân/pixel) nhưng đổi được
+    độ sâu → nền tảng của bottleneck (ResNet) và pointwise conv (MobileNet).
     Bài tiếp <b style="color:var(--accent2)">F8</b>: phóng to ảnh — transposed conv.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F7 · Conv 1×1</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F7 · Conv 1×1</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -152,45 +205,58 @@ function fillG(id, arr){
   el.innerHTML=s;
 }
 function generate(){
-  var x=[WB.randInt(1,4), WB.randInt(1,4), WB.randInt(1,4)];
-  var W=[]; for(var i=0;i<6;i++) W.push(WB.randIntNZ(-1,2));  // 2×3 hàng-trước: [w11,w12,w13, w21,w22,w23]
-  var b=[WB.pick([0,1,2]), WB.pick([0,1,-1])];
-  var o1=W[0]*x[0]+W[1]*x[1]+W[2]*x[2]+b[0];
-  var o2=W[3]*x[0]+W[4]*x[1]+W[5]*x[2]+b[1];
-
-  fillG('x',x); fillG('W',W);
   var fI=WB.fmtInt;
+  var xA=[WB.randInt(1,4), WB.randInt(1,4), WB.randInt(1,4)];
+  var xB=[WB.randInt(1,4), WB.randInt(1,4), WB.randInt(1,4)];
+  var W=[]; for(var i=0;i<6;i++) W.push(WB.randInt(0,2));   // 2×3 hàng-trước: [w11,w12,w13, w21,w22,w23] — không âm, tránh "+ −"
+  var b=[WB.pick([0,1,2]), WB.pick([0,1,2])];
+  var oA1=W[0]*xA[0]+W[1]*xA[1]+W[2]*xA[2]+b[0];
+  var oA2=W[3]*xA[0]+W[4]*xA[1]+W[5]*xA[2]+b[1];
+  var oB1=W[0]*xB[0]+W[1]*xB[1]+W[2]*xB[2]+b[0];
+  var oB2=W[3]*xB[0]+W[4]*xB[1]+W[5]*xB[2]+b[1];
+
+  fillG('xA', xA); fillG('W', W); fillG('xB', xB);
   WB.setAll({
     bs: b.map(fI).join(', '),
-    x1: fI(x[0]), x2: fI(x[1]), x3: fI(x[2]),
+    xA1: fI(xA[0]), xA2: fI(xA[1]), xA3: fI(xA[2]),
+    xB1: fI(xB[0]), xB2: fI(xB[1]), xB3: fI(xB[2]),
     w11: fI(W[0]), w12: fI(W[1]), w13: fI(W[2]),
     w21: fI(W[3]), w22: fI(W[4]), w23: fI(W[5]),
     b1: fI(b[0]), b2: fI(b[1]),
-    o1: fI(o1), o2: fI(o2)
+    oA1: fI(oA1), oA2: fI(oA2), oB1: fI(oB1), oB2: fI(oB2)
   });
   drawMix('figMix');
 }
 
-// 3 kênh vào → W → 2 kênh ra (tại 1 pixel)
+// 1 pixel: 3 kênh → W → 2 kênh; ô mờ phía sau = pixel khác dùng CHUNG W
 function drawMix(id){
   var svg=document.getElementById(id); if(!svg) return;
   var s='';
   var ci=['#f3c9c9','#c9eccf','#cfe0f3'];
-  for(var k=0;k<3;k++){
-    s += '<rect x="14" y="'+(26+k*26)+'" width="18" height="18" fill="'+ci[k]+'" stroke="#999"/>';
-    s += '<text x="6" y="'+(38+k*26)+'" style="font-size:8px" fill="#6b7280">c'+(k+1)+'</text>';
+  // ô mờ (pixel khác) — vẽ trước để nằm dưới
+  for(var g=2; g>=1; g--){
+    var dx=g*6, dy=g*6;
+    for(var k=0;k<3;k++) s += '<rect x="'+(24+dx)+'" y="'+(36+k*26+dy)+'" width="18" height="18" fill="#eef1f5" stroke="#d7dee6"/>';
+    for(var m=0;m<2;m++) s += '<rect x="'+(150+dx)+'" y="'+(50+m*26+dy)+'" width="18" height="18" fill="#eef1f5" stroke="#d7dee6"/>';
+    for(var a=0;a<3;a++) s += '<line x1="'+(42+dx)+'" y1="'+(45+a*26+dy)+'" x2="82" y2="73" stroke="#e9edf1" stroke-width="1"/>';
+    for(var m2=0;m2<2;m2++) s += '<line x1="116" y1="73" x2="'+(150+dx)+'" y2="'+(59+m2*26+dy)+'" stroke="#e9edf1" stroke-width="1"/>';
   }
-  // W block
-  s += '<rect x="72" y="40" width="34" height="46" fill="#ece2ff" stroke="#7c5cff"/>';
-  s += '<text x="89" y="67" text-anchor="middle" font-size="12" font-weight="700" fill="#5b3fd6">W</text>';
-  for(var a=0;a<3;a++) s += '<line x1="32" y1="'+(35+a*26)+'" x2="72" y2="63" stroke="#bbb" stroke-width="1"/>';
+  // pixel chính (đậm, ở trước)
+  for(var k2=0;k2<3;k2++){
+    s += '<rect x="24" y="'+(36+k2*26)+'" width="18" height="18" fill="'+ci[k2]+'" stroke="#94a3b8"/>';
+    s += '<text x="16" y="'+(48+k2*26)+'" style="font-size:8px" fill="#6b7280">c'+(k2+1)+'</text>';
+  }
+  s += '<rect x="82" y="50" width="34" height="46" fill="#ece2ff" stroke="#7c5cff" stroke-width="1.6"/>';
+  s += '<text x="99" y="77" text-anchor="middle" font-size="12" font-weight="700" fill="#5b3fd6">W</text>';
+  for(var a2=0;a2<3;a2++) s += '<line x1="42" y1="'+(45+a2*26)+'" x2="82" y2="73" stroke="#9aa5b1" stroke-width="1.1"/>';
   var co=['#d6ecf6','#bfe0ee'];
-  for(var m=0;m<2;m++){
-    s += '<rect x="140" y="'+(40+m*26)+'" width="18" height="18" fill="'+co[m]+'" stroke="#0e7490"/>';
-    s += '<line x1="106" y1="63" x2="140" y2="'+(49+m*26)+'" stroke="#bbb" stroke-width="1"/>';
-    s += '<text x="162" y="'+(52+m*26)+'" style="font-size:8px" fill="#0e7490">o'+(m+1)+'</text>';
+  for(var m3=0;m3<2;m3++){
+    s += '<rect x="150" y="'+(50+m3*26)+'" width="18" height="18" fill="'+co[m3]+'" stroke="#0e7490"/>';
+    s += '<line x1="116" y1="73" x2="150" y2="'+(59+m3*26)+'" stroke="#9aa5b1" stroke-width="1.1"/>';
+    s += '<text x="172" y="'+(63+m3*26)+'" style="font-size:8px" fill="#0e7490">o'+(m3+1)+'</text>';
   }
-  s += '<text x="95" y="18" text-anchor="middle" style="font-size:8px" fill="#6b7280">3 kênh → 2 kênh (1 pixel)</text>';
+  s += '<text x="105" y="16" text-anchor="middle" style="font-size:8px" fill="#6b7280">1 pixel: 3 kênh → 2 kênh</text>';
+  s += '<text x="105" y="142" text-anchor="middle" style="font-size:8.5px;font-weight:700" fill="#5b3fd6">CÙNG một W cho mọi pixel khác (ô mờ)</text>';
   svg.innerHTML=s;
 }
 WB.wire(generate);

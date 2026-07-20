@@ -5,18 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A10 — Hệ phương trình 2×2 (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:5px;}
-.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
-.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
-.page .calc{line-height:1.75;}
-.page .why{margin-top:4px;}
-.page .note{margin-top:3px;}
-.sys{font-family:var(--mono);font-size:14px;line-height:1.7;}
+.page .step{margin-top:6px;}
+.sys{font-family:var(--mono);font-size:15px;line-height:1.8;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -31,24 +26,20 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A10</span><h1>Hệ phương trình tuyến tính 2×2 <small>— Linear system</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A10</span>
+    <h1>Hệ phương trình tuyến tính 2×2 <small>— nghiệm = giao hai đường</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~17 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Rất nhiều bài toán quy về "tìm bộ số thỏa <b>đồng thời</b> nhiều ràng buộc" — đó là hệ phương trình.
-    Hồi quy tuyến tính (B1) giải đúng một hệ như vậy. Làm tay một hệ 2×2 giúp thấy rõ cơ chế.
-    <div class="formula">
-      a₁x + b₁y = c₁ &nbsp;;&nbsp; a₂x + b₂y = c₂ &nbsp;⇔&nbsp; A·[x, y]ᵀ = [c₁, c₂]ᵀ
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Hai phương trình = hai <b>đường thẳng</b>; bộ số thỏa <b>cả hai</b> chính là <b>giao điểm</b>.
+    Hãy <b>khử một ẩn</b>, tìm (x, y), <b>điền nghiệm vào ô ✍ trong hình</b> và thử lại; sau đó (Trang 2) giải lại bằng
+    <b>định thức (Cramer)</b> để kiểm chéo. Đây là cơ chế mà hồi quy tuyến tính (B1) dựa vào.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi phương trình là một <b>đường thẳng</b> trên mặt phẳng. <b>Nghiệm = giao điểm</b> hai đường. Hai đường cắt nhau → một
-    nghiệm; song song → vô nghiệm; trùng nhau → vô số nghiệm.
-  </div>
-
-  <!-- GIVEN -->
+  <!-- BƯỚC 0 — GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn hệ</h2><span class="tag">2 ẩn x, y</span></div>
     <div class="sys">
@@ -58,50 +49,101 @@
     <div class="note">Mục tiêu: tìm (x, y) thỏa <b>cả hai</b> phương trình.</div>
   </div>
 
-  <!-- BƯỚC 1 — khử x -->
+  <!-- BƯỚC 1 — HERO: hình + khử x -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Khử một ẩn (làm hệ số x bằng nhau)</h2><span class="tag">cộng/trừ vế</span></div>
-    <div class="calc">
-      Nhân pt2 với <span data-q="mul">2</span> → hệ số x khớp pt1 (= <span data-q="a1">2</span>):<br>
-      &nbsp;&nbsp;<span data-q="a1">2</span>x + <span data-q="e2y">6</span>y = <span data-q="e2r">20</span><br>
-      Trừ pt1: ( <span data-q="e2y">6</span> − <span data-q="b1">1</span> )y = <span data-q="e2r">20</span> − <span data-q="c1">5</span>
-      → <span data-q="ycoef">5</span>y = <span class="blk" style="min-width:42px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Khử x → tìm y, rồi điền nghiệm vào hình</h2><span class="tag">hero · giao 2 đường</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 176 150" width="58mm" height="49.5mm" aria-label="hai đường thẳng của hệ; ô để điền nghiệm (x,y)"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc big" style="margin:0">
+          Nhân pt2 với <span data-q="mul">2</span>: &nbsp;<span data-q="a1">2</span>x + <span data-q="e2y">6</span>y = <span data-q="e2r">20</span><br>
+          Trừ pt1 → ( <span data-q="e2y">6</span> − <span data-q="b1">1</span> )y = <span data-q="e2r">20</span> − <span data-q="c1">5</span><br>
+          <span data-q="ycoef">5</span>y = <span class="wcell"></span>
+        </div>
+        <div class="note" style="margin-top:6px">Nhân để hệ số x bằng nhau rồi <b>trừ</b> → x biến mất, còn một ẩn.
+          <b>Điền giao điểm (x, y) vào ô ✍ trong hình.</b></div>
+      </div>
     </div>
-    <div class="why"><b>Vì sao:</b> nhân để hệ số x bằng nhau rồi trừ → x biến mất, còn <b>một ẩn một phương trình</b>.</div>
   </div>
 
   <!-- BƯỚC 2 — tìm y, thế x -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tìm y rồi thế ngược</h2><span class="tag">back-substitute</span></div>
-    <div class="calc">
-      y = <span data-q="yrhs">15</span> / <span data-q="ycoef">5</span> = <span class="blk" style="min-width:36px"></span><br>
-      Thế vào pt2: x = <span data-q="c2">10</span> − <span data-q="b2">3</span>·y = <span class="blk" style="min-width:36px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Tìm y rồi thế ngược tìm x</h2><span class="tag">back-substitute</span></div>
+    <div class="calc big">
+      y = <span data-q="yrhs">15</span> / <span data-q="ycoef">5</span> = <span class="wcell"></span>
+      &nbsp;&nbsp;→&nbsp;&nbsp; x = <span data-q="c2">10</span> − <span data-q="b2">3</span>·y = <span class="wcell"></span>
     </div>
     <div class="hint">Thế vào phương trình <b>đơn giản hơn</b> (hệ số nhỏ) cho nhẹ tính.</div>
   </div>
 
+  <div class="scratch" style="height:24mm"><span class="lb">✏️ Nháp — khử x, tìm y rồi thế ngược ra x</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài A10</span>
+    <h1>Hệ phương trình 2×2 <small>— thử lại &amp; giải bằng định thức</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+
+  <div class="mission">
+    🎯 <b>Tiếp.</b> Nghiệm đúng phải thỏa <b>cả hai</b> phương trình — thử lại để chắc. Rồi giải lại bằng
+    <b>quy tắc Cramer</b> (dùng định thức A9): x = detₓ/det, y = det_y/det. Hai cách khác nhau ra cùng đáp số = yên tâm.
+  </div>
+
   <!-- BƯỚC 3 — thử lại -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Thử lại</h2><span class="tag">kiểm</span></div>
-    <div class="calc">
-      pt1: <span data-q="a1">2</span>·x + <span data-q="b1">1</span>·y = <span class="blk" style="min-width:36px"></span> (= <span data-q="c1">5</span> ✓)<br>
-      pt2: <span data-q="a2">1</span>·x + <span data-q="b2">3</span>·y = <span class="blk" style="min-width:36px"></span> (= <span data-q="c2">10</span> ✓)
+    <div class="step-h"><div class="b">3</div><h2>Thử lại vào cả hai phương trình</h2><span class="tag">kiểm</span></div>
+    <div class="calc big">
+      pt1: <span data-q="a1">2</span>·x + <span data-q="b1">1</span>·y = <span class="wcell"></span> <small style="color:#7a8794">(phải = <span data-q="c1">5</span>)</small>
+      &nbsp;·&nbsp; pt2: <span data-q="a2">1</span>·x + <span data-q="b2">3</span>·y = <span class="wcell"></span> <small style="color:#7a8794">(phải = <span data-q="c2">10</span>)</small>
     </div>
-    <div class="why"><b>Vì sao:</b> nghiệm đúng phải thỏa <b>cả hai</b> phương trình, không chỉ một.</div>
   </div>
+
+  <!-- BƯỚC 4 — Cramer -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Giải lại bằng định thức (Cramer) — kiểm chéo</h2><span class="tag">x = detₓ/det</span></div>
+    <div class="calc big">
+      det = <span data-q="a1">2</span>·<span data-q="b2w">3</span> − <span data-q="a2">1</span>·<span data-q="b1w">1</span> = <span class="wcell"></span><br>
+      detₓ = <span data-q="c1w">5</span>·<span data-q="b2w">3</span> − <span data-q="c2w">10</span>·<span data-q="b1w">1</span> = <span class="wcell"></span>
+        <small style="color:#7a8794">(thay cột x bằng vế phải)</small><br>
+      det_y = <span data-q="a1">2</span>·<span data-q="c2w">10</span> − <span data-q="a2">1</span>·<span data-q="c1w">5</span> = <span class="wcell"></span>
+        <small style="color:#7a8794">(thay cột y bằng vế phải)</small><br>
+      x = detₓ/det = <span class="wcell"></span> &nbsp; y = det_y/det = <span class="wcell"></span>
+        <small style="color:#7a8794">← trùng nghiệm Bước 2 ✓</small>
+    </div>
+    <div class="note">Định thức ở mẫu chính là det A của A9. Nếu det = 0 (hai đường song song) thì chia cho 0 ⇒ <b>vô nghiệm</b> hoặc vô số nghiệm.</div>
+  </div>
+
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — tính 3 định thức rồi chia ra x, y</span></div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Khi nào hệ <b>vô nghiệm</b>? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Nghiệm ứng với điều gì trên hình? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Khi nào hệ vô nghiệm? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Nghiệm trên hình là điểm nào? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Mẫu số trong Cramer chính là gì? → <span class="blk" style="min-width:90px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Khử x, tìm y &amp; x</span>
+    <span><span class="ck"></span>Điền nghiệm + thử lại</span>
+    <span><span class="ck"></span>Cramer khớp</span>
+    <span class="win">🎉 Bạn vừa giải một hệ phương trình bằng tay!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -111,38 +153,40 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Khử x</h2></div>
-    <div class="calc ans">
-      <span data-q="ycoef">5</span>y = <span data-q="e2r">20</span> − <span data-q="c1">5</span> = <span class="blk" data-q="yrhs">15</span>
+    <div class="calc ans big">
+      <span data-q="ycoef">5</span>y = <span data-q="e2r">20</span> − <span data-q="c1">5</span> = <span class="wcell ans" data-q="yrhs">15</span>
     </div>
+    <div class="why"><b>Vì sao:</b> nhân pt2 để hệ số x khớp pt1 rồi trừ → x triệt tiêu, còn <b>một ẩn một phương trình</b>.</div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>y rồi x</h2></div>
-    <div class="calc ans">
-      y = <span data-q="yrhs">15</span> / <span data-q="ycoef">5</span> = <span class="blk" data-q="ysol">3</span><br>
-      x = <span data-q="c2">10</span> − <span data-q="b2">3</span>·<span data-q="ysol">3</span> = <span class="blk" data-q="xsol">1</span>
+    <div class="calc ans big">
+      y = <span data-q="yrhs">15</span> / <span data-q="ycoef">5</span> = <span class="wcell ans" data-q="ysol">3</span>
+      &nbsp;&nbsp;→&nbsp;&nbsp; x = <span data-q="c2">10</span> − <span data-q="b2">3</span>·<span data-q="ysol">3</span> = <span class="wcell ans" data-q="xsol">1</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Thử lại</h2></div>
     <div class="calc ans">
-      pt1: <span data-q="a1">2</span>·<span data-q="xsol">1</span> + <span data-q="b1">1</span>·<span data-q="ysol">3</span> = <span class="blk" data-q="chk1">5</span> ✓<br>
-      pt2: <span data-q="a2">1</span>·<span data-q="xsol">1</span> + <span data-q="b2">3</span>·<span data-q="ysol">3</span> = <span class="blk" data-q="chk2">10</span> ✓
+      pt1: <span data-q="a1">2</span>·<span data-q="xsol">1</span> + <span data-q="b1">1</span>·<span data-q="ysol">3</span> = <span class="wcell ans" data-q="chk1">5</span> ✓
+      &nbsp;·&nbsp; pt2: <span data-q="a2">1</span>·<span data-q="xsol">1</span> + <span data-q="b2">3</span>·<span data-q="ysol">3</span> = <span class="wcell ans" data-q="chk2">10</span> ✓
     </div>
+    <div class="why"><b>Vì sao:</b> nghiệm đúng phải thỏa <b>cả hai</b> phương trình; trên hình đó là <b>giao điểm</b> hai đường (chấm tím).</div>
   </div>
 
-  <!-- BƯỚC 4 / SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hình học: nghiệm = giao hai đường</h2><span class="tag">giao 2 đường</span></div>
-    <div class="figrow">
-      <svg id="figL" class="fig" viewBox="0 0 170 160" width="54mm" height="50mm" aria-label="hai đường thẳng cắt nhau tại nghiệm của hệ"></svg>
-      <div style="flex:1">
-        <div class="calc ans">Nghiệm: (x, y) = ( <span data-q="xsol">1</span>, <span data-q="ysol">3</span> )</div>
-        <div class="note">Đường lam = pt1, đường cam = pt2; <b>chấm tím</b> = giao điểm = nghiệm.
-          Nếu hai đường <b>song song</b> (det A = 0) thì <b>vô nghiệm</b> — A9 cho biết qua định thức.</div>
-      </div>
+    <div class="step-h"><div class="b">4</div><h2>Cramer</h2></div>
+    <div class="calc ans big">
+      det = <span data-q="detExpr">2·3 − 1·1</span> = <span class="wcell ans" data-q="detA">5</span> &nbsp;
+      detₓ = <span data-q="detxExpr">5·3 − 10·1</span> = <span class="wcell ans" data-q="detx">5</span> &nbsp;
+      det_y = <span data-q="detyExpr">2·10 − 1·5</span> = <span class="wcell ans" data-q="dety">15</span><br>
+      x = <span data-q="detx">5</span>/<span data-q="detA">5</span> = <span class="wcell ans" data-q="xsol">1</span> &nbsp;
+      y = <span data-q="dety">15</span>/<span data-q="detA">5</span> = <span class="wcell ans" data-q="ysol">3</span> ✓
     </div>
+    <div class="why" style="max-width:150mm"><b>Vì sao:</b> Cramer thay lần lượt cột hệ số của x (rồi y) bằng vế phải, lấy tỉ số định thức. Mẫu số det A ≠ 0
+      bảo đảm <b>nghiệm duy nhất</b>; det A = 0 (hai đường song song) thì chia cho 0 ⇒ vô nghiệm — A9 báo trước qua định thức.</div>
   </div>
 
   <div class="quiz">
@@ -150,21 +194,24 @@
     <ol>
       <li>Khi nào vô nghiệm? → <span class="qa">Hai đường song song (det A = 0, vế phải không khớp).</span></li>
       <li>Nghiệm trên hình? → <span class="qa">Giao điểm của hai đường thẳng.</span></li>
+      <li>Mẫu số Cramer? → <span class="qa">Định thức det A của ma trận hệ số.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Khử Gauss = biến hệ thành một ẩn rồi thế ngược; nghiệm là giao điểm hình học. Định thức (A9) báo trước
-    có nghiệm duy nhất hay không. Bài tiếp (A11): trị riêng — hướng mà ma trận <b>không xoay</b>, chỉ co giãn.
+    <b style="color:var(--accent2)">Rút ra.</b> Khử Gauss = biến hệ thành một ẩn rồi thế ngược; Cramer = tỉ số định thức — hai đường đến cùng nghiệm là giao điểm hình học.
+    Định thức (A9) báo trước có nghiệm duy nhất hay không. Bài tiếp (A11): trị riêng — hướng mà ma trận <b>không xoay</b>, chỉ co giãn.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A10 · Hệ phương trình 2×2</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var STATE = {a1:2,b1:1,c1:5,a2:1,b2:3,c2:10,x0:1,y0:3};
+
 function generate(){
-  var f = WB.fmtInt;
+  var f = WB.fmtInt, w = WB.wrap;
   // dựng hệ có nghiệm NGUYÊN: chọn (x0,y0) trước, a2=1 cho khử sạch
   var x0, y0, a1, b1, b2, a2 = 1, det;
   do {
@@ -175,6 +222,7 @@ function generate(){
   } while (det === 0 || b1 === b2 || (x0 === 0 && y0 === 0));
   var c1 = a1*x0 + b1*y0;
   var c2 = a2*x0 + b2*y0;
+  STATE = {a1:a1, b1:b1, c1:c1, a2:a2, b2:b2, c2:c2, x0:x0, y0:y0};
 
   var mul = a1;                 // nhân pt2 (a2=1) với a1 để khớp hệ số x
   var e2y = a1*b2, e2r = a1*c2; // pt2 sau khi nhân
@@ -183,26 +231,36 @@ function generate(){
   var xsol = c2 - b2*ysol;      // = x0
   var chk1 = a1*xsol + b1*ysol; // = c1
   var chk2 = a2*xsol + b2*ysol; // = c2
+  // Cramer
+  var detA = a1*b2 - a2*b1;     // = det
+  var detx = c1*b2 - c2*b1;     // = x0·detA
+  var dety = a1*c2 - a2*c1;     // = y0·detA
 
   // chuỗi "+ b" / "− b" cho hiển thị hệ
   function term(v){ var s = f(v); return /^−/.test(s) ? '− ' + s.slice(1) : '+ ' + s; }
 
   WB.setAll({
     a1: f(a1), a2: f(a2), b1: f(b1), b2: f(b2), c1: f(c1), c2: f(c2),
+    b1w: w(f(b1)), b2w: w(f(b2)), c1w: w(f(c1)), c2w: w(f(c2)),
     b1s: term(b1), b2s: term(b2),
     mul: f(mul), e2y: f(e2y), e2r: f(e2r),
     ycoef: f(ycoef), yrhs: f(yrhs),
     ysol: f(ysol), xsol: f(xsol),
-    chk1: f(chk1), chk2: f(chk2)
+    chk1: f(chk1), chk2: f(chk2),
+    detA: f(detA), detx: f(detx), dety: f(dety),
+    detExpr:  f(a1)+'·'+w(f(b2))+' − '+f(a2)+'·'+w(f(b1)),
+    detxExpr: w(f(c1))+'·'+w(f(b2))+' − '+w(f(c2))+'·'+w(f(b1)),
+    detyExpr: f(a1)+'·'+w(f(c2))+' − '+f(a2)+'·'+w(f(c1))
   });
-  drawLines('figL', a1, b1, c1, a2, b2, c2, x0, y0);
+  drawLines('figQ', a1, b1, c1, a2, b2, c2, x0, y0, false);
+  drawLines('figA', a1, b1, c1, a2, b2, c2, x0, y0, true); // an toàn nếu có figA
 }
 
-// hai đường a·x + b·y = c trên lưới [-5,5], đánh dấu giao điểm (x0,y0)
-function drawLines(id, a1, b1, c1, a2, b2, c2, x0, y0){
+// hai đường a·x + b·y = c trên lưới [-5,5]; ô điền nghiệm (x0,y0) trong hình.
+function drawLines(id, a1, b1, c1, a2, b2, c2, x0, y0, showAns){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var O = {x: 85, y: 80}, u = 13, R = 5;
+  var O = {x: 92, y: 80}, u = 13, R = 5;
   function X(v){ return (O.x + v*u).toFixed(1); }
   function Y(v){ return (O.y - v*u).toFixed(1); }
   var s = '';
@@ -221,11 +279,21 @@ function drawLines(id, a1, b1, c1, a2, b2, c2, x0, y0){
   s += lineSeg(a1, b1, c1, '#0e7490');
   s += lineSeg(a2, b2, c2, '#b45309');
   // giao điểm
-  s += '<circle cx="'+X(x0)+'" cy="'+Y(y0)+'" r="3.6" fill="#7c5cff" stroke="#fff" stroke-width="1"/>';
-  s += '<text x="'+(O.x + x0*u + 6)+'" y="'+(O.y - y0*u - 5)+'" style="font-size:9px" fill="#7c5cff" font-weight="700">('+WB.fmtInt(x0)+', '+WB.fmtInt(y0)+')</text>';
+  if (showAns){
+    s += '<circle cx="'+X(x0)+'" cy="'+Y(y0)+'" r="3.6" fill="#7c5cff" stroke="#fff" stroke-width="1"/>';
+  } else {
+    s += '<circle cx="'+X(x0)+'" cy="'+Y(y0)+'" r="3.6" fill="#fff" stroke="#7c5cff" stroke-width="1.6"/>';
+  }
+  // ô điền nghiệm (x,y), góc trên-trái
+  var bx = 6, by = 6;
+  s += '<rect x="'+bx+'" y="'+by+'" width="72" height="26" rx="7" fill="'+(showAns?'#f3f0ff':'#fff')+'" stroke="'+(showAns?'#a99cf0':'#7c5cff')+'" stroke-width="1.6"/>';
+  s += '<text x="'+bx+'" y="'+(by-3)+'" style="font-size:8.5px" fill="#7c5cff" font-weight="700">nghiệm (x, y) ✍</text>';
+  if (showAns) s += '<text x="'+(bx+36)+'" y="'+(by+18)+'" text-anchor="middle" style="font-size:13px" fill="#5b43c9" font-weight="700">( '+WB.fmtInt(x0)+', '+WB.fmtInt(y0)+' )</text>';
+  else s += '<text x="'+(bx+36)+'" y="'+(by+17)+'" text-anchor="middle" style="font-size:12px" fill="#c3ccd6">( ? , ? )</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);
+drawLines('figQ', STATE.a1, STATE.b1, STATE.c1, STATE.a2, STATE.b2, STATE.c2, STATE.x0, STATE.y0, false);
 generate();
 </script>
 </body>

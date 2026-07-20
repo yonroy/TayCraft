@@ -4,192 +4,408 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài I3 — Perplexity (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.55}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
+  <div class="top">
+    <span class="no">I3</span>
+    <h1>Perplexity <small>— đo độ "bối rối" của mô hình ngôn ngữ</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>p · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>−ln p, CE, PPL · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V, PPL_đều · đoán mù</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I3</span><h1>Perplexity <small>— độ "bối rối" của mô hình ngôn ngữ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Perplexity = exp của cross-entropy trung bình → "số lựa chọn hiệu dụng" mô hình phân vân giữa. Là chỉ số
-    chuẩn để <b>so sánh</b> mô hình ngôn ngữ: PPL 10 nghĩa là mỗi bước như đoán giữa ~10 token đều khả năng.
-    <div class="formula">PPL = exp( −(1/N) Σ ln p(tokenₜ) ) = exp(cross-entropy trung bình)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Perplexity (PPL) đo mức "bối rối" của mô hình khi đoán từng token: tính <b>−ln p</b> (độ bất ngờ)
+    mỗi bước, lấy <b>trung bình</b> ra cross-entropy CE, rồi <b>mũ hóa</b> (PPL = e<sup>CE</sup>) ra "số lựa chọn hiệu dụng"
+    mô hình còn phân vân. Cuối phiếu bạn tự chứng minh: nếu mô hình đoán <b>ĐỀU</b> cho V khả năng thì PPL <b>đúng bằng V</b>
+    — perplexity chính là <b>branching factor</b> (số nhánh phân vân).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Nếu mô hình <b>chắc chắn đúng</b> (p=1 cho token thật) → bối rối = 1 (không phân vân). Nếu đoán mò giữa V token đều nhau → PPL ≈ V.
-    PPL = "số mặt xúc xắc đều" tương đương với độ bất định của mô hình.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 token · p gán cho token đúng</span></div>
-    <div class="calc" style="font-size:14px">
-      p = ( <span class="gv" data-q="p1">0.5</span>, <span class="gv" data-q="p2">0.25</span>, <span class="gv" data-q="p3">0.5</span> )
-    </div>
-    <table class="extbl"><tr><td class="h">p</td><td>0.5</td><td>0.25</td></tr>
-      <tr><td class="h">ln p</td><td>−0.69</td><td>−1.39</td></tr></table>
-    <table class="extbl"><tr><td class="h">x</td><td>0.69</td><td>0.92</td><td>1.16</td><td>1.39</td></tr>
-      <tr><td class="h">eˣ</td><td>2.00</td><td>2.51</td><td>3.19</td><td>4.01</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>−ln từng token</h2><span class="tag">độ bất ngờ</span></div>
-    <div class="calc">
-      −ln(<span data-q="p1">0.5</span>) = <span class="blk" style="min-width:44px"></span> ;
-      −ln(<span data-q="p2">0.25</span>) = <span class="blk" style="min-width:44px"></span> ;
-      −ln(<span data-q="p3">0.5</span>) = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> −ln p là "độ bất ngờ" mỗi token (cross-entropy từng bước); p nhỏ → bất ngờ lớn.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trung bình (cross-entropy)</h2><span class="tag">÷ N</span></div>
-    <div class="calc">
-      CE = ( <span data-q="nl1">0.69</span> + <span data-q="nl2">1.39</span> + <span data-q="nl3">0.69</span> ) / 3 = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="hint">Đây chính là cross-entropy trung bình trên chuỗi (Bài 17).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Perplexity</h2><span class="tag">exp(CE)</span></div>
-    <div class="calc">
-      PPL = e<sup><span data-q="ce">0.92</span></sup> = <span class="blk" style="min-width:48px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> mũ hóa CE → "số token đều khả năng" tương đương ≈ độ bất định của mô hình.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đọc PPL</h2><span class="tag">thấp = tốt</span></div>
-    <div class="note">PPL = 1 (hoàn hảo), càng cao càng tệ; PPL = |V| nghĩa là đoán mò hoàn toàn. Chỉ so sánh được trên <b>cùng</b> tập kiểm tra.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>PPL = 1 nghĩa là gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>PPL liên hệ cross-entropy ra sao? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài I3</span><h1>Perplexity <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>−ln từng token</h2></div>
-    <div class="calc ans">( <span class="blk" data-q="nl1">0.69</span>, <span class="blk" data-q="nl2">1.39</span>, <span class="blk" data-q="nl3">0.69</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cross-entropy trung bình</h2></div>
-    <div class="calc ans">CE = <span class="blk" data-q="ce">0.92</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Perplexity</h2></div>
-    <div class="calc ans">PPL = e<sup><span data-q="ce">0.92</span></sup> = <span class="blk" data-q="ppl">2.51</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Độ bất ngờ −ln p từng token</h2><span class="tag">đường = CE trung bình</span></div>
-    <div class="figrow">
-      <svg id="figS" class="fig" viewBox="0 0 240 150" width="78mm" height="48mm" aria-label="cột độ bất ngờ trừ ln p của từng token và đường ngang cross-entropy trung bình"></svg>
-      <div style="flex:1">
-        <div class="note">Cột <b>lam</b> = −ln p mỗi token (token p thấp → cột cao = bất ngờ). Đường <b>cam</b> = CE trung bình. PPL = e^(đường đó).</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">3 token · p mô hình gán cho token đúng</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Token</th><th>p (đúng)</th><th>Tô thanh 0…1</th></tr>
+          <tr><td class="l">t₁</td><td style="color:var(--blue);font-weight:800" data-q="p1">0.50</td><td><div class="track uni" id="t_p1"></div></td></tr>
+          <tr><td class="l">t₂</td><td style="color:var(--blue);font-weight:800" data-q="p2">0.25</td><td><div class="track uni" id="t_p2"></div></td></tr>
+          <tr><td class="l">t₃</td><td style="color:var(--blue);font-weight:800" data-q="p3">0.50</td><td><div class="track uni" id="t_p3"></div></td></tr>
+        </table>
+        <div class="cap">p = xác suất mô hình gán cho token <b>đúng</b> tại mỗi bước — p cao → tự tin đúng, p thấp → "bất ngờ". Thang thanh: 0…1.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:5.6mm"><span>p</span><span>ln p</span></div>
+          <div class="mx c2" style="--cw:14mm;--ch:5.6mm">
+            <div class="pe">0.25</div><div class="pe">0.50</div>
+            <div class="pe">−1.39</div><div class="pe">−0.69</div>
+          </div>
+        </div>
+        <div class="cap">Bảng tra <b>ln p</b> — KHÔNG bấm máy tính.</div>
+        <div style="margin-top:1.6mm;border-top:1px solid var(--line2);padding-top:1.6mm">
+          <div class="mxwrap">
+            <div class="rowlab" style="--ch:5.6mm"><span>x</span><span>eˣ</span></div>
+            <div class="mx c6" style="--cw:11mm;--ch:5.6mm">
+              <div>0.69</div><div>0.92</div><div>1.16</div><div>1.39</div><div>1.61</div><div>2.08</div>
+              <div class="pe">2.00</div><div class="pe">2.51</div><div class="pe">3.19</div><div class="pe">4.01</div><div class="pe">5.00</div><div class="pe">8.00</div>
+            </div>
+          </div>
+          <div class="cap">Bảng tra <b>eˣ</b> — dùng cho Bước③ &amp; Bước④ (Bước④ đọc <b>ngược</b>: tìm cột eˣ=V để ra ln V).</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>PPL = 1? → <span class="qa">Mô hình hoàn hảo — luôn gán p=1 cho token đúng (không phân vân).</span></li>
-      <li>Liên hệ CE? → <span class="qa">PPL = exp(cross-entropy trung bình).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">p → −ln p → trung bình (CE) → eˣ → PPL</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 92" width="100%" height="30mm"
+           aria-label="ba token qua -ln p rồi trung bình ra CE rồi mũ hóa ra PPL, các ô số để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> PPL = exp(CE trung bình) = số lựa chọn hiệu dụng; thấp là tốt. Bài tiếp (I5): tinh chỉnh rẻ bằng <b>LoRA</b>.
+  <!-- ① BẤT NGỜ -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Độ bất ngờ mỗi token</span><span class="f">−ln p (tra bảng)</span></div>
+    <div class="pb">
+      <div class="eq">
+        −ln p₁ = −ln(<span data-q="p1">0.50</span>) = <span class="slot sm"></span> &nbsp;·&nbsp;
+        −ln p₂ = −ln(<span data-q="p2">0.25</span>) = <span class="slot sm"></span> &nbsp;·&nbsp;
+        −ln p₃ = −ln(<span data-q="p3">0.50</span>) = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>−ln p₁</th><th>−ln p₂</th><th>−ln p₃</th></tr>
+        <tr><td class="l">bất ngờ</td><td><div class="track uni" id="t_s1"></div></td><td><div class="track uni" id="t_s2"></div></td><td><div class="track uni" id="t_s3"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…2 · token p <b>thấp hơn</b> → −ln p <b>lớn hơn</b> (bất ngờ hơn). Token nào bất ngờ nhất? → <span class="slot" style="min-width:18mm"></span></div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② CE -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Cross-entropy trung bình</span><span class="f">CE = trung bình 3 −ln p</span></div>
+    <div class="pb">
+      <div class="eq">CE = ( <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> ) ÷ 3 = <span class="slot"></span></div>
+      <div class="cap">−ln p lấy từ Bước①. CE trung bình luôn nằm giữa giá trị nhỏ nhất &amp; lớn nhất của 3 số đó.</div>
+    </div>
+  </div>
+
+  <!-- ③ PPL -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Perplexity — mũ hóa CE</span><span class="f">PPL = eᶜᴱ (tra bảng eˣ)</span></div>
+    <div class="pb">
+      <div class="eq">PPL = e<sup>CE</sup> = e<sup><span class="slot sm"></span></sup> = <span class="slot"></span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>PPL</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_ppl"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…10. PPL càng <b>gần 1</b> (trái) → mô hình càng tự tin &amp; đúng.</div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — PPL của phân bố ĐỀU = đúng V</span><span class="f">V khả năng, đoán mù đều nhau</span></div>
+    <div class="pb">
+      <div class="eq">
+        Giả sử mô hình rải xác suất <b>ĐỀU</b> cho <span class="slot sm" data-q="V">5</span> khả năng ở mỗi bước (đoán mù, không thiên vị):<br>
+        p_đều = 1 ÷ V = 1 ÷ <span data-q="V">5</span> = <span class="slot sm"></span><br>
+        CE_đều = −ln(p_đều) = ln V = <span class="slot sm"></span> &nbsp;<span class="cap" style="display:inline">(tra bảng eˣ <b>ngược</b>: tìm dòng eˣ = V ở trên)</span><br>
+        PPL_đều = e<sup>CE_đều</sup> = <span class="slot sm"></span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">MÔ HÌNH THẬT (Bước③)</div>
+          <table><tr><td class="l">PPL thực</td><td><div class="track uni" id="t_r1"></div></td></tr></table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--purple);letter-spacing:.08em;margin-bottom:1mm">ĐOÁN ĐỀU V PHƯƠNG ÁN</div>
+          <table><tr><td class="l">PPL_đều</td><td><div class="track uni" id="t_u1"></div></td></tr></table>
+        </div>
+      </div>
+      <div class="cap">Thang thanh: 0…10 (cả hai cột). So 2 thanh: thanh nào <b>dài hơn</b>? Perplexity chính là <b>"số nhánh phân vân"</b> (branching factor)
+        — mô hình đã thu hẹp từ V nhánh xuống còn khoảng bao nhiêu? → <span class="slot" style="min-width:60mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính −ln p &amp; CE</span>
+    <span><span class="ck"></span>Ra PPL = e^CE</span>
+    <span><span class="ck"></span>Chứng minh PPL_đều = V</span>
+    <span class="win">🎉 Bạn vừa đo độ "bối rối" như dân LLM thật!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">I3</span>
+    <h1>Perplexity <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>p · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>−ln p, CE, PPL · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V, PPL_đều · đoán mù</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">p → −ln p → trung bình (CE) → eˣ → PPL</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 92" width="100%" height="30mm" aria-label="sơ đồ ba stage đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Độ bất ngờ mỗi token</span></div>
+    <div class="pb">
+      <div class="eq">
+        −ln p₁ = −ln(<span data-q="p1">0.50</span>) = <span class="slot ans sm" data-q="nl1">0.69</span> &nbsp;·&nbsp;
+        −ln p₂ = −ln(<span data-q="p2">0.25</span>) = <span class="slot ans sm" data-q="nl2">1.39</span> &nbsp;·&nbsp;
+        −ln p₃ = −ln(<span data-q="p3">0.50</span>) = <span class="slot ans sm" data-q="nl3">0.69</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>−ln p₁</th><th>−ln p₂</th><th>−ln p₃</th></tr>
+        <tr><td class="l">bất ngờ</td><td><div class="track uni" id="a_s1"></div></td><td><div class="track uni" id="a_s2"></div></td><td><div class="track uni" id="a_s3"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao dùng −ln p:</b> p=1 (chắc chắn đúng) → −ln p=0 (không bất ngờ); p→0 → −ln p→∞ (cực bất ngờ). Token p thấp nhất → cột cao nhất.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Cross-entropy trung bình</span></div>
+    <div class="pb">
+      <div class="eq">CE = ( <span class="slot ans sm" data-q="nl1">0.69</span> + <span class="slot ans sm" data-q="nl2">1.39</span> + <span class="slot ans sm" data-q="nl3">0.69</span> ) ÷ 3 = <span class="slot ans" data-q="ce">0.92</span></div>
+      <div class="why"><b>Vì sao lấy trung bình:</b> CE là độ bất ngờ <b>trung bình mỗi token</b> trên cả chuỗi — không phụ thuộc chuỗi dài hay ngắn, nên so sánh được giữa các câu khác độ dài.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Perplexity — mũ hóa CE</span></div>
+    <div class="pb">
+      <div class="eq">PPL = e<sup>CE</sup> = e<sup><span class="slot ans sm" data-q="ce">0.92</span></sup> = <span class="slot ans" data-q="ppl">2.51</span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>PPL</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_ppl"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao mũ hóa:</b> CE ở thang log (nat/token), khó cảm nhận. e<sup>CE</sup> đổi về thang "số token đều khả năng" — trực quan hơn nhiều: PPL≈2.5 nghĩa là mỗi bước mô hình phân vân cỡ 2–3 lựa chọn.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — PPL của phân bố ĐỀU = đúng V</span></div>
+    <div class="pb">
+      <div class="eq">
+        V = <span class="slot ans sm" data-q="V">5</span> khả năng, đoán mù đều nhau:<br>
+        p_đều = 1 ÷ V = 1 ÷ <span data-q="V">5</span> = <span class="slot ans sm" data-q="pUnif">0.200</span><br>
+        CE_đều = −ln(p_đều) = ln V = <span class="slot ans sm" data-q="ceUnif">1.61</span><br>
+        PPL_đều = e<sup>CE_đều</sup> = <span class="slot ans sm" data-q="pplUnif">5.00</span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">MÔ HÌNH THẬT</div>
+          <table><tr><td class="l">PPL thực</td><td><div class="track uni" id="a_r1"></div></td></tr></table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--purple);letter-spacing:.08em;margin-bottom:1mm">ĐOÁN ĐỀU V PHƯƠNG ÁN</div>
+          <table><tr><td class="l">PPL_đều</td><td><div class="track uni" id="a_u1"></div></td></tr></table>
+        </div>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> PPL_đều <b>đúng bằng V</b> — không phải xấp xỉ, mà là một <b>đẳng thức</b>
+      (CE_đều = ln V, nên PPL_đều = e<sup>ln V</sup> = V, đúng với mọi V: 5, 8 hay 50 000). Đây là lý do perplexity được gọi là
+      <b>"branching factor"</b> (số nhánh phân vân hiệu dụng): PPL=1 là mô hình chắc chắn tuyệt đối (không còn nhánh nào để phân vân),
+      PPL=V là đoán mù y như tung xúc xắc V mặt. PPL thực (thấp hơn V) cho thấy mô hình đã <b>thu hẹp</b> được bao nhiêu nhánh so với đoán mù.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi đọc perplexity</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Chia tổng −ln p cho N là xong, khỏi cần mũ hóa."</b><br>
+          <span style="color:var(--dim)">Đó mới là CE (thang <b>log</b>, đơn vị nat/token) — khó cảm nhận. Phải <b>mũ hóa</b> (PPL=e<sup>CE</sup>) mới ra "số nhánh phân vân" trực quan, đây mới là perplexity.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "PPL=1 chỉ cần mô hình đoán đúng nhiều lần."</b><br>
+          <span style="color:var(--dim)">PPL=1 đòi hỏi p=1 <b>tuyệt đối</b> ở mọi bước. Đoán đúng nhưng p=0.9 vẫn cho PPL≈1.11 &gt; 1 — "đúng" khác "chắc chắn tuyệt đối".</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "So PPL giữa hai mô hình khác tokenizer là hợp lệ."</b><br>
+          <span style="color:var(--dim)">PPL phụ thuộc <b>tập từ vựng &amp; cách tách token</b> — chỉ so sánh được khi hai mô hình dùng <b>cùng tokenizer</b> và <b>cùng tập kiểm</b>.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "PPL_đều = V chỉ đúng khi V nhỏ."</b><br>
+          <span style="color:var(--dim)">Sai — đây là đẳng thức toán học e<sup>ln V</sup> = V, đúng với <b>mọi</b> V, kể cả từ điển 50 000 từ của LLM thật.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> PPL = exp(cross-entropy trung bình) = "số nhánh phân vân" hiệu dụng (<b>branching factor</b>): đoán ĐỀU V khả năng
+    luôn cho đúng PPL=V, PPL=1 là chắc chắn tuyệt đối, mô hình tốt kéo PPL xuống thấp hơn V rất nhiều. Bài tiếp theo <b>I5</b>:
+    <b>LoRA</b> — tinh chỉnh mô hình lớn rẻ bằng ma trận hạng thấp.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I3 · Perplexity</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var NL = {0.5:0.69, 0.25:1.39};            // −ln p
-var EXPCE = {0.69:2.00, 0.92:2.51, 1.16:3.19, 1.39:4.01};
+// Bảng tra ln p (p ∈ {0.25, 0.5}) — dữ liệu cho sẵn trên phiếu.
+var NL = {0.5: 0.69, 0.25: 1.39};
+// Bảng tra eˣ mở rộng — dùng chung Bước③ (CE mô hình thật) & Bước④ (đọc ngược: eˣ=V → x=ln V).
+var EXP = {0.69: 2.00, 0.92: 2.51, 1.16: 3.19, 1.39: 4.01, 1.61: 5.00, 2.08: 8.00};
+var S = {};
+
 function generate(){
   var f2 = WB.fmt2;
-  var p = [WB.pick([0.5,0.25]), WB.pick([0.5,0.25]), WB.pick([0.5,0.25])];
-  var nl = p.map(function(x){return NL[x];});
+  var p;
+  do {                                                        // guard: tránh cả 3 token cùng p (câu "bất ngờ nhất" mất ý nghĩa)
+    p = [WB.pick([0.5,0.25]), WB.pick([0.5,0.25]), WB.pick([0.5,0.25])];
+  } while (p[0]===p[1] && p[1]===p[2]);
+  var nl = p.map(function(x){ return NL[x]; });
   var ceRaw = (nl[0]+nl[1]+nl[2])/3;
-  var keys=[0.69,0.92,1.16,1.39];
-  var ce = keys.reduce(function(a,b){return Math.abs(b-ceRaw)<Math.abs(a-ceRaw)?b:a;});
-  var ppl = EXPCE[ce];
+  var ceKeys = [0.69,0.92,1.16,1.39];
+  var ce = ceKeys.reduce(function(a,b){ return Math.abs(b-ceRaw) < Math.abs(a-ceRaw) ? b : a; });
+  var ppl = EXP[ce];
+
+  var V = WB.pick([5,8]);                                    // tách khỏi {4} để PPL thực luôn < V
+  var pUnif = 1/V;
+  var ceUnif = Math.round(Math.log(V)*100)/100;
+  var pplUnif = Math.round(Math.exp(ceUnif)*100)/100;
+
+  S = {p:p, nl:nl, ce:ce, ppl:ppl, V:V, pUnif:pUnif, ceUnif:ceUnif, pplUnif:pplUnif};
+
   WB.setAll({
-    p1:String(p[0]), p2:String(p[1]), p3:String(p[2]),
+    p1:f2(p[0]), p2:f2(p[1]), p3:f2(p[2]),
     nl1:f2(nl[0]), nl2:f2(nl[1]), nl3:f2(nl[2]),
-    ce:f2(ce), ppl:f2(ppl)
+    ce:f2(ce), ppl:f2(ppl),
+    V:String(V), pUnif:pUnif.toFixed(3), ceUnif:f2(ceUnif), pplUnif:f2(pplUnif)
   });
-  drawSurprise('figS', nl, ce);
+
+  drawBarUni('t_p1', 0, 1, false); drawBarUni('t_p2', 0, 1, false); drawBarUni('t_p3', 0, 1, false);
+
+  drawBarUni('t_s1', 0, 2, false); drawBarUni('t_s2', 0, 2, false); drawBarUni('t_s3', 0, 2, false);
+  drawBarUni('a_s1', nl[0], 2, true); drawBarUni('a_s2', nl[1], 2, true); drawBarUni('a_s3', nl[2], 2, true);
+
+  drawBarUni('t_ppl', 0, 10, false);
+  drawBarUni('a_ppl', ppl, 10, true);
+
+  drawBarUni('t_r1', 0, 10, false); drawBarUni('t_u1', 0, 10, false);
+  drawBarUni('a_r1', ppl, 10, true); drawBarUni('a_u1', pplUnif, 10, true);
+
+  drawPipe('figQ', false);
+  drawPipe('figA', true);
 }
-function drawSurprise(id, nl, ce){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=30, base=122, scale=58, gap=58, bw=26;
-  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  for(var i=0;i<3;i++){
-    var bx=x0+i*gap, h=nl[i]*scale;
-    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="#0e749033" stroke="#0e7490" stroke-width="1.3"/>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-4).toFixed(1)+'" text-anchor="middle" font-size="8.5" fill="#0e7490" font-weight="700">'+WB.fmt2(nl[i])+'</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base+13)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">t'+(i+1)+'</text>';
+
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho p, −ln p, PPL (chỉ dương).
+// fill=false → chỉ vạch mốc, chừa trống cho người học tô bút chì (ĐỀ).
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v>0){
+    var pct = Math.min(v/max,1)*100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
   }
-  var cy=base-ce*scale;
-  s+='<line x1="'+(x0-6)+'" y1="'+cy.toFixed(1)+'" x2="'+(x0+3*gap)+'" y2="'+cy.toFixed(1)+'" stroke="#b45309" stroke-width="1.5" stroke-dasharray="5 3"/>';
-  s+='<text x="'+(x0+3*gap-4)+'" y="'+(cy-3).toFixed(1)+'" text-anchor="end" font-size="8.5" fill="#b45309" font-weight="700">CE='+WB.fmt2(ce)+'</text>';
+  el.innerHTML=h;
+}
+
+// Hộp giá trị của sơ đồ: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var stroke = filled?ORG:INK, fill=filled?'#fff8f0':'#fff';
+  var dash = filled?'':' stroke-dasharray="3 2"';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(filled?1.2:1.4)+'"'+dash+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ 3 stage: ①−ln p (3 hàng) → ②CE trung bình → ③PPL. showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawPipe(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2, DIM='#6b7280', INK='#16202e', BLU='#0e7490';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  var Ax=6, Aw=222, Bx=252, Bw=150, Cx=418, Cw=128;
+
+  s+='<text x="'+(Ax+Aw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">① −ln p (bất ngờ)</text>';
+  for(var i=0;i<3;i++){
+    var ry=24+i*24;
+    s+='<text x="'+(Ax+2)+'" y="'+(ry+11)+'" font-size="7.6" fill="'+BLU+'">t'+(i+1)+' · p='+f2(S.p[i])+'</text>';
+    s+=stageBox(Ax+Aw-46, ry, 44, 17, f2(S.nl[i]), showAns);
+  }
+
+  s+='<line x1="'+(Ax+Aw+1)+'" y1="60" x2="'+(Bx-1)+'" y2="60" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="'+((Ax+Aw+Bx)/2)+'" y="54" text-anchor="middle" font-size="7.4" fill="'+DIM+'">trung bình</text>';
+
+  s+='<text x="'+(Bx+Bw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">② CE trung bình</text>';
+  s+='<text x="'+(Bx+2)+'" y="63" font-size="7.6" fill="'+DIM+'">CE</text>';
+  s+=stageBox(Bx+Bw-46, 52, 44, 17, f2(S.ce), showAns);
+
+  s+='<line x1="'+(Bx+Bw+1)+'" y1="60" x2="'+(Cx-1)+'" y2="60" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="'+((Bx+Bw+Cx)/2)+'" y="54" text-anchor="middle" font-size="7.4" fill="'+DIM+'">eˣ</text>';
+
+  s+='<text x="'+(Cx+Cw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">③ PPL</text>';
+  s+='<text x="'+(Cx+2)+'" y="63" font-size="7.6" fill="'+DIM+'">PPL</text>';
+  s+=stageBox(Cx+Cw-46, 52, 44, 17, f2(S.ppl), showAns);
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

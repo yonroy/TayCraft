@@ -5,16 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F10 — Đếm tham số một lớp conv (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
+.page .step{margin-top:7px;}
 .page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
 .page .note{margin-top:4px;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,21 +27,20 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F10</span><h1>Đếm tham số một lớp conv <small>— Conv param count</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Conv chia sẻ <b>cùng một filter trượt khắp ảnh</b> → ít tham số bất kể ảnh lớn nhỏ. Biết đếm để hiểu vì sao
-    CNN gọn hơn MLP hàng nghìn lần trên ảnh, và để ước lượng bộ nhớ/tốc độ.
-    <div class="formula">
-      params(conv) = (K·K·C<sub>in</sub> + 1)·C<sub>out</sub> &nbsp;&nbsp;(kernel K×K trên C<sub>in</sub> kênh + 1 bias, lặp cho C<sub>out</sub> filter)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài F10</span>
+    <h1>Đếm tham số một lớp conv <small>— weight sharing tiết kiệm bao nhiêu?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Một filter = một <b>khối nhỏ K×K×C<sub>in</sub></b> dùng lại ở <b>mọi vị trí</b> ảnh → số tham số <b>không phụ thuộc kích thước ảnh</b> (khác FC).
-    Có C<sub>out</sub> filter thì nhân lên C<sub>out</sub>, cộng C<sub>out</sub> bias.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Một lớp conv có C<sub>out</sub> filter, mỗi filter là một khối nhỏ <b>K×K×C<sub>in</sub></b> — nhưng khối đó
+    <b>dùng lại ở mọi vị trí</b> trên ảnh (weight sharing). Hãy tự đếm đúng số tham số, rồi <b>tự kiểm</b> xem con số đó có
+    "phình" theo ảnh to hay không — và so với một lớp <b>fully-connected</b> làm cùng việc thì chênh nhau thế nào.
+    <div class="formula" style="margin-top:5px">
+      params(conv) = (K·K·C<sub>in</sub> + 1)·C<sub>out</sub> &nbsp;(mỗi filter: K·K·C<sub>in</sub> trọng số + 1 bias, lặp cho C<sub>out</sub> filter)
+    </div>
   </div>
 
   <!-- GIVEN -->
@@ -55,61 +52,117 @@
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Tham số một filter</h2><span class="tag">khối K×K×C<sub>in</sub> + 1 bias</span></div>
-    <div class="calc">
-      K·K·C<sub>in</sub> = <span data-q="K">3</span>·<span data-q="K">3</span>·<span data-q="ci">3</span> = <span class="blk" style="min-width:46px"></span> &nbsp;→&nbsp; + 1 bias = <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      K·K·C<sub>in</sub> = <span class="gv" data-q="K">3</span>·<span class="gv" data-q="K">3</span>·<span class="gv" data-q="ci">3</span> = <span class="wcell" style="min-width:44px"></span> &nbsp;→&nbsp; + 1 bias = <span class="wcell" style="min-width:44px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> một filter là khối K×K trên mọi kênh vào (K·K·C<sub>in</sub> trọng số) cộng đúng một bias.</div>
+    <div class="why"><b>Vì sao:</b> một filter là khối K×K trải trên <b>toàn bộ</b> C<sub>in</sub> kênh vào (K·K·C<sub>in</sub> trọng số), cộng đúng 1 bias riêng của nó.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Nhân số filter</h2><span class="tag">× C<sub>out</sub></span></div>
-    <div class="calc">
-      tổng = (tham số/filter)·C<sub>out</sub> = <span data-q="per">28</span>·<span data-q="co">4</span> = <span class="blk" style="min-width:56px"></span>
+    <div class="calc big">
+      tổng = (tham số/filter)·C<sub>out</sub> = <span class="wcell" style="min-width:40px"></span>·<span class="gv" data-q="co">4</span> = <span class="wcell" style="min-width:56px"></span>
     </div>
-    <div class="hint">mỗi filter có bias riêng → +C<sub>out</sub>, không phải +1.</div>
-    <div class="note"><b>So với fully-connected:</b> ảnh 32×32×3 → cùng số kênh ra qua FC cần ~<b>hàng triệu</b> tham số; conv chỉ <b><span data-q="totalNote">112</span></b>.
-      Chia sẻ trọng số (cùng filter khắp ảnh) → tiết kiệm khổng lồ &amp; bất biến tịnh tiến.</div>
-    <div class="note"><b>Không phụ thuộc H, W:</b> số tham số conv chỉ phụ thuộc K, C<sub>in</sub>, C<sub>out</sub> — không phụ thuộc kích thước ảnh.</div>
+    <div class="hint">mỗi filter có bias riêng → cộng thêm C<sub>out</sub> bias, không phải chỉ +1.</div>
+    <div class="note">Để ý: công thức trên chỉ chứa <b>K, C<sub>in</sub>, C<sub>out</sub></b> — <b>không hề có H, W</b> (kích thước ảnh). Bước 3 sẽ tự kiểm điều này.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F10 · Đếm tham số conv</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Conv độc lập kích thước ảnh — FC thì không</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F10</span>
+    <h1>Đếm tham số một lớp conv <small>— đổi cỡ ảnh, số tham số có đổi không?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
+  </div>
+
+  <!-- STEP 3 — TỰ KIỂM lõi -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đổi cỡ ảnh, conv có "phình" không?</h2><span class="tag">so với FC</span></div>
+    <div class="note" style="margin-top:0"><b>Phần A.</b> Giữ nguyên K, C<sub>in</sub>, C<sub>out</sub> ở trên, tính params(conv) cho hai ảnh khác hẳn kích thước:</div>
+    <div class="calc big">
+      Ảnh nhỏ <span class="gv" data-q="h1">32</span>×<span class="gv" data-q="w1">32</span>: params(conv) = <span class="wcell" style="min-width:50px"></span> &nbsp;&nbsp;
+      Ảnh lớn <span class="gv" data-q="h2">512</span>×<span class="gv" data-q="w2">512</span>: params(conv) = <span class="wcell" style="min-width:50px"></span>
+    </div>
+    <div class="note"><b>Phần B.</b> Một lớp <b>fully-connected</b> nối mọi pixel-kênh ảnh <span class="gv" data-q="h1">32</span>×<span class="gv" data-q="w1">32</span>×C<sub>in</sub>
+      tới cùng số kênh ra (không chia sẻ trọng số):</div>
+    <div class="calc big">
+      params(FC) = (H·W·C<sub>in</sub>)·(H·W·C<sub>out</sub>) = <span class="wcell" style="min-width:90px"></span>
+    </div>
+    <div class="hint">FC nối MỌI input tới MỌI output → nhân theo (H·W)², bùng nổ khi ảnh lớn — conv thì không vì dùng lại cùng filter.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Tham số conv có phụ thuộc kích thước ảnh không? → <span class="blk" style="min-width:140px"></span></li>
-      <li>Vì sao conv ít tham số hơn FC nhiều? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Đổi ảnh từ 32×32 sang 512×512 (giữ K, C<sub>in</sub>, C<sub>out</sub>) — params(conv) có đổi không? Vì sao? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Với ảnh 32×32, params(FC) lớn hơn params(conv) khoảng bao nhiêu lần? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F10 · Đếm tham số conv</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — nhân K·K·C_in, nhân C_out, nhân (H·W)² ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Đếm tham số conv</span>
+    <span><span class="ck"></span>Kiểm độc lập H,W + so FC</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao CNN gọn hơn FC hàng nghìn lần!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F10 · Đếm tham số conv</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F10</span><h1>Đếm tham số một lớp conv <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F10</span><h1>Đếm tham số một lớp conv <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Tham số một filter</h2></div>
-    <div class="calc ans">K·K·C<sub>in</sub> = <span data-q="K">3</span>·<span data-q="K">3</span>·<span data-q="ci">3</span> = <span class="blk" data-q="kk">27</span> → + 1 = <span class="blk" data-q="per">28</span></div>
+    <div class="calc ans">K·K·C<sub>in</sub> = <span data-q="K">3</span>·<span data-q="K">3</span>·<span data-q="ci">3</span> = <span class="wcell ans" data-q="kk">27</span> → + 1 = <span class="wcell ans" data-q="per">28</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Nhân số filter</h2></div>
-    <div class="calc ans">tổng = <span data-q="per">28</span>·<span data-q="co">4</span> = <span class="blk" data-q="total">112</span> tham số</div>
+    <div class="calc ans">tổng = <span data-q="per">28</span>·<span data-q="co">4</span> = <span class="wcell ans" data-q="total">112</span> tham số</div>
   </div>
 
-  <!-- SƠ ĐỒ -->
+  <!-- SƠ ĐỒ 1: bộ lọc xếp chồng -->
   <div class="step">
     <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>C<sub>out</sub> filter, mỗi cái K×K×C<sub>in</sub></h2><span class="tag">weight sharing</span></div>
     <div class="figrow">
-      <svg id="figBank" class="fig" viewBox="0 0 180 130" width="58mm" height="42mm" aria-label="bộ lọc conv xếp chồng, dùng lại khắp ảnh"></svg>
+      <svg id="figBank" class="fig" viewBox="0 0 180 130" width="52mm" height="38mm" aria-label="bộ lọc conv xếp chồng, dùng lại khắp ảnh"></svg>
       <div style="flex:1">
-        <div class="note">Cùng bộ trọng số đó <b>trượt khắp ảnh</b> nên không nhân thêm theo W×H. FC nối cả ảnh phẳng → tham số ∝ (W·H·C<sub>in</sub>)·(số nơ-ron):
-          khổng lồ. Đây là lý do conv thống trị thị giác máy tính (so C9 — đếm tham số MLP).</div>
+        <div class="note">Cùng bộ trọng số đó <b>trượt khắp ảnh</b> nên không nhân thêm theo W×H. Đây là lý do conv thống trị thị giác máy tính.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 — self-check answer -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Conv không đổi theo ảnh — FC thì bùng nổ</h2></div>
+    <div class="calc ans">
+      params(conv) ảnh nhỏ = <span class="wcell ans" data-q="convA">112</span> &nbsp;=&nbsp; params(conv) ảnh lớn = <span class="wcell ans" data-q="convB">112</span> <small style="color:#7a8794">(bằng nhau — công thức không có H,W)</small>
+    </div>
+    <div class="calc ans">
+      params(FC) ảnh 32×32 = <span class="wcell ans" data-q="fc">12.582.912</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> conv dùng lại cùng K·K·C<sub>in</sub> trọng số ở mọi vị trí (chia sẻ) → tổng không phụ thuộc H,W.
+      FC nối riêng từng cặp input–output → tham số ∝ (H·W)², nổ tung khi ảnh lớn.</div>
+    <div class="figrow">
+      <svg id="figCmp" class="fig" viewBox="0 0 260 140" width="76mm" height="41mm" aria-label="đồ thị conv giữ phẳng còn FC tăng vọt khi ảnh lớn dần"></svg>
+      <div style="flex:1">
+        <div class="note">Trục ngang: ảnh nhỏ → vừa → lớn. Đường <b style="color:#b45309">cam (conv)</b> nằm phẳng — số tham số không đổi.
+          Đường <b style="color:#7c5cff">tím (FC)</b> tăng vọt vì phải nối lại toàn bộ khi ảnh lớn hơn.</div>
       </div>
     </div>
   </div>
@@ -117,44 +170,84 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Phụ thuộc cỡ ảnh? → <span class="qa">Không — chỉ phụ thuộc K, C<sub>in</sub>, C<sub>out</sub>.</span></li>
-      <li>Vì sao ít tham số hơn FC? → <span class="qa">Chia sẻ cùng filter ở mọi vị trí (weight sharing).</span></li>
+      <li>Đổi cỡ ảnh, conv có đổi không? → <span class="qa">Không — (K²C<sub>in</sub>+1)C<sub>out</sub> không chứa H,W; filter chỉ trượt qua nhiều vị trí hơn, không sinh thêm trọng số.</span></li>
+      <li>FC lớn hơn conv bao nhiêu lần? → <span class="qa">Với bộ số này ≈ <span data-q="ratio">112.347</span> lần — và tỉ lệ này càng khủng khi ảnh càng to, vì FC ∝ (H·W)² còn conv thì không đổi.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> params = (K²·C<sub>in</sub> + 1)·C<sub>out</sub>, độc lập kích thước ảnh; weight sharing giúp CNN cực gọn.
+    <b style="color:var(--accent2)">Rút ra.</b> params(conv) = (K²·C<sub>in</sub> + 1)·C<sub>out</sub>, hoàn toàn độc lập kích thước ảnh nhờ weight sharing;
+    FC làm cùng việc thì tham số bùng nổ theo (H·W)² — đây chính là lý do CNN xử lý được ảnh lớn mà MLP thì không.
     Hết Phần F (CNN). Sang Phần G — bài tiếp <b style="color:var(--accent2)">G2</b>: RNN một bước hồi quy.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F10 · Đếm tham số conv</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F10 · Đếm tham số conv</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+function fmtBig(n){
+  var s = String(Math.round(n));
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 function generate(){
-  var fI=WB.fmtInt;
-  var K=WB.pick([3,5]), ci=WB.pick([3,4]), co=WB.pick([4,8]);
-  var kk=K*K*ci, per=kk+1, total=per*co;
+  var fI = WB.fmtInt;
+  var K = WB.pick([3,5]), ci = WB.pick([3,4]), co = WB.pick([4,8]);
+  var kk = K*K*ci, per = kk+1, total = per*co;
+  var h1 = 32, w1 = 32, h2 = 512, w2 = 512;
+  var convA = total, convB = total;                 // độc lập H,W → cùng công thức, cùng giá trị
+  var fc = (h1*w1*ci) * (h1*w1*co);                  // FC nối cùng ảnh 32×32, không chia sẻ trọng số
+  var ratio = Math.round(fc/total);
   WB.setAll({
-    K:fI(K), ci:fI(ci), co:fI(co),
-    kk:fI(kk), per:fI(per), total:fI(total), totalNote:fI(total)
+    K: fI(K), ci: fI(ci), co: fI(co),
+    kk: fI(kk), per: fI(per), total: fI(total),
+    h1: fI(h1), w1: fI(w1), h2: fI(h2), w2: fI(w2),
+    convA: fI(convA), convB: fI(convB),
+    fc: fmtBig(fc), ratio: fmtBig(ratio)
   });
   drawBank('figBank', co);
+  drawCmp('figCmp');
 }
 
+// bộ lọc xếp chồng: C_out filter, mỗi cái K×K×C_in
 function drawBank(id, co){
-  var svg=document.getElementById(id); if(!svg) return;
-  var n=Math.min(co,6), s='';
-  for(var k=n-1;k>=0;k--){
-    var x=26+k*11, y=30+k*10;
-    for(var i=0;i<3;i++) for(var j=0;j<3;j++)
+  var svg = document.getElementById(id); if (!svg) return;
+  var n = Math.min(co, 6), s = '';
+  for (var k=n-1;k>=0;k--){
+    var x = 26+k*11, y = 30+k*10;
+    for (var i=0;i<3;i++) for (var j=0;j<3;j++)
       s += '<rect x="'+(x+j*11)+'" y="'+(y+i*11)+'" width="11" height="11" fill="#ece2ff" stroke="#7c5cff"/>';
   }
   s += '<text x="20" y="20" style="font-size:8px" fill="#5b3fd6">C_out filter · mỗi cái K×K×C_in</text>';
   s += '<text x="20" y="124" style="font-size:8px" fill="#6b7280">+ 1 bias mỗi filter · dùng lại khắp ảnh</text>';
-  svg.innerHTML=s;
+  svg.innerHTML = s;
 }
+
+// đồ thị: conv phẳng (cam) vs FC tăng vọt (tím) khi ảnh nhỏ→vừa→lớn (minh họa, không theo tỉ lệ thật)
+function drawCmp(id){
+  var svg = document.getElementById(id); if (!svg) return;
+  var xs = [30, 130, 230];
+  var labels = ['nhỏ', 'vừa', 'lớn'];
+  var convY = 100, fcY = [104, 60, 18];
+  var s = '';
+  s += '<line x1="18" y1="118" x2="248" y2="118" stroke="#cbd2da" stroke-width="1"/>';
+  s += '<line x1="18" y1="10" x2="18" y2="118" stroke="#cbd2da" stroke-width="1"/>';
+  s += '<text x="133" y="134" text-anchor="middle" style="font-size:8.5px" fill="#6b7280">kích thước ảnh →</text>';
+  // đường conv (cam) — phẳng
+  var pConv = xs.map(function(x){ return x+','+convY; }).join(' ');
+  s += '<polyline points="'+pConv+'" fill="none" stroke="#b45309" stroke-width="2"/>';
+  xs.forEach(function(x){ s += '<circle cx="'+x+'" cy="'+convY+'" r="3.4" fill="#b45309"/>'; });
+  s += '<text x="230" y="'+(convY-8)+'" text-anchor="end" style="font-size:8.5px" fill="#7a3d00" font-weight="700">params(conv)</text>';
+  // đường FC (tím) — tăng vọt
+  var pFc = xs.map(function(x,i){ return x+','+fcY[i]; }).join(' ');
+  s += '<polyline points="'+pFc+'" fill="none" stroke="#7c5cff" stroke-width="2"/>';
+  xs.forEach(function(x,i){ s += '<circle cx="'+x+'" cy="'+fcY[i]+'" r="3.4" fill="#7c5cff"/>'; });
+  s += '<text x="230" y="10" text-anchor="end" style="font-size:8.5px" fill="#5b3fd6" font-weight="700">params(FC)</text>';
+  s += '<path d="M 236 6 l 6 -6 l 6 8" fill="none" stroke="#5b3fd6" stroke-width="1.4"/>';
+  xs.forEach(function(x,i){ s += '<text x="'+x+'" y="128" text-anchor="middle" style="font-size:8px" fill="#6b7280">'+labels[i]+'</text>'; });
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
 generate();
 </script>

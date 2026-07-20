@@ -3,179 +3,356 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài J4 — Diffusion forward (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài J4 — Diffusion Forward (A4 in được)</title>
+<!-- Phong cách DASHBOARD: panel + bảng số + thanh giá trị. Link wb-dashboard.css, KHÔNG kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .eq{line-height:1.95}
+  .why{line-height:1.62}
+  .mission{line-height:1.6}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J</div>
+  <div class="top">
+    <span class="no">J4</span>
+    <h1>Diffusion — Forward <small>— thêm nhiễu dần bằng một phép</small></h1>
+    <span class="chip">PHẦN J · SINH</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~14 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x₀ · ảnh gốc</span>
+      <span><span class="sw" style="background:var(--orange)"></span>hệ số &amp; xₜ · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>nhiễu ε</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài J4</span><h1>Diffusion — Forward <small>— thêm nhiễu dần</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Diffusion học cách <b>đảo ngược</b> việc thêm nhiễu (khử nhiễu, Bài 25). Để huấn luyện, ta cần tạo nhanh
-    ảnh nhiễu ở bước t bất kỳ — công thức "nhảy thẳng" dùng tích lũy ᾱ làm điều đó trong một phép.
-    <div class="formula">xₜ = √ᾱₜ · x₀ + √(1 − ᾱₜ) · ε, &nbsp; ε ~ N(0,1) &nbsp;(ᾱₜ = ∏ αᵢ, giảm dần về 0)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Forward diffusion <b>pha loãng</b> ảnh gốc và <b>thêm nhiễu</b> dần. Công thức "nhảy thẳng" tới bước t:
+    <b>xₜ = √ᾱₜ · x₀ + √(1−ᾱₜ) · ε</b> (ε ~ N(0,1)). √ᾱ = "còn bao nhiêu ảnh gốc", √(1−ᾱ) = "đã thêm bao nhiêu nhiễu".
+    Cuối phiếu bạn tự chứng minh <b>(√ᾱ)² + (√(1−ᾱ))² = 1</b> — hai hệ số luôn nằm trên đường tròn đơn vị, nên tổng phương sai <b>được bảo toàn</b>;
+    và khi ᾱ → 0 (bước t lớn) thì xₜ → <b>nhiễu thuần</b> N(0,1).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi bước <b>pha loãng</b> ảnh gốc và <b>thêm một ít nhiễu</b>. √ᾱ là "còn lại bao nhiêu ảnh gốc", √(1−ᾱ) là "đã thêm bao nhiêu
-    nhiễu"; hai trọng số luôn thỏa (√ᾱ)² + (√(1−ᾱ))² = 1 (giữ tổng phương sai).
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 pixel</span></div>
-    <div class="calc" style="font-size:14px">
-      x₀ = <span class="gv" data-q="x0">2</span> · tại bước t có ᾱₜ = <span class="gv" data-q="abar">0.64</span> · nhiễu ε = <span class="gv" data-q="eps">1</span>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Hệ số trộn</h2><span class="tag">căn bậc hai</span></div>
-    <div class="calc">
-      √ᾱ = √<span data-q="abar">0.64</span> = <span class="blk" style="min-width:40px"></span> ; &nbsp;
-      √(1−ᾱ) = √<span data-q="oneMinus">0.36</span> = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> cặp này là bộ Pythagore → (√ᾱ)² + (√(1−ᾱ))² = 1 (bảo toàn phương sai).</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trộn ảnh + nhiễu</h2><span class="tag">nhảy thẳng tới t</span></div>
-    <div class="calc">
-      xₜ = <span data-q="sqA">0.8</span>·<span data-q="x0">2</span> + <span data-q="sq1A">0.6</span>·<span data-q="eps">1</span> = <span class="blk" style="min-width:46px"></span>
-    </div>
-    <div class="hint">Phần ảnh gốc (√ᾱ·x₀) + phần nhiễu (√(1−ᾱ)·ε).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước t lớn hơn</h2><span class="tag">ᾱ → 0</span></div>
-    <div class="note">Nếu ᾱ → 0: √ᾱ → 0, √(1−ᾱ) → 1 → xₜ ≈ ε (nhiễu thuần). Cuối quá trình ảnh gốc biến mất hoàn toàn → điểm xuất phát để khử nhiễu ngược.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao "nhảy thẳng"</h2><span class="tag">dùng ᾱₜ</span></div>
-    <div class="note">Nhờ ᾱₜ = ∏αᵢ (Bài J6), tính xₜ <b>trực tiếp</b> từ x₀ trong một phép, khỏi lặp t bước → huấn luyện hiệu quả.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Tổng (√ᾱ)² + (√(1−ᾱ))² bằng bao nhiêu? → <span class="blk" style="min-width:120px"></span></li>
-      <li>Khi t → T (ᾱ → 0), xₜ thành gì? → <span class="blk" style="min-width:130px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài J4</span><h1>Diffusion — Forward <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Hệ số trộn</h2></div>
-    <div class="calc ans">√ᾱ = <span class="blk" data-q="sqA">0.8</span> ; √(1−ᾱ) = <span class="blk" data-q="sq1A">0.6</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trộn</h2></div>
-    <div class="calc ans">xₜ = <span data-q="sqA">0.8</span>·<span data-q="x0">2</span> + <span data-q="sq1A">0.6</span>·<span data-q="eps">1</span> = <span class="blk" data-q="xt">2.2</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Ảnh rõ → mờ dần → nhiễu</h2><span class="tag">t tăng</span></div>
-    <div class="figrow">
-      <svg id="figD" class="fig" viewBox="0 0 250 110" width="82mm" height="36mm" aria-label="ba khung: ảnh rõ, ảnh mờ pha nhiễu, và nhiễu thuần khi t tăng"></svg>
-      <div style="flex:1">
-        <div class="note">t càng lớn, √ᾱ giảm (ít ảnh gốc) còn √(1−ᾱ) tăng (nhiều nhiễu) → khung cuối gần như nhiễu thuần.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">1 pixel · ᾱ chọn sao cho √ tròn</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Đại lượng</th><th>giá trị</th></tr>
+          <tr><td class="l">x₀ (ảnh gốc)</td><td style="color:var(--blue);font-weight:800" data-q="x0">2</td></tr>
+          <tr><td class="l">ᾱₜ (tín hiệu còn lại)</td><td style="color:var(--blue);font-weight:800" data-q="abar">0.64</td></tr>
+          <tr><td class="l">1 − ᾱₜ (nhiễu thêm)</td><td style="color:var(--blue);font-weight:800" data-q="oneMinus">0.36</td></tr>
+          <tr><td class="l">ε (mẫu nhiễu N(0,1))</td><td style="color:var(--purple);font-weight:800" data-q="eps">1</td></tr>
+        </table>
+        <div class="cap">ᾱ = bình phương số đẹp (cặp Pythagore 0.8/0.6) → căn ra tròn, <b>không bấm máy tính</b>. ε coi như một hằng số đã rút sẵn.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:5.6mm"><span>y</span><span>√y</span></div>
+          <div class="mx c4" style="--cw:11.5mm;--ch:5.6mm">
+            <div>0.16</div><div>0.36</div><div>0.64</div><div>1.00</div>
+            <div class="pe">0.40</div><div class="pe">0.60</div><div class="pe">0.80</div><div class="pe">1.00</div>
+          </div>
+        </div>
+        <div class="cap">Bảng tra <b>căn bậc hai</b> — dùng cho Bước①. Đọc: √0.64 = 0.80, √0.36 = 0.60.</div>
+        <div style="margin-top:2mm;padding:1.4mm 2.6mm;background:#f7fafb;border-left:3px solid var(--purple);font-size:9px;line-height:1.5">
+          💡 <b>Trực giác:</b> như <b>pha nước màu</b> — mỗi bước đổ bớt nước gốc (√ᾱ) và thêm nước lã (√(1−ᾱ)). Hai tỉ lệ luôn "vừa đủ đầy ly".
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Tổng? → <span class="qa">1 (bảo toàn phương sai).</span></li>
-      <li>xₜ khi ᾱ → 0? → <span class="qa">Nhiễu thuần N(0,1).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">√ᾱ·x₀ (lam) + √(1−ᾱ)·ε (tím) = xₜ (cam)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 120" width="100%" height="35mm"
+           aria-label="tam giác vuông huyền 1 với hai cạnh căn alpha ngang và căn một trừ alpha, cạnh phải là cộng hai đóng góp ảnh gốc và nhiễu thành x tại bước t, các ô để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Forward diffusion = √ᾱ·x₀ + √(1−ᾱ)·ε, nhảy thẳng tới bước t nhờ ᾱₜ. Bài tiếp (25): học đảo ngược — một bước
-    khử nhiễu.
+  <!-- ① HỆ SỐ TRỘN -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Hai hệ số trộn</span><span class="f">√ᾱ và √(1−ᾱ) — tra bảng</span></div>
+    <div class="pb">
+      <div class="eq">
+        √ᾱ = √<span data-q="abar">0.64</span> = <span class="slot sm"></span> &nbsp;<span style="color:var(--dim)">(còn lại ảnh gốc)</span> &nbsp;·&nbsp;
+        √(1−ᾱ) = √<span data-q="oneMinus">0.36</span> = <span class="slot sm"></span> &nbsp;<span style="color:var(--dim)">(lượng nhiễu)</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…1</th><th>√ᾱ (ảnh gốc)</th><th>√(1−ᾱ) (nhiễu)</th></tr>
+        <tr><td class="l">tỉ lệ</td><td><div class="track uni" id="t_ca"></div></td><td><div class="track uni" id="t_cn"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…1. Hệ số nào lớn hơn → thành phần đó chiếm ưu thế trong xₜ.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② TRỘN -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Trộn thành xₜ</span><span class="f">xₜ = √ᾱ·x₀ + √(1−ᾱ)·ε (nhảy thẳng)</span></div>
+    <div class="pb">
+      <div class="eq">
+        xₜ = <span class="slot sm"></span>·<span data-q="x0">2</span> + <span class="slot sm"></span>·<span data-q="eps">1</span>
+        = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh −4…+4</th><th>√ᾱ·x₀ (ảnh gốc)</th><th>√(1−ᾱ)·ε (nhiễu)</th><th>xₜ (kết quả)</th></tr>
+        <tr><td class="l">đóng góp</td><td><div class="track" id="t_g1"></div></td><td><div class="track" id="t_g2"></div></td><td><div class="track" id="t_xt"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: −4 … 0 … +4 (vạch giữa = 0). Nhiễu ε có thể <b>âm</b> → tô về bên trái. Đóng góp nào lớn hơn khi ᾱ=<span data-q="abar">0.64</span>? → <span class="slot" style="min-width:22mm"></span></div>
+    </div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — bảo toàn phương sai</span><span class="f">(√ᾱ)² + (√(1−ᾱ))² = 1</span></div>
+    <div class="pb">
+      <div class="eq">
+        (√ᾱ)² + (√(1−ᾱ))² = <span class="slot sm"></span>² + <span class="slot sm"></span>² = <span data-q="abar">0.64</span> + <span data-q="oneMinus">0.36</span> = <span class="slot sm"></span><br>
+        Khi ᾱ → 0 (bước t rất lớn): √ᾱ → <span class="slot sm"></span> , √(1−ᾱ) → <span class="slot sm"></span> → xₜ ≈ <span class="slot sm"></span> &nbsp;<span style="color:var(--dim)">(nhiễu thuần)</span>
+      </div>
+      <div class="cap">Nếu x₀ và ε đều có phương sai 1 thì Var(xₜ) = ᾱ·1 + (1−ᾱ)·1 = 1 — <b>không đổi theo t</b>. Đó là lý do dùng đúng cặp hệ số này.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:13mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tra √ᾱ, √(1−ᾱ)</span>
+    <span><span class="ck"></span>Trộn ra xₜ</span>
+    <span><span class="ck"></span>Chứng minh tổng bình phương = 1</span>
+    <span class="win">🎉 Bạn vừa "thêm nhiễu" như diffusion thật!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">J4</span>
+    <h1>Diffusion — Forward <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x₀ · ảnh gốc</span>
+      <span><span class="sw" style="background:var(--orange)"></span>hệ số &amp; xₜ · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>nhiễu ε</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">√ᾱ·x₀ (lam) + √(1−ᾱ)·ε (tím) = xₜ (cam)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 120" width="100%" height="35mm" aria-label="sơ đồ tam giác và cộng đóng góp đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Hai hệ số trộn</span></div>
+    <div class="pb">
+      <div class="eq">
+        √ᾱ = √<span data-q="abar">0.64</span> = <span class="slot ans sm" data-q="sqA">0.8</span> &nbsp;·&nbsp;
+        √(1−ᾱ) = √<span data-q="oneMinus">0.36</span> = <span class="slot ans sm" data-q="sq1A">0.6</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…1</th><th>√ᾱ</th><th>√(1−ᾱ)</th></tr>
+        <tr><td class="l">tỉ lệ</td><td><div class="track uni" id="a_ca"></div></td><td><div class="track uni" id="a_cn"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao căn:</b> ᾱ là tỉ lệ <b>phương sai</b> giữ lại; để nhân vào tín hiệu (không phải phương sai) ta lấy <b>√</b>. Do đó √ᾱ là biên độ ảnh gốc, √(1−ᾱ) là biên độ nhiễu.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Trộn thành xₜ</span></div>
+    <div class="pb">
+      <div class="eq">
+        xₜ = <span data-q="sqA">0.8</span>·<span data-q="x0">2</span> + <span data-q="sq1A">0.6</span>·<span data-q="eps">1</span>
+        = <span class="slot ans sm" data-q="g1">1.6</span> + <span class="slot ans sm" data-q="g2">0.6</span> = <span class="slot ans" data-q="xt">2.2</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh −4…+4</th><th>√ᾱ·x₀</th><th>√(1−ᾱ)·ε</th><th>xₜ</th></tr>
+        <tr><td class="l">đóng góp</td><td><div class="track" id="a_g1"></div></td><td><div class="track" id="a_g2"></div></td><td><div class="track" id="a_xt"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao "nhảy thẳng":</b> nhờ ᾱₜ = ∏αᵢ (Bài J6) gộp sẵn cả t bước, ta ra xₜ trong <b>một phép</b> thay vì lặp thêm nhiễu t lần → huấn luyện lấy mẫu bước t bất kỳ cực nhanh.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — bảo toàn phương sai</span></div>
+    <div class="pb">
+      <div class="eq">
+        (√ᾱ)² + (√(1−ᾱ))² = <span data-q="sqA">0.8</span>² + <span data-q="sq1A">0.6</span>² = <span data-q="abar">0.64</span> + <span data-q="oneMinus">0.36</span> = <span class="slot ans sm" data-q="one">1</span><br>
+        ᾱ → 0: √ᾱ → <span class="slot ans sm" data-q="z0">0</span> , √(1−ᾱ) → <span class="slot ans sm" data-q="z1">1</span> → xₜ ≈ <span class="slot ans sm" data-q="zeps">ε</span> (nhiễu thuần N(0,1))
+      </div>
+      <div class="why p" style="margin:0"><b>Đây là điểm cốt lõi:</b> hai hệ số √ᾱ và √(1−ᾱ) luôn nằm trên <b>đường tròn đơn vị</b> — bình phương cộng lại đúng bằng <b>1</b> với mọi ᾱ.
+        Nên nếu Var(x₀)=Var(ε)=1 thì Var(xₜ) = ᾱ + (1−ᾱ) = 1 <b>không đổi theo t</b> (variance-preserving). Khi ᾱ giảm dần về 0, ảnh gốc <b>tan biến</b> (√ᾱ→0)
+        còn nhiễu chiếm trọn (√(1−ᾱ)→1) → xₜ trở thành nhiễu Gauss thuần. Đó chính là điểm xuất phát cho quá trình <b>khử nhiễu ngược</b> ở Bài J5.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi làm forward diffusion</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Dùng thẳng ᾱ·x₀ + (1−ᾱ)·ε (quên căn)."</b><br>
+          <span style="color:var(--dim)">Phải lấy <b>√</b>: ᾱ là tỉ lệ phương sai, còn tín hiệu nhân theo <b>biên độ</b>. Quên căn → tổng phương sai không còn bằng 1.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Phải lặp t bước thêm nhiễu mới đúng."</b><br>
+          <span style="color:var(--dim)">Không — ᾱₜ gộp sẵn tích αᵢ nên <b>một phép</b> ra xₜ ở bước t bất kỳ. Đó là cả điểm mạnh của công thức.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "ᾱ tăng dần theo t."</b><br>
+          <span style="color:var(--dim)">Ngược lại — ᾱₜ = ∏αᵢ <b>giảm dần</b> về 0 (mỗi αᵢ &lt; 1). t càng lớn → càng ít ảnh gốc, càng nhiều nhiễu.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "xₜ luôn dương vì là ảnh."</b><br>
+          <span style="color:var(--dim)">Sai — nhiễu ε có thể <b>âm</b>, kéo xₜ xuống dưới 0. Ở đây pixel đã chuẩn hoá quanh 0, không phải thang 0…255.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Forward diffusion = √ᾱ·x₀ + √(1−ᾱ)·ε — nhảy thẳng tới bước t nhờ ᾱₜ; hai hệ số thỏa <b>(√ᾱ)²+(√(1−ᾱ))²=1</b>
+    nên phương sai được bảo toàn, và ᾱ→0 đưa ảnh về nhiễu thuần. Bài tiếp <b>J5</b>: <b>khử nhiễu một bước</b> — học đoán ε để đảo ngược phép trộn này.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J4 · Diffusion Forward</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var S = {};
+
 function generate(){
-  var f = WB.fmtTrim;
-  // ᾱ là bình phương số đẹp → căn ra tròn (cặp Pythagore 0.8/0.6)
+  var f = WB.fmtTrim, fi = WB.fmtInt;
+  // cặp Pythagore để √ tròn (tra bảng), tránh calculator
   var pair = WB.pick([{abar:0.64, sqA:0.8, sq1A:0.6}, {abar:0.36, sqA:0.6, sq1A:0.8}]);
-  var x0 = WB.randInt(1,3), eps = WB.pick([1,-1,2]);
+  var x0  = WB.randInt(1,3);
+  var eps = WB.pick([1,-1,2]);
   var oneMinus = Math.round((1-pair.abar)*100)/100;
-  var xt = Math.round((pair.sqA*x0 + pair.sq1A*eps)*100)/100;
+  var g1 = Math.round(pair.sqA*x0*100)/100;      // đóng góp ảnh gốc
+  var g2 = Math.round(pair.sq1A*eps*100)/100;    // đóng góp nhiễu (có thể âm)
+  var xt = Math.round((g1+g2)*100)/100;
+
+  S = {x0:x0, abar:pair.abar, oneMinus:oneMinus, eps:eps, sqA:pair.sqA, sq1A:pair.sq1A, g1:g1, g2:g2, xt:xt};
+
   WB.setAll({
-    x0:String(x0), abar:f(pair.abar), eps:f(eps), oneMinus:f(oneMinus),
-    sqA:f(pair.sqA), sq1A:f(pair.sq1A), xt:f(xt)
+    x0:String(x0), abar:f(pair.abar), oneMinus:f(oneMinus), eps:fi(eps),
+    sqA:f(pair.sqA), sq1A:f(pair.sq1A),
+    g1:f(g1), g2:f(g2), xt:f(xt),
+    one:'1', z0:'0', z1:'1', zeps:'ε'
   });
-  drawDiff('figD', pair.sq1A);
+
+  drawBarUni('t_ca',0,1,false);        drawBarUni('t_cn',0,1,false);
+  drawBarUni('a_ca',pair.sqA,1,true);  drawBarUni('a_cn',pair.sq1A,1,true);
+
+  drawBar('t_g1',0,4,false); drawBar('t_g2',0,4,false); drawBar('t_xt',0,4,false);
+  drawBar('a_g1',g1,4,true); drawBar('a_g2',g2,4,true); drawBar('a_xt',xt,4,true);
+
+  drawFig('figQ', false);
+  drawFig('figA', true);
 }
-function drawDiff(id, noiseLvl){
-  var svg = document.getElementById(id); if(!svg) return;
-  var s='';
-  var levels=[0.15, noiseLvl, 0.98];
-  var labs=['x₀ (rõ)','xₜ (pha)','x_T (nhiễu)'];
+
+// Thanh MỘT CHIỀU (0…max, gốc trái) — cho hệ số dương.
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:50%"></div>';
+  if(fill && v>0){ var pct=Math.min(v/max,1)*100; h+='<div class="fill pos" style="left:0%;width:'+pct+'%"></div>'; }
+  el.innerHTML=h;
+}
+
+// Thanh HAI CHIỀU (−max…0…+max) — cho đóng góp/xₜ có thể âm.
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct=Math.min(Math.abs(v)/max,1)*50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
+  }
+  el.innerHTML=h;
+}
+
+// hộp số: nét đứt/rỗng (ĐỀ) vs cam/số (ĐÁP ÁN). w đủ rộng chứa dấu "−".
+function box(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+(filled?'#fff8f0':'#fff')+'" stroke="'+(filled?ORG:INK)+'" stroke-width="'+(filled?1.2:1.4)+'"'+(filled?'':' stroke-dasharray="3 2"')+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+2.6)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ: tam giác Pythagore (trái) + cộng đóng góp (phải).
+function drawFig(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f=WB.fmtTrim, fi=WB.fmtInt, DIM='#6b7280', INK='#16202e', BLU='#0e7490', ORG='#b45309', PUR='#6d28d9';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  // --- Tam giác vuông: cạnh ngang √ᾱ (cam), cạnh dọc √(1−ᾱ) (tím), huyền 1 ---
+  var ox=44, oy=104, sc=88;
+  var ax=ox+S.sqA*sc, bx=ox, by=oy-S.sq1A*sc;
+  s+='<text x="70" y="12" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+INK+'">Hai hệ số trên đường tròn đơn vị</text>';
+  s+='<polygon points="'+ox+','+oy+' '+ax+','+oy+' '+ox+','+by+'" fill="#f6f4fb" stroke="'+DIM+'" stroke-width="0.8"/>';
+  s+='<line x1="'+ox+'" y1="'+oy+'" x2="'+ax+'" y2="'+oy+'" stroke="'+ORG+'" stroke-width="2.4"/>';
+  s+='<text x="'+((ox+ax)/2)+'" y="'+(oy+11)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="'+ORG+'">√ᾱ'+(showAns?'='+f(S.sqA):'')+'</text>';
+  s+='<line x1="'+ox+'" y1="'+oy+'" x2="'+bx+'" y2="'+by+'" stroke="'+PUR+'" stroke-width="2.4"/>';
+  s+='<text x="'+(ox-3)+'" y="'+((oy+by)/2)+'" text-anchor="end" font-size="7.6" font-weight="700" fill="'+PUR+'">√(1−ᾱ)'+(showAns?'='+f(S.sq1A):'')+'</text>';
+  s+='<line x1="'+ax+'" y1="'+oy+'" x2="'+bx+'" y2="'+by+'" stroke="'+DIM+'" stroke-width="1.4" stroke-dasharray="4 2"/>';
+  s+='<text x="'+((ax+bx)/2+16)+'" y="'+((oy+by)/2-3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="'+DIM+'">huyền=1</text>';
+  s+='<rect x="'+ox+'" y="'+(oy-9)+'" width="9" height="9" fill="none" stroke="'+DIM+'" stroke-width="0.8"/>';
+
+  // --- Cộng đóng góp: √ᾱ·x₀ (lam) + √(1−ᾱ)·ε (tím) = xₜ (cam) ---
+  var Px=232;
+  s+='<text x="'+(Px+150)+'" y="12" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+INK+'">xₜ = √ᾱ·x₀ + √(1−ᾱ)·ε</text>';
+  s+='<rect x="'+Px+'" y="34" width="86" height="24" rx="3" fill="#eef7f9" stroke="'+BLU+'" stroke-width="1.2"/>';
+  s+='<text x="'+(Px+43)+'" y="28" text-anchor="middle" font-size="7.4" fill="'+BLU+'">√ᾱ·x₀ (ảnh gốc)</text>';
+  s+=box(Px+27, 40, 32, 13, WB.fmtTrim(S.g1), showAns);
+  s+='<text x="'+(Px+96)+'" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="'+DIM+'">+</text>';
+  s+='<rect x="'+(Px+108)+'" y="34" width="94" height="24" rx="3" fill="#f6f2fe" stroke="'+PUR+'" stroke-width="1.2"/>';
+  s+='<text x="'+(Px+155)+'" y="28" text-anchor="middle" font-size="7.4" fill="'+PUR+'">√(1−ᾱ)·ε (nhiễu)</text>';
+  s+=box(Px+139, 40, 32, 13, WB.fmtTrim(S.g2), showAns);
+  s+='<text x="'+(Px+212)+'" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="'+DIM+'">=</text>';
+  s+='<rect x="'+(Px+224)+'" y="30" width="76" height="32" rx="4" fill="'+(showAns?'#fff8f0':'#fff')+'" stroke="'+(showAns?ORG:INK)+'" stroke-width="'+(showAns?1.4:1.6)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+  s+='<text x="'+(Px+262)+'" y="26" text-anchor="middle" font-size="7.6" fill="'+DIM+'">xₜ (bước t)</text>';
+  if(showAns) s+='<text x="'+(Px+262)+'" y="51" text-anchor="middle" font-size="10" font-weight="800" fill="#7a3d00">'+WB.fmtTrim(S.xt)+'</text>';
+
+  // dải rõ → mờ → nhiễu (bảo toàn phương sai)
+  var y2=92;
+  s+='<text x="6" y="'+(y2-4)+'" font-size="7.6" font-weight="700" fill="'+DIM+'">t tăng → ᾱ giảm → ảnh gốc tan, nhiễu chiếm trọn:</text>';
+  var labs=['x₀ rõ','xₜ pha','x_T nhiễu'], densit=[0.1,0.5,0.95];
   for(var k=0;k<3;k++){
-    var bx=12+k*82, by=18, sz=56;
-    s+='<rect x="'+bx+'" y="'+by+'" width="'+sz+'" height="'+sz+'" rx="4" fill="#f4f1ea" stroke="#b9b09a" stroke-width="1.2"/>';
-    // chấm nhiễu theo mức
-    var n=Math.round(levels[k]*60);
-    for(var i=0;i<n;i++){
-      var px=bx+3+Math.random()*(sz-6), py=by+3+Math.random()*(sz-6);
-      s+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="1.1" fill="#5b6776"/>';
-    }
-    if(k===0){ s+='<circle cx="'+(bx+sz/2)+'" cy="'+(by+sz/2)+'" r="13" fill="#0e749055" stroke="#0e7490" stroke-width="1.4"/>'; }
-    s+='<text x="'+(bx+sz/2)+'" y="'+(by+sz+12)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">'+labs[k]+'</text>';
-    if(k<2) s+='<text x="'+(bx+sz+8)+'" y="'+(by+sz/2+4)+'" font-size="13" fill="#b45309">→</text>';
+    var gx=6+k*70, sz=20;
+    s+='<rect x="'+gx+'" y="'+(y2+2)+'" width="'+sz+'" height="'+sz+'" rx="3" fill="#f4f1ea" stroke="#b9b09a" stroke-width="1"/>';
+    var n=Math.round(densit[k]*22);
+    for(var i=0;i<n;i++){ s+='<circle cx="'+(gx+3+((i*13)%(sz-6)))+'" cy="'+(y2+5+((i*17)%(sz-6)))+'" r="0.9" fill="'+DIM+'"/>'; }
+    if(k===0) s+='<circle cx="'+(gx+sz/2)+'" cy="'+(y2+2+sz/2)+'" r="5" fill="'+BLU+'55" stroke="'+BLU+'" stroke-width="1"/>';
+    s+='<text x="'+(gx+sz/2)+'" y="'+(y2+sz+9)+'" text-anchor="middle" font-size="6.6" fill="'+DIM+'">'+labs[k]+'</text>';
+    if(k<2) s+='<text x="'+(gx+sz+8)+'" y="'+(y2+2+sz/2+3)+'" text-anchor="middle" font-size="10" fill="'+ORG+'">→</text>';
   }
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC
 </script>
 </body>
 </html>

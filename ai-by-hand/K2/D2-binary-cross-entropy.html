@@ -5,20 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D2 — Binary Cross-Entropy (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 .ltab{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin-top:2px;}
 .ltab td,.ltab th{border:1px solid var(--line);padding:2px 7px;text-align:center;}
 .ltab th{background:var(--given);font-weight:700;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -33,27 +28,25 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D2</span><h1>Binary Cross-Entropy <small>— BCE</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài D2</span>
+    <h1>Binary Cross-Entropy <small>— BCE: phạt nặng khi tự tin mà sai</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> MSE không hợp cho xác suất (gradient yếu khi sai chắc). BCE phạt <b>rất nặng</b> khi mô hình tự tin mà sai
-    (p→0 cho nhãn 1 → loss→∞), thúc mô hình chỉnh nhanh. Là loss của logistic regression và đầu ra nhị phân.
-    <div class="formula">
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> BCE hỏi: "mô hình gán bao nhiêu xác suất cho <b>đáp án đúng</b>?" Gán cao → loss nhỏ; gán ~0 cho đáp án đúng → loss bùng nổ.
+    Hãy <b>tự tay</b> tính BCE cho 2 mẫu (tra bảng ln). Phần thưởng: chứng minh gradient ghép sigmoid rút gọn thành <b>p − y</b> — đúng bằng sai số như hồi quy.
+    <div class="formula" style="margin-top:5px">
       BCE = −[ y·ln p + (1 − y)·ln(1 − p) ] &nbsp;&nbsp; (y ∈ {0,1}, p = xác suất lớp 1)
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    BCE hỏi: "mô hình gán bao nhiêu xác suất cho <b>đáp án đúng</b>?" Gán cao → loss nhỏ; gán thấp → loss lớn; gán ~0 cho đáp án đúng
-    → loss bùng nổ. Tự tin mà sai bị phạt nặng nhất.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng tra ln</h2><span class="tag">2 mẫu</span></div>
-    <div class="calc" style="font-size:14px">
+    <div class="calc big">
       Mẫu 1: (y = <span class="gv" data-q="y1">1</span>, p = <span class="gv" data-q="p1">0.8</span>) &nbsp;|&nbsp;
       Mẫu 2: (y = <span class="gv" data-q="y2">0</span>, p = <span class="gv" data-q="p2">0.3</span>)
     </div>
@@ -63,88 +56,136 @@
     </table>
   </div>
 
-  <!-- BƯỚC 1 — mẫu y=1 -->
+  <div class="grid2">
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Mẫu y = 1</h2><span class="tag">−ln p</span></div>
     <div class="calc">
-      BCE₁ = −ln p = −ln(<span data-q="p1">0.8</span>) = <span class="blk" style="min-width:48px"></span>
+      BCE₁ = −ln p = −ln(<span data-q="p1">0.8</span>) = <span class="wcell" style="min-width:48px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> nhãn 1 nên chỉ còn số hạng −ln p; p càng gần 1 thì loss càng nhỏ.</div>
+    <div class="hint">Nhãn 1 → chỉ còn −ln p; p gần 1 thì loss nhỏ.</div>
   </div>
 
-  <!-- BƯỚC 2 — mẫu y=0 -->
+  <!-- STEP 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Mẫu y = 0</h2><span class="tag">−ln(1 − p)</span></div>
     <div class="calc">
-      BCE₂ = −ln(1 − p) = −ln(<span data-q="comp2">0.7</span>) = <span class="blk" style="min-width:48px"></span>
+      BCE₂ = −ln(1 − p) = −ln(<span data-q="comp2">0.7</span>) = <span class="wcell" style="min-width:48px"></span>
     </div>
-    <div class="hint">Nhãn 0 thì "xác suất đúng" là 1 − p (xác suất lớp 0).</div>
+    <div class="hint">Nhãn 0 → "xác suất đúng" là 1 − p.</div>
   </div>
+  </div><!-- /grid2 -->
 
-  <!-- BƯỚC 3 — trung bình -->
+  <!-- STEP 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Trung bình batch</h2><span class="tag">mean</span></div>
-    <div class="calc">
-      (BCE₁ + BCE₂)/2 = <span class="blk" style="min-width:48px"></span>
+    <div class="calc big">
+      (BCE₁ + BCE₂)/2 = <span class="wcell" style="min-width:50px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> loss tổng của batch = trung bình loss mỗi mẫu.</div>
+    <div class="why"><b>Vì sao:</b> loss của cả batch = trung bình loss mỗi mẫu.</div>
   </div>
 
-  <!-- BƯỚC 4 — phạt tự tin sai -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D2 · Binary Cross-Entropy</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>BCE — gradient gọn &amp; phạt tự tin sai</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D2</span>
+    <h1>Binary Cross-Entropy <small>— gradient rút gọn còn p − y</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: gradient p − y -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Phạt khi tự tin mà sai</h2><span class="tag">−ln → ∞</span></div>
-    <div class="calc">
-      Nếu y = 1, p = 0.5: −ln(0.5) = <span class="blk" style="min-width:44px"></span> ; nếu p → 0.01 thì −ln p rất lớn.
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — gradient sigmoid + BCE = p − y</h2><span class="tag">chuỗi đạo hàm</span></div>
+    <div class="note" style="margin-top:0">
+      Với p = σ(z): &nbsp; ∂BCE/∂p = <span class="frac" style="font-size:13px"><span class="n">p − y</span><span class="d">p(1 − p)</span></span> &nbsp;và&nbsp; ∂p/∂z = p(1 − p).
+      Nhân theo <b>quy tắc chuỗi</b>, mẫu số triệt tiêu: &nbsp; ∂BCE/∂z = <b>p − y</b>. Hãy tính p − y cho 2 mẫu:
     </div>
-    <div class="note">Gradient khi ghép sigmoid + BCE rút gọn còn <b>p − y</b> (Bài B3/D9). p càng gần 0 cho nhãn 1, loss càng bùng nổ.</div>
+    <div class="calc big">
+      Mẫu 1 (y=1): p − y = <span data-q="p1">0.8</span> − 1 = <span class="wcell" style="min-width:52px"></span> <small style="color:#7a8794">(âm → đẩy z ↑, tăng p)</small><br>
+      Mẫu 2 (y=0): p − y = <span data-q="p2">0.3</span> − 0 = <span class="wcell" style="min-width:52px"></span> <small style="color:#7a8794">(dương → đẩy z ↓, giảm p)</small>
+    </div>
+    <div class="note">Gradient = <b>sai số p − y</b> — y hệt hồi quy tuyến tính. Vì thế logistic + BCE học rất mượt (Bài B3), và softmax + CE cho gradient p − y đa lớp (Bài D9).</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Phạt khi tự tin mà sai</h2><span class="tag">−ln → ∞</span></div>
+    <div class="calc">
+      Nếu y = 1, p = 0.5: −ln(0.5) = <span class="wcell" style="min-width:46px"></span> ; nếu p → 0.01 thì −ln p rất lớn.
+    </div>
+    <div class="note">p càng gần 0 cho nhãn đúng → −ln p bùng nổ. BCE ép mô hình sửa nhanh những dự đoán "tự tin mà sai".</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>BCE phạt nặng nhất khi nào? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Gradient sigmoid + BCE rút gọn còn gì? → <span class="blk" style="min-width:120px"></span></li>
       <li>Với y = 0, "xác suất đúng" là gì? → <span class="blk" style="min-width:90px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D2 · Binary Cross-Entropy</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — tra ln &amp; đổi dấu ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính BCE 2 mẫu</span>
+    <span><span class="ck"></span>Kiểm gradient p−y</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao BCE dễ học!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D2 · Binary Cross-Entropy</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D2</span><h1>Binary Cross-Entropy <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D2</span><h1>Binary Cross-Entropy <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Mẫu y = 1</h2></div>
     <div class="calc ans">
-      BCE₁ = −ln(<span data-q="p1">0.8</span>) = −(<span data-q="lnp1">−0.22</span>) = <span class="blk" data-q="bce1">0.22</span>
+      BCE₁ = −ln(<span data-q="p1">0.8</span>) = −(<span data-q="lnp1">−0.22</span>) = <span class="wcell ans" data-q="bce1">0.22</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Mẫu y = 0</h2></div>
     <div class="calc ans">
-      BCE₂ = −ln(<span data-q="comp2">0.7</span>) = −(<span data-q="lnc2">−0.36</span>) = <span class="blk" data-q="bce2">0.36</span>
+      BCE₂ = −ln(<span data-q="comp2">0.7</span>) = −(<span data-q="lnc2">−0.36</span>) = <span class="wcell ans" data-q="bce2">0.36</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Trung bình</h2></div>
     <div class="calc ans">
-      (<span data-q="bce1">0.22</span> + <span data-q="bce2">0.36</span>)/2 = <span class="blk" data-q="mean">0.29</span>
+      (<span data-q="bce1">0.22</span> + <span data-q="bce2">0.36</span>)/2 = <span class="wcell ans" data-q="mean">0.29</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Tự tin sai</h2></div>
+    <div class="step-h"><div class="b">4</div><h2>Gradient p − y</h2><span class="tag">= sai số</span></div>
+    <div class="calc ans">
+      Mẫu 1: p − y = <span data-q="p1">0.8</span> − 1 = <span class="wcell ans" data-q="g1">−0.20</span> &nbsp;·&nbsp;
+      Mẫu 2: p − y = <span data-q="p2">0.3</span> − 0 = <span class="wcell ans" data-q="g2">0.30</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> ∂BCE/∂z = (∂BCE/∂p)(∂p/∂z) = <span class="frac" style="font-size:12px"><span class="n">p−y</span><span class="d">p(1−p)</span></span>·p(1−p) = <b>p − y</b>. Dấu cho biết đẩy z lên hay xuống; độ lớn = mức sai.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự tin sai</h2></div>
     <div class="figrow">
-      <svg id="figB" class="fig" viewBox="0 0 210 150" width="66mm" height="44mm" aria-label="đường âm ln p dốc đứng khi p tiến về 0"></svg>
+      <svg id="figB" class="fig" viewBox="0 0 210 150" width="60mm" height="40mm" aria-label="đường âm ln p dốc đứng khi p tiến về 0"></svg>
       <div style="flex:1">
-        <div class="calc ans">y = 1, p = 0.5: −ln(0.5) = <span class="blk" data-q="half">0.69</span></div>
+        <div class="calc ans">y = 1, p = 0.5: −ln(0.5) = <span class="wcell ans" data-q="half">0.69</span></div>
         <div class="note">Đường <b>−ln p</b> dốc đứng khi p → 0: gán xác suất gần 0 cho nhãn đúng → loss khổng lồ. p → 1 → loss → 0.</div>
       </div>
     </div>
@@ -153,17 +194,17 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Phạt nặng nhất? → <span class="qa">Khi mô hình tự tin (p cực đoan) nhưng sai nhãn.</span></li>
+      <li>Gradient? → <span class="qa">p − y (sigmoid + BCE) — sai số, giống hồi quy; dễ học.</span></li>
       <li>y = 0, xác suất đúng? → <span class="qa">1 − p (xác suất lớp 0).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> BCE = −ln(xác suất nhãn đúng); phạt mạnh sai tự tin, gradient gọn với sigmoid. Bài tiếp (D4): so hai <b>phân phối</b>
-    bằng KL divergence (tổng quát của cross-entropy).
+    <b style="color:var(--accent2)">Rút ra.</b> BCE = −ln(xác suất nhãn đúng), trung bình = <span data-q="mean">0.29</span>; phạt mạnh sai tự tin, gradient gọn <b>p − y</b> với sigmoid.
+    Bài D3: cross-entropy đa lớp (tổng quát của BCE). Bài D4: KL divergence (CE = entropy + KL).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D2 · Binary Cross-Entropy</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D2 · Binary Cross-Entropy</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -176,11 +217,13 @@ function generate(){
   var comp2 = (Math.round((1 - parseFloat(p2))*10)/10).toFixed(1);  // 1−p2 ∈ {0.6,0.7,0.8}
   var bce1 = -LN[p1], bce2 = -LN[comp2];
   var mean = (bce1 + bce2)/2;
+  var g1 = parseFloat(p1) - 1, g2 = parseFloat(p2);   // gradient p − y
 
   WB.setAll({
     y1: '1', p1: p1, y2: '0', p2: p2, comp2: comp2,
     lnp1: f2(LN[p1]), lnc2: f2(LN[comp2]),
     bce1: f2(bce1), bce2: f2(bce2), mean: f2(mean),
+    g1: f2(g1), g2: f2(g2),
     half: '0.69'
   });
   drawNlogp('figB');

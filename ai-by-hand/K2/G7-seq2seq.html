@@ -7,14 +7,13 @@
 <link rel="stylesheet" href="../wb.css">
 <style>
 .page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
 .page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
 .page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
+.page .why{margin-top:4px;}
 .page .note{margin-top:4px;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,64 +28,110 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G7</span><h1>Seq2seq encoder → decoder <small>— Sequence to sequence</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài G7</span>
+    <h1>Seq2seq encoder → decoder <small>— Sequence to sequence</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Dịch/tóm tắt = ánh xạ <b>chuỗi → chuỗi</b> độ dài khác nhau. Seq2seq tách "hiểu" (encoder) khỏi "sinh" (decoder).
-    Điểm yếu — nhồi cả câu vào <b>một</b> vectơ c — chính là động lực ra đời <b>attention</b> (Phần H).
-    <div class="formula">
-      Encoder: c = h<sub>n</sub> (trạng thái cuối sau khi đọc x₁…x<sub>n</sub>) &nbsp;·&nbsp; Decoder: s₀ = c; s<sub>t</sub> = RNN(y<sub>t−1</sub>, s<sub>t−1</sub>)
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Dịch/tóm tắt = ánh xạ <b>chuỗi → chuỗi</b> độ dài khác nhau. Seq2seq tách "hiểu" (encoder) khỏi "sinh" (decoder):
+    encoder <b>cuộn qua cả câu</b> rồi <b>nén</b> tất cả vào <b>một</b> vectơ ngữ cảnh c; decoder chỉ nhìn c để <b>sinh câu ra</b>, từng bước, tự hồi quy.
+    Hãy tự tay nén rồi giải nén qua c — và xem c "eo hẹp" cỡ nào dù câu vào dài hay ngắn.
+    <div class="formula" style="margin-top:5px">
+      Encoder: c = h<sub>n</sub> (trạng thái cuối sau khi đọc x₁…x<sub>n</sub>) &nbsp;·&nbsp; Decoder: s₀ = c; s<sub>t</sub> = ½·s<sub>t−1</sub>
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Encoder như người <b>đọc xong cả câu rồi tóm tắt vào một mẩu giấy</b> (c). Decoder cầm mẩu giấy đó <b>viết ra câu dịch</b>, từng từ một,
-    mỗi từ dựa trên giấy tóm tắt + từ vừa viết. (Lấy w<sub>enc</sub>=1, w<sub>dec</sub>=½ cho gọn.)
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">encoder 3 bước</span></div>
-    <div class="calc" style="font-size:15px">Encoder đọc x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">3</span>, <span class="gv" data-q="x3">4</span> ), h<sub>t</sub> = h<sub>t−1</sub> + x<sub>t</sub>. Decoder: s₀ = c, s<sub>t</sub> = ½·s<sub>t−1</sub>.</div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">encoder 3 bước · h₀ = 0</span></div>
+    <div class="calc" style="font-size:15px">
+      Encoder đọc x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">3</span>, <span class="gv" data-q="x3">4</span> ),
+      h<sub>t</sub> = h<sub>t−1</sub> + x<sub>t</sub>. Decoder: s₀ = c, s<sub>t</sub> = ½·s<sub>t−1</sub>.
+    </div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Encoder nén thành ngữ cảnh c</h2><span class="tag">c = h cuối</span></div>
-    <div class="calc">
-      h₁ = <span data-q="x1">2</span> · h₂ = h₁ + <span data-q="x2">3</span> = <span data-q="h2">5</span> · h₃ = h₂ + <span data-q="x3">4</span> = <span class="blk" style="min-width:40px"></span> &nbsp;→&nbsp; c = <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Encoder cuộn qua chuỗi → nén thành c</h2><span class="tag">c = h cuối</span></div>
+    <div class="calc big">
+      h₁ = <span class="gv" data-q="x1">2</span> · h₂ = h₁ + <span class="gv" data-q="x2">3</span> = <span class="gv" data-q="h2">5</span> ·
+      h₃ = h₂ + <span class="gv" data-q="x3">4</span> = <span class="wcell" style="min-width:38px"></span> &nbsp;→&nbsp;
+      c = <span class="wcell" style="min-width:38px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> c là "bản tóm tắt" cố định độ dài, <b>bất kể câu dài ngắn</b> — toàn bộ câu vào dồn vào một vectơ.</div>
+    <div class="why"><b>Vì sao:</b> c là "bản tóm tắt" cố định độ dài — <b>toàn bộ câu vào</b> dồn vào một vectơ, ở đây là <b>một số</b>.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Decoder bước 1</h2><span class="tag">s₀ = c</span></div>
-    <div class="calc">s₁ = ½·s₀ = ½·c = <span class="blk" style="min-width:46px"></span></div>
-    <div class="hint">decoder là RNN khác, khởi tạo bằng c rồi sinh y₁ = softmax(W·s₁).</div>
+    <div class="calc big">s₁ = ½·s₀ = ½·c = ½·<span data-q="c">9</span> = <span class="wcell" style="min-width:46px"></span></div>
+    <div class="hint">decoder là RNN <b>khác</b>, khởi tạo bằng c rồi sinh y₁ = softmax(W·s₁).</div>
   </div>
 
   <!-- BƯỚC 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Sinh tiếp (tự hồi quy)</h2><span class="tag">đến &lt;eos&gt;</span></div>
-    <div class="calc">s₂ = ½·s₁ = <span class="blk" style="min-width:46px"></span> &nbsp;→&nbsp; y₂ dựa trên y₁ vừa sinh & s₁; lặp tới khi gặp &lt;eos&gt;.</div>
-    <div class="why"><b>Vì sao:</b> tự hồi quy — từ trước làm đầu vào cho từ sau; mọi token ra đều bắt nguồn từ <b>một</b> c.</div>
+    <div class="calc big">s₂ = ½·s₁ = <span class="wcell" style="min-width:46px"></span> &nbsp;→&nbsp; y₂ dựa trên y₁ vừa sinh &amp; s₁; lặp tới khi gặp &lt;eos&gt;.</div>
+    <div class="why"><b>Vì sao:</b> tự hồi quy — từ trước làm đầu vào cho từ sau; mọi token ra đều bắt nguồn từ <b>một</b> c duy nhất.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Nút cổ chai của vectơ ngữ cảnh c</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G7</span>
+    <h1>Seq2seq encoder → decoder <small>— c có "phình" theo độ dài câu không?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM: nút cổ chai, c cố định kích thước -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — c có "phình" theo độ dài câu không?</h2><span class="tag">nút cổ chai</span></div>
+    <div class="note" style="margin-top:0">
+      Chuỗi 1 (Bước 1) dài <b>3</b> bước cho c = <span data-q="c">9</span> — <b>một số duy nhất</b>. Giờ encoder đọc <b>chuỗi 2 dài hơn</b> (5 bước),
+      CÙNG công thức h<sub>t</sub> = h<sub>t−1</sub> + x<sub>t</sub> (h₀ = 0), tức c′ chỉ là tổng mọi x′:
+    </div>
+    <div class="calc big">
+      c′ = <span class="gv" data-q="x1b">2</span> + <span class="gv" data-q="x2b">1</span> + <span class="gv" data-q="x3b">3</span> +
+      <span class="gv" data-q="x4b">2</span> + <span class="gv" data-q="x5b">1</span> = <span class="wcell" style="min-width:40px"></span>
+    </div>
+    <div class="note">
+      So sánh: chuỗi dài <b>3</b> bước → c là <b>1 số</b>. Chuỗi dài <b>5</b> bước → c′ vẫn <b>1 số</b> — <b>kích thước c không đổi</b> dù câu vào dài hơn hẳn.
+      Vậy thông tin của x′₁ (đầu chuỗi 2) phải "sống sót" qua <b>4</b> phép cộng nữa mới len được vào c′ — câu càng dài, phần đầu càng dễ bị lu mờ.
+      Đây chính là <b>nút cổ chai thông tin</b> (information bottleneck) — động lực ra đời <b>Attention</b> (Phần H, K3): cho decoder nhìn lại
+      <b>MỌI</b> trạng thái encoder thay vì chỉ mỗi c.
+    </div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vectơ ngữ cảnh c là gì? → <span class="blk" style="min-width:170px"></span></li>
-      <li>Điểm yếu của seq2seq cơ bản? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Kích thước của c có phụ thuộc độ dài câu vào không? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Vì sao gọi c là "nút cổ chai", và nó dẫn tới kỹ thuật nào? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — cộng dồn 5 số của chuỗi 2 ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Nén chuỗi 3 bước qua c</span>
+    <span><span class="ck"></span>So sánh với chuỗi 5 bước</span>
+    <span class="win">🎉 Bạn vừa thấy nút cổ chai của seq2seq!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -96,27 +141,41 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Encoder → c</h2></div>
-    <div class="calc ans">h₁=<span data-q="x1">2</span> · h₂=<span data-q="h2">5</span> · h₃=<span data-q="h2">5</span>+<span data-q="x3">4</span>=<span class="blk" data-q="c">9</span> → c = <span data-q="c">9</span></div>
+    <div class="calc ans">
+      h₁=<span data-q="x1">2</span> · h₂=<span data-q="h2">5</span> ·
+      h₃=<span data-q="h2">5</span>+<span data-q="x3">4</span>=<span class="wcell ans" data-q="c">9</span> →
+      c = <span class="wcell ans" data-q="c">9</span>
+    </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Decoder bước 1</h2></div>
-    <div class="calc ans">s₁ = ½·c = ½·<span data-q="c">9</span> = <span class="blk" data-q="s1">4.5</span></div>
+    <div class="calc ans">s₁ = ½·c = ½·<span data-q="c">9</span> = <span class="wcell ans" data-q="s1">4.5</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Sinh tiếp</h2></div>
-    <div class="calc ans">s₂ = ½·s₁ = <span class="blk" data-q="s2">2.25</span> (lặp tự hồi quy tới &lt;eos&gt;)</div>
+    <div class="calc ans">s₂ = ½·s₁ = <span class="wcell ans" data-q="s2">2.25</span> (lặp tự hồi quy tới &lt;eos&gt;)</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — chuỗi 5 bước</h2><span class="tag">c′ vẫn 1 số</span></div>
+    <div class="calc ans">
+      c′ = <span data-q="x1b">2</span>+<span data-q="x2b">1</span>+<span data-q="x3b">3</span>+<span data-q="x4b">2</span>+<span data-q="x5b">1</span> =
+      <span class="wcell ans" data-q="c2">9</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> dù 3 bước hay 5 bước, kết quả nén luôn là <b>một</b> số (kích thước cố định) — càng nhiều bước, thông tin đầu chuỗi càng phải đi xa hơn mới tới được c.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
     <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>encoder → c (nút thắt) → decoder</h2><span class="tag">→ attention</span></div>
     <div class="figrow">
-      <svg id="figS2S" class="fig" viewBox="0 0 230 110" width="74mm" height="35mm" aria-label="seq2seq encoder nén thành c rồi decoder bung ra"></svg>
+      <svg id="figS2S" class="fig" viewBox="0 0 230 110" width="74mm" height="35mm" aria-label="seq2seq: nhiều trạng thái encoder chui qua phễu hẹp vào một c, rồi decoder bung ra"></svg>
       <div style="flex:1">
-        <div class="note">Nhồi câu dài vào <b>một</b> c → mất chi tiết, dịch kém ở câu dài. <b>Attention</b> (Phần H, Bài H5) cho decoder nhìn lại <b>mọi</b>
-          trạng thái encoder thay vì chỉ c → cú nhảy vọt dẫn tới Transformer.</div>
+        <div class="note">Toàn bộ chuỗi encoder (lam) chui qua <b>phễu hẹp</b> để dồn vào c — <b>một</b> ô duy nhất, bất kể chuỗi ngắn hay dài.
+          Decoder (cam) chỉ được nhìn c này để sinh cả câu ra. <b>Attention</b> (Phần H, Bài H1) phá vỡ nút thắt: cho decoder nhìn lại
+          <b>mọi</b> trạng thái encoder thay vì chỉ c → cú nhảy vọt dẫn tới Transformer.</div>
       </div>
     </div>
   </div>
@@ -124,29 +183,35 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>c là gì? → <span class="qa">Bản tóm tắt cố định-độ-dài của cả chuỗi vào (trạng thái cuối encoder).</span></li>
-      <li>Điểm yếu? → <span class="qa">Nhồi cả câu vào một c → mất thông tin câu dài (→ cần attention).</span></li>
+      <li>c có phụ thuộc độ dài câu không? → <span class="qa">Không — c luôn cùng kích thước (ở đây 1 số), dù chuỗi 3 hay 5 bước.</span></li>
+      <li>Vì sao là "nút cổ chai"? → <span class="qa">Mọi thông tin phải nén qua đúng 1 vectơ c → câu dài dễ mất chi tiết đầu câu → dẫn tới Attention.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Seq2seq = encoder nén → c → decoder sinh tự hồi quy; nút thắt c dẫn tới attention.
+    <b style="color:var(--accent2)">Rút ra.</b> Seq2seq = encoder nén cả chuỗi vào <b>một</b> c cố định kích thước → decoder sinh tự hồi quy từ c.
+    Nén càng nhiều thông tin vào cùng một chỗ → nút cổ chai càng siết chặt ở câu dài, đó là động lực ra đời attention.
     Bài tiếp <b style="color:var(--accent2)">G8</b>: chọn token khi sinh — Greedy vs Beam search.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G7 · Seq2seq</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
   var fI=WB.fmtInt, fT=WB.fmtTrim;
+  // Chuỗi 1 — encoder 3 bước
   var x1=WB.randInt(2,4), x2=WB.randInt(2,4), x3=WB.randInt(2,4);
   var h2=x1+x2, c=h2+x3;
   var s1=c/2, s2=s1/2;
+  // Chuỗi 2 — encoder 5 bước (tự kiểm nút cổ chai)
+  var x1b=WB.randInt(1,3), x2b=WB.randInt(1,3), x3b=WB.randInt(1,3), x4b=WB.randInt(1,3), x5b=WB.randInt(1,3);
+  var c2 = x1b+x2b+x3b+x4b+x5b;
   WB.setAll({
     x1:fI(x1), x2:fI(x2), x3:fI(x3), h2:fI(h2), c:fI(c),
-    s1:fT(s1), s2:fT(s2)
+    s1:fT(s1), s2:fT(s2),
+    x1b:fI(x1b), x2b:fI(x2b), x3b:fI(x3b), x4b:fI(x4b), x5b:fI(x5b), c2:fI(c2)
   });
   drawS2S('figS2S');
 }
@@ -156,6 +221,8 @@ function drawS2S(id){
   var defs='<defs><marker id="aS7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
   var ex=[22,52,82], dx=[158,196], y=58;
   var s='';
+  // phễu: mọi trạng thái encoder bị siết hẹp lại trước khi vào c
+  s += '<path d="M10 32 L95 32 L122 46 L122 70 L95 84 L10 84 Z" fill="#0e7490" opacity="0.06"/>';
   for(var i=0;i<3;i++){
     s += '<circle cx="'+ex[i]+'" cy="'+y+'" r="11" fill="#d6ecf6" stroke="#0e7490"/><text x="'+ex[i]+'" y="'+(y+3)+'" text-anchor="middle" style="font-size:8px">h'+(i+1)+'</text>';
     if(i<2) s += '<line x1="'+(ex[i]+11)+'" y1="'+y+'" x2="'+(ex[i+1]-11)+'" y2="'+y+'" stroke="#0e7490" stroke-width="1.4" marker-end="url(#aS7)"/>';
@@ -166,9 +233,9 @@ function drawS2S(id){
   for(var d=0;d<2;d++) s += '<circle cx="'+dx[d]+'" cy="'+y+'" r="11" fill="#ffe6cc" stroke="#b45309"/><text x="'+dx[d]+'" y="'+(y+3)+'" text-anchor="middle" style="font-size:8px">s'+(d+1)+'</text>';
   s += '<line x1="136" y1="'+y+'" x2="'+(dx[0]-11)+'" y2="'+y+'" stroke="#b45309" stroke-width="1.4" marker-end="url(#aS7)"/>';
   s += '<line x1="'+(dx[0]+11)+'" y1="'+y+'" x2="'+(dx[1]-11)+'" y2="'+y+'" stroke="#b45309" stroke-width="1.4" marker-end="url(#aS7)"/>';
-  s += '<text x="52" y="22" text-anchor="middle" style="font-size:8px" fill="#0e7490">encoder</text>';
+  s += '<text x="52" y="22" text-anchor="middle" style="font-size:8px" fill="#0e7490">encoder (3 hoặc 5 bước)</text>';
   s += '<text x="177" y="22" text-anchor="middle" style="font-size:8px" fill="#b45309">decoder</text>';
-  s += '<text x="122" y="86" text-anchor="middle" style="font-size:8px" fill="#8a6d00">nút thắt cổ chai</text>';
+  s += '<text x="122" y="98" text-anchor="middle" style="font-size:8px" fill="#8a6d00">nút thắt cổ chai</text>';
   svg.innerHTML=defs+s;
 }
 WB.wire(generate);

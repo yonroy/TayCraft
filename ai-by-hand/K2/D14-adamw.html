@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D14 — AdamW (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -27,148 +22,179 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D14</span><h1>AdamW <small>— Adam + weight decay tách rời</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài D14</span>
+    <h1>AdamW <small>— Adam + weight decay tách rời</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Adam gộp hai ý hay (đà + thích nghi) nên ổn định, ít cần chỉnh η. AdamW sửa lỗi của Adam khi cộng L2 vào
-    gradient bằng cách <b>trừ thẳng λw</b> — chuẩn cho huấn luyện mô hình lớn (Transformer).
-    <div class="formula">
-      m ← β₁m + (1−β₁)g &nbsp; v ← β₂v + (1−β₂)g² &nbsp; m̂ = m/(1−β₁ᵗ) &nbsp; v̂ = v/(1−β₂ᵗ)<br>
-      w ← w − η·m̂/(√v̂ + ε) − η·λ·w &nbsp; (weight decay tách rời)
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Adam (D13) đã gộp đà + thích nghi. AdamW thêm <b>weight decay</b> — co trọng số về 0 để chống quá khớp — nhưng <b>trừ thẳng</b> η·λ·w, KHÔNG cộng vào gradient.
+    Hãy <b>tự tay</b> chạy một bước AdamW. Phần thưởng: thấy vì sao "tách rời" quan trọng — cộng vào gradient sẽ làm decay <b>lệch</b> theo độ dốc.
+    <div class="formula" style="margin-top:5px">
+      m̂ = m/(1−β₁ᵗ) &nbsp;·&nbsp; v̂ = v/(1−β₂ᵗ) &nbsp;·&nbsp; w ← w − η·m̂/√v̂ − η·λ·w &nbsp;<small>(decay tách rời)</small>
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Adam lái xe vừa <b>giữ đà</b> (m, hướng trung bình) vừa <b>tự chỉnh ga từng bánh</b> (v, độ rung). Hiệu chỉnh thiên lệch bù việc m, v
-    khởi tạo 0. AdamW: việc "co trọng số về 0" (decay) làm <b>riêng</b>, không trộn vào gradient.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (bước t = 1)</h2><span class="tag">β₁=0.9, β₂=0.999</span></div>
-    <div class="calc" style="font-size:13.5px">
-      w₀ = <span class="gv" data-q="w0">1.0</span> ; η = <span class="gv" data-q="eta">0.1</span> ; g = <span class="gv" data-q="g">2</span> ;
-      m₀ = v₀ = 0 ; λ = <span class="gv" data-q="lam">0.01</span> ; β₁ = 0.9, β₂ = 0.999
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (bước đầu, t = 1)</h2><span class="tag">β₁=0.9, β₂=0.999</span></div>
+    <div class="calc big">
+      w₀ = <span class="gv" data-q="w0">1.0</span> &nbsp;·&nbsp; g = <span class="gv" data-q="g">2</span> &nbsp;·&nbsp; η = <span class="gv" data-q="eta">0.1</span> &nbsp;·&nbsp; λ = <span class="gv" data-q="lam">0.01</span> &nbsp;·&nbsp; m₀ = v₀ = 0
     </div>
   </div>
 
-  <!-- BƯỚC 1 — m, v -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mô-men 1 &amp; 2 (chưa hiệu chỉnh)</h2><span class="tag">đà + rung</span></div>
-    <div class="calc">
-      m₁ = (1−0.9)·g = 0.1·<span data-q="g">2</span> = <span class="blk" style="min-width:40px"></span> ;
-      v₁ = (1−0.999)·g² = 0.001·<span data-q="gsq">4</span> = <span class="blk" style="min-width:48px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Hai mô-men (chưa hiệu chỉnh)</h2><span class="tag">m₁, v₁</span></div>
+    <div class="calc big">
+      m₁ = 0.1·<span data-q="g">2</span> = <span class="wcell" style="min-width:40px"></span> &nbsp;·&nbsp;
+      v₁ = 0.001·<span data-q="gsq">4</span> = <span class="wcell" style="min-width:52px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> m là đà gradient, v là độ rung (bình phương) — y hệt Momentum &amp; RMSProp gộp lại.</div>
+    <div class="why"><b>Vì sao:</b> m là đà gradient (D11), v là độ rung bình phương (D12) — y hệt Adam.</div>
   </div>
 
-  <!-- BƯỚC 2 — hiệu chỉnh -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Hiệu chỉnh thiên lệch (t = 1)</h2><span class="tag">chia (1−βᵗ)</span></div>
-    <div class="calc">
-      m̂ = m₁/(1−0.9) = m₁/0.1 = <span class="blk" style="min-width:34px"></span> ;
-      v̂ = v₁/(1−0.999) = v₁/0.001 = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Hiệu chỉnh thiên lệch (t = 1)</h2><span class="tag">÷(1−βᵗ)</span></div>
+    <div class="calc big">
+      m̂ = m₁/0.1 = <span class="wcell" style="min-width:36px"></span> &nbsp;·&nbsp;
+      v̂ = v₁/0.001 = <span class="wcell" style="min-width:36px"></span> &nbsp;·&nbsp;
+      √v̂ = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="hint">Chia (1−βᵗ) "thổi phồng" lại giá trị bị kéo về 0 ở các bước đầu (m, v khởi tạo 0).</div>
+    <div class="hint">Chia (1−βᵗ) khôi phục m̂ = g, v̂ = g² (D13). Bước đầu m̂/√v̂ = ±1.</div>
   </div>
 
-  <!-- BƯỚC 3 — bước Adam -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước Adam</h2><span class="tag">η·m̂/√v̂</span></div>
-    <div class="calc">
-      √v̂ = <span class="blk" style="min-width:30px"></span> ; Δ = η·m̂/√v̂ = <span data-q="eta">0.1</span>·m̂/√v̂ = <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">3</div><h2>Bước Adam (nhánh thích nghi)</h2><span class="tag">Δ = η·m̂/√v̂</span></div>
+    <div class="calc big">
+      Δ = <span data-q="eta">0.1</span>·m̂/√v̂ = <span class="wcell" style="min-width:44px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> bước đầu Adam ≈ η theo <b>dấu</b> gradient (m̂/√v̂ ≈ ±1) — bất kể độ lớn g.</div>
+    <div class="why"><b>Vì sao:</b> bước đầu Adam ≈ η theo <b>dấu</b> gradient (m̂/√v̂ ≈ ±1), bất kể độ lớn g.</div>
   </div>
 
-  <!-- BƯỚC 4 — weight decay -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D14 · AdamW</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>AdamW — decay tách rời, co đều mọi tham số</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D14</span>
+    <h1>AdamW <small>— vì sao trừ thẳng chứ không cộng vào gradient</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — weight decay tách rời -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Weight decay tách rời</h2><span class="tag">−η·λ·w</span></div>
-    <div class="calc">
-      w₁ = w₀ − Δ − η·λ·w₀ = <span data-q="w0">1.0</span> − Δ − <span data-q="eta">0.1</span>·<span data-q="lam">0.01</span>·<span data-q="w0">1.0</span> = <span class="blk" style="min-width:56px"></span>
+    <div class="step-h"><div class="b">4</div><h2>Weight decay tách rời → cập nhật</h2><span class="tag">−η·λ·w</span></div>
+    <div class="calc big">
+      η·λ·w₀ = <span data-q="eta">0.1</span>·<span data-q="lam">0.01</span>·<span data-q="w0">1.0</span> = <span class="wcell" style="min-width:44px"></span><br>
+      w₁ = w₀ − Δ − η·λ·w₀ = <span class="wcell" style="min-width:60px"></span>
     </div>
-    <div class="note">Phần <b>−η·λ·w</b> co trọng số về 0 <b>độc lập</b> với adaptive scale (điểm khác Adam thường, vốn trộn L2 vào gradient).</div>
+    <div class="note">Phần <b>−η·λ·w</b> co trọng số về 0 <b>độc lập</b> với nhánh thích nghi (không chia √v̂).</div>
+  </div>
+
+  <!-- STEP 5 — TỰ KIỂM: decay tách rời co đều -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — cộng vào gradient thì hỏng ở đâu?</h2><span class="tag">tách rời</span></div>
+    <div class="note" style="margin-top:0">
+      Weight decay muốn co <b>mọi</b> trọng số cùng tỉ lệ η·λ. Xem 2 tham số cùng η·λ·w = <b>0.10</b> nhưng khác độ rung √v̂:
+    </div>
+    <div class="calc big">
+      Adam+L2 (λw cộng vào gradient → qua chia √v̂):<br>
+      &nbsp;&nbsp;A (√v̂ = 2): co = 0.10/2 = <span class="wcell" style="min-width:40px"></span> &nbsp;·&nbsp;
+      B (√v̂ = 0.5): co = 0.10/0.5 = <span class="wcell" style="min-width:40px"></span><br>
+      AdamW (trừ thẳng, KHÔNG qua √v̂): cả A &amp; B = <span class="wcell" style="min-width:40px"></span>
+      &nbsp;<small style="color:#7a8794">— co đều hay lệch?</small>
+    </div>
+    <div class="note">Adam+L2: B co mạnh <b>gấp 4×</b> A (decay bị nhánh √v̂ bóp méo theo độ dốc — sai). AdamW trừ thẳng → co <b>đều</b> mọi tham số. Đó là lý do AdamW là chuẩn cho Transformer.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Adam gộp hai kỹ thuật nào? → <span class="blk" style="min-width:150px"></span></li>
-      <li>AdamW khác Adam ở đâu? → <span class="blk" style="min-width:160px"></span></li>
+      <li>AdamW khác Adam ở đâu? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D14 · AdamW</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — trừ hai nhánh ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Một bước AdamW</span>
+    <span><span class="ck"></span>Kiểm decay tách rời</span>
+    <span class="win">🎉 Hết Phần D — bạn nắm trọn bộ optimizer!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D14 · AdamW</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D14</span><h1>AdamW <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D14</span><h1>AdamW <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mô-men 1 &amp; 2</h2></div>
+    <div class="step-h"><div class="b">1</div><h2>Mô-men &amp; hiệu chỉnh</h2></div>
     <div class="calc ans">
-      m₁ = 0.1·<span data-q="g">2</span> = <span class="blk" data-q="m1">0.2</span> ;
-      v₁ = 0.001·<span data-q="gsq">4</span> = <span class="blk" data-q="v1">0.004</span>
+      m₁ = 0.1·<span data-q="g">2</span> = <span class="wcell ans" data-q="m1">0.2</span> · v₁ = 0.001·<span data-q="gsq">4</span> = <span class="wcell ans" data-q="v1">0.004</span> &nbsp;·&nbsp;
+      m̂ = <span class="wcell ans" data-q="mh">2</span> · v̂ = <span class="wcell ans" data-q="vh">4</span> · √v̂ = <span class="wcell ans" data-q="sqvh">2</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Hiệu chỉnh</h2></div>
-    <div class="calc ans">
-      m̂ = <span data-q="m1">0.2</span>/0.1 = <span class="blk" data-q="mh">2</span> ;
-      v̂ = <span data-q="v1">0.004</span>/0.001 = <span class="blk" data-q="vh">4</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước Adam</h2></div>
-    <div class="calc ans">
-      √v̂ = <span class="blk" data-q="sqvh">2</span> ; Δ = <span data-q="eta">0.1</span>·<span data-q="mh">2</span>/<span data-q="sqvh">2</span> = <span class="blk" data-q="delta">0.1</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Weight decay &amp; cập nhật</h2></div>
+    <div class="step-h"><div class="b">3</div><h2>Bước Adam &amp; decay tách rời</h2></div>
     <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 250 130" width="80mm" height="40mm" aria-label="sơ đồ AdamW: g sinh m và v, gộp thành bước Adam; nhánh decay riêng trừ vào w"></svg>
+      <svg id="figA" class="fig" viewBox="0 0 250 128" width="76mm" height="39mm" aria-label="g sinh m và v, gộp thành bước Adam qua nhánh chia căn v; nhánh decay riêng trừ thẳng vào w"></svg>
       <div style="flex:1">
-        <div class="calc ans">w₁ = <span data-q="w0">1.0</span> − <span data-q="delta">0.1</span> − <span data-q="decay">0.001</span> = <span class="blk" data-q="w1">0.899</span></div>
-        <div class="note"><b>Hai nhánh</b>: bước Adam (η·m̂/√v̂) và decay riêng (−η·λ·w). Decay không qua adaptive scale.</div>
+        <div class="calc ans">Δ = <span data-q="eta">0.1</span>·<span data-q="mh">2</span>/<span data-q="sqvh">2</span> = <span class="wcell ans" data-q="delta">0.1</span> &nbsp;·&nbsp; η·λ·w₀ = <span class="wcell ans" data-q="decay">0.001</span><br>w₁ = <span data-q="w0">1.0</span> − <span data-q="delta">0.1</span> − <span data-q="decay">0.001</span> = <span class="wcell ans" data-q="w1">0.899</span></div>
+        <div class="note"><b>Hai nhánh vào w</b>: Δ (cam, qua chia √v̂) và decay (tím, trừ thẳng −η·λ·w). Tách rời nên decay không bị √v̂ bóp méo.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tách rời → co đều mọi tham số</h2><span class="tag">decoupled</span></div>
+    <div class="calc ans">
+      Adam+L2: A = 0.10/2 = <span class="wcell ans" data-q="cA">0.05</span> · B = 0.10/0.5 = <span class="wcell ans" data-q="cB">0.20</span> &nbsp;·&nbsp;
+      AdamW: A &amp; B = <span class="wcell ans" data-q="cW">0.10</span> (đều)
+    </div>
+    <div class="why"><b>Vì sao:</b> cộng λw vào gradient thì decay bị chia √v̂ → B (√v̂ nhỏ) co gấp 4× A. AdamW trừ thẳng → mọi tham số co cùng η·λ.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Adam gộp? → <span class="qa">Momentum (m) + RMSProp (v).</span></li>
-      <li>AdamW khác? → <span class="qa">Weight decay trừ thẳng (−ηλw), tách khỏi gradient.</span></li>
+      <li>Adam gộp? → <span class="qa">Momentum (m) + RMSProp (v) + hiệu chỉnh thiên lệch.</span></li>
+      <li>AdamW khác? → <span class="qa">Weight decay trừ thẳng (−η·λ·w), tách khỏi gradient → co đều.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> AdamW = đà + thích nghi + hiệu chỉnh thiên lệch + decay tách rời; mặc định cho mô hình lớn. Hết Phần D (tối ưu).
-    Sang Phần E — Bài tiếp: khởi tạo trọng số (Xavier/He).
+    <b style="color:var(--accent2)">Rút ra.</b> AdamW = đà + thích nghi + hiệu chỉnh thiên lệch + decay <b>tách rời</b> (co đều) → mặc định cho mô hình lớn (Transformer).
+    <b>Hết Phần D (D1–D14) — bạn đã đi trọn: loss → gradient → backprop → optimizer.</b>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D14 · AdamW</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D14 · AdamW</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
   var ft = WB.fmtTrim;
-  function f3(v){ var s = (Math.round(v*1000)/1000).toString(); return s.replace('-', '−'); }
+  function f3(v){ return (Math.round(v*1000)/1000).toString().replace('-','−'); }
   var w0 = WB.pick([1.0, 2.0]);
   var eta = 0.1, g = WB.pick([2, 3]);
   var lam = WB.pick([0.01, 0.1]);
@@ -176,40 +202,42 @@ function generate(){
   var m1 = 0.1*g, v1 = 0.001*gsq;
   var mh = m1/0.1, vh = v1/0.001;          // = g, g²
   var sqvh = Math.sqrt(vh);                 // = g
-  var delta = Math.round(eta*mh/sqvh*100)/100;   // = eta
+  var delta = Math.round(eta*mh/sqvh*100)/100;   // = η (= 0.1)
   var decay = Math.round(eta*lam*w0*1000)/1000;
   var w1 = Math.round((w0 - delta - decay)*1000)/1000;
 
   WB.setAll({
     w0: ft(w0), eta: ft(eta), g: ft(g), lam: ft(lam), gsq: ft(gsq),
-    m1: ft(m1), v1: f3(v1), mh: ft(mh), vh: ft(vh),
-    sqvh: ft(sqvh), delta: ft(delta), decay: f3(decay), w1: f3(w1)
+    m1: f3(m1), v1: f3(v1), mh: ft(mh), vh: ft(vh), sqvh: ft(sqvh),
+    delta: ft(delta), decay: f3(decay), w1: f3(w1),
+    cA: '0.05', cB: '0.20', cW: '0.10'      // ví dụ tách-rời cố định (η·λ·w = 0.10)
   });
   drawAdamW('figA');
 }
 
-// sơ đồ: g → m, v → bước Adam; nhánh decay riêng → w
+// g → m, v → bước Adam (nhánh cam qua √v̂); nhánh decay tím trừ thẳng vào w
 function drawAdamW(id){
   var svg = document.getElementById(id);
   if (!svg) return;
   function box(x, y, w, h, label, color){
-    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="#fff" stroke="'+color+'" stroke-width="1.6"/>'
-      + '<text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" style="font-size:9px" fill="'+color+'" font-weight="700">'+label+'</text>';
+    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+color+'11" stroke="'+color+'" stroke-width="1.5"/>'
+      + '<text x="'+(x+w/2)+'" y="'+(y+h/2+3.5)+'" text-anchor="middle" style="font-size:8.5px" fill="'+color+'" font-weight="700">'+label+'</text>';
   }
-  function arrow(x1,y1,x2,y2,col){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(col||'#5b6776')+'" stroke-width="1.6" marker-end="url(#aw'+id+')"/>'; }
-  var s = '<defs><marker id="aw'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker></defs>';
-  s += box(8, 50, 34, 22, 'g', '#0e7490');
-  s += box(70, 18, 52, 22, 'm (đà)', '#7c5cff');
-  s += box(70, 78, 52, 22, 'v (rung)', '#0e7490');
-  s += arrow(42, 58, 70, 32) + arrow(42, 64, 70, 88);
-  s += box(150, 48, 56, 24, 'Δ=η·m̂/√v̂', '#b45309');
-  s += arrow(122, 30, 150, 54) + arrow(122, 88, 150, 66);
-  s += box(214, 48, 30, 24, 'w', '#111');
-  s += arrow(206, 60, 214, 60);
-  // nhánh decay riêng
-  s += '<text x="125" y="120" text-anchor="middle" style="font-size:8px" fill="#b45309">nhánh decay riêng: −η·λ·w</text>';
-  s += '<path d="M229,72 Q229,108 130,112" fill="none" stroke="#b45309" stroke-width="1.4" stroke-dasharray="4 3"/>';
-  s += '<path d="M40,112 Q229,108 229,72" fill="none" stroke="#b45309" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#aw'+id+')" opacity="0"/>';
+  var s = '<defs><marker id="aw'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker>'
+        + '<marker id="awd'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c5cff"/></marker></defs>';
+  s += box(8, 44, 30, 22, 'g', '#0e7490');
+  s += box(64, 14, 50, 22, 'm → m̂', '#0e7490');
+  s += box(64, 74, 50, 22, 'v → v̂', '#b45309');
+  s += '<line x1="38" y1="50" x2="63" y2="28" stroke="#5b6776" stroke-width="1.4" marker-end="url(#aw'+id+')"/>';
+  s += '<line x1="38" y1="60" x2="63" y2="82" stroke="#5b6776" stroke-width="1.4" marker-end="url(#aw'+id+')"/>';
+  s += box(138, 44, 58, 24, 'Δ=η·m̂/√v̂', '#b45309');
+  s += '<line x1="114" y1="26" x2="137" y2="50" stroke="#5b6776" stroke-width="1.4" marker-end="url(#aw'+id+')"/>';
+  s += '<line x1="114" y1="84" x2="137" y2="62" stroke="#5b6776" stroke-width="1.4" marker-end="url(#aw'+id+')"/>';
+  s += box(216, 44, 28, 24, 'w', '#111');
+  s += '<line x1="196" y1="56" x2="215" y2="56" stroke="#b45309" stroke-width="1.6" marker-end="url(#aw'+id+')"/>';
+  // nhánh decay riêng (tím, nét đứt) từ w vòng xuống, trừ thẳng
+  s += '<path d="M230,68 L230,108 L120,108" fill="none" stroke="#7c5cff" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#awd'+id+')"/>';
+  s += '<text x="120" y="122" text-anchor="start" style="font-size:8px" fill="#7c5cff" font-weight="700">− η·λ·w (tách rời, không qua √v̂)</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

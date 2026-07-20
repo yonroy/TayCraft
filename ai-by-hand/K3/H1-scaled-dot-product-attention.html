@@ -4,221 +4,442 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài H1 — Scaled Dot-Product Attention (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (2 trang thay vì 4): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách/line-height tại đây. -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.45}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ (A) ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H1</span>
+    <h1>Scaled Dot-Product Attention <small>— chú ý chấm-điểm có tỉ lệ</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~20 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>Q · vào</span>
+      <span><span class="sw" style="background:var(--orange)"></span>K, α · trọng số/đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V · thành phần 3</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H1</span><h1>Scaled Dot-Product Attention <small>— chú ý chấm-điểm có tỉ lệ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Đây là <b>phép tính lõi</b> của mọi Transformer. Mỗi truy vấn (Q) chấm điểm tương đồng với từng khóa (K),
-    chuẩn hóa bằng softmax thành <b>trọng số chú ý</b>, rồi <b>trộn các giá trị (V)</b> theo trọng số đó — cho token lấy thông tin từ token liên quan ở bất kỳ khoảng cách nào.
-    <div class="formula">Attention(Q,K,V) = softmax( Q·Kᵀ / √dₖ ) · V &nbsp;&nbsp;(ở đây dₖ = 4 → √dₖ = 2)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Attention là "quét thư viện": so câu hỏi <b>q</b> với từng nhãn <b>k</b>, đổi độ khớp thành
+    tỉ lệ chú ý <b>α</b> (softmax), rồi <b>trộn nội dung v</b> theo tỉ lệ đó → ra <b>O</b>. Cuối phiếu bạn tự chứng minh:
+    <b>bỏ bước chia √d</b> làm α gần như dồn hết vào một token — vì sao Transformer luôn cần bước "hạ nhiệt" này.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>tra cứu mềm</b>: câu hỏi Q so độ khớp với từng "nhãn" K (tích vô hướng) → softmax biến độ khớp thành <b>trọng số</b> (cộng = 1) →
-    lấy <b>trung bình có trọng số</b> các nội dung V. Chia √dₖ để điểm không quá lớn làm softmax bão hòa.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 query · 2 key/value · dₖ=4</span></div>
-    <div class="calc" style="font-size:14px">
-      q = ( <span class="gv" data-q="q1">2</span>, <span class="gv" data-q="q2">0</span> ) &nbsp;·&nbsp;
-      k₁ = (1, 0), k₂ = (0, 1) &nbsp;·&nbsp;
-      v₁ = ( <span class="gv" data-q="v11">1</span>, <span class="gv" data-q="v12">0</span> ),
-      v₂ = ( <span class="gv" data-q="v21">0</span>, <span class="gv" data-q="v22">1</span> )
-    </div>
-    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
-      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Điểm tương đồng (Q·Kᵀ)</h2><span class="tag">tích vô hướng</span></div>
-    <div class="calc">
-      q·k₁ = <span class="blk" style="min-width:40px"></span> ; &nbsp; q·k₂ = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> tích vô hướng đo "câu hỏi khớp khóa nào" — giống cosine khi chưa chuẩn hóa độ dài.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chia √dₖ</h2><span class="tag">√4 = 2</span></div>
-    <div class="calc">
-      điểm = ( <span data-q="s1">2</span>/2 , <span data-q="s2">0</span>/2 ) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
-    </div>
-    <div class="hint">Chia √dₖ giữ phương sai điểm ổn định khi dₖ lớn → softmax không bão hòa (gradient còn sống).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Softmax → trọng số chú ý α</h2><span class="tag">eˣ / Σeˣ</span></div>
-    <div class="calc">
-      e<sup><span data-q="sc1">1</span></sup> = <span data-q="e1">2.72</span> , e<sup><span data-q="sc2">0</span></sup> = <span data-q="e2">1.00</span> , Σ = <span data-q="Z">3.72</span> →
-      α = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> token khớp hơn nhận chú ý nhiều hơn; tổng α = 1 (do softmax).</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Trộn V → đầu ra</h2><span class="tag">O = α·V</span></div>
-    <div class="calc">
-      O = <span data-q="a1">0.73</span>·(<span data-q="v11">1</span>,<span data-q="v12">0</span>) + <span data-q="a2">0.27</span>·(<span data-q="v21">0</span>,<span data-q="v22">1</span>) = ( <span class="blk" style="min-width:46px"></span>, <span class="blk" style="min-width:46px"></span> )
-    </div>
-    <div class="note">Đầu ra là <b>hỗn hợp</b> thông tin các token, nghiêng về token liên quan nhất.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Vì sao chia √dₖ trước softmax? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Trọng số attention α tổng bằng bao nhiêu? → <span class="blk" style="min-width:50px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H1 · Scaled Dot-Product Attention</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H1</span><h1>Scaled Dot-Product Attention <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Điểm Q·Kᵀ</h2></div>
-    <div class="calc ans">q·k₁ = <span class="blk" data-q="s1">2</span> ; &nbsp; q·k₂ = <span class="blk" data-q="s2">0</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chia √dₖ</h2></div>
-    <div class="calc ans">điểm = ( <span class="blk" data-q="sc1">1</span>, <span class="blk" data-q="sc2">0</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Softmax → α</h2></div>
-    <div class="calc ans">α = ( <span class="blk" data-q="a1">0.73</span>, <span class="blk" data-q="a2">0.27</span> ) &nbsp;<span class="note" style="display:inline">(2.72/3.72 = 0.73)</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Trộn V</h2></div>
-    <div class="calc ans">O = ( <span class="blk" data-q="o1">0.73</span>, <span class="blk" data-q="o2">0.27</span> )</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Tra cứu mềm: Q chú ý vào K/V</h2><span class="tag">độ dày = α</span></div>
-    <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 240 150" width="76mm" height="48mm" aria-label="sơ đồ query chú ý vào hai key value với độ dày cạnh tỉ lệ trọng số alpha"></svg>
-      <div style="flex:1">
-        <div class="note">Cạnh <b>càng dày</b> = α càng lớn → token đó đóng góp nhiều vào đầu ra O. Token khớp hơn (q·k lớn) hút phần lớn chú ý.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">1 query · 2 key/value · d=4</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm"><span>q</span><span>k₁</span><span>k₂</span></div>
+          <div class="mx c2" style="--cw:9.5mm;--ch:6.4mm">
+            <div class="gv" data-q="q1">2</div><div class="gv" data-q="q2">0</div>
+            <div class="pe">1</div><div class="pe">0</div>
+            <div class="pe">0</div><div class="pe">1</div>
+          </div>
+        </div>
+        <div class="cap"><b>q</b> = truy vấn (lam) · <b>k₁,k₂</b> = khóa cố định, trực chuẩn (cam) — chọn vậy để tính tay gọn.
+        d=4 trên lý thuyết, rút gọn 2 chiều để tính tay; <b>√d=2</b> vẫn giữ nguyên vai trò hằng số chia.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm"><span>v₁</span><span>v₂</span></div>
+          <div class="mx c2" style="--cw:9.5mm;--ch:6.4mm">
+            <div class="pv" data-q="v11">1</div><div class="pv" data-q="v12">0</div>
+            <div class="pv" data-q="v21">0</div><div class="pv" data-q="v22">1</div>
+          </div>
+        </div>
+        <div class="cap"><b>v₁,v₂</b> = nội dung (tím) — được trộn theo α ở Bước③.</div>
+        <div style="margin-top:1.6mm;border-top:1px solid var(--line2);padding-top:1.6mm">
+          <div class="mxwrap">
+            <div class="rowlab" style="--ch:5.6mm"><span>x</span><span>eˣ</span></div>
+            <div class="mx c5" style="--cw:8mm;--ch:5.6mm">
+              <div>0</div><div>1</div><div>2</div><div>3</div><div>4</div>
+              <div class="pe">1.00</div><div class="pe">2.72</div><div class="pe">7.39</div><div class="pe">20.09</div><div class="pe">54.60</div>
+            </div>
+          </div>
+          <div class="cap">Bảng tra <b>eˣ</b> — KHÔNG bấm máy tính, đọc thẳng x → eˣ.</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Vì sao chia √dₖ? → <span class="qa">Giữ điểm không quá lớn → softmax không bão hòa, gradient còn sống.</span></li>
-      <li>Tổng α? → <span class="qa">1 (do softmax).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">Q·K → ÷√d → softmax → ·V</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 84" width="100%" height="28mm"
+           aria-label="bốn hộp: q chấm k ra điểm, chia căn d, softmax ra alpha, nhân v ra O — các ô số để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Attention = điểm Q·K (chia √dₖ) → softmax → trộn V; mỗi token lấy thông tin theo độ liên quan.
-    Bài tiếp (H2): <b>self-attention</b> — Q, K, V cùng sinh từ một chuỗi.
+  <!-- ① Q·K & chia √d -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Điểm tương đồng &amp; chia √d</span><span class="f">q·k rồi ÷√d=2</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Khóa</th><th>q · k (tích vô hướng)</th><th>÷ √d = 2</th></tr>
+        <tr><td class="l">k₁ = (1, 0)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">k₂ = (0, 1)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+      </table>
+      <div class="cap">q·k₁ = q₁·1 + q₂·0 &nbsp;·&nbsp; q·k₂ = q₁·0 + q₂·1 — k trực chuẩn nên mỗi tích chỉ còn <b>đúng một số hạng</b>.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H1 · Scaled Dot-Product Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② SOFTMAX -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax — tra bảng eˣ → α</span><span class="f">eˣ ÷ Σeˣ</span></div>
+    <div class="pb">
+      <div class="eq">
+        e<sup>điểm₁</sup> = <span class="slot sm"></span> &nbsp;·&nbsp; e<sup>điểm₂</sup> = <span class="slot sm"></span><br>
+        Σ = e<sup>điểm₁</sup> + e<sup>điểm₂</sup> = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span><br>
+        α₁ = e<sup>điểm₁</sup> ÷ Σ = <span class="slot sm"></span> ÷ <span class="slot sm"></span> = <span class="slot"></span>
+        &nbsp;&nbsp; α₂ = e<sup>điểm₂</sup> ÷ Σ = <span class="slot sm"></span> ÷ <span class="slot sm"></span> = <span class="slot"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>α₁</th><th>α₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_a1"></div></td><td><div class="track uni" id="t_a2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>0 … 1</b> · α₁+α₂ luôn = 1 (softmax chuẩn hóa).</div>
+    </div>
+  </div>
+
+  <!-- ③ TRỘN V -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Trộn V → đầu ra O</span><span class="f">O = α₁v₁ + α₂v₂</span></div>
+    <div class="pb">
+      <div class="eq">
+        O₁ = α₁·v₁ₓ + α₂·v₂ₓ = <span class="slot sm"></span>·<span data-q="v11" style="color:var(--purple);font-weight:800">1</span> + <span class="slot sm"></span>·<span data-q="v21" style="color:var(--purple);font-weight:800">0</span> = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span><br>
+        O₂ = α₁·v₁ᵧ + α₂·v₂ᵧ = <span class="slot sm"></span>·<span data-q="v12" style="color:var(--purple);font-weight:800">0</span> + <span class="slot sm"></span>·<span data-q="v22" style="color:var(--purple);font-weight:800">1</span> = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>O₁</th><th>O₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_o1"></div></td><td><div class="track uni" id="t_o2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>0 … 3</b> (v₁,v₂ ∈ [0,3] nên O cũng nằm trong khoảng này — trung bình có trọng số của v).</div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — vì sao PHẢI chia √d</span><span class="f">bỏ Bước② → tra bảng ngay tại điểm thô</span></div>
+    <div class="pb">
+      <div class="eq">
+        Giả sử <b>BỎ QUA</b> bước chia √d — tra bảng eˣ <b>thẳng tại điểm thô</b> q·k (Bước①, chưa chia):<br>
+        e<sup>q·k₁</sup> = <span class="slot sm"></span> &nbsp;·&nbsp; e<sup>q·k₂</sup> = <span class="slot sm"></span> &nbsp;·&nbsp; Σ' = <span class="slot sm"></span><br>
+        α'₁ = <span class="slot sm"></span> &nbsp;&nbsp; α'₂ = <span class="slot sm"></span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">CÓ CHIA √d (Bước②③)</div>
+          <table>
+            <tr><td class="l">α₁</td><td><div class="track uni" id="t_c1"></div></td></tr>
+            <tr><td class="l">α₂</td><td><div class="track uni" id="t_c2"></div></td></tr>
+          </table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">KHÔNG CHIA (α' ở trên)</div>
+          <table>
+            <tr><td class="l">α'₁</td><td><div class="track uni" id="t_u1"></div></td></tr>
+            <tr><td class="l">α'₂</td><td><div class="track uni" id="t_u2"></div></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="cap">Thang thanh: <b>0 … 1</b> · so 2 cột: thanh nào <b>nhọn hẳn</b> (gần đầy một bên, gần rỗng bên kia)?
+        Vì sao Transformer luôn cần bước chia này khi d lớn? <span class="slot" style="min-width:70mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:13mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Ra α &amp; tô thanh</span>
+    <span><span class="ck"></span>Trộn V ra O &amp; tô thanh</span>
+    <span><span class="ck"></span>Chứng minh √d chống bão hòa</span>
+    <span class="win">🎉 Bạn vừa làm phép tính lõi của mọi Transformer!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H1 · Scaled Dot-Product Attention</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H1</span>
+    <h1>Scaled Dot-Product Attention <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>Q · vào</span>
+      <span><span class="sw" style="background:var(--orange)"></span>K, α · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V · thành phần 3</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">Q·K → ÷√d → softmax → ·V → O</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 84" width="100%" height="28mm" aria-label="sơ đồ bốn hộp đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Điểm tương đồng &amp; chia √d</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Khóa</th><th>q · k</th><th>÷ √d = 2</th></tr>
+        <tr><td class="l">k₁ = (1, 0)</td><td><span class="cellb ans" data-q="s1">2</span></td><td><span class="cellb ans" data-q="sc1">1</span></td></tr>
+        <tr><td class="l">k₂ = (0, 1)</td><td><span class="cellb ans" data-q="s2">0</span></td><td><span class="cellb ans" data-q="sc2">0</span></td></tr>
+      </table>
+      <div class="why"><b>Vì sao rẻ:</b> k trực chuẩn (mỗi k chỉ có một tọa độ = 1) nên q·k = <b>đúng tọa độ tương ứng của q</b> — nhân-cộng đủ 2 số hạng nhưng một số hạng luôn triệt tiêu vì nhân với 0.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax → α</span></div>
+    <div class="pb">
+      <div class="eq">
+        e<sup>điểm₁</sup> = <span class="slot ans sm" data-q="e1">2.72</span> &nbsp;·&nbsp; e<sup>điểm₂</sup> = <span class="slot ans sm" data-q="e2">1.00</span><br>
+        Σ = <span class="slot ans sm" data-q="e1">2.72</span> + <span class="slot ans sm" data-q="e2">1.00</span> = <span class="slot ans" data-q="Z">3.72</span><br>
+        α₁ = <span class="slot ans sm" data-q="e1">2.72</span> ÷ <span class="slot ans sm" data-q="Z">3.72</span> = <span class="slot ans" data-q="al1">0.73</span>
+        &nbsp;&nbsp; α₂ = <span class="slot ans sm" data-q="e2">1.00</span> ÷ <span class="slot ans sm" data-q="Z">3.72</span> = <span class="slot ans" data-q="al2">0.27</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>α₁</th><th>α₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_a1"></div></td><td><div class="track uni" id="a_a2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao eˣ rồi chia tổng:</b> eˣ luôn dương &amp; giãn khoảng cách (điểm càng cao càng vượt trội) — chia tổng ép mọi giá trị về (0,1) và cộng đúng 1 → đọc thẳng như "% chú ý".</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Trộn V → O</span></div>
+    <div class="pb">
+      <div class="eq">
+        O₁ = <span class="slot ans sm" data-q="al1">0.73</span>·<span data-q="v11" style="color:var(--purple);font-weight:800">1</span> + <span class="slot ans sm" data-q="al2">0.27</span>·<span data-q="v21" style="color:var(--purple);font-weight:800">0</span> = <span class="slot ans" data-q="O1">0.73</span><br>
+        O₂ = <span class="slot ans sm" data-q="al1">0.73</span>·<span data-q="v12" style="color:var(--purple);font-weight:800">0</span> + <span class="slot ans sm" data-q="al2">0.27</span>·<span data-q="v22" style="color:var(--purple);font-weight:800">1</span> = <span class="slot ans" data-q="O2">0.27</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>O₁</th><th>O₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_o1"></div></td><td><div class="track uni" id="a_o2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao là "trung bình có trọng số":</b> α₁+α₂=1 nên O luôn nằm <b>trên đoạn nối v₁,v₂</b>, không bao giờ ra ngoài — attention không "chọn cứng" một token (khác argmax), mà trộn mềm theo mức liên quan.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — vì sao PHẢI chia √d</span></div>
+    <div class="pb">
+      <div class="eq">
+        e<sup>q·k₁</sup> = <span class="slot ans sm" data-q="eu1">7.39</span> &nbsp;·&nbsp; e<sup>q·k₂</sup> = <span class="slot ans sm" data-q="eu2">1.00</span> &nbsp;·&nbsp; Σ' = <span class="slot ans sm" data-q="Zu">8.39</span><br>
+        α'₁ = <span class="slot ans sm" data-q="bl1">0.88</span> &nbsp;&nbsp; α'₂ = <span class="slot ans sm" data-q="bl2">0.12</span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">CÓ CHIA √d</div>
+          <table>
+            <tr><td class="l">α₁</td><td><div class="track uni" id="a_c1"></div></td></tr>
+            <tr><td class="l">α₂</td><td><div class="track uni" id="a_c2"></div></td></tr>
+          </table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">KHÔNG CHIA</div>
+          <table>
+            <tr><td class="l">α'₁</td><td><div class="track uni" id="a_u1"></div></td></tr>
+            <tr><td class="l">α'₂</td><td><div class="track uni" id="a_u2"></div></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> KHÔNG chia làm thanh <b>α' nhọn hẳn</b> so với α — softmax gần như dồn 100% vào một token
+      (<b>bão hòa</b>). Điểm dot-product lớn dần theo số chiều d (tổng d số hạng), nên không "hạ nhiệt" bằng √d thì d càng lớn softmax càng cực đoan
+      và <b>gradient qua softmax gần như bằng 0</b> — mạng ngừng học dù hướng q·k vẫn đúng. √d chính là <b>bộ điều nhiệt</b> giữ softmax mềm mại, dùng được với mọi d.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi tính attention</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Bỏ chia √d vì kết quả vẫn đúng hướng."</b><br>
+          <span style="color:var(--dim)">Hướng đúng nhưng α bị <b>bão hòa</b> (gần 0/1) → gradient qua softmax ≈ 0 → mạng <b>ngừng học</b>, dù q·k không đổi hướng. Bước④ vừa chứng minh bằng số.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Chia cho d thay vì √d."</b><br>
+          <span style="color:var(--dim)">q·k là tổng d số hạng độc lập → phương sai điểm ∝ d. Chia <b>√d</b> mới đưa phương sai điểm về đúng cỡ ổn định; chia hẳn d làm điểm quá nhỏ, cũng mất tín hiệu.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "α₁+α₂ lệch 1 do em tính sai."</b><br>
+          <span style="color:var(--dim)">Định nghĩa softmax luôn ép tổng đúng <b>1</b> trước khi làm tròn; lệch nhỏ khi thấy là do <b>làm tròn 2 chữ số</b>, không phải lỗi tính.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "O là v của token điểm cao nhất (argmax)."</b><br>
+          <span style="color:var(--dim)">O = <b>tổ hợp lồi</b> (trung bình có trọng số) của <b>mọi</b> v theo α, không "chọn cứng" một token — đây là khác biệt cốt lõi giữa attention (mềm) và argmax (cứng).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Attention = so khớp <b>Q·K</b>, <b>chia √d</b> để giữ softmax mềm mại (không bão hòa dù d lớn), rồi <b>trộn V</b> theo tỉ lệ α — mỗi token
+    lấy thông tin theo mức liên quan, không "chọn cứng" một token nào. Bài tiếp theo <b>H2 (self-attention)</b>: Q, K, V cùng sinh từ một chuỗi, để mỗi
+    token "nhìn" các token khác trong chính câu của nó.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H1 · Scaled Dot-Product Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var EXP = {0:1, 1:2.72, 2:7.39};
+// Bảng eˣ mở rộng (0..4) — scaled score luôn rơi {0,a}(a∈{1,2}); điểm THÔ (không chia) rơi {0,2a}.
+var EXP = {0:1, 1:2.72, 2:7.39, 3:20.09, 4:54.60};
+var S = {};
+
 function generate(){
-  var f2 = WB.fmt2;
-  var a = WB.pick([1,2]);            // điểm trội sau khi /√d (rơi mốc bảng eˣ)
-  var dom = WB.pick([0,1]);          // q nghiêng về k₁ hay k₂
+  var f2 = WB.fmt2, fI = WB.fmtInt;
+  var a = WB.pick([1,2]);            // độ trội của q (sau /√d rơi đúng mốc bảng eˣ)
+  var dom = WB.pick([0,1]);          // q nghiêng về k1 (0) hay k2 (1)
   var q = dom===0 ? [2*a,0] : [0,2*a];
   var k1=[1,0], k2=[0,1];
   var s1 = q[0]*k1[0]+q[1]*k1[1];
   var s2 = q[0]*k2[0]+q[1]*k2[1];
   var sc1 = s1/2, sc2 = s2/2;
+
   var e1 = EXP[sc1], e2 = EXP[sc2];
   var Z = Math.round((e1+e2)*100)/100;
-  var al1 = Math.round(e1/(e1+e2)*100)/100;
-  var al2 = Math.round((1-al1)*100)/100;
+  var al1r = e1/(e1+e2);
+  var al1 = Math.round(al1r*100)/100;
+  var al2 = Math.round((1-al1r)*100)/100;
+
   var v1 = [WB.randInt(0,3), WB.randInt(0,3)];
   var v2 = [WB.randInt(0,3), WB.randInt(0,3)];
-  var o1 = Math.round((al1*v1[0]+al2*v2[0])*100)/100;
-  var o2 = Math.round((al1*v1[1]+al2*v2[1])*100)/100;
+  var O1 = Math.round((al1*v1[0]+al2*v2[0])*100)/100;
+  var O2 = Math.round((al1*v1[1]+al2*v2[1])*100)/100;
+
+  // Tự kiểm ④: BỎ bước chia — tra bảng eˣ thẳng tại điểm thô s1,s2 (Bước①, chưa chia).
+  var eu1 = EXP[s1], eu2 = EXP[s2];
+  var Zu = Math.round((eu1+eu2)*100)/100;
+  var bl1r = eu1/(eu1+eu2);
+  var bl1 = Math.round(bl1r*100)/100;
+  var bl2 = Math.round((1-bl1r)*100)/100;
+
+  S = {q:q,k1:k1,k2:k2,s1:s1,s2:s2,sc1:sc1,sc2:sc2,e1:e1,e2:e2,Z:Z,al1:al1,al2:al2,
+       v1:v1,v2:v2,O1:O1,O2:O2,eu1:eu1,eu2:eu2,Zu:Zu,bl1:bl1,bl2:bl2};
 
   WB.setAll({
-    q1: String(q[0]), q2: String(q[1]),
-    v11: String(v1[0]), v12: String(v1[1]), v21: String(v2[0]), v22: String(v2[1]),
-    s1: String(s1), s2: String(s2),
-    sc1: String(sc1), sc2: String(sc2),
+    q1: fI(q[0]), q2: fI(q[1]),
+    v11: fI(v1[0]), v12: fI(v1[1]), v21: fI(v2[0]), v22: fI(v2[1]),
+    s1: fI(s1), s2: fI(s2),
+    sc1: fI(sc1), sc2: fI(sc2),
     e1: f2(e1), e2: f2(e2), Z: f2(Z),
-    a1: f2(al1), a2: f2(al2),
-    o1: f2(o1), o2: f2(o2)
+    al1: f2(al1), al2: f2(al2),
+    O1: f2(O1), O2: f2(O2),
+    eu1: f2(eu1), eu2: f2(eu2), Zu: f2(Zu),
+    bl1: f2(bl1), bl2: f2(bl2)
   });
-  drawAttn('figA', al1, al2);
+
+  // ĐỀ: thanh trống (chỉ vạch mốc). ĐÁP ÁN: tô đầy.
+  drawBarUni('t_a1', 0, 1, false); drawBarUni('t_a2', 0, 1, false);
+  drawBarUni('a_a1', al1, 1, true); drawBarUni('a_a2', al2, 1, true);
+  drawBarUni('t_o1', 0, 3, false); drawBarUni('t_o2', 0, 3, false);
+  drawBarUni('a_o1', O1, 3, true); drawBarUni('a_o2', O2, 3, true);
+  drawBarUni('t_c1', 0, 1, false); drawBarUni('t_c2', 0, 1, false);
+  drawBarUni('t_u1', 0, 1, false); drawBarUni('t_u2', 0, 1, false);
+  drawBarUni('a_c1', al1, 1, true); drawBarUni('a_c2', al2, 1, true);
+  drawBarUni('a_u1', bl1, 1, true); drawBarUni('a_u2', bl2, 1, true);
+
+  drawPipe('figQ', false);
+  drawPipe('figA', true);
 }
 
-function drawAttn(id, a1, a2){
-  var svg = document.getElementById(id); if(!svg) return;
-  var qx=34, qy=75, kx=196, ky1=40, ky2=110;
-  function node(x,y,txt,col){
-    return '<circle cx="'+x+'" cy="'+y+'" r="17" fill="'+col+'22" stroke="'+col+'" stroke-width="1.6"/>'+
-           '<text x="'+x+'" y="'+(y+3.5)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+col+'">'+txt+'</text>';
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho α, O (chỉ dương).
+// fill=false → chỉ vạch mốc, chừa trống cho người học tô bút chì (ĐỀ).
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v>0){
+    var pct = Math.min(v/max,1)*100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
   }
-  function edge(x1,y1,x2,y2,w,lab,lx,ly){
-    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#7c5cff" stroke-width="'+w+'" opacity="0.75"/>'+
-           '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" font-size="9" font-weight="700" fill="#7c5cff">α='+WB.fmt2(lab)+'</text>';
-  }
-  var s='';
-  s += edge(qx+17,qy-6,kx-17,ky1, 1+a1*9, a1, 120, ky1-6);
-  s += edge(qx+17,qy+6,kx-17,ky2, 1+a2*9, a2, 120, ky2+14);
-  s += node(qx,qy,'Q','#0e7490');
-  s += node(kx,ky1,'k₁v₁','#b45309');
-  s += node(kx,ky2,'k₂v₂','#b45309');
-  s += '<text x="'+qx+'" y="'+(qy+32)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">truy vấn</text>';
-  svg.innerHTML = s;
+  el.innerHTML=h;
 }
+
+// Hộp giá trị của sơ đồ: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var stroke = filled?ORG:INK, fill=filled?'#fff8f0':'#fff';
+  var dash = filled?'':' stroke-dasharray="3 2"';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(filled?1.2:1.4)+'"'+dash+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ luồng 4 hộp: Q·K → ÷√d → softmax → ·V. showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawPipe(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2, fI=WB.fmtInt, DIM='#6b7280', INK='#16202e';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+  var stages=[
+    {x:4,  w:122, title:'① Q·K',      rows:[['q·k₁', fI(S.s1)], ['q·k₂', fI(S.s2)]]},
+    {x:142,w:122, title:'② ÷√d=2',    rows:[['điểm₁', fI(S.sc1)], ['điểm₂', fI(S.sc2)]]},
+    {x:280,w:130, title:'③ softmax',  rows:[['α₁', f2(S.al1)], ['α₂', f2(S.al2)]]},
+    {x:426,w:122, title:'④ ·V → O',   rows:[['O₁', f2(S.O1)], ['O₂', f2(S.O2)]]}
+  ];
+  stages.forEach(function(st,i){
+    s+='<text x="'+(st.x+st.w/2)+'" y="14" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">'+st.title+'</text>';
+    st.rows.forEach(function(r,ri){
+      var ry = 26 + ri*27;
+      s+='<text x="'+(st.x+4)+'" y="'+(ry+11)+'" font-size="7.6" fill="'+DIM+'">'+r[0]+'</text>';
+      s+=stageBox(st.x+st.w-46, ry, 44, 18, r[1], showAns);
+    });
+    if(i<stages.length-1){
+      var ax1=st.x+st.w+1, ax2=stages[i+1].x-1, ay=44;
+      s+='<line x1="'+ax1+'" y1="'+ay+'" x2="'+ax2+'" y2="'+ay+'" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+    }
+  });
+  svg.innerHTML=s;
+}
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

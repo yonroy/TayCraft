@@ -3,19 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài A13 — Quy tắc chuỗi (A4 in được)</title>
+<title>Làm toán AI · Bài A13 — Quy tắc chuỗi (bản hiểu rõ, A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css; template HIỂU RÕ: hình-trên-đề + chùm câu hỏi -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:8px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cx{background:#0e7490;}.cu2{background:#7c5cff;}.cy{background:#b45309;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.02em;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -23,205 +37,316 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A · <b>bản hiểu rõ</b></div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A13</span><h1>Quy tắc chuỗi <small>— Chain rule</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mạng nơ-ron là <b>hàm lồng hàm lồng hàm…</b> Muốn biết loss đổi thế nào theo một trọng số ở lớp sâu,
-    ta <b>nhân các đạo hàm dọc chuỗi</b>. Quy tắc chuỗi chính là cơ chế backpropagation.
-    <div class="formula">
-      y = f(u), &nbsp; u = g(x) &nbsp;⇒&nbsp; dy/dx = (dy/du) · (du/dx)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài A13</span>
+    <h1>Quy tắc chuỗi <small>— dây chuyền bánh răng của backprop</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Chuỗi hàm như <b>dây chuyền bánh răng</b>: bánh x quay làm bánh u quay, bánh u quay làm bánh y quay. Tốc độ y theo x =
-    <b>tích</b> các tỉ số truyền của từng khâu. Nhiều khâu thì cứ nhân tiếp.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mạng nơ-ron là <b>máy lồng trong máy</b>: x chui qua máy 1 thành u, u chui qua máy 2 thành y.
+    Bạn sẽ chạy dây chuyền <b>xuôi</b>, đo <b>tỉ số truyền</b> của từng máy, rồi <b>nhân dồn</b> để biết "lay x một chút thì y rung bao nhiêu".
+    Phần thưởng: <b>dự đoán trước</b> Δy rồi thấy nó đúng — chính là một bước backprop.
+    <div class="legend">Mã màu: <b class="cx">x</b> đầu vào (lam) · <b class="cu2">u</b> trạm giữa (tím) · <b class="cy">y</b> đầu ra (cam)</div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn hàm lồng</h2><span class="tag">y(u(x))</span></div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn hai cỗ máy</h2><span class="tag">y(u(x))</span></div>
     <div class="calc" style="font-size:15px">
-      y = u² &nbsp;,&nbsp; u = <span data-q="a">3</span>x <span data-q="bs">+ 1</span> &nbsp;;&nbsp; xét tại x = <span data-q="x0">1</span>
+      máy 1: u = <span data-q="a">3</span>x <span data-q="bs">+ 1</span> &nbsp;·&nbsp; máy 2: y = u² &nbsp;·&nbsp; đầu vào x = <span class="gv" data-q="x0">1</span>
     </div>
-    <div class="note">Lớp ngoài: bình phương. Lớp trong: hàm tuyến tính. Cần dy/dx tại điểm đã cho.</div>
+    <div class="note">Quy tắc chuỗi: dy/dx = (dy/du)·(du/dx) — tốc độ tổng = <b>tích</b> các tỉ số truyền.</div>
   </div>
 
-  <!-- BƯỚC 1 — đạo hàm ngoài -->
+  <!-- CỤM 1 — CHẠY XUÔI -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Đạo hàm lớp ngoài dy/du</h2><span class="tag">coi u là biến</span></div>
-    <div class="calc">
-      y = u² → dy/du = <span class="blk" style="min-width:40px"></span> (tổng quát)<br>
-      u(<span data-q="x0">1</span>) = <span data-q="a">3</span>·<span data-q="x0">1</span> <span data-q="bs">+ 1</span> = <span class="blk" style="min-width:34px"></span>
-      → dy/du = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Chạy dây chuyền xuôi — điền 2 trạm</h2><span class="tag">forward</span></div>
+    <div class="figwrap">
+      <svg id="figFlow" class="fig" viewBox="0 0 300 92" width="94mm" height="29mm" aria-label="x qua máy 1 ra u, qua máy 2 ra y; hai ô u và y để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> x = <span data-q="x0">1</span> chui qua <b>máy 1</b> (nhân <span data-q="a">3</span>, cộng <span data-q="b">1</span>) thành u,
+        rồi u chui qua <b>máy 2</b> (bình phương) thành y. Điền hai trạm ✍ trên hình.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> tạm coi u là biến, đạo hàm lớp ngoài trước — đúng tinh thần "từ ngoài vào trong".</div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — chạy xuôi</span><br>
+      u = <span data-q="a">3</span>·<span data-q="x0">1</span> <span data-q="bs">+ 1</span> = <span class="blk"></span>
+      &nbsp;→&nbsp; y = u² = ( <span class="blk"></span> )² = <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Muốn có y phải đi qua trạm nào trước? Có đường nào cho x tới thẳng y không? → <span class="blk" style="min-width:90px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Cấu trúc "ra của máy này = vào của máy kia" được gọi là gì? → <span class="blk" style="min-width:90px"></span></li>
+    </ul>
   </div>
 
-  <!-- BƯỚC 2 — đạo hàm trong -->
+  <!-- CỤM 2 — TỈ SỐ TRUYỀN TỪNG KHÂU -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Đạo hàm lớp trong du/dx</h2><span class="tag">tuyến tính</span></div>
-    <div class="calc">
-      u = <span data-q="a">3</span>x <span data-q="bs">+ 1</span> → du/dx = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Đo tỉ số truyền của TỪNG máy — điền lên 2 mũi tên</h2><span class="tag">đạo hàm cục bộ</span></div>
+    <div class="figwrap">
+      <svg id="figGears" class="fig" viewBox="0 0 300 100" width="94mm" height="31mm" aria-label="hai mũi tên x sang u, u sang y; mỗi mũi tên một ô trống tỉ số truyền"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mỗi mũi tên có một <b>tỉ số truyền</b> riêng — lay đầu này 1 đơn vị thì đầu kia rung bấy nhiêu.
+        Máy 1 tuyến tính nên tỉ số <b>cố định</b>; máy 2 (u²) thì tỉ số <b>phụ thuộc chỗ đang đứng</b> (u). Điền 2 ô ✍.</div>
     </div>
-    <div class="hint">Hàm bậc nhất có độ dốc <b>hằng</b> = hệ số của x.</div>
-  </div>
-
-  <!-- BƯỚC 3 — nhân lại -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Nhân lại</h2><span class="tag">tích các khâu</span></div>
-    <div class="calc">
-      dy/dx = (dy/du)·(du/dx) = <span data-q="dydu">8</span> · <span data-q="dudx">3</span> = <span class="blk" style="min-width:42px"></span>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — đạo hàm từng khâu</span> <span class="sub">(u lấy từ Cụm 1)</span><br>
+      du/dx = hệ số của x = <span class="blk"></span> &nbsp;·&nbsp;
+      dy/du = 2u = 2·<span class="blk"></span> = <span class="blk"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> nhân vì ảnh hưởng <b>truyền nối tiếp</b> — x lay u, u lay y; tổng hiệu ứng là tích.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Khâu nào đang khuếch đại mạnh hơn (tỉ số lớn hơn)? → <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu u lớn gấp đôi thì dy/du = 2u đổi thế nào? Còn du/dx có đổi không? → <span class="blk" style="min-width:120px"></span></li>
+    </ul>
   </div>
 
-  <!-- BƯỚC 4 — kiểm bằng khai triển -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Kiểm bằng khai triển</h2><span class="tag">xác nhận</span></div>
-    <div class="calc">
-      y = (<span data-q="a">3</span>x <span data-q="bs">+ 1</span>)² → y' = 2(<span data-q="a">3</span>x <span data-q="bs">+ 1</span>)·<span data-q="a">3</span>;
-      tại x = <span data-q="x0">1</span>: = <span class="blk" style="min-width:42px"></span>
-    </div>
-    <div class="note">Trong backprop, đây là "<b>δ của lớp trên × đạo hàm cục bộ</b>" lan ngược từng lớp.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Vì sao backprop chính là quy tắc chuỗi? → <span class="blk" style="min-width:160px"></span></li>
-      <li>dy/dx ghép hai khâu bằng phép gì? → <span class="blk" style="min-width:90px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A13 · Quy tắc chuỗi</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A13 · Quy tắc chuỗi (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần A<br>Mức: nhập môn · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A13</span><h1>Quy tắc chuỗi <small>— nhân dồn &amp; thí nghiệm lay thử</small></h1></div>
+
+  <!-- CỤM 3 — NHÂN DỒN + THÍ NGHIỆM -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Nhân dồn hai khâu → dy/dx, rồi LAY THỬ x</h2><span class="tag">phần thưởng</span></div>
+    <div class="figwrap">
+      <svg id="figTotal" class="fig" viewBox="0 0 300 96" width="94mm" height="30mm" aria-label="mũi tên tổng từ x tới y với ô trống dy/dx bằng tích hai tỉ số"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> gộp cả dây chuyền thành <b>một</b> mũi tên tổng x → y. Tỉ số của nó = <b>tích</b> hai tỉ số thành phần
+        (truyền nối tiếp thì nhân, không cộng). Điền ô ✍ to.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — nhân dồn rồi lay thử Δx = 0.1</span><br>
+      dy/dx = (du/dx)·(dy/du) = <span class="blk"></span> · <span class="blk"></span> = <span class="blk"></span><br>
+      lay x thêm 0.1 → dự đoán Δy ≈ dy/dx · 0.1 = <span class="blk"></span><br>
+      kiểm bằng khai triển: y' = 2(<span data-q="a">3</span>x <span data-q="bs">+ 1</span>)·<span data-q="a">3</span> tại x = <span data-q="x0">1</span>:
+      2·<span class="blk"></span>·<span data-q="a">3</span> = <span class="blk"></span> — khớp? <span class="blk" style="min-width:34px"></span><br>
+      <span class="ttl">kiểm SỐ THẬT</span> — lay hẳn Δx = 1: Δy = y(x₀+1) − y(x₀) = <span class="blk"></span> ;
+      dự đoán dy/dx·1 = <span class="blk"></span> → chênh = <span class="blk"></span> <span class="sub">(= a², phần cong bậc hai)</span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao hai tỉ số phải <b>nhân</b> chứ không cộng? (x lay u, rồi u lay y — hiệu ứng gì?) → <span class="blk" style="min-width:140px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu một khâu có tỉ số = 0 thì dy/dx = ? Lay x còn ảnh hưởng y không? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 4 — NỐI BACKPROP -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Toàn cảnh — chuỗi dài hơn = backprop</h2><span class="tag">mạng nhiều lớp</span></div>
+    <div style="text-align:center;margin-top:4px">
+      <svg id="figBP" class="fig" viewBox="0 0 460 74" width="150mm" height="24mm" aria-label="chuỗi w qua lớp 1, lớp 2 tới loss; gradient lan ngược bằng cách nhân các đạo hàm cục bộ"></svg>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-pred">Dự đoán</span> Chuỗi 3 khâu w → z → h → loss thì d(loss)/dw = tích của mấy tỉ số? → <span class="blk" style="min-width:60px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Backprop đi <b>từ loss ngược về w</b>, nhân dần từng đạo hàm cục bộ. Vì sao người ta gọi nó là "lan truyền ngược" của quy tắc chuỗi? → <span class="blk" style="min-width:150px"></span></li>
+    </ul>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — nhân dồn &amp; lay thử ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Chạy xuôi u, y</span>
+    <span><span class="ck"></span>2 tỉ số truyền</span>
+    <span><span class="ck"></span>Nhân dồn + lay thử Δy</span>
+    <span class="win">🎉 Bạn vừa chạy một bước backprop bằng tay!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A13 · Quy tắc chuỗi (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài A13</span><h1>Quy tắc chuỗi <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài A13</span><h1>Quy tắc chuỗi <small>— đáp số gọn + cốt lõi</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>dy/du</h2></div>
-    <div class="calc ans">
-      y = u² → dy/du = <span class="blk" data-q="dydu_g">2u</span><br>
-      u(<span data-q="x0">1</span>) = <span data-q="a">3</span>·<span data-q="x0">1</span> <span data-q="bs">+ 1</span> = <span class="blk" data-q="uval">4</span>
-      → dy/du = 2·<span data-q="uval">4</span> = <span class="blk" data-q="dydu">8</span>
-    </div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Chạy xuôi</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tự tính</span> u = <span class="wcell ans" data-q="uval">4</span> &nbsp;·&nbsp; y = u² = <span class="wcell ans" data-q="yval">16</span></li>
+      <li><span class="lab">Quan sát</span> Phải qua trạm u trước; không có đường tắt x → y.</li>
+      <li><span class="lab">Vì sao</span> Hàm <b>lồng nhau</b> (hợp thành): y = f(g(x)).</li>
+    </ul>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>du/dx</h2></div>
-    <div class="calc ans">
-      u = <span data-q="a">3</span>x <span data-q="bs">+ 1</span> → du/dx = <span class="blk" data-q="dudx">3</span>
-    </div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Tỉ số từng khâu</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tự tính</span> du/dx = <span class="mono" data-q="dudx">3</span> (cố định) &nbsp;·&nbsp; dy/du = 2·<span class="mono" data-q="uval">4</span> = <span class="mono" data-q="dydu">8</span> (phụ thuộc u).</li>
+      <li><span class="lab">Quan sát</span> Khâu <span class="mono" data-q="bigger">u → y</span> đang khuếch đại mạnh hơn.</li>
+      <li><span class="lab">Dự đoán</span> u gấp đôi → dy/du gấp đôi; du/dx là hằng số, không đổi.</li>
+    </ul>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Nhân lại</h2></div>
-    <div class="calc ans">
-      dy/dx = <span data-q="dydu">8</span> · <span data-q="dudx">3</span> = <span class="blk" data-q="dydx">24</span>
-    </div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Nhân dồn &amp; lay thử</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tự tính</span> dy/dx = <span class="mono" data-q="dudx">3</span>·<span class="mono" data-q="dydu">8</span> = <span class="wcell ans" data-q="dydx">24</span> &nbsp;·&nbsp; Δy ≈ <span class="mono" data-q="dydx">24</span>·0.1 = <span class="mono" data-q="dy01">2.4</span></li>
+      <li><span class="lab">Kiểm</span> Khai triển: 2·<span class="mono" data-q="uval">4</span>·<span class="mono" data-q="a">3</span> = <span class="mono" data-q="dydx">24</span> ✓ khớp.</li>
+      <li><span class="lab">Kiểm số thật</span> Δy(1) = <span class="mono" data-q="yx1">25</span> − <span class="mono" data-q="yx0">16</span> = <span class="mono" data-q="dyAct">9</span>; dự đoán dy/dx = <span class="mono" data-q="dydx">24</span>; chênh = <span class="mono" data-q="gapNum">1</span> = a² (phần cong).</li>
+      <li><span class="lab">Vì sao</span> Hiệu ứng <b>truyền nối tiếp</b>: x lay u (×du/dx), u lay y (×dy/du) → nhân.</li>
+      <li><span class="lab">Dự đoán</span> Một khâu = 0 → dy/dx = 0; lay x không còn tới được y (gradient chết).</li>
+    </ul>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Khai triển kiểm tra</h2></div>
-    <div class="calc ans">
-      y' = 2(<span data-q="a">3</span>x <span data-q="bs">+ 1</span>)·<span data-q="a">3</span>; tại x = <span data-q="x0">1</span>:
-      = 2·<span data-q="uval">4</span>·<span data-q="a">3</span> = <span class="blk" data-q="dydx">24</span> ✓ (khớp)
-    </div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: dây chuyền bánh răng x → u → y</h2><span class="tag">tích tỉ số</span></div>
-    <div class="figrow">
-      <svg id="figC" class="fig" viewBox="0 0 300 120" width="92mm" height="37mm" aria-label="ba khâu x sang u sang y, nhân hai tỉ số truyền"></svg>
-      <div style="flex:1">
-        <div class="note">Mỗi mũi tên là một "tỉ số truyền": x→u là <b>du/dx = <span data-q="dudx">3</span></b>, u→y là <b>dy/du = <span data-q="dydu">8</span></b>.
-          Tốc độ tổng = <b>tích</b> = <span data-q="dydx">24</span>.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Backprop = quy tắc chuỗi vì? → <span class="qa">Mạng là hàm lồng nhau; gradient nhân dồn các đạo hàm cục bộ.</span></li>
-      <li>Ghép hai khâu bằng? → <span class="qa">Phép nhân (dy/du · du/dx).</span></li>
-    </ol>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 4 — Backprop</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Dự đoán</span> 3 khâu → tích của <span class="mono">3</span> tỉ số (đạo hàm cục bộ).</li>
+      <li><span class="lab">Vì sao</span> Đi từ loss ngược về, mỗi lớp nhân thêm một đạo hàm cục bộ — chính là quy tắc chuỗi chạy ngược chiều mũi tên.</li>
+    </ul>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Quy tắc chuỗi = nhân đạo hàm dọc theo chuỗi hàm; đó là cách gradient chảy ngược qua mạng. Bài tiếp (A14):
-    mở rộng sang <b>nhiều biến</b> → gradient (vectơ các đạo hàm riêng).
+    <b style="color:var(--accent2)">Rút ra.</b> Quy tắc chuỗi = nhân đạo hàm dọc chuỗi hàm; đó là cách gradient chảy ngược qua mạng — và Δy ≈ dy/dx·Δx là
+    cách đọc "gradient nói gì". Bài tiếp (A14): mở rộng sang <b>nhiều biến</b> → gradient (vectơ các đạo hàm riêng).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A13 · Quy tắc chuỗi</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A13 · Quy tắc chuỗi (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var CX='#0e7490', CU2='#7c5cff', CY='#b45309', GRY='#5b6776';
+function el(id){return document.getElementById(id);}
+var STATE = {a:3,b:1,x0:1,uval:4};
+
 function generate(){
-  var f = WB.fmtInt;
+  var f = WB.fmtInt, ft = WB.fmtTrim;
   var a = WB.randIntNZ(-3, 4);
   var b = WB.randIntNZ(-3, 4);
   var x0 = WB.randInt(-2, 3);
-  var uval;
-  do { uval = a*x0 + b; } while (uval === 0 && (x0 = WB.randInt(-2,3)) !== null && false);
-  if (uval === 0){ b += 1; uval = a*x0 + b; }   // tránh u = 0
+  var uval = a*x0 + b;
+  if (uval === 0){ b += 1; uval = a*x0 + b; }
   var dydu = 2*uval;
   var dudx = a;
   var dydx = dydu * dudx;
+  var dy01 = dydx * 0.1;
+  // kiểm số thật (lay Δx = 1): tất cả nguyên
+  var yx0 = uval*uval;
+  var ux1 = a*(x0+1) + b;            // = uval + a
+  var yx1 = ux1*ux1;
+  var dyAct = yx1 - yx0;             // = a·(2u + a)
+  var gapNum = dyAct - dydx;         // = a²
+  STATE = {a:a, b:b, x0:x0, uval:uval};
 
   function signed(v){ var s = f(v), neg = /^−/.test(s), mag = neg ? s.slice(1) : s; return (neg ? '− ' : '+ ') + mag; }
+  var bigger = Math.abs(dydu) >= Math.abs(dudx) ? 'u → y' : 'x → u';
 
   WB.setAll({
-    a: f(a), bs: signed(b), x0: f(x0),
-    dydu_g: '2u', uval: f(uval),
-    dydu: f(dydu), dudx: f(dudx), dydx: f(dydx)
+    a: f(a), b: f(Math.abs(b)), bs: signed(b), x0: f(x0),
+    uval: f(uval), yval: f(uval*uval),
+    dudx: f(dudx), dydu: f(dydu), dydx: f(dydx),
+    dy01: ft(Math.round(dy01*10)/10),
+    yx0: f(yx0), yx1: f(yx1), dyAct: f(dyAct), gapNum: f(gapNum),
+    bigger: bigger
   });
-  drawChain('figC', dudx, dydu, dydx);
+  drawFlow('figFlow', a, b, x0);
+  drawGears('figGears');
+  drawTotal('figTotal');
 }
 
-// dây chuyền x → u → y với hai tỉ số truyền và tích
-function drawChain(id, dudx, dydu, dydx){
-  var svg = document.getElementById(id);
-  if (!svg) return;
+function mkArrow(idm, id, c){ return '<marker id="'+idm+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="'+c+'"/></marker>'; }
+function nodeC(cx, cy, r, label, color){
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#fff" stroke="'+color+'" stroke-width="2.4"/>'
+    + '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="15" fill="'+color+'" font-weight="700">'+label+'</text>';
+}
+function qbox(x, y, w, h, lab, c){
+  return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="#fff" stroke="'+c+'" stroke-width="1.8"/>'
+    + '<text x="'+(x+4)+'" y="'+(y-3)+'" font-size="8" fill="'+c+'" font-weight="700">'+lab+'</text>'
+    + '<text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="11" fill="#c3ccd6">?</text>';
+}
+
+/* Cụm 1: x → [máy 1] → ô ? u → [máy 2] → ô ? y */
+function drawFlow(id, a, b, x0){
   var f = WB.fmtInt;
-  function node(cx, label, color){
-    return '<circle cx="'+cx+'" cy="60" r="22" fill="#fff" stroke="'+color+'" stroke-width="2.4"/>'
-      + '<text x="'+cx+'" y="66" text-anchor="middle" style="font-size:18px" fill="'+color+'" font-weight="700">'+label+'</text>';
-  }
-  function arrow(x1, x2, lab){
-    return '<line x1="'+x1+'" y1="60" x2="'+x2+'" y2="60" stroke="#5b6776" stroke-width="2" marker-end="url(#ch'+id+')"/>'
-      + '<text x="'+((x1+x2)/2)+'" y="48" text-anchor="middle" style="font-size:11px" fill="#5b6776" font-weight="700">'+lab+'</text>';
-  }
-  var s = '<defs><marker id="ch'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="#5b6776"/></marker></defs>';
-  s += arrow(50, 100, 'du/dx = ' + f(dudx));
-  s += arrow(150, 200, 'dy/du = ' + f(dydu));
-  s += node(28, 'x', '#0e7490');
-  s += node(128, 'u', '#7c5cff');
-  s += node(228, 'y', '#b45309');
-  s += '<text x="265" y="64" style="font-size:11px" fill="#b45309" font-weight="700">×</text>';
-  s += '<text x="150" y="100" text-anchor="middle" style="font-size:12px" fill="#111" font-weight="700">dy/dx = ' + f(dudx) + '·' + f(dydu) + ' = ' + f(dydx) + '</text>';
+  var svg = el(id); if (!svg) return;
+  var s = '<defs>'+mkArrow('f1', id, GRY)+'</defs>';
+  var cy = 52;
+  // x given
+  s += '<rect x="8" y="'+(cy-14)+'" width="36" height="28" rx="7" fill="#eaf4f6" stroke="#7fb4bf" stroke-width="1.4"/>';
+  s += '<text x="26" y="'+(cy-18)+'" text-anchor="middle" font-size="8.5" fill="'+CX+'" font-weight="700">x</text>';
+  s += '<text x="26" y="'+(cy+5)+'" text-anchor="middle" font-size="13" fill="'+CX+'" font-weight="700">'+f(x0)+'</text>';
+  // máy 1
+  s += '<line x1="46" y1="'+cy+'" x2="66" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#f1'+id+')"/>';
+  s += '<rect x="68" y="'+(cy-16)+'" width="56" height="32" rx="6" fill="#f3f0ff" stroke="'+CU2+'" stroke-width="1.6"/>';
+  s += '<text x="96" y="'+(cy-3)+'" text-anchor="middle" font-size="9" fill="'+CU2+'" font-weight="700">máy 1</text>';
+  s += '<text x="96" y="'+(cy+10)+'" text-anchor="middle" font-size="9" fill="'+CU2+'">×'+f(a)+' rồi '+(b>=0?'+':'−')+f(Math.abs(b))+'</text>';
+  // ô u
+  s += '<line x1="126" y1="'+cy+'" x2="146" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#f1'+id+')"/>';
+  s += qbox(148, cy-14, 40, 28, 'u ✍', CU2);
+  // máy 2
+  s += '<line x1="190" y1="'+cy+'" x2="210" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#f1'+id+')"/>';
+  s += '<rect x="212" y="'+(cy-16)+'" width="42" height="32" rx="6" fill="#fff3e6" stroke="'+CY+'" stroke-width="1.6"/>';
+  s += '<text x="233" y="'+(cy-3)+'" text-anchor="middle" font-size="9" fill="'+CY+'" font-weight="700">máy 2</text>';
+  s += '<text x="233" y="'+(cy+10)+'" text-anchor="middle" font-size="10" fill="'+CY+'">(·)²</text>';
+  // ô y
+  s += '<line x1="256" y1="'+cy+'" x2="272" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#f1'+id+')"/>';
+  s += qbox(274, cy-14, 22, 28, 'y ✍', CY);
   svg.innerHTML = s;
 }
+
+/* Cụm 2: hai mũi tên với 2 ô ? tỉ số truyền */
+function drawGears(id){
+  var svg = el(id); if (!svg) return;
+  var s = '<defs>'+mkArrow('g1', id, GRY)+'</defs>';
+  var cy = 62;
+  s += nodeC(30, cy, 20, 'x', CX);
+  s += nodeC(150, cy, 20, 'u', CU2);
+  s += nodeC(270, cy, 20, 'y', CY);
+  s += '<line x1="52" y1="'+cy+'" x2="126" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#g1'+id+')"/>';
+  s += '<line x1="172" y1="'+cy+'" x2="246" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#g1'+id+')"/>';
+  s += qbox(62, 8, 54, 24, 'du/dx ✍', CX);
+  s += qbox(182, 8, 54, 24, 'dy/du ✍', CU2);
+  svg.innerHTML = s;
+}
+
+/* Cụm 3: mũi tên tổng x → y + ô ? dy/dx to */
+function drawTotal(id){
+  var svg = el(id); if (!svg) return;
+  var s = '<defs>'+mkArrow('t1', id, CY)+'</defs>';
+  var cy = 66;
+  s += nodeC(30, cy, 20, 'x', CX);
+  s += nodeC(270, cy, 20, 'y', CY);
+  s += '<line x1="52" y1="'+cy+'" x2="246" y2="'+cy+'" stroke="'+CY+'" stroke-width="2.6" marker-end="url(#t1'+id+')"/>';
+  s += '<text x="150" y="'+(cy+16)+'" text-anchor="middle" font-size="9.5" fill="'+GRY+'">tích hai tỉ số truyền</text>';
+  s += '<rect x="102" y="8" width="96" height="34" rx="8" fill="#fff" stroke="'+CY+'" stroke-width="2"/>';
+  s += '<text x="108" y="4" font-size="8.5" fill="'+CY+'" font-weight="700" dominant-baseline="hanging">dy/dx = ✍</text>';
+  s += '<text x="150" y="34" text-anchor="middle" font-size="12" fill="#c3ccd6">? · ? = ?</text>';
+  svg.innerHTML = s;
+}
+
+/* Cụm 4 (tĩnh): w → lớp 1 → lớp 2 → loss + mũi tên gradient ngược */
+function drawBP(id){
+  var svg = el(id); if (!svg) return;
+  var s = '<defs>'+mkArrow('b1', id, GRY)+mkArrow('b2', id, CY)+'</defs>';
+  var cy = 30, names = ['w', 'lớp 1', 'lớp 2', 'loss'], xs = [30, 150, 270, 390];
+  for (var i = 0; i < 4; i++){
+    var c = i === 0 ? CX : (i === 3 ? CY : CU2);
+    s += '<rect x="'+(xs[i]-28)+'" y="'+(cy-16)+'" width="56" height="32" rx="7" fill="#fff" stroke="'+c+'" stroke-width="2"/>';
+    s += '<text x="'+xs[i]+'" y="'+(cy+5)+'" text-anchor="middle" font-size="11" fill="'+c+'" font-weight="700">'+names[i]+'</text>';
+    if (i < 3) s += '<line x1="'+(xs[i]+28)+'" y1="'+cy+'" x2="'+(xs[i+1]-32)+'" y2="'+cy+'" stroke="'+GRY+'" stroke-width="2" marker-end="url(#b1'+id+')"/>';
+  }
+  // gradient ngược
+  s += '<line x1="'+(xs[3]-28)+'" y1="'+(cy+24)+'" x2="'+(xs[0]+30)+'" y2="'+(cy+24)+'" stroke="'+CY+'" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#b2'+id+')"/>';
+  s += '<text x="210" y="'+(cy+38)+'" text-anchor="middle" font-size="9" fill="'+CY+'" font-weight="700">gradient lan ngược: nhân dần từng đạo hàm cục bộ</text>';
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
 generate();
+drawBP('figBP');
 </script>
 </body>
 </html>

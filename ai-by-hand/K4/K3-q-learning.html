@@ -1,187 +1,307 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài K3 — Q-learning một cập nhật (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài K3 — Q-learning (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.8mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--blue);font-weight:800}
+.cmp{display:grid;grid-template-columns:auto 1fr;gap:1.4mm 3mm;align-items:center;font-size:9.4px}
+.cmp .lab{font:800 9px var(--sans)}
+.cmp .lab.a{color:var(--blue)} .cmp .lab.b{color:var(--orange)} .cmp .lab.p{color:var(--purple)}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.vs2{display:grid;grid-template-columns:1fr 1fr;gap:1.6mm;margin-top:1mm}
+.vs2 > div{border-radius:4px;padding:1.4mm 2.2mm;font-size:9px;line-height:1.4}
+.vs2 .ql{border:1.4px solid var(--orange);background:#fff8f0}
+.vs2 .sa{border:1.4px solid var(--blue);background:#eaf4f6}
+.vs2 b.o{color:var(--orange)} .vs2 b.b{color:var(--blue)}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Q-learning <small>— học bảng Q từ kinh nghiệm · <i>Q-learning</i></small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút · Bài K3</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>cho sẵn</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>Q / đáp án</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>mục tiêu / δ</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài K3</span><h1>Q-learning <small>— một cập nhật</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Q-learning học giá trị hành động <b>chỉ từ trải nghiệm</b> (s,a,r,s'), không cần mô hình môi trường. Hội tụ về Q
-    tối ưu → chính sách tối ưu = chọn argmax Q. Là gốc của Deep Q-Network (DQN).
-    <div class="formula">Q(s,a) ← Q(s,a) + α·[ r + γ·maxₐ' Q(s',a') − Q(s,a) ] &nbsp;(phần ngoặc = TD error)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Tự tay <b>cập nhật một ô bảng Q</b> từ trải nghiệm (s,a,r,s'): mục tiêu Bellman → TD error δ → kéo Q <b>một phần α</b> về mục tiêu. Rồi <b>chạy trọn 1 tập 3 lần</b> (thấy giá trị lan ngược từ đích), <b>khám phá vai trò của α</b>, và giải thích vì sao Q-learning <b>off-policy</b>.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi trải nghiệm cho một <b>ước lượng mới</b> (mục tiêu Bellman). Q cũ có thể sai → kéo nó <b>một phần α</b> về phía mục tiêu. Phần trong
-    ngoặc là "ngạc nhiên" (TD error): dương thì nâng Q, âm thì hạ.
-  </div>
+  <div class="why2 p"><b>💡 Trực giác.</b> Mỗi trải nghiệm cho một <i>ước lượng mới</i> về giá trị hành động (mục tiêu Bellman: thưởng vừa nhận + giá trị chỗ vừa tới). Q cũ có thể sai → ta không vứt nó đi cũng không tin hẳn cái mới, mà <b>đi một phần α</b> về phía mới. Làm vậy nhiều lần, Q dần đúng. <i>Nối K2:</i> đây chính là Bellman đổi dấu "=" thành "cập nhật một phần" — học từ kinh nghiệm, KHÔNG cần biết trước mô hình môi trường.</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">α = <span data-q="alpha">0.5</span>, γ = <span data-q="gamma">0.9</span></span></div>
-    <div class="calc" style="font-size:14px">
-      Q(s,a) hiện = <span class="gv" data-q="Q">2</span> ; trải nghiệm: r = <span class="gv" data-q="r">1</span> ;
-      sang s' có maxₐ' Q(s',a') = <span class="gv" data-q="maxQ">4</span>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mục tiêu Bellman</h2><span class="tag">r + γ·maxQ'</span></div>
-    <div class="calc">
-      mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">4</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> đây là ước lượng <i>tốt hơn</i> cho Q(s,a) dựa trên trải nghiệm vừa quan sát.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>TD error δ</h2><span class="tag">mục tiêu − Q</span></div>
-    <div class="calc">
-      δ = <span data-q="target">4.6</span> − <span data-q="Q">2</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="hint">δ là "ngạc nhiên" — δ&gt;0 nghĩa Q hiện đang thấp hơn thực tế.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Cập nhật Q</h2><span class="tag">Q + α·δ</span></div>
-    <div class="calc">
-      Q ← <span data-q="Q">2</span> + <span data-q="alpha">0.5</span>·<span data-q="td">2.6</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> đi <b>một phần α</b> về mục tiêu (không nhảy hẳn) → mượt, ổn định trước nhiễu.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Off-policy</h2><span class="tag">dùng max</span></div>
-    <div class="note">Q-learning dùng <b>maxₐ'</b> (hành động tốt nhất giả định) bất kể agent thực sự làm gì → <b>off-policy</b>. SARSA (K4) dùng hành động <b>thật</b> đã chọn → on-policy.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>TD error đo gì? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Vì sao Q-learning là off-policy? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K3 · Q-learning</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài K3</span><h1>Q-learning <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mục tiêu Bellman</h2></div>
-    <div class="calc ans">mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">4</span> = <span class="blk" data-q="target">4.6</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>TD error</h2></div>
-    <div class="calc ans">δ = <span data-q="target">4.6</span> − <span data-q="Q">2</span> = <span class="blk" data-q="td">2.6</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Q mới</h2></div>
-    <div class="calc ans">Q ← <span data-q="Q">2</span> + <span data-q="alpha">0.5</span>·<span data-q="td">2.6</span> = <span class="blk" data-q="Qnew">3.3</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Q được kéo về mục tiêu theo α</h2><span class="tag">cập nhật</span></div>
-    <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 250 96" width="82mm" height="31mm" aria-label="trục giá trị: Q cũ kéo một phần alpha về phía mục tiêu Bellman"></svg>
-      <div style="flex:1">
-        <div class="note">Trục giá trị: Q cũ (lam) và mục tiêu Bellman (cam). Cập nhật kéo Q đi <b>một phần α</b> của khoảng cách (δ) → Q mới nằm giữa.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — một trải nghiệm</span><span class="f">α = <span data-q="alpha">0.5</span> · γ = <span data-q="gamma">0.9</span></span></div>
+    <div class="pb">
+      <div class="storybox">
+        Agent ở trạng thái <b>s</b> làm hành động <b>a</b>: nhận thưởng <b class="gk" data-q="r">1</b>, sang <b>s'</b>. Giá trị ô đang sửa <b class="rw">Q(s,a)</b> hiện = <b class="rw" data-q="q_old">0</b>. Ở s', hành động tốt nhất có <b>maxₐ'Q(s',a') = <span class="rw" data-q="maxq">2</span></b>.
+        <div class="cap" style="margin-top:1.2mm">Luật cập nhật: <b>Q(s,a) ← Q(s,a) + α·[ r + γ·maxₐ'Q(s',a') − Q(s,a) ]</b> — phần trong ngoặc [ ] là TD error δ.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>TD error? → <span class="qa">Chênh lệch giữa mục tiêu Bellman và Q hiện tại ("ngạc nhiên").</span></li>
-      <li>Off-policy? → <span class="qa">Dùng maxₐ' Q' (hành động tốt nhất), không phải hành động agent thực hiện.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">① Mục tiêu Bellman</span><span class="f">r + γ·maxQ'</span></div>
+    <div class="pb">
+      <div class="eq">mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxq">2</span> = <span class="slot ans"></span></div>
+      <div class="cmp" style="margin-top:1mm"><span class="lab p">mục tiêu · thang 0…9</span><div class="track uni" id="b_t"></div></div>
+      <div class="why2 p"><b>Vì sao?</b> Đây là ước lượng <i>tốt hơn</i> cho Q(s,a) sau khi thấy thực tế 1 bước: thưởng r cộng giá trị (chiết khấu γ) của chỗ vừa đến. Chính là vế phải phương trình Bellman (K2).</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Q-learning: Q ← Q + α·(r+γmaxQ'−Q); off-policy, gốc của DQN. Bài tiếp (K4): biến thể on-policy —
-    <b style="color:var(--accent2)">SARSA</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">② TD error δ — "độ ngạc nhiên"</span><span class="f">mục tiêu − Q</span></div>
+    <div class="pb">
+      <div class="eq">δ = <span class="slot sm"></span> − <span data-q="q_old">0</span> = <span class="slot ans"></span></div>
+      <div class="cmp" style="margin-top:1mm"><span class="lab b">δ · thang −5…0…+5 (âm tô trái)</span><div class="track" id="b_d"></div></div>
+      <div class="why2"><b>δ đo gì?</b> Chênh lệch giữa mục tiêu (thực tế vừa thấy) và Q hiện tại. δ&gt;0 → thực tế <i>tốt hơn</i> ta nghĩ (sẽ nâng Q); δ&lt;0 → <i>tệ hơn</i> (sẽ hạ Q); δ=0 → Q đã đúng, không cần sửa.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K3 · Q-learning</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">③ Cập nhật — kéo một phần α</span><span class="f">Q ← Q + α·δ</span></div>
+    <div class="pb">
+      <div class="eq">Q(s,a) ← <span data-q="q_old">0</span> + <span data-q="alpha">0.5</span>·<span class="slot sm"></span> = <span class="slot ans"></span></div>
+      <div class="cmp" style="margin-top:1mm"><span class="lab b">Q mới · thang 0…9</span><div class="track uni" id="b_q"></div></div>
+      <div class="why2"><b>Vì sao chỉ đi một phần α?</b> Mục tiêu chỉ là ước lượng từ <i>một</i> trải nghiệm (có nhiễu). Nhảy hẳn tới mục tiêu (α=1) làm Q giật theo từng mẫu ngẫu nhiên. Đi một phần → trung bình hoá nhiều trải nghiệm → học <b>mượt &amp; ổn định</b>.</div>
+    </div>
+  </div>
+
+  <div class="why2"><b>🔮 Dự đoán trước khi tính.</b> δ ở đây dương hay âm? Q mới sẽ <i>lớn hơn</i> hay <i>nhỏ hơn</i> Q cũ? Ghi phỏng đoán, rồi tính để kiểm.</div>
+  <div class="scratch" style="height:40mm"><span class="lb">Nháp — tính mục tiêu, δ, Q mới &amp; ghi phỏng đoán</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K3 · Q-learning</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Q-learning <small>— chạy trọn 1 tập · vai trò α · off-policy</small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ tập — giá trị lan ngược từ đích</span><span class="f">Q đầu: Q(S1,a1)=0, Q(S2,a2)=2</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figQ" viewBox="0 0 372 96" width="108mm" height="24mm" aria-label="chuỗi 3 trạng thái S1 S2 đích"></svg>
+      <div class="cap" style="margin:0">Agent đi S1 →(a1, r=1)→ S2 →(a2, r=6)→ <b>đích</b>. Ban đầu chỉ ô S2·a2 có giá trị (=2). Chạy 3 lần cập nhật → giá trị <b>chảy ngược</b> về S1.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Chạy trọn 1 tập — điền 3 lần cập nhật</span><span class="f">α=0.5, γ=0.9 · mỗi lần dùng Q đã cập nhật</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th>Lần</th><th>(s,a,r,s')</th><th>maxₐ'Q'</th><th>mục tiêu<br>r+γ·maxQ'</th><th>Q cũ</th><th>δ</th><th>Q mới</th></tr></thead>
+        <tbody>
+          <tr><td class="l">1</td><td>(S1,a1,1,S2)</td><td>2</td><td><span class="cellb" style="width:12mm"></span></td><td>0</td><td><span class="cellb" style="width:12mm"></span></td><td><span class="cellb" style="width:12mm"></span></td></tr>
+          <tr><td class="l">2</td><td>(S2,a2,6,đích)</td><td>0</td><td><span class="cellb" style="width:12mm"></span></td><td>2</td><td><span class="cellb" style="width:12mm"></span></td><td><span class="cellb" style="width:12mm"></span></td></tr>
+          <tr><td class="l">3</td><td>(S1,a1,1,S2)</td><td><span class="cellb" style="width:12mm"></span></td><td><span class="cellb" style="width:12mm"></span></td><td>1.4</td><td><span class="cellb" style="width:12mm"></span></td><td><span class="cellb" style="width:12mm"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:1mm"><b>Chú ý Lần 3:</b> maxₐ'Q'(S2) lấy từ Q <i>đã cập nhật</i> ở Lần 2 (không còn là 2). "Q cũ" Lần 3 (=1.4) chính là Q mới ở Lần 1.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — α quyết định TỐC ĐỘ học</div>
+    <div style="font-size:9px;line-height:1.45">Cùng mục tiêu = <b class="gk" data-q="target">2.8</b> và Q cũ = <b class="rw" data-q="q_old">0</b> ở bước ①, thử ba tốc độ học α. Điền Q mới = Q + α·(mục tiêu − Q):</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th>α</th><th>0 (không học)</th><th>0.5 (đang dùng)</th><th>1 (nhảy hẳn)</th></tr></thead>
+      <tbody><tr><td class="l">Q mới</td><td><span class="cellb" style="width:14mm"></span></td><td><span class="cellb" style="width:14mm"></span></td><td><span class="cellb" style="width:14mm"></span></td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ α=0: Q <b>đứng yên</b> (không học gì). α=1: Q <b>nhảy thẳng</b> tới mục tiêu (vứt hết kinh nghiệm cũ, nhạy nhiễu). α giữa: <b>trộn</b> cũ &amp; mới. Đây là lý do α thường nhỏ (0.1–0.5).</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — off-policy: mục tiêu KHÔNG phụ thuộc hành động agent chọn tiếp</div>
+    <div style="font-size:9px;line-height:1.45">Ở Lần 1 (s'=S2), Q(S2): a1=0, a2=2. Tính mục tiêu <b>theo hai kiểu</b>, so sánh:</div>
+    <div class="vs2">
+      <div class="ql"><b class="o">Q-learning (dùng max)</b><br>= 1 + 0.9·<b>max</b>(0,2) = <span class="slot ans sm"></span></div>
+      <div class="sa"><b class="b">Nếu agent chọn a1 (SARSA)</b><br>= 1 + 0.9·Q(S2,<b>a1</b>) = 1 + 0.9·0 = <span class="slot sm"></span></div>
+    </div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Q-learning <b>luôn dùng max</b> ⇒ mục tiêu đứng yên dù agent khám phá bằng hành động nào = <b>off-policy</b> (học chính sách tối ưu). SARSA (Bài K4) dùng hành động <i>thật</i> → on-policy.</div>
+  </div>
+
+  <div class="scratch" style="height:30mm"><span class="lb">Nháp — 3 lần cập nhật · α biên · off-policy</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Tính ①②③</span>
+    <span><span class="ck"></span>Điền 3 lần</span>
+    <span><span class="ck"></span>Điền bảng α</span>
+    <span><span class="ck"></span>So 2 ô off-policy</span>
+    <span class="win">🎉 Xong Bài K3!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K3 · Q-learning</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Q-learning <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — một cập nhật (đáp án)</span><span class="f">với bộ số hiện trên đề</span></div>
+    <div class="pb">
+      <div class="eq">mục tiêu = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxq">2</span> = <span class="qa" data-q="target">2.8</span>
+        &nbsp;·&nbsp; δ = <span data-q="target">2.8</span> − <span data-q="q_old">0</span> = <span class="qa" data-q="td">2.8</span>
+        &nbsp;·&nbsp; Q ← <span data-q="q_old">0</span> + <span data-q="alpha">0.5</span>·<span data-q="td">2.8</span> = <span class="qa" data-q="qnew">1.4</span></div>
+      <div class="cmp" style="margin-top:1mm"><span class="lab p">mục tiêu</span><div class="track uni" id="b_tk"></div>
+        <span class="lab b">δ</span><div class="track" id="b_dk"></div>
+        <span class="lab b">Q mới</span><div class="track uni" id="b_qk"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ tập đã điền — Q sau học</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figA" viewBox="0 0 372 96" width="108mm" height="24mm" aria-label="chuỗi trạng thái với Q sau học"></svg>
+      <div class="cap" style="margin:0">Sau 3 lần: Q(S2,a2) 2→<b>4</b> (thưởng đích), rồi Q(S1,a1) 0→1.4→<b>3.0</b> (giá trị lan ngược). Agent giờ biết từ S1 đi a1 để về đích.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Chạy trọn 1 tập — đáp án</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th>Lần</th><th>(s,a,r,s')</th><th>maxQ'</th><th>mục tiêu</th><th>Q cũ</th><th>δ</th><th>Q mới</th></tr></thead>
+        <tbody>
+          <tr><td class="l">1</td><td>(S1,a1,1,S2)</td><td>2</td><td class="pt">2.8</td><td>0</td><td class="pt">2.8</td><td class="an">1.4</td></tr>
+          <tr><td class="l">2</td><td>(S2,a2,6,đích)</td><td>0</td><td class="pt">6</td><td>2</td><td class="pt">4</td><td class="an">4</td></tr>
+          <tr><td class="l">3</td><td>(S1,a1,1,S2)</td><td class="pt">4</td><td class="pt">4.6</td><td>1.4</td><td class="pt">3.2</td><td class="an">3.0</td></tr>
+        </tbody>
+      </table>
+      <div class="why2 p"><b>Giá trị lan ngược.</b> Lần 2 thưởng ở đích nâng Q(S2,a2): 2→4. Lần 3 giá trị đó chảy về Q(S1,a1): 1.4→3.0. Lặp nhiều tập, giá trị lan dần từ đích về xuất phát — nhờ đó agent "nhìn xa" được nhiều bước.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Vai trò α — đáp án</div>
+    <div class="cmp"><span class="lab">Q mới theo α (mục tiêu=<span data-q="target">2.8</span>, Q cũ=<span data-q="q_old">0</span>):</span>
+      <span style="font:700 9.6px var(--mono)">α=0 → <b class="qa" data-q="qa0">0</b> &nbsp;·&nbsp; α=0.5 → <b class="qa" data-q="qnew2">1.4</b> &nbsp;·&nbsp; α=1 → <b class="qa" data-q="qa1">2.8</b></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> α=0 không học (Q đứng yên); α=1 vứt Q cũ, nhảy hẳn tới mục tiêu (nhạy nhiễu, dao động); α giữa cân bằng ổn định &amp; tốc độ. Thực tế thường α nhỏ dần theo thời gian.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Off-policy — đáp án</div>
+    <div class="vs2">
+      <div class="ql"><b class="o">Q-learning</b>: 1 + 0.9·max(0,2) = <b>2.8</b></div>
+      <div class="sa"><b class="b">Nếu chọn a1 (SARSA)</b>: 1 + 0.9·0 = <b>1.0</b></div>
+    </div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> Q-learning luôn dùng <b>max</b> ⇒ mục tiêu không đổi dù agent khám phá thế nào → <b>off-policy</b>: học giá trị chính sách <i>tối ưu</i> trong khi hành xử theo chính sách khác. SARSA dùng hành động thật (2.8 vs 1.0 khác nhau) → on-policy.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên γ:</b> lấy r + maxQ' thay vì r + <b>γ</b>·maxQ' → mục tiêu phồng to.</li>
+        <li><b>Dùng Q(s', a thật) thay cho max:</b> đó là SARSA, không phải Q-learning.</li>
+        <li><b>Nhảy hẳn (α=1):</b> Q ← mục tiêu, bỏ hết kinh nghiệm cũ → dao động theo nhiễu.</li>
+        <li><b>Lần 3 quên cập nhật maxQ':</b> vẫn lấy 2 trong khi Q(S2,a2) đã thành 4.</li>
+        <li><b>Nhầm dấu δ:</b> δ = mục tiêu − Q (không phải Q − mục tiêu).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="why2 p"><b>🔬 Lên DQN.</b> Khi số trạng thái quá nhiều để kẻ bảng Q (ảnh, game phức tạp), thay bảng bằng một <b>mạng nơ-ron</b> Q<sub>θ</sub>(s,a) — vẫn đúng luật này, chỉ đổi "sửa ô bảng" thành "hạ gradient để Q<sub>θ</sub> tiến về mục tiêu r+γ·maxQ'". Đó là <b>Deep Q-Network</b> (DQN), thuật toán từng chơi Atari giỏi hơn người.</div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Q-learning: <b>Q ← Q + α·(r + γ·maxQ' − Q)</b>; <b>off-policy</b> (dùng max), α định tốc độ học, giá trị lan ngược từ phần thưởng, học từ kinh nghiệm không cần mô hình — gốc của <b>DQN</b>. Bài tiếp <b>K4 · SARSA</b>: bản <b>on-policy</b> — thay max bằng hành động <i>thật</i> đã chọn.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K3 · Q-learning</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var alpha = WB.pick([0.5, 0.2]);
-  var gamma = WB.pick([0.9, 0.8]);
-  var Q = WB.randInt(1,3);
-  var r = WB.randInt(1,3);
-  var maxQ = WB.randInt(3,5);
-  var target = Math.round((r + gamma*maxQ)*100)/100;
-  var td = Math.round((target - Q)*100)/100;
-  var Qnew = Math.round((Q + alpha*td)*100)/100;
-  WB.setAll({
-    alpha:f(alpha), gamma:f(gamma), Q:String(Q), r:String(r), maxQ:String(maxQ),
-    target:f(target), td:f(td), Qnew:f(Qnew)
-  });
-  drawPull('figQ', Q, target, Qnew);
-}
-function drawPull(id, Q, target, Qnew){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=24, x1=226, base=58;
-  var lo=Math.min(Q,target)-0.6, hi=Math.max(Q,target)+0.6;
-  function px(v){ return x0 + (v-lo)/(hi-lo)*(x1-x0); }
-  var s='<line x1="'+x0+'" y1="'+base+'" x2="'+x1+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  var qx=px(Q), tx=px(target), nx=px(Qnew);
-  s+='<circle cx="'+qx.toFixed(1)+'" cy="'+base+'" r="5" fill="#0e7490"/>';
-  s+='<text x="'+qx.toFixed(1)+'" y="'+(base-10)+'" text-anchor="middle" font-size="9" fill="#0e7490">Q cũ '+Q+'</text>';
-  s+='<circle cx="'+tx.toFixed(1)+'" cy="'+base+'" r="5" fill="#b45309"/>';
-  s+='<text x="'+tx.toFixed(1)+'" y="'+(base-10)+'" text-anchor="middle" font-size="9" fill="#b45309">mục tiêu '+WB.fmtTrim(target)+'</text>';
-  s+='<circle cx="'+nx.toFixed(1)+'" cy="'+base+'" r="4.5" fill="none" stroke="#16a34a" stroke-width="2"/>';
-  s+='<text x="'+nx.toFixed(1)+'" y="'+(base+18)+'" text-anchor="middle" font-size="9" fill="#16a34a">Q mới '+WB.fmtTrim(Qnew)+'</text>';
+function drawBarU(id,v,max){const el=document.getElementById(id);if(!el)return;let h='<div class="zero" style="left:0"></div><div class="tick" style="left:33.3%"></div><div class="tick" style="left:66.6%"></div>';if(v>0){const p=Math.min(v/max,1)*100;h+='<div class="fill pos" style="left:0;width:'+p+'%"></div>';}el.innerHTML=h;}
+function drawBarS(id,v,max){const el=document.getElementById(id);if(!el)return;let h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';if(v!==0){const p=Math.min(Math.abs(v)/max,1)*50;h+= v>0?'<div class="fill pos" style="left:50%;width:'+p+'%"></div>':'<div class="fill neg" style="right:50%;width:'+p+'%"></div>';}el.innerHTML=h;}
+function emptyU(id){const el=document.getElementById(id);if(el)el.innerHTML='<div class="zero" style="left:0"></div><div class="tick" style="left:33.3%"></div><div class="tick" style="left:66.6%"></div>';}
+function emptyS(id){const el=document.getElementById(id);if(el)el.innerHTML='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';}
+function drawChain(id, learned){
+  const svg=document.getElementById(id); if(!svg) return;
+  const y=44, xs=[52,190,320], rad=26; const labels=['S1','S2','đích'];
+  let s='';
+  for(let i=0;i<2;i++){
+    const x1=xs[i]+rad, x2=xs[i+1]-rad;
+    s+='<line x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'" stroke="#0e7490" stroke-width="1.5"/>';
+    s+='<polygon points="'+x2+','+y+' '+(x2-7)+','+(y-4)+' '+(x2-7)+','+(y+4)+'" fill="#0e7490"/>';
+    const rr = i===0?'a1, r=1':'a2, r=6';
+    s+='<text x="'+((xs[i]+xs[i+1])/2)+'" y="'+(y-8)+'" text-anchor="middle" font-size="8.4" font-weight="700" fill="#6d28d9" font-family="Consolas,monospace">'+rr+'</text>';
+  }
+  for(let i=0;i<3;i++){
+    const goal=i===2;
+    s+='<circle cx="'+xs[i]+'" cy="'+y+'" r="'+rad+'" fill="'+(goal?'#eefaf8':'#eaf4f6')+'" stroke="'+(goal?'#0f766e':'#0e7490')+'" stroke-width="1.8"/>';
+    s+='<text x="'+xs[i]+'" y="'+(y+3)+'" text-anchor="middle" font-size="10.5" font-weight="800" fill="#16202e">'+labels[i]+'</text>';
+  }
+  const q1 = learned?'Q(S1,a1)=3.0':'Q(S1,a1)=0';
+  const q2 = learned?'Q(S2,a2)=4':'Q(S2,a2)=2';
+  s+='<text x="'+xs[0]+'" y="'+(y+rad+11)+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+(learned?'#b45309':'#6b7280')+'" font-family="Consolas,monospace">'+q1+'</text>';
+  s+='<text x="'+xs[1]+'" y="'+(y+rad+11)+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+(learned?'#b45309':'#6b7280')+'" font-family="Consolas,monospace">'+q2+'</text>';
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function gen(){
+  const alpha=0.5, gamma=0.9;
+  let r,q_old,maxq,target,td,qnew;
+  do{ r=WB.randInt(1,3); q_old=WB.randInt(0,3); maxq=WB.randInt(2,6);
+    target=Math.round((r+gamma*maxq)*100)/100; td=Math.round((target-q_old)*100)/100; qnew=Math.round((q_old+alpha*td)*100)/100;
+  }while(Math.abs(td)<1e-9);
+  const qa0=q_old, qa1=target;   // α=0 → Q cũ; α=1 → mục tiêu
+  WB.setAll({
+    alpha:WB.fmtTrim(alpha), gamma:WB.fmtTrim(gamma),
+    r:WB.fmtInt(r), q_old:WB.fmtInt(q_old), maxq:WB.fmtInt(maxq),
+    target:WB.fmt2(target), td:WB.fmt2(td), qnew:WB.fmt2(qnew), qnew2:WB.fmt2(qnew),
+    qa0:WB.fmt2(qa0), qa1:WB.fmt2(qa1)
+  });
+  drawBarU('b_tk',target,9); drawBarS('b_dk',td,5); drawBarU('b_qk',qnew,9);
+  emptyU('b_t'); emptyS('b_d'); emptyU('b_q');
+  drawChain('figQ', false); drawChain('figA', true);
+  const pages=[...document.querySelectorAll('.page')];
+  const meas=pages.map((p,i)=>'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight)).join(' ');
+  const md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

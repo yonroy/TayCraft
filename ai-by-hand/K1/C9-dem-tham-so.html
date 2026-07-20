@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài C9 — Đếm tham số mạng (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pC">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,183 +25,242 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài C9</span><h1>Đếm tham số mạng <small>— Parameter counting</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Số tham số quyết định <b>bộ nhớ, tốc độ, nguy cơ overfit</b>. Biết đếm giúp ước lượng chi phí một
-    kiến trúc và hiểu vì sao mô hình lớn cần nhiều dữ liệu/điện.
-    <div class="formula">
-      Một lớp (in → out): params = in·out (trọng số) + out (bias) &nbsp;&nbsp; Tổng = Σ qua mọi lớp
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài C9</span>
+    <h1>Đếm tham số mạng <small>— params mỗi lớp = in·out + out; tổng = Σ mọi lớp</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi nơ-ron ở lớp sau <b>nối tới mọi</b> nơ-ron lớp trước → một trọng số cho mỗi dây; cộng thêm <b>một bias</b> cho mỗi nơ-ron.
-    Lớp càng rộng và nối càng dày, số dây (tham số) phình theo <b>tích</b> in × out.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Số tham số quyết định <b>bộ nhớ · tốc độ · nguy cơ overfit</b> của một mạng. Hãy <b>tự tay đếm</b>
+    một mạng 3 lớp trọng số: mỗi lớp <i>in→out</i> tốn <b>in·out trọng số + out bias</b>. Phần thưởng: kiểm chéo tổng
+    bằng <b>hai cách</b> và thấy vì sao mô hình thật có <b>hàng tỉ</b> tham số.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn kiến trúc</h2><span class="tag"><span data-q="n0">3</span> → <span data-q="n1">4</span> → <span data-q="n2">2</span></span></div>
-    <div class="calc" style="font-size:15px">
-      đầu vào <span class="gv" data-q="n0">3</span> · lớp ẩn <span class="gv" data-q="n1">4</span> nơ-ron · đầu ra <span class="gv" data-q="n2">2</span> nơ-ron (fully-connected)
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn kiến trúc</h2><span class="tag" data-q="archTag">2 → 4 → 3 → 2</span></div>
+    <div class="row">
+      <svg id="figN" class="fig" viewBox="0 0 240 130" width="96mm" height="52mm" aria-label="sơ đồ mạng fully-connected 4 lớp; mỗi dây nối là một trọng số"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc" style="font-size:15px">
+          vào <span class="gv" data-q="n0">2</span> · ẩn₁ <span class="gv" data-q="n1">4</span> · ẩn₂ <span class="gv" data-q="n2">3</span> · ra <span class="gv" data-q="n3">2</span>
+        </div>
+        <div class="note">3 lớp có trọng số: (vào→ẩn₁), (ẩn₁→ẩn₂), (ẩn₂→ra). Mỗi <b>dây</b> = 1 trọng số; mỗi nơ-ron lớp sau thêm 1 <b>bias</b>.</div>
+      </div>
     </div>
-    <div class="note">Hai lớp có trọng số: (đầu vào → ẩn) và (ẩn → đầu ra). Đếm cả <b>bias</b>.</div>
   </div>
 
-  <!-- BƯỚC 1 — lớp 1 -->
+  <div class="grid2">
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Lớp 1 (<span data-q="n0">3</span> → <span data-q="n1">4</span>)</h2><span class="tag">in·out + out</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Lớp 1 (<span data-q="n0">2</span> → <span data-q="n1">4</span>)</h2><span class="tag">in·out + out</span></div>
     <div class="calc">
-      trọng số = <span data-q="n0">3</span>·<span data-q="n1">4</span> = <span class="blk" style="min-width:34px"></span> ;
-      bias = <span class="blk" style="min-width:30px"></span> ;
-      cộng = <span class="blk" style="min-width:34px"></span>
+      trọng số = <span data-q="n0">2</span>·<span data-q="n1">4</span> = <span class="wcell"></span><br>
+      bias = <span class="blk" style="min-width:26px"></span> ; cộng = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> <span data-q="n1">4</span> nơ-ron, mỗi nơ-ron có <span data-q="n0">3</span> trọng số (một cho mỗi đầu vào) + 1 bias.</div>
+    <div class="hint"><b>Vì sao:</b> <span data-q="n1">4</span> nơ-ron, mỗi cái <span data-q="n0">2</span> trọng số (một cho mỗi đầu vào) + 1 bias.</div>
   </div>
 
-  <!-- BƯỚC 2 — lớp 2 -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Lớp 2 (<span data-q="n1">4</span> → <span data-q="n2">2</span>)</h2><span class="tag">in·out + out</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Lớp 2 (<span data-q="n1">4</span> → <span data-q="n2">3</span>)</h2><span class="tag">in·out + out</span></div>
     <div class="calc">
-      trọng số = <span data-q="n1">4</span>·<span data-q="n2">2</span> = <span class="blk" style="min-width:34px"></span> ;
-      bias = <span class="blk" style="min-width:30px"></span> ;
-      cộng = <span class="blk" style="min-width:34px"></span>
+      trọng số = <span data-q="n1">4</span>·<span data-q="n2">3</span> = <span class="wcell"></span><br>
+      bias = <span class="blk" style="min-width:26px"></span> ; cộng = <span class="wcell"></span>
+    </div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Lớp 3 (<span data-q="n2">3</span> → <span data-q="n3">2</span>)</h2><span class="tag">lớp ra</span></div>
+    <div class="calc big">
+      trọng số = <span data-q="n2">3</span>·<span data-q="n3">2</span> = <span class="wcell"></span> &nbsp; bias = <span class="blk" style="min-width:26px"></span> &nbsp; cộng = <span class="wcell"></span>
     </div>
   </div>
 
-  <!-- BƯỚC 3 — tổng -->
+  <!-- STEP 4 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tổng toàn mạng</h2><span class="tag">cộng dồn</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Tổng toàn mạng</h2><span class="tag">cộng dồn</span></div>
+    <div class="calc big">
+      Tổng = <span data-q="L1">16</span> + <span data-q="L2">15</span> + <span data-q="L3">8</span> = <span class="wcell" style="min-width:50px"></span> tham số
+    </div>
+    <div class="hint">Cộng params mọi lớp; đừng quên <b>bias</b> (mỗi lớp thêm "out" cái).</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Đếm tham số — kiểm chéo &amp; quy mô</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài C9</span>
+    <h1>Đếm tham số mạng <small>— kiểm chéo hai cách · trọng số áp đảo bias</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
+  </div>
+
+  <!-- STEP 5 — TỰ KIỂM: kiểm chéo + trọng số áp đảo bias -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — cộng gộp = cộng từng lớp</h2><span class="tag">trọng số vs bias</span></div>
+    <div class="calc big">
+      Σ mọi <b>trọng số</b> = <span data-q="n0">2</span>·<span data-q="n1">4</span> + <span data-q="n1">4</span>·<span data-q="n2">3</span> + <span data-q="n2">3</span>·<span data-q="n3">2</span> = <span class="wcell"></span> = W<br>
+      Σ mọi <b>bias</b> = <span data-q="n1">4</span> + <span data-q="n2">3</span> + <span data-q="n3">2</span> = <span class="wcell"></span> = B<br>
+      W + B = <span class="wcell" style="min-width:50px"></span> &nbsp;<small style="color:#7a8794">— có bằng Tổng ở Bước 4 không?</small>
+    </div>
+    <div class="note">Cộng theo <b>hai cách</b> (từng lớp / gộp trọng số &amp; bias) phải ra <b>cùng một số</b> → yên tâm không đếm sót.</div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Vì sao mô hình thật có tỉ tham số?</h2><span class="tag">ước lượng nhanh</span></div>
     <div class="calc">
-      Tổng = <span data-q="L1">16</span> + <span data-q="L2">10</span> = <span class="blk" style="min-width:44px"></span>
+      Một lớp rộng 1000→1000: trọng số = 1000·1000 = <span class="wcell" style="min-width:70px"></span> · bias = <span class="wcell" style="min-width:52px"></span> &nbsp;→&nbsp; bias chỉ ~<span class="blk" style="min-width:44px"></span> của lớp
     </div>
-    <div class="hint">Cộng tham số mọi lớp; đừng quên <b>bias</b> (out cái mỗi lớp).</div>
-  </div>
-
-  <!-- BƯỚC 4 — quy mô thực -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao mô hình thật có tỉ tham số?</h2><span class="tag">quy mô</span></div>
-    <div class="note">Một lớp 1000 → 1000 đã có ~1 <b>triệu</b> tham số (10⁶). Xếp hàng trăm lớp rộng 4096 + bảng embedding khổng lồ → <b>hàng tỉ</b>.
-      Tham số phình theo <b>tích</b> in × out của từng lớp.</div>
+    <div class="note">Khi lớp rộng, <b>trọng số áp đảo bias</b> (in·out ≫ out) → ước lượng nhanh: <b>params ≈ Σ in·out</b>. Xếp trăm lớp rộng 4096 + bảng embedding khổng lồ → <b>hàng tỉ</b> tham số, phình theo <b>tích</b> in×out.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Lớp in→out có bao nhiêu bias? → <span class="blk" style="min-width:110px"></span></li>
-      <li>Yếu tố nào làm tham số tăng nhanh nhất? → <span class="blk" style="min-width:130px"></span></li>
+      <li>Lớp in→out có bao nhiêu bias? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Yếu tố nào làm tham số tăng nhanh nhất? → <span class="blk" style="min-width:140px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:24mm"><span class="lb">✏️ Nháp — nhân &amp; cộng tham số ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Đếm 3 lớp</span>
+    <span><span class="ck"></span>Kiểm chéo W + B</span>
+    <span class="win">🎉 Bạn vừa "cân" một mạng nơ-ron!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài C9</span><h1>Đếm tham số mạng <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài C9</span><h1>Đếm tham số mạng <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Lớp 1 (<span data-q="n0">3</span> → <span data-q="n1">4</span>)</h2></div>
+    <div class="step-h"><div class="b">1</div><h2>Lớp 1 (<span data-q="n0">2</span> → <span data-q="n1">4</span>)</h2></div>
     <div class="calc ans">
-      trọng số = <span data-q="n0">3</span>·<span data-q="n1">4</span> = <span class="blk" data-q="w1">12</span> ;
-      bias = <span class="blk" data-q="b1">4</span> ;
-      cộng = <span class="blk" data-q="L1">16</span>
+      trọng số = <span data-q="n0">2</span>·<span data-q="n1">4</span> = <span class="blk" data-q="w1">8</span> ; bias = <span class="blk" data-q="n1b">4</span> ; cộng = <span class="wcell ans" data-q="L1">12</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Lớp 2 (<span data-q="n1">4</span> → <span data-q="n2">2</span>)</h2></div>
+    <div class="step-h"><div class="b">2</div><h2>Lớp 2 (<span data-q="n1">4</span> → <span data-q="n2">3</span>)</h2></div>
     <div class="calc ans">
-      trọng số = <span data-q="n1">4</span>·<span data-q="n2">2</span> = <span class="blk" data-q="w2">8</span> ;
-      bias = <span class="blk" data-q="b2">2</span> ;
-      cộng = <span class="blk" data-q="L2">10</span>
+      trọng số = <span data-q="n1">4</span>·<span data-q="n2">3</span> = <span class="blk" data-q="w2">12</span> ; bias = <span class="blk" data-q="n2b">3</span> ; cộng = <span class="wcell ans" data-q="L2">15</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tổng</h2></div>
+    <div class="step-h"><div class="b">3</div><h2>Lớp 3 (<span data-q="n2">3</span> → <span data-q="n3">2</span>)</h2></div>
     <div class="calc ans">
-      Tổng = <span data-q="L1">16</span> + <span data-q="L2">10</span> = <span class="blk" data-q="total">26</span> tham số
+      trọng số = <span data-q="n2">3</span>·<span data-q="n3">2</span> = <span class="blk" data-q="w3">6</span> ; bias = <span class="blk" data-q="n3b">2</span> ; cộng = <span class="wcell ans" data-q="L3">8</span>
     </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ mạng &amp; số dây</h2><span class="tag">in × out</span></div>
-    <div class="figrow">
-      <svg id="figN" class="fig" viewBox="0 0 230 150" width="72mm" height="44mm" aria-label="sơ đồ mạng fully-connected ba lớp với các dây nối là trọng số"></svg>
-      <div style="flex:1">
-        <div class="note">Mỗi <b>dây</b> = một trọng số (<span data-q="w1">12</span> + <span data-q="w2">8</span> dây);
-          mỗi nơ-ron lớp sau thêm <b>một bias</b> (<span data-q="n1">4</span> + <span data-q="n2">2</span>). Tổng = <span data-q="total">26</span>.</div>
-      </div>
+    <div class="step-h"><div class="b">4</div><h2>Tổng</h2></div>
+    <div class="calc ans big">
+      Tổng = <span data-q="L1">12</span> + <span data-q="L2">15</span> + <span data-q="L3">8</span> = <span class="wcell ans" data-q="total">35</span> tham số
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Kiểm chéo hai cách</h2><span class="tag">W + B = Tổng</span></div>
+    <div class="calc ans">
+      W = <span data-q="wSumExpr">8 + 12 + 6</span> = <span class="wcell ans" data-q="wTot">26</span> &nbsp;·&nbsp;
+      B = <span data-q="bSumExpr">4 + 3 + 2</span> = <span class="wcell ans" data-q="bTot">9</span> &nbsp;·&nbsp;
+      W + B = <span class="wcell ans" data-q="wbTot">35</span> ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> gộp mọi trọng số (W) và mọi bias (B) rồi cộng cũng chính là cộng params từng lớp — chỉ đổi thứ tự cộng. Khớp Tổng ⇒ không sót.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Trọng số áp đảo bias</h2></div>
+    <div class="calc ans">
+      1000→1000: trọng số = <span class="wcell ans" data-q="bigW">1 000 000</span> · bias = <span class="wcell ans" data-q="bigB">1 000</span> → bias ≈ <span class="blk" data-q="bigFrac">0.1%</span>
+    </div>
+    <div class="note">in·out ≫ out ⇒ ước lượng nhanh <b>params ≈ Σ in·out</b>.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Bao nhiêu bias? → <span class="qa">out (một bias mỗi nơ-ron đầu ra).</span></li>
-      <li>Tăng nhanh nhất do? → <span class="qa">Tích in×out — lớp rộng nối dày.</span></li>
+      <li>Bao nhiêu bias? → <span class="qa">out (một bias mỗi nơ-ron đầu ra của lớp).</span></li>
+      <li>Tăng nhanh nhất do? → <span class="qa">Tích in×out — lớp rộng nối dày (bias không đáng kể).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Tham số mỗi lớp = in·out + out; tổng cộng dồn. Đây là "thước đo cỡ" mô hình. Hết Phần C nền;
-    sang K2 — Bài tiếp (D1): đo sai số bằng MSE / MAE.
+    <b style="color:var(--accent2)">Rút ra.</b> params mỗi lớp = in·out + out; tổng = <span data-q="total">35</span> (cộng dồn, kiểm chéo W+B). Đây là "thước đo cỡ" mô hình.
+    Bài C10: biến logit thô của lớp ra thành <b>xác suất</b> bằng softmax — cửa ra cho bài phân loại.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C9 · Đếm tham số mạng</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var n0 = WB.randInt(2, 4), n1 = WB.randInt(3, 5), n2 = WB.randInt(2, 3);
-  var w1 = n0*n1, b1 = n1, L1 = w1 + b1;
-  var w2 = n1*n2, b2 = n2, L2 = w2 + b2;
-  var total = L1 + L2;
+  var n0 = WB.randInt(2,3), n1 = WB.randInt(3,5), n2 = WB.randInt(2,4), n3 = WB.randInt(1,2);
+  var w1 = n0*n1, w2 = n1*n2, w3 = n2*n3;
+  var L1 = w1 + n1, L2 = w2 + n2, L3 = w3 + n3;
+  var total = L1 + L2 + L3;
+  var wTot = w1 + w2 + w3, bTot = n1 + n2 + n3, wbTot = wTot + bTot;
 
   WB.setAll({
-    n0: String(n0), n1: String(n1), n2: String(n2),
-    w1: String(w1), b1: String(b1), L1: String(L1),
-    w2: String(w2), b2: String(b2), L2: String(L2),
-    total: String(total)
+    n0: String(n0), n1: String(n1), n2: String(n2), n3: String(n3),
+    n1b: String(n1), n2b: String(n2), n3b: String(n3),
+    archTag: n0 + ' → ' + n1 + ' → ' + n2 + ' → ' + n3,
+    w1: String(w1), w2: String(w2), w3: String(w3),
+    L1: String(L1), L2: String(L2), L3: String(L3),
+    total: String(total),
+    wSumExpr: w1 + ' + ' + w2 + ' + ' + w3, wTot: String(wTot),
+    bSumExpr: n1 + ' + ' + n2 + ' + ' + n3, bTot: String(bTot),
+    wbTot: String(wbTot)
   });
-  drawNet('figN', n0, n1, n2);
+  drawNet('figN', [n0, n1, n2, n3]);
 }
 
-// mạng fully-connected 3 cột: n0 (lam) → n1 (tím) → n2 (cam)
-function drawNet(id, n0, n1, n2){
+// mạng fully-connected nhiều cột: input lam · ẩn tím · output cam
+function drawNet(id, sizes){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var cx = [40, 115, 190], H = 150, r = 9;
-  var cols = ['#0e7490', '#7c5cff', '#b45309'];
+  var W = 240, H = 130, r = 8, L = sizes.length;
+  var x0 = 30, x1 = W - 30;
+  var cx = sizes.map(function(_, k){ return L === 1 ? W/2 : x0 + k*(x1-x0)/(L-1); });
   function ys(n){
-    var arr = [], gap = Math.min(30, (H - 30)/Math.max(1, n - 1 || 1)), top = H/2 - gap*(n-1)/2;
+    var arr = [], gap = Math.min(26, (H - 28)/Math.max(1, n - 1 || 1)), top = H/2 - gap*(n-1)/2;
     for (var i = 0; i < n; i++) arr.push(n === 1 ? H/2 : top + i*gap);
     return arr;
   }
-  var Y0 = ys(n0), Y1 = ys(n1), Y2 = ys(n2), i, j, s = '';
-  // dây lớp 1
-  for (i = 0; i < n0; i++) for (j = 0; j < n1; j++)
-    s += '<line x1="'+cx[0]+'" y1="'+Y0[i].toFixed(1)+'" x2="'+cx[1]+'" y2="'+Y1[j].toFixed(1)+'" stroke="#cdd3d9" stroke-width="0.7"/>';
-  // dây lớp 2
-  for (i = 0; i < n1; i++) for (j = 0; j < n2; j++)
-    s += '<line x1="'+cx[1]+'" y1="'+Y1[i].toFixed(1)+'" x2="'+cx[2]+'" y2="'+Y2[j].toFixed(1)+'" stroke="#cdd3d9" stroke-width="0.7"/>';
-  // nơ-ron
-  function nodes(xs, arr, color){ var t = ''; for (var k = 0; k < arr.length; k++) t += '<circle cx="'+xs+'" cy="'+arr[k].toFixed(1)+'" r="'+r+'" fill="#fff" stroke="'+color+'" stroke-width="2"/>'; return t; }
-  s += nodes(cx[0], Y0, cols[0]) + nodes(cx[1], Y1, cols[1]) + nodes(cx[2], Y2, cols[2]);
-  // nhãn
-  s += '<text x="'+cx[0]+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+cols[0]+'" font-weight="700">'+n0+'</text>';
-  s += '<text x="'+cx[1]+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+cols[1]+'" font-weight="700">'+n1+'</text>';
-  s += '<text x="'+cx[2]+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+cols[2]+'" font-weight="700">'+n2+'</text>';
+  var Y = sizes.map(ys), s = '', a, b, i, j;
+  // dây từng lớp
+  for (a = 0; a < L-1; a++){
+    for (i = 0; i < sizes[a]; i++) for (j = 0; j < sizes[a+1]; j++)
+      s += '<line x1="'+cx[a].toFixed(1)+'" y1="'+Y[a][i].toFixed(1)+'" x2="'+cx[a+1].toFixed(1)+'" y2="'+Y[a+1][j].toFixed(1)+'" stroke="#cdd3d9" stroke-width="0.6"/>';
+  }
+  function color(k){ return k === 0 ? '#0e7490' : (k === L-1 ? '#b45309' : '#7c5cff'); }
+  for (a = 0; a < L; a++){
+    for (i = 0; i < sizes[a]; i++)
+      s += '<circle cx="'+cx[a].toFixed(1)+'" cy="'+Y[a][i].toFixed(1)+'" r="'+r+'" fill="#fff" stroke="'+color(a)+'" stroke-width="2"/>';
+    s += '<text x="'+cx[a].toFixed(1)+'" y="14" text-anchor="middle" style="font-size:9px" fill="'+color(a)+'" font-weight="700">'+sizes[a]+'</text>';
+  }
   svg.innerHTML = s;
 }
 WB.wire(generate);

@@ -3,204 +3,430 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài I9 — Repetition penalty (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài I9 — Repetition Penalty (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.55}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
+  <div class="top">
+    <span class="no">I9</span>
+    <h1>Repetition Penalty <small>— chia logit token đã dùng, chống lặp</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>z · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>z′, p · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>token đã dùng</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I9</span><h1>Repetition Penalty <small>— chống lặp bằng can thiệp logit</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Greedy/sampling dễ rơi vào vòng lặp ("rất rất rất…"). Repetition penalty & logit bias <b>can thiệp trực
-    tiếp</b> vào logits để ép đa dạng hoặc cấm/khuyến khích token cụ thể — công cụ điều khiển đầu ra thực dụng.
-    <div class="formula">logit bias: z'ₖ = zₖ + biasₖ &nbsp;·&nbsp; repetition penalty: token đã dùng → hạ logit</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Repetition penalty chống lặp bằng cách "đánh thuế" logit của token <b>vừa được sinh</b>: nếu logit
+    dương, <b>chia cho r&gt;1</b> trước khi softmax — token đó khó được chọn lại. Cuối phiếu bạn tự chứng minh: phạt luôn
+    làm <b>giảm</b> xác suất token bị phạt, nhưng <b>không xáo trộn thứ hạng</b> giữa các token chưa bị phạt — một can
+    thiệp <b>chọn lọc</b>, khác temperature (đổi độ gắt toàn cục) hay top-k (cắt cứng).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Trước khi bốc thăm token kế, <b>đánh thuế</b> các token vừa nói → chúng khó được chọn lại → câu bớt lặp. Hoặc <b>cộng/trừ điểm</b>
-    thẳng vào một token (logit bias) để cấm (−∞) hay ưu ái nó.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 token A B C · phạt −1</span></div>
-    <div class="calc" style="font-size:14px">
-      logits z = ( <span class="gv" data-q="z1">1</span>, <span class="gv" data-q="z2">0</span>, <span class="gv" data-q="z3">2</span> ) ·
-      token <span class="gv" data-q="used">C</span> (logit lớn nhất) <b>đã sinh</b> ở bước trước → hạ logit đi 1.
-    </div>
-    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
-      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Áp phạt</h2><span class="tag">token đã dùng −1</span></div>
-    <div class="calc">
-      z' = ( <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> chỉ token đã dùng (<span data-q="used">C</span>) bị hạ → bớt khả năng được chọn lại.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax sau phạt</h2><span class="tag">eˣ / Σ</span></div>
-    <div class="calc">
-      e = (<span data-q="ep1">2.72</span>, <span data-q="ep2">1.00</span>, <span data-q="ep3">2.72</span>), Σ=<span data-q="Zp">6.44</span> →
-      p = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
-    </div>
-    <div class="hint">Trước phạt token đã dùng áp đảo; sau phạt nó ngang với token mạnh kế.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>So với không phạt</h2><span class="tag">p của token đã dùng</span></div>
-    <div class="calc">
-      không phạt: p(<span data-q="used">C</span>) = <span data-q="pNo">0.67</span> &nbsp;→&nbsp; có phạt: p(<span data-q="used">C</span>) = <span class="blk" style="min-width:42px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> can thiệp logit đổi hẳn phân phối chọn → giảm khả năng lặp lại token đó.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>logit bias / cấm token</h2><span class="tag">+∞ / −∞</span></div>
-    <div class="note">Đặt bias = −∞ để <b>cấm</b> một token; +lớn để ép chọn. Dùng cho an toàn nội dung, ép định dạng, tránh lặp.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Repetition penalty tác động ở đâu? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Cấm hẳn một token bằng cách nào? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I9 · Repetition Penalty</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài I9</span><h1>Repetition Penalty <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Sau phạt</h2></div>
-    <div class="calc ans">z' = ( <span class="blk" data-q="zp1">1</span>, <span class="blk" data-q="zp2">0</span>, <span class="blk" data-q="zp3">1</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax sau phạt</h2></div>
-    <div class="calc ans">p = ( <span class="blk" data-q="p1">0.42</span>, <span class="blk" data-q="p2">0.16</span>, <span class="blk" data-q="p3">0.42</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>So sánh</h2></div>
-    <div class="calc ans">p(<span data-q="used">C</span>): <span data-q="pNo">0.67</span> → <span class="blk" data-q="pPen">0.42</span> (giảm → bớt lặp)</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Logit token đã dùng: trước vs sau phạt</h2><span class="tag">đánh thuế</span></div>
-    <div class="figrow">
-      <svg id="figL" class="fig" viewBox="0 0 240 150" width="78mm" height="46mm" aria-label="cột logit ba token, token đã dùng bị hạ một bậc sau khi phạt"></svg>
-      <div style="flex:1">
-        <div class="note">Cột <b>lam</b> = logit gốc, cột <b>cam</b> = sau phạt. Token đã dùng (C) tụt 1 bậc → xác suất chọn lại giảm hẳn.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">3 token A·B·C · penalty r=2</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Token</th><th>logit z</th><th>Đã dùng?</th></tr>
+          <tr><td class="l">A</td><td style="color:var(--blue);font-weight:800" data-q="z0">2</td><td style="color:var(--purple);font-weight:800;text-align:center" data-q="mk0">✓</td></tr>
+          <tr><td class="l">B</td><td style="color:var(--blue);font-weight:800" data-q="z1">0</td><td style="color:var(--purple);font-weight:800;text-align:center" data-q="mk1"></td></tr>
+          <tr><td class="l">C</td><td style="color:var(--blue);font-weight:800" data-q="z2">1</td><td style="color:var(--purple);font-weight:800;text-align:center" data-q="mk2"></td></tr>
+        </table>
+        <div class="cap">Token đánh dấu <b style="color:var(--purple)">✓ tím</b> = token <span data-q="used">A</span> vừa được sinh ở bước trước → sẽ bị phạt.
+          Penalty <b>r = <span data-q="r">2</span></b>: logit dương của token đã dùng bị <b>chia cho r</b>; token chưa dùng giữ nguyên logit.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:5.6mm"><span>x</span><span>eˣ</span></div>
+          <div class="mx c5" style="--cw:10mm;--ch:5.6mm">
+            <div>0</div><div>1</div><div>2</div><div>3</div><div>4</div>
+            <div class="pe">1.00</div><div class="pe">2.72</div><div class="pe">7.39</div><div class="pe">20.09</div><div class="pe">54.60</div>
+          </div>
+        </div>
+        <div class="cap">Bảng tra <b>eˣ</b> — KHÔNG bấm máy tính, đọc thẳng x → eˣ.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Tác động ở đâu? → <span class="qa">Vào logits (trước softmax) — hạ token đã xuất hiện.</span></li>
-      <li>Cấm token? → <span class="qa">Đặt logit bias = −∞ (xác suất → 0).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">z → (÷r token đã dùng) → z′ → softmax → p</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 560 92" width="100%" height="30mm"
+           aria-label="hai giai đoạn: z sau phạt rồi softmax ra p, các ô số để trống, hàng token đã dùng tô tím"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Hạ logit token đã dùng (hoặc logit bias) → giảm lặp / điều khiển đầu ra. Bài tiếp (I10): định dạng hội thoại
-    thành token — <b>chat template</b>.
+  <!-- ① ÁP PHẠT -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Áp phạt: chia logit token đã dùng cho r</span><span class="f">chỉ 1 token đổi</span></div>
+    <div class="pb">
+      <div class="eq">
+        z′ = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )
+        — chỉ token đã dùng (<span data-q="used">A</span>) chia cho r=<span data-q="r">2</span>, hai token còn lại <b>giữ nguyên</b>.
+      </div>
+      <div class="cap">z gốc = ( <span data-q="z0">2</span>, <span data-q="z1">0</span>, <span data-q="z2">1</span> ) theo thứ tự A, B, C (từ bảng Cho sẵn).</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I9 · Repetition Penalty</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② SOFTMAX TRƯỚC -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax TRƯỚC phạt</span><span class="f">baseline — dùng z gốc, chưa can thiệp</span></div>
+    <div class="pb">
+      <div class="eq">
+        e = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> ) &nbsp;;&nbsp; Σ = <span class="slot sm"></span><br>
+        p<sub>trước</sub> = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )
+      </div>
+      <div class="cap">Tra bảng eˣ cho z gốc, cộng lại thành Σ rồi chia — ba số cộng = 1.</div>
+    </div>
+  </div>
+
+  <!-- ③ SOFTMAX SAU -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Softmax SAU phạt</span><span class="f">dùng z′ từ Bước①</span></div>
+    <div class="pb">
+      <div class="eq">
+        e′ = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> ) &nbsp;;&nbsp; Σ′ = <span class="slot sm"></span><br>
+        p<sub>sau</sub> = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )
+      </div>
+      <div class="cap">Tra bảng eˣ cho z′ (Bước①) — chỉ token đã dùng đổi cột tra, hai token kia dùng lại e đã tính ở Bước②.</div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — phạt chọn lọc, không xáo thứ hạng phần còn lại</span><span class="f">so p trước / sau</span></div>
+    <div class="pb">
+      <div class="eq">
+        p(<span data-q="used">A</span>) trước phạt = <span class="slot sm"></span> → sau phạt = <span class="slot sm"></span> → <span class="slot sm" style="min-width:20mm"></span> (tăng/giảm?)<br>
+        2 token CHƯA phạt (<span data-q="nu0L">B</span>, <span data-q="nu1L">C</span>): lớn hơn TRƯỚC phạt = <span class="slot sm"></span>
+        &nbsp;·&nbsp; lớn hơn SAU phạt = <span class="slot sm"></span> → thứ hạng <span class="slot sm" style="min-width:26mm"></span> (đổi/giữ nguyên?)
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">TRƯỚC PHẠT</div>
+          <table>
+            <tr><td class="l">A</td><td><div class="track uni" id="t_b0"></div></td></tr>
+            <tr><td class="l">B</td><td><div class="track uni" id="t_b1"></div></td></tr>
+            <tr><td class="l">C</td><td><div class="track uni" id="t_b2"></div></td></tr>
+          </table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">SAU PHẠT</div>
+          <table>
+            <tr><td class="l">A</td><td><div class="track uni" id="t_a0"></div></td></tr>
+            <tr><td class="l">B</td><td><div class="track uni" id="t_a1"></div></td></tr>
+            <tr><td class="l">C</td><td><div class="track uni" id="t_a2"></div></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="cap">Thang thanh: 0…1 · Tìm bar của token đã dùng (<span data-q="used">A</span>) trong mỗi cột — chiều cao đổi thế nào?
+        Hai bar còn lại (B, C) thứ tự có đổi không?</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính z′ sau phạt</span>
+    <span><span class="ck"></span>Ra p trước &amp; sau, tô 6 thanh</span>
+    <span><span class="ck"></span>Chứng minh phạt chọn lọc, không xáo thứ hạng</span>
+    <span class="win">🎉 Bạn vừa hiểu cơ chế chống lặp dùng trong mọi LLM chat thật!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I9 · Repetition Penalty</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">I9</span>
+    <h1>Repetition Penalty <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>z · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>z′, p · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>token đã dùng</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">z → (÷r token đã dùng) → z′ → softmax → p</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 560 92" width="100%" height="30mm" aria-label="sơ đồ hai giai đoạn đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Áp phạt: chia logit token đã dùng cho r</span></div>
+    <div class="pb">
+      <div class="eq">
+        z′ = ( <span class="slot ans sm" data-q="zp0">1</span>, <span class="slot ans sm" data-q="zp1">0</span>, <span class="slot ans sm" data-q="zp2">1</span> )
+        — chỉ token đã dùng (<span data-q="used">A</span>) chia cho r=<span data-q="r">2</span>, hai token còn lại giữ nguyên.
+      </div>
+      <div class="why"><b>Vì sao chỉ 1 token đổi:</b> penalty chỉ "nhìn lịch sử" token <b>đã sinh</b> — token chưa dùng
+        không có lý do bị phạt, logit của chúng đứng yên.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax TRƯỚC phạt</span></div>
+    <div class="pb">
+      <div class="eq">
+        e = ( <span class="slot ans sm" data-q="eb0">7.39</span>, <span class="slot ans sm" data-q="eb1">1.00</span>, <span class="slot ans sm" data-q="eb2">2.72</span> ) &nbsp;;&nbsp; Σ = <span class="slot ans sm" data-q="Zb">11.11</span><br>
+        p<sub>trước</sub> = ( <span class="slot ans sm" data-q="pb0">0.67</span>, <span class="slot ans sm" data-q="pb1">0.09</span>, <span class="slot ans sm" data-q="pb2">0.24</span> )
+      </div>
+      <div class="why"><b>Vì sao cần baseline:</b> phải biết p <b>trước khi phạt</b> mới đo được penalty kéo giảm bao nhiêu — nếu không có mốc so sánh, "giảm" là một câu vô nghĩa.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Softmax SAU phạt</span></div>
+    <div class="pb">
+      <div class="eq">
+        e′ = ( <span class="slot ans sm" data-q="ea0">2.72</span>, <span class="slot ans sm" data-q="ea1">1.00</span>, <span class="slot ans sm" data-q="ea2">2.72</span> ) &nbsp;;&nbsp; Σ′ = <span class="slot ans sm" data-q="Za">6.44</span><br>
+        p<sub>sau</sub> = ( <span class="slot ans sm" data-q="pa0">0.42</span>, <span class="slot ans sm" data-q="pa1">0.16</span>, <span class="slot ans sm" data-q="pa2">0.42</span> )
+      </div>
+      <div class="why"><b>Vì sao Σ đổi:</b> chia nhỏ MỘT logit làm eˣ của riêng token đó giảm → tổng Σ cũng giảm theo — softmax
+        chia lại "miếng bánh" xác suất cho mọi token, dù chỉ một token bị can thiệp trực tiếp.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — phạt chọn lọc, không xáo thứ hạng phần còn lại</span></div>
+    <div class="pb">
+      <div class="eq">
+        p(<span data-q="used">A</span>) trước phạt = <span class="slot ans sm" data-q="pUsedB">0.67</span> → sau phạt = <span class="slot ans sm" data-q="pUsedA">0.42</span>
+        → <span class="slot ans sm" style="min-width:20mm">luôn giảm</span><br>
+        2 token CHƯA phạt (<span data-q="nu0L">B</span>, <span data-q="nu1L">C</span>): lớn hơn TRƯỚC phạt = <span class="slot ans sm" data-q="rankB">C</span>
+        &nbsp;·&nbsp; lớn hơn SAU phạt = <span class="slot ans sm" data-q="rankA">C</span> → thứ hạng <span class="slot ans sm" style="min-width:26mm">giữ nguyên</span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">TRƯỚC PHẠT</div>
+          <table>
+            <tr><td class="l">A</td><td><div class="track uni" id="a_b0"></div></td></tr>
+            <tr><td class="l">B</td><td><div class="track uni" id="a_b1"></div></td></tr>
+            <tr><td class="l">C</td><td><div class="track uni" id="a_b2"></div></td></tr>
+          </table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">SAU PHẠT</div>
+          <table>
+            <tr><td class="l">A</td><td><div class="track uni" id="a_a0"></div></td></tr>
+            <tr><td class="l">B</td><td><div class="track uni" id="a_a1"></div></td></tr>
+            <tr><td class="l">C</td><td><div class="track uni" id="a_a2"></div></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> p(token đã dùng) <b>luôn giảm</b> — chia logit dương cho r&gt;1
+      luôn làm nó nhỏ đi, nên eᶻ′ nhỏ hơn eᶻ, nên phần chia của nó trong Σ nhỏ lại. Nhưng giữa <b>B và C</b> (không bị phạt),
+      logit của chúng <b>không hề đổi</b> — tỉ lệ eᶻᴮ ÷ eᶻᶜ y hệt trước và sau phạt, vì Σ chỉ là <b>một hằng số chia chung</b>
+      cho mọi token, không làm lệch tỉ lệ giữa các số hạng không đổi. Đây là lý do repetition penalty được gọi là can thiệp
+      <b>chọn lọc</b>: nó "đàn áp" đúng một mục tiêu mà không xáo trộn trật tự của phần còn lại — khác hẳn temperature
+      (chia MỌI logit cho cùng một số → đổi độ gắt toàn cục nhưng giữ nguyên thứ hạng của TẤT CẢ) và top-k (cắt cứng theo thứ hạng).</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi đọc repetition penalty</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Penalty trừ/chia thẳng vào xác suất, không phải logit."</b><br>
+          <span style="color:var(--dim)">Sai — penalty can thiệp <b>trước softmax</b>, ở logit. Nếu chia thẳng vào p, tổng
+          3 xác suất sẽ không còn = 1, phải chuẩn hóa lại; can thiệp ở logit rồi mới softmax mới giữ tính chất "luôn cộng 1".</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "r càng lớn thì token bị cấm hẳn (p=0)."</b><br>
+          <span style="color:var(--dim)">Sai — z′=z÷r chỉ tiến dần về <b>0</b> khi r→∞ (không phải −∞), nên eᶻ′→1, xác suất
+          giảm nhưng <b>không bao giờ chạm 0</b>. Muốn cấm tuyệt đối phải dùng logit bias = −∞, một cơ chế khác.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Penalty áp cho tất cả token, không chỉ token đã dùng."</b><br>
+          <span style="color:var(--dim)">Sai — chỉ token đã <b>xuất hiện trong lịch sử</b> bị chia logit; token chưa từng
+          được sinh giữ nguyên logit gốc (Bước① B, C không đổi).</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Phạt xáo trộn cả thứ hạng của token không bị phạt."</b><br>
+          <span style="color:var(--dim)">Sai — Bước④ vừa chứng minh bằng số: B và C giữ nguyên thứ hạng trước/sau, vì tử số
+          eᶻ của chúng không đổi, chỉ mẫu số Σ đổi <b>chung</b> cho cả ba.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Repetition penalty = chia logit dương của token <b>đã dùng</b> cho r&gt;1 trước softmax — luôn <b>giảm</b>
+    xác suất bị chọn lại nhưng <b>giữ nguyên thứ hạng</b> giữa các token khác (can thiệp chọn lọc, khác temperature/top-k).
+    Bài tiếp theo <b>I10</b>: <b>chat template</b> — định dạng hội thoại thành chuỗi token.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I9 · Repetition Penalty</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-var EXP = {0:1, 1:2.72, 2:7.39};
+// Bảng tra eˣ (x nguyên 0..4) — logit trong bài luôn rơi đúng các mốc này.
+var EXP = {0:1, 1:2.72, 2:7.39, 3:20.09, 4:54.60};
+var S = {};
+
 function generate(){
-  var f2 = WB.fmt2;
-  var letters=['A','B','C'];
-  var ui = WB.pick([0,1,2]);            // token đã dùng = token có logit lớn nhất (=2)
-  var z=[0,0,0]; z[ui]=2;
-  var others = [0,1]; others = WB.pick([[0,1],[1,0]]);
-  var k=0; for(var i=0;i<3;i++){ if(i!==ui){ z[i]=others[k]; k++; } }
-  // không phạt
-  var e0=z.map(function(v){return EXP[v];});
-  var Z0=e0[0]+e0[1]+e0[2];
-  var pNo=Math.round(e0[ui]/Z0*100)/100;
-  // sau phạt: hạ token đã dùng 1
-  var zp=z.slice(); zp[ui]=z[ui]-1;
-  var ep=zp.map(function(v){return EXP[v];});
-  var Zp=Math.round((ep[0]+ep[1]+ep[2])*100)/100;
-  var p=[0,0,0];
-  p[0]=Math.round(ep[0]/(ep[0]+ep[1]+ep[2])*100)/100;
-  p[1]=Math.round(ep[1]/(ep[0]+ep[1]+ep[2])*100)/100;
-  p[2]=Math.round((1-p[0]-p[1])*100)/100;
+  var f2 = WB.fmt2, fI = WB.fmtInt, letters = ['A','B','C'];
+  var ui = WB.pick([0,1,2]);                    // token đã dùng (sẽ bị phạt)
+  var zUsed = WB.pick([2,4]);                   // logit dương, chia hết cho r=2
+  var rest = WB.pickDistinct([0,1,3], 2);        // 2 logit khác nhau cho 2 token còn lại
+  var z = [0,0,0]; z[ui] = zUsed;
+  var k = 0;
+  for (var i = 0; i < 3; i++) { if (i !== ui) { z[i] = rest[k]; k++; } }
+
+  var r = 2;
+  var zp = z.slice(); zp[ui] = z[ui] / r;        // chỉ token đã dùng bị chia
+
+  // Softmax TRƯỚC phạt (dùng z gốc) — baseline.
+  var eb = z.map(function(v){ return EXP[v]; });
+  var sumB = eb[0] + eb[1] + eb[2];
+  var Zb = Math.round(sumB * 100) / 100;
+  var pb = [0,0,0];
+  pb[0] = Math.round(eb[0] / sumB * 100) / 100;
+  pb[1] = Math.round(eb[1] / sumB * 100) / 100;
+  pb[2] = Math.round((1 - pb[0] - pb[1]) * 100) / 100;
+
+  // Softmax SAU phạt (dùng z′).
+  var ea = zp.map(function(v){ return EXP[v]; });
+  var sumA = ea[0] + ea[1] + ea[2];
+  var Za = Math.round(sumA * 100) / 100;
+  var pa = [0,0,0];
+  pa[0] = Math.round(ea[0] / sumA * 100) / 100;
+  pa[1] = Math.round(ea[1] / sumA * 100) / 100;
+  pa[2] = Math.round((1 - pa[0] - pa[1]) * 100) / 100;
+
+  // Hai token chưa phạt — so thứ hạng trước/sau (tính trên tỉ lệ e thật, tránh sai số làm tròn).
+  var nu = []; for (var i2 = 0; i2 < 3; i2++) { if (i2 !== ui) nu.push(i2); }
+  var rank = eb[nu[0]] >= eb[nu[1]] ? letters[nu[0]] : letters[nu[1]];   // bất biến trước=sau (chứng minh toán học)
+
+  S = { ui: ui, z: z, zp: zp, pa: pa };
+
   WB.setAll({
-    z1:String(z[0]), z2:String(z[1]), z3:String(z[2]), used:letters[ui],
-    zp1:String(zp[0]), zp2:String(zp[1]), zp3:String(zp[2]),
-    ep1:f2(ep[0]), ep2:f2(ep[1]), ep3:f2(ep[2]), Zp:f2(Zp),
-    p1:f2(p[0]), p2:f2(p[1]), p3:f2(p[2]),
-    pNo:f2(pNo), pPen:f2(p[ui])
+    used: letters[ui], r: String(r),
+    z0: fI(z[0]), z1: fI(z[1]), z2: fI(z[2]),
+    zp0: fI(zp[0]), zp1: fI(zp[1]), zp2: fI(zp[2]),
+    mk0: ui===0 ? '✓' : '', mk1: ui===1 ? '✓' : '', mk2: ui===2 ? '✓' : '',
+    eb0: f2(eb[0]), eb1: f2(eb[1]), eb2: f2(eb[2]), Zb: f2(Zb),
+    pb0: f2(pb[0]), pb1: f2(pb[1]), pb2: f2(pb[2]),
+    ea0: f2(ea[0]), ea1: f2(ea[1]), ea2: f2(ea[2]), Za: f2(Za),
+    pa0: f2(pa[0]), pa1: f2(pa[1]), pa2: f2(pa[2]),
+    pUsedB: f2(pb[ui]), pUsedA: f2(pa[ui]),
+    nu0L: letters[nu[0]], nu1L: letters[nu[1]],
+    rankB: rank, rankA: rank
   });
-  drawLogit('figL', z, zp, ui);
+
+  drawBarUni('t_b0', 0, 1, false); drawBarUni('t_b1', 0, 1, false); drawBarUni('t_b2', 0, 1, false);
+  drawBarUni('t_a0', 0, 1, false); drawBarUni('t_a1', 0, 1, false); drawBarUni('t_a2', 0, 1, false);
+  drawBarUni('a_b0', pb[0], 1, true); drawBarUni('a_b1', pb[1], 1, true); drawBarUni('a_b2', pb[2], 1, true);
+  drawBarUni('a_a0', pa[0], 1, true); drawBarUni('a_a1', pa[1], 1, true); drawBarUni('a_a2', pa[2], 1, true);
+
+  drawPipe('figQ', false);
+  drawPipe('figA', true);
 }
-function drawLogit(id, z, zp, ui){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=30, base=120, scale=34, gap=64, bw=20;
-  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+3*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  var labs=['A','B','C'];
-  for(var i=0;i<3;i++){
-    var bx=x0+i*gap, h1=z[i]*scale, h2=zp[i]*scale;
-    s+='<rect x="'+bx+'" y="'+(base-h1).toFixed(1)+'" width="'+bw+'" height="'+h1.toFixed(1)+'" fill="#0e749033" stroke="#0e7490" stroke-width="1.3"/>';
-    s+='<rect x="'+(bx+bw+3)+'" y="'+(base-h2).toFixed(1)+'" width="'+bw+'" height="'+h2.toFixed(1)+'" fill="#b4530933" stroke="#b45309" stroke-width="1.3"/>';
-    s+='<text x="'+(bx+bw)+'" y="'+(base+13)+'" text-anchor="middle" font-size="9" fill="'+(i===ui?'#b45309':'#5b6776')+'" font-weight="'+(i===ui?'700':'400')+'">'+labs[i]+(i===ui?' (dùng)':'')+'</text>';
+
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho p (chỉ dương).
+// fill=false → chỉ vạch mốc, chừa trống cho người học tô bút chì (ĐỀ).
+function drawBarUni(id, v, max, fill){
+  var el = document.getElementById(id); if (!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if (fill && v > 0) {
+    var pct = Math.min(v / max, 1) * 100;
+    h += '<div class="fill pos" style="left:0%;width:' + pct + '%"></div>';
   }
-  s+='<text x="'+(x0+4)+'" y="14" font-size="8.5" fill="#0e7490" font-weight="700">■ gốc</text>';
-  s+='<text x="'+(x0+52)+'" y="14" font-size="8.5" fill="#b45309" font-weight="700">■ sau phạt</text>';
-  svg.innerHTML=s;
+  el.innerHTML = h;
 }
+
+// Hộp giá trị của sơ đồ: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x, y, w, h, val, filled){
+  var ORG = '#b45309', INK = '#16202e';
+  var stroke = filled ? ORG : INK, fill = filled ? '#fff8f0' : '#fff';
+  var dash = filled ? '' : ' stroke-dasharray="3 2"';
+  var s = '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2.5" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + (filled ? 1.2 : 1.4) + '"' + dash + '/>';
+  if (filled) s += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 3) + '" text-anchor="middle" font-size="7.6" font-weight="700" fill="#7a3d00">' + val + '</text>';
+  return s;
+}
+
+// Sơ đồ 2 giai đoạn: ① z′ (sau phạt, 3 hàng A/B/C) → ② p (softmax sau phạt, 3 hàng).
+// Hàng của token đã dùng tô tím. showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawPipe(id, showAns){
+  var svg = document.getElementById(id); if (!svg) return;
+  var fI = WB.fmtInt, f2 = WB.fmt2, DIM = '#6b7280', INK = '#16202e', PUR = '#6d28d9';
+  var letters = ['A','B','C'];
+  var s = '<defs><marker id="mk' + id + '" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+        + '<path d="M0 0 L6 3 L0 6 z" fill="' + DIM + '"/></marker></defs>';
+  var Ax = 8, Aw = 250, Bx = 310, Bw = 240;
+
+  s += '<text x="' + (Ax + Aw / 2) + '" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="' + INK + '">① z′ (sau phạt: ÷r token đã dùng)</text>';
+  for (var i = 0; i < 3; i++) {
+    var ry = 22 + i * 23;
+    var col = i === S.ui ? PUR : DIM;
+    s += '<text x="' + (Ax + 2) + '" y="' + (ry + 11) + '" font-size="8.4" fill="' + col + '" font-weight="' + (i === S.ui ? '800' : '400') + '">' + letters[i] + '</text>';
+    s += stageBox(Ax + Aw - 50, ry, 46, 17, fI(S.zp[i]), showAns);
+  }
+  s += '<line x1="' + (Ax + Aw + 1) + '" y1="56" x2="' + (Bx - 1) + '" y2="56" stroke="' + DIM + '" stroke-width="1.3" marker-end="url(#mk' + id + ')"/>';
+  s += '<text x="' + ((Ax + Aw + Bx) / 2) + '" y="50" text-anchor="middle" font-size="7.4" fill="' + DIM + '">softmax</text>';
+
+  s += '<text x="' + (Bx + Bw / 2) + '" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="' + INK + '">② p (softmax sau phạt)</text>';
+  for (var j = 0; j < 3; j++) {
+    var ry2 = 22 + j * 23;
+    var col2 = j === S.ui ? PUR : DIM;
+    s += '<text x="' + (Bx + 2) + '" y="' + (ry2 + 11) + '" font-size="8.4" fill="' + col2 + '" font-weight="' + (j === S.ui ? '800' : '400') + '">' + letters[j] + '</text>';
+    s += stageBox(Bx + Bw - 50, ry2, 46, 17, f2(S.pa[j]), showAns);
+  }
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

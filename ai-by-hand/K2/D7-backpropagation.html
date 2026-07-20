@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D7 — Backpropagation (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,157 +25,200 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nền tảng · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D7</span><h1>Backpropagation <small>— lan gradient ngược</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài D7</span>
+    <h1>Backpropagation <small>— lan gradient ngược qua một nút</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Tính đạo hàm loss theo <b>từng</b> tham số riêng lẻ thì vô vọng. Backprop làm <b>một lượt ngược</b> cho mọi tham số
-    bằng cách chuyền "trách nhiệm sai" δ về sau. Không có nó, deep learning không khả thi.
-    <div class="formula">
-      Forward: z = w·x → a = f(z) → L = ½(a−y)² &nbsp;·&nbsp; Backward: ∂L/∂a = a−y → ∂L/∂z = ∂L/∂a·f′(z) → ∂L/∂w = ∂L/∂z·x
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Tính đạo hàm loss theo <b>từng</b> tham số riêng thì vô vọng. Backprop làm <b>một lượt ngược</b>: chuyền "trách nhiệm sai" δ về sau,
+    mỗi nút nhân đạo hàm cục bộ. Hãy <b>tự tay</b> lan gradient từ loss về w. Phần thưởng: thấy cả đường ngược chỉ là <b>một phép nhân chuỗi</b> — nhân dọc đồ thị.
+    <div class="formula" style="margin-top:5px">
+      Xuôi: z = w·x → a = ReLU(z) → L = ½(a−y)² &nbsp;·&nbsp; Ngược: ∂L/∂a = a−y → ×ReLU′(z) → ×x
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Tín hiệu đi <b>xuôi</b> cho dự đoán; "lỗi" đi <b>ngược</b> chia trách nhiệm. Tại mỗi nút, nhân đạo hàm cục bộ với gradient nhận từ phía
-    sau (quy tắc chuỗi) → biết nút đó nên đổi thế nào.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (forward)</h2><span class="tag">w·x → ReLU → loss</span></div>
-    <div class="calc" style="font-size:15px">
-      x = <span class="gv" data-q="x">3</span>, w = <span class="gv" data-q="w">2</span> → z = w·x = <span class="gv" data-q="z">6</span> → a = ReLU(z) = <span class="gv" data-q="a">6</span>; nhãn y = <span class="gv" data-q="y">4</span>; L = ½(a−y)².
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (forward đã có)</h2><span class="tag">w·x → ReLU → loss</span></div>
+    <div class="calc big">
+      x = <span class="gv" data-q="x">3</span>, w = <span class="gv" data-q="w">2</span> → z = w·x = <span class="gv" data-q="z">6</span> → a = ReLU(z) = <span class="gv" data-q="a">6</span> ; nhãn y = <span class="gv" data-q="y">4</span> ; L = ½(a−y)²
     </div>
+    <div class="why"><b>Vì sao:</b> forward lưu z, a để backward <b>tái dùng</b> → không tính lại, gradient mọi tham số rẻ.</div>
   </div>
 
-  <!-- BƯỚC 1 -->
+  <div class="grid2">
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Gradient tại đầu ra</h2><span class="tag">∂L/∂a</span></div>
-    <div class="calc">∂L/∂a = a − y = <span data-q="a">6</span> − <span data-q="y">4</span> = <span class="blk" style="min-width:44px"></span></div>
-    <div class="why"><b>Vì sao:</b> bắt đầu từ loss, lấy đạo hàm theo đầu ra a trước rồi mới lan ngược.</div>
+    <div class="step-h"><div class="b">1</div><h2>Gradient tại đầu ra</h2><span class="tag">∂L/∂a = a − y</span></div>
+    <div class="calc">∂L/∂a = a − y = <span data-q="a">6</span> − <span data-q="y">4</span> = <span class="wcell" style="min-width:40px"></span></div>
   </div>
 
-  <!-- BƯỚC 2 -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Qua hàm kích hoạt</h2><span class="tag">×ReLU′(z)</span></div>
-    <div class="calc">∂L/∂z = ∂L/∂a · ReLU′(z) = <span class="blk" style="min-width:36px"></span> · 1 = <span class="blk" style="min-width:44px"></span></div>
-    <div class="hint">ReLU′(z&gt;0)=1 → cho gradient đi thẳng; nếu z&lt;0 thì ×0 (chặn).</div>
+    <div class="step-h"><div class="b">2</div><h2>Qua ReLU</h2><span class="tag">×ReLU′(z)</span></div>
+    <div class="calc">∂L/∂z = ∂L/∂a · <span data-q="reluD">1</span> = <span class="wcell" style="min-width:40px"></span></div>
+    <div class="hint">ReLU′(z&gt;0) = 1 → gradient đi thẳng; nếu z&lt;0 thì ×0 (chặn).</div>
   </div>
+  </div><!-- /grid2 -->
 
-  <!-- BƯỚC 3 -->
+  <!-- STEP 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Tới trọng số</h2><span class="tag">×x</span></div>
-    <div class="calc">∂L/∂w = ∂L/∂z · x = <span class="blk" style="min-width:36px"></span> · <span data-q="x">3</span> = <span class="blk" style="min-width:44px"></span></div>
-    <div class="why"><b>Vì sao:</b> ∂z/∂w = x → gradient của w = δ nhân <b>đầu vào</b> của nút đó.</div>
+    <div class="calc big">∂L/∂w = ∂L/∂z · x = <span class="blk" style="min-width:36px"></span> · <span data-q="x">3</span> = <span class="wcell" style="min-width:44px"></span></div>
+    <div class="why"><b>Vì sao:</b> ∂z/∂w = x → gradient của w = δ nhân <b>đầu vào</b> của nút đó. Cuối cùng w ← w − η·∂L/∂w.</div>
   </div>
 
-  <!-- BƯỚC 4 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Backprop — cả đường ngược = một tích chuỗi</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D7</span>
+    <h1>Backpropagation <small>— gradient = tích các đạo hàm cục bộ dọc đường</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: tích dọc đường -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Cập nhật & quy mô</h2><span class="tag">chuỗi nhân ngược</span></div>
-    <div class="note">w ← w − η·∂L/∂w. Mạng nhiều lớp chỉ là lặp 3 bước này (δ lớp trước = Wᵀδ ⊙ f′ — Bài D8). Forward lưu lại a, z để backward <b>tái dùng</b> → rẻ.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — gradient là tích dọc đường</h2><span class="tag">quy tắc chuỗi = 1 phép nhân</span></div>
+    <div class="note" style="margin-top:0">
+      Thay vì lan từng bước, viết <b>trọn</b> đường loss → a → z → w thành <b>một tích</b> các đạo hàm cục bộ:
+      <br>∂L/∂w = <span class="frac" style="font-size:13px"><span class="n">∂L</span><span class="d">∂a</span></span>·<span class="frac" style="font-size:13px"><span class="n">∂a</span><span class="d">∂z</span></span>·<span class="frac" style="font-size:13px"><span class="n">∂z</span><span class="d">∂w</span></span> = (a−y)·ReLU′(z)·x. Nhân một lần:
+    </div>
+    <div class="calc big">
+      ∂L/∂w = (<span data-q="a">6</span>−<span data-q="y">4</span>)·<span data-q="reluD">1</span>·<span data-q="x">3</span> = <span class="wcell" style="min-width:52px"></span>
+      &nbsp;<small style="color:#7a8794">— có khớp Bước 3 không?</small>
+    </div>
+    <div class="note">Bằng đúng Bước 3 → "lan ngược từng bước" và "nhân một tích dọc đường" là <b>cùng một phép</b> (quy tắc chuỗi). Nhân tử <b>ReLU′(z)</b> là "cổng": nếu z&lt;0 nó = 0 → cả tích = 0, nút <b>không học</b> (nơ-ron chết).</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vì sao backprop rẻ</h2><span class="tag">tái dùng trung gian</span></div>
+    <div class="note" style="margin-top:2px">Mạng nhiều lớp chỉ lặp 3 bước này: δ lớp trước = (Wᵀδ) ⊙ f′ (Bài D8). Forward lưu z, a một lần; backward dùng lại → tính gradient cho
+      <b>mọi</b> tham số chỉ một lượt ngược, thay vì đạo hàm riêng từng tham số. Đó là lý do deep learning khả thi.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Backprop dựa trên quy tắc toán nào? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Backprop dựa trên quy tắc toán nào? → <span class="blk" style="min-width:160px"></span></li>
       <li>Gradient của trọng số = ? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — nhân chuỗi các đạo hàm cục bộ ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Lan gradient về w</span>
+    <span><span class="ck"></span>Kiểm tích dọc đường</span>
+    <span class="win">🎉 Bạn vừa chạy một lượt backprop!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D7</span><h1>Backpropagation <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D7</span><h1>Backpropagation <small>— lời giải &amp; kiểm tra</small></h1></div>
 
+  <div class="grid2">
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Gradient đầu ra</h2></div>
-    <div class="calc ans">∂L/∂a = <span data-q="a">6</span> − <span data-q="y">4</span> = <span class="blk" data-q="dLda">2</span></div>
+    <div class="calc ans">∂L/∂a = <span data-q="a">6</span> − <span data-q="y">4</span> = <span class="wcell ans" data-q="dLda">2</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Qua ReLU</h2></div>
-    <div class="calc ans">∂L/∂z = <span data-q="dLda">2</span> · 1 = <span class="blk" data-q="dLdz">2</span> (vì z = <span data-q="z">6</span> &gt; 0)</div>
+    <div class="calc ans">∂L/∂z = <span data-q="dLda">2</span> · <span data-q="reluD">1</span> = <span class="wcell ans" data-q="dLdz">2</span> (z = <span data-q="z">6</span> &gt; 0)</div>
   </div>
+  </div><!-- /grid2 -->
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Tới trọng số</h2></div>
-    <div class="calc ans">∂L/∂w = <span data-q="dLdz">2</span> · <span data-q="x">3</span> = <span class="blk" data-q="dLdw">6</span></div>
+    <div class="calc ans big">∂L/∂w = <span data-q="dLdz">2</span> · <span data-q="x">3</span> = <span class="wcell ans" data-q="dLdw">6</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Đồ thị tính toán · gradient chạy ngược</h2><span class="tag">lam xuôi · cam ngược</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Tích dọc đường = cùng kết quả</h2><span class="tag">lam xuôi · cam ngược</span></div>
     <div class="figrow">
-      <svg id="figBP" class="fig" viewBox="0 0 240 110" width="76mm" height="35mm" aria-label="đồ thị x w z a L, mũi tên gradient ngược"></svg>
+      <svg id="figBP" class="fig" viewBox="0 0 240 110" width="76mm" height="34mm" aria-label="đồ thị x w z a L, mũi tên gradient ngược"></svg>
       <div style="flex:1">
-        <div class="note">Xuôi (lam): x,w → z → a → L. Ngược (cam): ∂L/∂a → ∂L/∂z → ∂L/∂w, mỗi bước nhân một đạo hàm cục bộ (quy tắc chuỗi). Forward lưu z,a
-          để backward tái dùng → tính gradient mọi tham số chỉ một lượt.</div>
+        <div class="calc ans">∂L/∂w = (<span data-q="a">6</span>−<span data-q="y">4</span>)·<span data-q="reluD">1</span>·<span data-q="x">3</span> = <span class="wcell ans" data-q="prod">6</span> = Bước 3 ✓</div>
+        <div class="note">Xuôi (lam): x,w → z → a → L. Ngược (cam): nhân đạo hàm cục bộ dọc đường. Nhân tử ReLU′(z) là cổng — z&lt;0 ⇒ tích = 0.</div>
       </div>
     </div>
+    <div class="why"><b>Vì sao:</b> quy tắc chuỗi = tích các đạo hàm cục bộ dọc đồ thị. Lan từng bước chỉ là nhân dần cùng tích đó → hai cách luôn khớp.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Quy tắc toán? → <span class="qa">Quy tắc chuỗi (nhân đạo hàm dọc đồ thị, chạy ngược).</span></li>
+      <li>Quy tắc toán? → <span class="qa">Quy tắc chuỗi — nhân đạo hàm cục bộ dọc đồ thị, chạy ngược.</span></li>
       <li>Gradient trọng số? → <span class="qa">δ (gradient tại nút) nhân đầu vào của nút đó.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Backprop = forward lưu trung gian + backward nhân chuỗi ngược → gradient mọi tham số rẻ.
-    Bài tiếp <b style="color:var(--accent2)">D8</b>: backprop cho mạng MLP nhiều lớp.
+    <b style="color:var(--accent2)">Rút ra.</b> ∂L/∂w = <span data-q="dLdw">6</span> = tích (a−y)·ReLU′(z)·x dọc đường; backprop = forward lưu trung gian + backward nhân chuỗi ngược → rẻ.
+    Bài D8: backprop cho <b>mạng MLP nhiều lớp</b> (δ trước = Wᵀδ ⊙ f′).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D7 · Backpropagation</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var fT=WB.fmtTrim;
-  var x=WB.pick([2,3]), w=WB.pick([2,3]), y=WB.pick([3,4,5]);
-  var z=w*x, a=Math.max(0,z);
-  var dLda=a-y, dLdz=dLda*(z>0?1:0), dLdw=dLdz*x;
+  var fT = WB.fmtTrim;
+  var x = WB.pick([2,3]), w = WB.pick([2,3]), y = WB.pick([3,4,5]);
+  var z = w*x, a = Math.max(0,z);
+  var reluD = z > 0 ? 1 : 0;
+  var dLda = a - y, dLdz = dLda*reluD, dLdw = dLdz*x;
+  var prod = dLdw;                              // (a−y)·ReLU′·x — cùng kết quả
+
   WB.setAll({
-    x:fT(x), w:fT(w), y:fT(y), z:fT(z), a:fT(a),
-    dLda:fT(dLda), dLdz:fT(dLdz), dLdw:fT(dLdw)
+    x: fT(x), w: fT(w), y: fT(y), z: fT(z), a: fT(a), reluD: fT(reluD),
+    dLda: fT(dLda), dLdz: fT(dLdz), dLdw: fT(dLdw), prod: fT(prod)
   });
   drawBP();
 }
 
 function drawBP(){
-  var svg=document.getElementById('figBP'); if(!svg) return;
-  var defs='<defs>'
-    +'<marker id="afD7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#0e7490"/></marker>'
-    +'<marker id="abD7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#b45309"/></marker>'
-    +'</defs>';
-  var xs=[28,98,168,216], y=46;
-  var lbl=['x,w','z','a','L'];
-  var s='';
+  var svg = document.getElementById('figBP'); if(!svg) return;
+  var defs = '<defs>'
+    + '<marker id="afD7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#0e7490"/></marker>'
+    + '<marker id="abD7" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#b45309"/></marker>'
+    + '</defs>';
+  var xs = [28,98,168,216], yy = 46;
+  var lbl = ['x,w','z','a','L'];
+  var s = '';
   for(var i=0;i<4;i++){
-    s += '<circle cx="'+xs[i]+'" cy="'+y+'" r="13" fill="#fff" stroke="#1a1a1a" stroke-width="1.2"/>';
-    s += '<text x="'+xs[i]+'" y="'+(y+4)+'" text-anchor="middle" style="font-size:9px" font-weight="700">'+lbl[i]+'</text>';
+    s += '<circle cx="'+xs[i]+'" cy="'+yy+'" r="13" fill="#fff" stroke="#1a1a1a" stroke-width="1.2"/>';
+    s += '<text x="'+xs[i]+'" y="'+(yy+4)+'" text-anchor="middle" style="font-size:9px" font-weight="700">'+lbl[i]+'</text>';
     if(i<3){
-      s += '<line x1="'+(xs[i]+13)+'" y1="'+(y-5)+'" x2="'+(xs[i+1]-13)+'" y2="'+(y-5)+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#afD7)"/>';
-      s += '<line x1="'+(xs[i+1]-13)+'" y1="'+(y+7)+'" x2="'+(xs[i]+13)+'" y2="'+(y+7)+'" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 2" marker-end="url(#abD7)"/>';
+      s += '<line x1="'+(xs[i]+13)+'" y1="'+(yy-5)+'" x2="'+(xs[i+1]-13)+'" y2="'+(yy-5)+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#afD7)"/>';
+      s += '<line x1="'+(xs[i+1]-13)+'" y1="'+(yy+7)+'" x2="'+(xs[i]+13)+'" y2="'+(yy+7)+'" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 2" marker-end="url(#abD7)"/>';
     }
   }
-  s += '<text x="63" y="'+(y-12)+'" text-anchor="middle" style="font-size:7.5px" fill="#0e7490">×w</text>';
-  s += '<text x="133" y="'+(y-12)+'" text-anchor="middle" style="font-size:7.5px" fill="#0e7490">ReLU</text>';
-  s += '<text x="192" y="'+(y-12)+'" text-anchor="middle" style="font-size:7.5px" fill="#0e7490">½(a−y)²</text>';
-  s += '<text x="120" y="'+(y+26)+'" text-anchor="middle" style="font-size:8px" fill="#b45309">δ chảy ngược (×đạo hàm cục bộ)</text>';
+  s += '<text x="63" y="'+(yy-12)+'" text-anchor="middle" style="font-size:7.5px" fill="#0e7490">×w</text>';
+  s += '<text x="133" y="'+(yy-12)+'" text-anchor="middle" style="font-size:7.5px" fill="#0e7490">ReLU</text>';
+  s += '<text x="192" y="'+(yy-12)+'" text-anchor="middle" style="font-size:7.5px" fill="#0e7490">½(a−y)²</text>';
+  s += '<text x="120" y="'+(yy+26)+'" text-anchor="middle" style="font-size:8px" fill="#b45309">δ chảy ngược (×đạo hàm cục bộ)</text>';
   s += '<text x="120" y="16" text-anchor="middle" style="font-size:8px" fill="#6b7280">đồ thị tính toán</text>';
-  svg.innerHTML=defs+s;
+  svg.innerHTML = defs + s;
 }
 WB.wire(generate);
 generate();

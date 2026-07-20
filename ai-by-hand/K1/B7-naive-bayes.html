@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B7 — Naive Bayes (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,52 +22,49 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B7</span><h1>Naive Bayes <small>— Naive Bayes classifier</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài B7</span>
+    <h1>Naive Bayes <small>— đảo ngược xác suất bằng phép nhân</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Naive Bayes <b>đảo ngược xác suất</b>: từ "thư rác hay viết chữ X" suy ra "thấy X thì có phải
-    rác". Giả định độc lập "ngây thơ" biến phép tính thành phép nhân đơn giản mà hiệu quả.
-    <div class="formula">
-      P(lớp | x) ∝ P(lớp) · ∏ᵢ P(xᵢ | lớp) &nbsp;&nbsp;→&nbsp;&nbsp; chọn lớp có tích lớn nhất
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Một lá thư chứa chữ <b>"khuyến mãi"</b>. Hãy <b>tự tay</b> nhân
+    tiền nghiệm P(lớp) với likelihood để chấm điểm hai lớp <b>rác / thường</b>, chuẩn hóa ra
+    xác suất, thêm chữ <b>"bạn"</b> rồi chấm lại. Phần thưởng: dùng <b>tỉ số cược</b> để thấy chỉ
+    tỉ lệ mới quyết định — mẫu số P(x) tự triệt tiêu.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi đặc trưng <b>bỏ một lá phiếu</b> cho từng lớp; nhân hết với "thành kiến ban đầu" P(lớp), tích cao nhất thì thắng.
-    "Naive" = coi các đặc trưng <b>không liên quan nhau</b>.
-  </div>
-
-  <!-- BƯỚC 0 -->
+  <!-- BƯỚC 0 — CHO SẴN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn — thư chứa {khuyến mãi}</h2><span class="tag">2 lớp</span></div>
-    <div class="calc">
-      Tiền nghiệm: P(rác) = <span class="gv" data-q="pRac">0.4</span> &nbsp; P(thường) = <span class="gv" data-q="pThuong">0.6</span><br>
-      "khuyến mãi": P(km|rác) = <span class="gv" data-q="LkmR">0.6</span> &nbsp; P(km|thường) = <span class="gv" data-q="LkmT">0.1</span><br>
-      "bạn": P(bạn|rác) = <span class="gv" data-q="LbanR">0.2</span> &nbsp; P(bạn|thường) = <span class="gv" data-q="LbanT">0.5</span>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn — tiền nghiệm &amp; likelihood</h2><span class="tag">2 lớp</span></div>
+    <div class="calc" style="line-height:1.95">
+      Tiền nghiệm: P(rác) = <span class="gv" data-q="pRac">0.4</span> &nbsp;·&nbsp; P(thường) = <span class="gv" data-q="pThuong">0.6</span><br>
+      "khuyến mãi": P(km|rác) = <span class="gv" data-q="LkmR">0.6</span> &nbsp;·&nbsp; P(km|thường) = <span class="gv" data-q="LkmT">0.1</span><br>
+      "bạn": P(bạn|rác) = <span class="gv" data-q="LbanR">0.2</span> &nbsp;·&nbsp; P(bạn|thường) = <span class="gv" data-q="LbanT">0.5</span>
     </div>
-    <div class="why" style="margin-top:5px"><b>Vì sao:</b> tiền nghiệm = "thành kiến" trước khi đọc; likelihood = từ đó hay gặp trong mỗi loại.</div>
+    <div class="why"><b>Vì sao:</b> tiền nghiệm = "thành kiến" trước khi đọc; likelihood = từ đó hay gặp trong mỗi loại thư. Bayes nhân hai thứ lại.</div>
   </div>
 
   <div class="grid2">
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Điểm cho lớp "rác"</h2><span class="tag">nhân</span></div>
-    <div class="calc">
-      P(rác)·P(km|rác) = <span data-q="pRac">0.4</span>·<span data-q="LkmR">0.6</span> = <span class="blk"></span>
+    <div class="calc big">
+      P(rác)·P(km|rác)<br>= <span data-q="pRac">0.4</span> · <span data-q="LkmR">0.6</span> = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> nhân thành kiến ban đầu với bằng chứng từ đặc trưng.</div>
+    <div class="why"><b>Vì sao:</b> nhân thành kiến ban đầu với bằng chứng "km".</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Điểm cho lớp "thường"</h2><span class="tag">nhân</span></div>
-    <div class="calc">
-      P(thường)·P(km|thường) = <span data-q="pThuong">0.6</span>·<span data-q="LkmT">0.1</span> = <span class="blk"></span>
+    <div class="calc big">
+      P(thường)·P(km|thường)<br>= <span data-q="pThuong">0.6</span> · <span data-q="LkmT">0.1</span> = <span class="wcell"></span>
     </div>
     <div class="hint"><b>Mẹo:</b> chỉ cần <b>so sánh</b> hai tích — chưa cần chuẩn hóa.</div>
   </div>
@@ -72,11 +73,22 @@
   <!-- BƯỚC 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>So sánh &amp; chuẩn hóa</h2><span class="tag">→ xác suất</span></div>
-    <div class="calc">
-      Lớn hơn → dự đoán <span class="blk" style="min-width:60px"></span> &nbsp;|&nbsp;
-      P(rác|km) = điểm_rác / (điểm_rác + điểm_thường) = <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      Lớn hơn → dự đoán <span class="wcell" style="min-width:70px"></span><br>
+      P(rác|km) = điểm_rác / (điểm_rác + điểm_thường) = <span class="wcell" style="min-width:60px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> chia tổng để biến tích thô thành xác suất thật.</div>
+    <div class="why"><b>Vì sao:</b> chia cho tổng để biến tích thô thành xác suất thật (mẫu = P(x), bằng nhau cho cả hai lớp).</div>
+  </div>
+
+  <!-- BƯỚC 4 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Thêm đặc trưng "bạn"</h2><span class="tag">nhân tiếp</span></div>
+    <div class="calc big">
+      rác: <span class="blk" style="min-width:54px"></span> · <span class="gv" data-q="LbanR">0.2</span> = <span class="wcell" style="min-width:58px"></span> &nbsp;·&nbsp;
+      thường: <span class="blk" style="min-width:54px"></span> · <span class="gv" data-q="LbanT">0.5</span> = <span class="wcell" style="min-width:58px"></span><br>
+      dự đoán mới → <span class="wcell" style="min-width:70px"></span>
+    </div>
+    <div class="note">Xác suất 0 cho một từ sẽ "giết" cả tích → thực tế dùng <b>làm trơn Laplace</b> (cộng 1 vào mọi đếm).</div>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B7 · Naive Bayes</span><span>Trang 1/3 · ĐỀ</span></div>
@@ -88,28 +100,32 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A4 · tính tay<br>Naive Bayes — tiếp theo</div>
   </div>
-  <div class="wb-title"><span class="no">Bài B7</span><h1>Naive Bayes <small>— thêm đặc trưng &amp; hình</small></h1></div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Thêm đặc trưng "bạn"</h2><span class="tag">nhân tiếp</span></div>
-    <div class="calc">
-      Thư còn chữ "bạn" → nhân thêm P(bạn|·):<br>
-      rác: <span class="blk" style="min-width:54px"></span>·<span class="gv" data-q="LbanR">0.2</span> = <span class="blk" style="min-width:54px"></span> &nbsp;|&nbsp;
-      thường: <span class="blk" style="min-width:54px"></span>·<span class="gv" data-q="LbanT">0.5</span> = <span class="blk" style="min-width:54px"></span> → dự đoán <span class="blk" style="min-width:60px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> mỗi đặc trưng mới nhân thêm một "lá phiếu"; điểm hai lớp đều co lại nhưng thứ hạng có thể đổi.</div>
-    <div class="note">Xác suất 0 cho một từ sẽ "giết" cả tích → thực tế dùng <b>làm trơn Laplace</b> (cộng 1 vào mọi đếm).</div>
+  <div class="wb-title">
+    <span class="no">Bài B7</span>
+    <h1>Naive Bayes <small>— tỉ số cược &amp; hình</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
   </div>
 
-  <!-- BƯỚC 5 -->
+  <!-- BƯỚC 5 — TỰ KIỂM: TỈ SỐ CƯỢC -->
   <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Vẽ &amp; so sánh hai cột</h2><span class="tag">tích phiếu</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — tỉ số cược (odds)</h2><span class="tag">chỉ tỉ lệ quyết định</span></div>
+    <div class="calc big" style="line-height:2.15">
+      Cược ban đầu (rác : thường) = P(rác)/P(thường) = <span class="wcell" style="min-width:50px"></span><br>
+      Sau "km": × tỉ số likelihood <span class="blk" style="min-width:70px"></span> = P(km|rác)/P(km|thường) → cược = <span class="wcell" style="min-width:50px"></span><br>
+      Kiểm chéo: P(rác|km) = cược/(1 + cược) = <span class="wcell" style="min-width:56px"></span> &nbsp;<small style="color:#7a8794">— phải khớp Bước 3</small>
+    </div>
+    <div class="note">Cược &gt; 1 ⇒ nghiêng <b>rác</b>. Mỗi đặc trưng chỉ <b>nhân cược với tỉ số likelihood</b> của nó; mẫu số chung P(x) <b>bị triệt tiêu</b> khi lấy tỉ lệ — nên khỏi cần tính P(x) để ra quyết định.</div>
+  </div>
+
+  <!-- BƯỚC 6 — HERO: hai cột điểm -->
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Vẽ &amp; so sánh hai cột điểm</h2><span class="tag">cột cao thắng</span></div>
     <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 200 120" width="68mm" height="41mm" aria-label="trục trống để vẽ hai cột điểm rác và thường"></svg>
-      <div style="flex:1">
-        <div class="why"><b>Vì sao:</b> hai cột là <b>điểm tích lũy</b> của mỗi lớp; cột cao hơn thì lớp đó thắng.</div>
-        <div class="note">Tự vẽ chiều cao hai cột (rác/thường) theo điểm Bước 1–2; chuẩn hóa = chia cho tổng hai cột.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 200 120" width="66mm" height="39.6mm" aria-label="trục trống để vẽ hai cột điểm rác và thường"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="note"><b>Vẽ tay:</b> dựng chiều cao hai cột (rác/thường) theo điểm Bước 1–2; cột nào cao hơn thì lớp đó thắng.</div>
+        <div class="calc" style="margin-top:6px">lớp thắng = <span class="wcell" style="min-width:64px"></span></div>
+        <div class="note" style="margin-top:6px">Chuẩn hóa = chia mỗi cột cho tổng hai cột → ra đúng P(lớp|x).</div>
       </div>
     </div>
   </div>
@@ -119,14 +135,20 @@
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Giả định "naive" là gì? → <span class="blk" style="min-width:200px"></span></li>
-      <li>Vì sao cần làm trơn (Laplace)? → <span class="blk" style="min-width:180px"></span></li>
+      <li>Vì sao khỏi cần tính mẫu số P(x)? → <span class="blk" style="min-width:180px"></span></li>
     </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Chấm điểm 2 lớp</span>
+    <span><span class="ck"></span>Chuẩn hóa &amp; kiểm cược</span>
+    <span class="win">🎉 Bạn vừa phân loại bằng Bayes!</span>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B7 · Naive Bayes</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -136,35 +158,46 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1–2</div><h2>Điểm hai lớp</h2></div>
-    <div class="calc ans">
-      điểm_rác = <span data-q="pRac">0.4</span>·<span data-q="LkmR">0.6</span> = <span class="blk" data-q="scoreRac">0.24</span> &nbsp;|&nbsp;
-      điểm_thường = <span data-q="pThuong">0.6</span>·<span data-q="LkmT">0.1</span> = <span class="blk" data-q="scoreThuong">0.06</span>
+    <div class="calc ans big">
+      điểm_rác = <span data-q="pRac">0.4</span>·<span data-q="LkmR">0.6</span> = <span class="wcell ans" data-q="scoreRac">0.24</span> &nbsp;·&nbsp;
+      điểm_thường = <span data-q="pThuong">0.6</span>·<span data-q="LkmT">0.1</span> = <span class="wcell ans" data-q="scoreThuong">0.06</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Dự đoán &amp; xác suất</h2></div>
-    <div class="calc ans">
-      <span data-q="scoreRac">0.24</span> &gt; <span data-q="scoreThuong">0.06</span> → dự đoán <span class="blk" data-q="pred">RÁC</span> &nbsp;|&nbsp;
-      P(rác|km) = <span data-q="scoreRac">0.24</span>/(<span data-q="scoreRac">0.24</span>+<span data-q="scoreThuong">0.06</span>) = <span class="blk" data-q="post">0.80</span>
+    <div class="calc ans big">
+      <span data-q="scoreRac">0.24</span> &gt; <span data-q="scoreThuong">0.06</span> → dự đoán <span class="wcell ans" data-q="pred">RÁC</span> &nbsp;·&nbsp;
+      P(rác|km) = <span data-q="scoreRac">0.24</span>/(<span data-q="scoreRac">0.24</span>+<span data-q="scoreThuong">0.06</span>) = <span class="wcell ans" data-q="post">0.80</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Thêm đặc trưng "bạn"</h2><span class="tag">nhân tiếp</span></div>
-    <div class="calc ans">
-      rác: <span data-q="scoreRac">0.24</span>·<span data-q="LbanR">0.2</span> = <span class="blk" data-q="rac2">0.048</span> &nbsp;|&nbsp;
-      thường: <span data-q="scoreThuong">0.06</span>·<span data-q="LbanT">0.5</span> = <span class="blk" data-q="thuong2">0.03</span> → <span class="blk" data-q="pred2">RÁC</span>
+    <div class="step-h"><div class="b">4</div><h2>Thêm đặc trưng "bạn"</h2></div>
+    <div class="calc ans big">
+      rác: <span data-q="scoreRac">0.24</span>·<span data-q="LbanR">0.2</span> = <span class="wcell ans" data-q="rac2">0.048</span> &nbsp;·&nbsp;
+      thường: <span data-q="scoreThuong">0.06</span>·<span data-q="LbanT">0.5</span> = <span class="wcell ans" data-q="thuong2">0.03</span> → <span class="wcell ans" data-q="pred2">RÁC</span>
     </div>
-    <div class="note">Xác suất 0 cho một từ sẽ "giết" cả tích → thực tế dùng <b>làm trơn Laplace</b> (cộng 1 vào mọi đếm).</div>
+    <div class="note">"bạn" hay gặp ở thư <b>thường</b> hơn (0.5 &gt; 0.2) → tỉ số likelihood 0.2/0.5 = 0.4 &lt; 1, kéo cược về phía thường. Một đặc trưng lành tính đủ mạnh có thể <b>đảo cả kết luận</b> → dự đoán cuối: <b data-q="pred2">RÁC</b>.</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Hình minh họa</h2><span class="tag">tích phiếu</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — tỉ số cược</h2><span class="tag">chỉ tỉ lệ</span></div>
+    <div class="calc ans big">
+      cược₀ = <span data-q="pRac">0.4</span>/<span data-q="pThuong">0.6</span> = <span class="wcell ans" data-q="odds0">0.67</span> &nbsp;·&nbsp;
+      × (<span data-q="LkmR">0.6</span>/<span data-q="LkmT">0.1</span> = <span data-q="lr">6</span>) → cược = <span class="wcell ans" data-q="odds1">4</span><br>
+      P(rác|km) = cược/(1+cược) = <span data-q="odds1">4</span>/<span data-q="odds1p1">5</span> = <span class="wcell ans" data-q="postOdds">0.80</span> ✓ khớp Bước 3
+    </div>
+    <div class="why"><b>Vì sao:</b> P(rác|x)/P(thường|x) = [P(rác)∏P(xᵢ|rác)] / [P(thường)∏P(xᵢ|thường)] — mẫu số chung P(x) tự triệt tiêu, nên chỉ <b>tích các tỉ số likelihood × cược ban đầu</b> mới quyết định. Cược &gt; 1 ⇒ rác.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Hình — hai cột điểm</h2></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 200 120" width="68mm" height="41mm" aria-label="hai cột điểm số rác và thường, cột rác cao hơn"></svg>
-      <div style="flex:1">
-        <div class="note">Hai cột là <b>điểm tích lũy</b> của mỗi lớp; lớp có cột cao hơn thắng. Chuẩn hóa = chia cho tổng hai cột.</div>
+      <svg id="figK" class="fig" viewBox="0 0 200 120" width="62mm" height="37.2mm" aria-label="hai cột điểm số rác và thường, cột rác cao hơn"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans">lớp thắng = <span class="wcell ans" data-q="winf">rác</span></div>
+        <div class="why"><b>Vì sao khớp:</b> cột "rác" cao hơn vì điểm_rác &gt; điểm_thường; chia cho tổng ra P(rác|x).</div>
       </div>
     </div>
   </div>
@@ -172,13 +205,13 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Giả định "naive" → <span class="qa">Các đặc trưng độc lập với nhau khi đã biết lớp.</span></li>
-      <li>Vì sao làm trơn? → <span class="qa">Tránh xác suất 0 làm cả tích về 0.</span></li>
+      <li>Giả định "naive" → <span class="qa">Các đặc trưng độc lập với nhau khi đã biết lớp → tính ∏P(xᵢ|lớp).</span></li>
+      <li>Khỏi cần P(x) vì → <span class="qa">Mẫu số P(x) chung hai lớp; so sánh/tỉ lệ thì nó triệt tiêu.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Naive Bayes = P(lớp)·∏P(đặc trưng|lớp), chọn lớp lớn nhất; nhanh và mạnh cho văn bản.
+    <b style="color:var(--accent2)">Rút ra.</b> Naive Bayes = P(lớp)·∏P(đặc trưng|lớp), chọn lớp lớn nhất; hiểu gọn nhất qua <b>tỉ số cược</b> — mỗi đặc trưng nhân cược với tỉ số likelihood của nó.
     Bài tiếp (B8): chia dữ liệu bằng <b>cây quyết định</b> dựa trên entropy &amp; information gain.
   </div>
 
@@ -200,6 +233,11 @@ function generate(){
   var rac2 = scoreRac * LbanR;
   var thuong2 = scoreThuong * LbanT;
   var pred2 = rac2 >= thuong2 ? 'RÁC' : 'THƯỜNG';
+  // tỉ số cược
+  var odds0 = pRac / pThuong;
+  var lr = LkmR / LkmT;
+  var odds1 = scoreRac / scoreThuong;       // = odds0 * lr
+  var postOdds = odds1 / (1 + odds1);
 
   function f1(x){ return WB.fmtTrim(x); }
   WB.setAll({
@@ -207,7 +245,11 @@ function generate(){
     LkmR: f1(LkmR), LkmT: f1(LkmT), LbanR: f1(LbanR), LbanT: f1(LbanT),
     scoreRac: WB.fmt2(scoreRac), scoreThuong: WB.fmt2(scoreThuong),
     post: WB.fmt2(post), pred: pred,
-    rac2: WB.fmtTrim(rac2), thuong2: WB.fmtTrim(thuong2), pred2: pred2
+    rac2: WB.fmtTrim(rac2), thuong2: WB.fmtTrim(thuong2), pred2: pred2,
+    odds0: WB.fmt2(odds0), lr: WB.fmtTrim(lr),
+    odds1: WB.fmtTrim(odds1), odds1p1: WB.fmtTrim(1 + odds1),
+    postOdds: WB.fmt2(postOdds),
+    winf: pred === 'RÁC' ? 'rác' : 'thường'
   });
 
   drawBars('figK', scoreRac, scoreThuong);

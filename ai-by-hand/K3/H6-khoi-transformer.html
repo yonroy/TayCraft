@@ -4,197 +4,338 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài H6 — Khối Transformer (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-</style>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H6</span>
+    <h1>Khối Transformer <small>— hai nhánh residual chồng thành một khối</small></h1>
+    <span class="chip">PHẦN H · KHỐI TRANSFORMER</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>X / residual</span>
+      <span><span class="sw" style="background:var(--orange)"></span>Attention · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>FFN</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Khối Transformer <small>— attention + FFN, bọc LN & residual</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Đây là "viên gạch" lặp lại của mọi LLM. Hai nửa bổ trợ: attention <b>trộn</b> thông tin giữa token, FFN
-    <b>xử lý</b> trong token; LN + residual giữ tín hiệu/gradient ổn định để chồng được rất sâu.
-    <div class="formula">a = x + Attention(LN(x)) &nbsp;·&nbsp; out = a + FFN(LN(a)) &nbsp;(pre-norm)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Một khối Transformer xếp <b>hai nhánh cùng khuôn</b>: chuẩn hóa → biến đổi → <b>cộng lại chính mình</b> (residual).
+    Nhánh 1 dùng <b>X + Attention(X) → Z</b>; nhánh 2 dùng <b>Z + FFN(Z) → Y</b> — đầu ra cuối của khối. Attention/FFN <b>đã tính sẵn</b>
+    (H1–H4, H11) — bạn chỉ ráp hai phép cộng residual đúng chỗ. Cuối phiếu, tự chứng minh: residual khiến khối chỉ học
+    <b>PHẦN HIỆU CHỈNH</b>, và một khối <b>MỚI KHỞI TẠO</b> (Attention≈FFN≈0) hoạt động như <b>ánh xạ đồng nhất</b> —
+    vì sao GPT/BERT chồng được 12–96 khối mà vẫn train ổn định.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi khối: <b>chuẩn hóa → trộn ngữ cảnh (attention) → cộng lại chính mình</b>; rồi <b>chuẩn hóa → suy nghĩ (FFN) → cộng lại</b>. "Cộng
-    lại chính mình" (residual) cho khối chỉ cần học <b>phần thêm</b>, và mở đường cao tốc cho gradient.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 token · d nhỏ</span></div>
-    <div class="calc" style="font-size:14px">
-      x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">0</span> ) ·
-      Attention(LN(x)) = ( <span class="gv" data-q="att1">1</span>, <span class="gv" data-q="att2">1</span> ) ·
-      FFN(LN(a)) = ( <span class="gv" data-q="ffn1">0</span>, <span class="gv" data-q="ffn2">2</span> )
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">1 token · d = 2</span></div>
+    <div class="pb" style="display:flex;gap:8mm;align-items:center">
+      <div class="mxwrap">
+        <div class="rowlab" style="--ch:7mm"><span>X</span><span>Attn(X)</span><span>FFN(Z)</span></div>
+        <div class="mx c2" style="--cw:11mm;--ch:7mm">
+          <div class="gv" data-q="x1">2</div><div class="gv" data-q="x2">−1</div>
+          <div class="pe" data-q="at1">1</div><div class="pe" data-q="at2">−2</div>
+          <div class="pv" data-q="ff1">−1</div><div class="pv" data-q="ff2">2</div>
+        </div>
+      </div>
+      <div class="cap" style="margin:0;max-width:96mm"><b>X</b> = đầu vào khối (1 token). <b>Attention(X)</b> và <b>FFN(Z)</b> là kết quả
+      <b>ĐÃ TÍNH sẵn</b> (Bài H1–H4 attention, Bài H11 FFN) — ở đây coi là hai "hiệu chỉnh" cho sẵn. LayerNorm <b>không đổi số</b>
+      ở phiếu này (chỉ ổn định phân bố trước khi vào Attention/FFN) — để tính tay gọn, ta bỏ qua bước chuẩn hóa số.</div>
     </div>
-    <div class="note">Hai vectơ nhánh cho sẵn để tập trung vào <b>cấu trúc khối</b> (cộng residual).</div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Nhánh attention + residual</h2><span class="tag">a = x + Attn</span></div>
-    <div class="calc">
-      a = (<span data-q="x1">2</span>,<span data-q="x2">0</span>) + (<span data-q="att1">1</span>,<span data-q="att2">1</span>) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> cộng x giữ thông tin gốc; attention chỉ <b>bổ sung</b> ngữ cảnh.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Nhánh FFN + residual</h2><span class="tag">out = a + FFN</span></div>
-    <div class="calc">
-      out = (<span data-q="a1">3</span>,<span data-q="a2">1</span>) + (<span data-q="ffn1">0</span>,<span data-q="ffn2">2</span>) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
-    </div>
-    <div class="hint">Cùng kiểu "cộng lại chính mình" như nhánh trên.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vai trò LN & residual</h2><span class="tag">ổn định</span></div>
-    <div class="why"><b>Vì sao:</b> LN giữ đầu vào mỗi nhánh <b>chuẩn hóa</b> (ổn định); residual cho gradient đường thẳng (Bài F9). Thiếu hai cái này thì khối sâu <b>không train nổi</b>.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Xếp chồng</h2><span class="tag">N khối</span></div>
-    <div class="note">Đầu ra khối này là đầu vào khối kế; chồng N khối (GPT-3: 96). Encoder/decoder khác ở mask (H3) & cross-attention (H5).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Hai nửa của khối Transformer làm gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Residual + LayerNorm để làm gì? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H6</span><h1>Khối Transformer <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Nhánh attention</h2></div>
-    <div class="calc ans">a = ( <span class="blk" data-q="a1">3</span>, <span class="blk" data-q="a2">1</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Nhánh FFN</h2></div>
-    <div class="calc ans">out = ( <span class="blk" data-q="o1">3</span>, <span class="blk" data-q="o2">3</span> )</div>
   </div>
 
   <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Luồng: x → LN→Attn→⊕ → LN→FFN→⊕ → out</h2><span class="tag">pre-norm</span></div>
-    <div class="figrow">
-      <svg id="figT" class="fig" viewBox="0 0 250 130" width="82mm" height="42mm" aria-label="luồng khối transformer: x qua LN attention cộng residual, rồi LN FFN cộng residual ra out"></svg>
-      <div style="flex:1">
-        <div class="note">Hai nhánh giống nhau: chuẩn hóa (LN) → biến đổi (Attn/FFN) → <b>cộng lại đầu vào</b> (⊕ residual). Đường residual (xám nhạt) là "cao tốc" cho gradient.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">X → (LN→Attn) → ⊕ → Z → (LN→FFN) → ⊕ → Y</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 560 120" width="100%" height="30mm"
+           aria-label="X đi hai nhánh: LN-Attention và đường thẳng residual, gộp ra Z; Z lại đi hai nhánh LN-FFN và residual, gộp ra Y"></svg>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm"><b>Đường ngang đậm (lam)</b> = residual, cộng thẳng đầu vào · <b>nhánh cong trên</b> = LN→biến đổi
+    (cam=Attention, tím=FFN) · <b>⊕</b> = cộng từng tọa độ.</div>
+  </div>
+
+  <!-- ① NHÁNH 1 -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Nhánh 1 — Attention + residual</span><span class="f">Z = X + Attention(X)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Chiều</th><th>X</th><th>+ Attn</th><th>= Z</th><th>Tô thanh Z</th></tr>
+        <tr><td class="l">d₁</td><td class="evt" data-q="x1">2</td><td class="gvt" data-q="at1">1</td><td><span class="cellb"></span></td><td><div class="track" id="tz1"></div></td></tr>
+        <tr><td class="l">d₂</td><td class="evt" data-q="x2">−1</td><td class="gvt" data-q="at2">−2</td><td><span class="cellb"></span></td><td><div class="track" id="tz2"></div></td></tr>
+      </table>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Thang thanh: <b>−10 … 0 … +10</b> · cộng <b>theo từng tọa độ</b> (element-wise) — LN bỏ qua số, chỉ residual mới cộng.</div>
+  </div>
+
+  <!-- ② NHÁNH 2 -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Nhánh 2 — FFN + residual</span><span class="f">Y = Z + FFN(Z)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Chiều</th><th>Z (từ ①)</th><th>+ FFN</th><th>= Y</th><th>Tô thanh Y</th></tr>
+        <tr><td class="l">d₁</td><td><span class="cellb"></span></td><td style="color:var(--purple);font-weight:800" data-q="ff1">−1</td><td><span class="cellb"></span></td><td><div class="track" id="ty1"></div></td></tr>
+        <tr><td class="l">d₂</td><td><span class="cellb"></span></td><td style="color:var(--purple);font-weight:800" data-q="ff2">2</td><td><span class="cellb"></span></td><td><div class="track" id="ty2"></div></td></tr>
+      </table>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Chép <b>Z</b> bạn vừa tính ở ① vào cột đầu — <b>Y</b> là đầu ra <b>cuối cùng</b> của cả khối.</div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — residual chỉ học phần HIỆU CHỈNH</span><span class="f">Y − X = Attn + FFN</span></div>
+    <div class="pb">
+      <div class="eq">
+        Y − X = (X + Attn + FFN) − X = <span class="slot" style="min-width:22mm"></span> = ( <span class="slot sm"></span>, <span class="slot sm"></span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">So với Attn + FFN đã tính ở ①② — khớp không?</span> <span class="slot" style="min-width:30mm"></span><br><br>
+        Giả sử khối <b>MỚI KHỞI TẠO</b> (trọng số ≈ 0) nên Attention(X) = (0, 0) và FFN(Z) = (0, 0). Khi đó:<br>
+        Y = X + (0,0) + (0,0) = ( <span class="slot sm"></span>, <span class="slot sm"></span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">Vậy lúc đó khối hoạt động như phép gì?</span> <span class="slot" style="min-width:50mm"></span>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Hai nửa? → <span class="qa">Attention trộn giữa token; FFN xử lý trong token.</span></li>
-      <li>Residual + LN? → <span class="qa">Giữ tín hiệu/gradient ổn định → chồng được rất sâu.</span></li>
-    </ol>
+  <div class="scratch" style="height:18mm"><span class="lb">✏️ Nháp — cộng tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính xong Z (nhánh 1)</span>
+    <span><span class="ck"></span>Tính xong Y (nhánh 2)</span>
+    <span><span class="ck"></span>Chứng minh Attn=FFN=0 ⇒ Y=X</span>
+    <span class="win">🎉 Bạn vừa ráp xong viên gạch của GPT/BERT!</span>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Khối = (LN→Attention→+x) rồi (LN→FFN→+a); chồng N khối thành mô hình. Bài tiếp (H3): thêm causal mask → khối GPT.
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H6</span>
+    <h1>Khối Transformer <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>X / residual</span>
+      <span><span class="sw" style="background:var(--orange)"></span>Attention · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>FFN</span></span>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">X → Z → Y</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 560 120" width="100%" height="30mm" aria-label="sơ đồ với Z và Y đã điền"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Nhánh 1 — Attention + residual</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Chiều</th><th>X</th><th>+ Attn</th><th>= Z</th><th>Z</th></tr>
+        <tr><td class="l">d₁</td><td class="evt" data-q="x1">2</td><td class="gvt" data-q="at1">1</td><td><span class="cellb ans" data-q="z1">3</span></td><td><div class="track" id="az1"></div></td></tr>
+        <tr><td class="l">d₂</td><td class="evt" data-q="x2">−1</td><td class="gvt" data-q="at2">−2</td><td><span class="cellb ans" data-q="z2">−3</span></td><td><div class="track" id="az2"></div></td></tr>
+      </table>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao cộng thẳng X:</b> nhánh Attention chỉ phải học <b>phần cần sửa</b> so với X — nếu Attention
+    im lặng (≈0), Z vẫn ≈ X, không mất thông tin gốc. Cộng residual dùng <b>X gốc</b>, không phải LN(X) — LN chỉ đứng trước Attention để ổn định input cho nó.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Nhánh 2 — FFN + residual</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Chiều</th><th>Z (từ ①)</th><th>+ FFN</th><th>= Y</th><th>Y</th></tr>
+        <tr><td class="l">d₁</td><td class="evt" data-q="z1">3</td><td style="color:var(--purple);font-weight:800" data-q="ff1">−1</td><td><span class="cellb ans" data-q="y1">2</span></td><td><div class="track" id="ay1"></div></td></tr>
+        <tr><td class="l">d₂</td><td class="evt" data-q="z2">−3</td><td style="color:var(--purple);font-weight:800" data-q="ff2">2</td><td><span class="cellb ans" data-q="y2">−1</span></td><td><div class="track" id="ay2"></div></td></tr>
+      </table>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao cùng khuôn:</b> nhánh 2 lặp lại <b>đúng công thức</b> nhánh 1 (chuẩn hóa → biến đổi → cộng residual),
+    chỉ đổi Attention→FFN và đầu vào X→Z. Đây là lý do một "khối" định nghĩa gọn rồi <b>xếp chồng N lần</b> để tạo cả mô hình.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — residual chỉ học phần HIỆU CHỈNH</span><span class="f">Attn≈FFN≈0 ⇒ Y=X</span></div>
+    <div class="pb">
+      <div class="eq">
+        Y − X = (X + Attn + FFN) − X = <span class="slot ans" style="min-width:22mm">Attn + FFN</span> = ( <span class="slot ans sm" data-q="df1">0</span>, <span class="slot ans sm" data-q="df2">0</span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">So với Attn + FFN đã tính ở ①② —</span> <span class="qa">Khớp — X bị trừ triệt tiêu ở cả hai vế, hiệu đúng bằng tổng hai hiệu chỉnh.</span><br><br>
+        Giả sử khối <b>MỚI KHỞI TẠO</b>: Attention(X) = (0,0), FFN(Z) = (0,0). Khi đó:<br>
+        Y = X + (0,0) + (0,0) = ( <span class="slot ans sm" data-q="x1">2</span>, <span class="slot ans sm" data-q="x2">−1</span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">Vậy lúc đó khối hoạt động như phép gì?</span> <span class="qa">Ánh xạ ĐỒNG NHẤT (identity) — X chảy thẳng qua, khối "chưa làm gì".</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> nhờ residual, khối <b>không học lại</b> biểu diễn từ đầu — nó chỉ học
+    <b>PHẦN THÊM</b> (delta) so với đầu vào. Vừa khởi tạo, các lớp con thường cho ra gần 0 → cả khối ≈ <b>ánh xạ đồng nhất</b>, an toàn để
+    <b>xếp CHỒNG</b> 12–96 khối (GPT-3) mà tín hiệu không nổ/không tắt ngay từ vòng đầu, rồi học dần từng phần hiệu chỉnh nhỏ.
+    <b>Khác với self-check "gradient=1" của Bài F9</b> (skip-connection, nhấn mặt <b>NGƯỢC</b>/đạo hàm) — ở đây ta nhấn mặt <b>XUÔI</b>/ngữ nghĩa:
+    khối được thiết kế để <b>bắt đầu gần như trong suốt</b>, rồi mới học.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở khối Transformer</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Residual cộng LN(x), không phải x."</b><br>
+          <span style="color:var(--dim)">Sai chiều — LN chỉ đứng <b>trước</b> Attention/FFN để ổn định input cho chúng. Residual luôn cộng <b>x gốc</b> (chưa chuẩn hóa),
+          nếu không thông tin gốc sẽ bị bóp méo qua mỗi khối.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Z và Y phải bằng nhau vì cùng công thức."</b><br>
+          <span style="color:var(--dim)">Không — hai nhánh dùng <b>biến đổi khác nhau</b> (Attention vs FFN) trên <b>đầu vào khác nhau</b> (X vs Z). Chỉ bằng nhau nếu cả hai hiệu chỉnh đều = 0.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Không có residual thì vẫn học được, chỉ chậm hơn."</b><br>
+          <span style="color:var(--dim)">Không hẳn — thiếu residual (+LN), khối rất sâu khiến tín hiệu/gradient <b>nổ hoặc tắt dần</b> theo cấp số, nhiều tầng sâu
+          gần như <b>ngừng học</b>, không chỉ là chậm hơn.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Đây giống hệt skip-connection CNN (Bài F9)."</b><br>
+          <span style="color:var(--dim)">Cùng cơ chế cộng tắt, nhưng F9 nhấn mặt <b>gradient=1 lúc lan ngược</b>; ở đây trọng tâm là <b>ngữ nghĩa</b> — khối học phần
+          hiệu chỉnh và khởi tạo gần identity.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Khối Transformer = hai nhánh <b>cùng khuôn</b> (chuẩn hóa → biến đổi → cộng residual): nhánh 1 trộn thông tin
+    <b>GIỮA</b> token (Attention), nhánh 2 xử lý <b>TRONG</b> từng token (FFN). Residual biến mỗi nhánh thành một "phần thêm" học dần từ gần 0,
+    nên xếp chồng rất sâu vẫn train ổn định — đường cao tốc cho cả tín hiệu xuôi lẫn gradient ngược. Nối tiếp N khối này chính là một mô hình GPT/BERT hoàn chỉnh.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H6 · Khối Transformer</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var BLU='#0e7490', ORG='#b45309', PUR='#6d28d9', INK='#16202e', DIM='#6b7280';
+var S = {};
+
 function generate(){
-  var x1=WB.randInt(0,3), x2=WB.randInt(0,3);
-  var att1=WB.randInt(0,2), att2=WB.randInt(0,2);
-  var ffn1=WB.randInt(0,2), ffn2=WB.randInt(0,3);
-  var a1=x1+att1, a2=x2+att2;
-  var o1=a1+ffn1, o2=a2+ffn2;
+  var fI = WB.fmtInt;
+  // X: đầu vào 1 token, d=2, số nguyên nhỏ khác 0.
+  var x1 = WB.randIntNZ(-4,4), x2 = WB.randIntNZ(-4,4);
+  // Attention(X), FFN(Z): "hiệu chỉnh" cho sẵn (coi như đã tính ở H1-H4/H11).
+  var at1 = WB.randIntNZ(-3,3), at2 = WB.randIntNZ(-3,3);
+  var ff1 = WB.randIntNZ(-3,3), ff2 = WB.randIntNZ(-3,3);
+  // Nhánh 1: Z = X + Attn(X). Nhánh 2: Y = Z + FFN(Z).
+  var z1 = x1+at1, z2 = x2+at2;
+  var y1 = z1+ff1, y2 = z2+ff2;
+  // Tự kiểm: Y-X = Attn+FFN (X triệt tiêu).
+  var df1 = at1+ff1, df2 = at2+ff2;
+
+  S = {x1:x1,x2:x2,at1:at1,at2:at2,ff1:ff1,ff2:ff2,z1:z1,z2:z2,y1:y1,y2:y2};
+
   WB.setAll({
-    x1:String(x1), x2:String(x2), att1:String(att1), att2:String(att2),
-    ffn1:String(ffn1), ffn2:String(ffn2),
-    a1:String(a1), a2:String(a2), o1:String(o1), o2:String(o2)
+    x1:fI(x1), x2:fI(x2), at1:fI(at1), at2:fI(at2), ff1:fI(ff1), ff2:fI(ff2),
+    z1:fI(z1), z2:fI(z2), y1:fI(y1), y2:fI(y2), df1:fI(df1), df2:fI(df2)
   });
-  drawBlock('figT');
+
+  // thanh giá trị: ĐỀ để TRỐNG, ĐÁP ÁN tô đầy. Thang −10…0…+10 (Z tối đa ±7, Y tối đa ±10).
+  drawBar('tz1', 0, 10, false); drawBar('tz2', 0, 10, false);
+  drawBar('ty1', 0, 10, false); drawBar('ty2', 0, 10, false);
+  drawBar('az1', z1, 10, true); drawBar('az2', z2, 10, true);
+  drawBar('ay1', y1, 10, true); drawBar('ay2', y2, 10, true);
+
+  drawFlow('figQ', false);
+  drawFlow('figA', true);
 }
-function drawBlock(id){
-  var svg = document.getElementById(id); if(!svg) return;
-  function box(x,txt,col){
-    return '<rect x="'+x+'" y="48" width="30" height="26" rx="5" fill="'+col+'22" stroke="'+col+'" stroke-width="1.3"/>'+
-      '<text x="'+(x+15)+'" y="64" text-anchor="middle" font-size="8.5" font-weight="700" fill="'+col+'">'+txt+'</text>';
+
+// Thanh hai chiều: gốc giữa (0), dương chạy phải (lam), âm chạy trái (cam).
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  function plus(x){
-    return '<circle cx="'+(x+8)+'" cy="61" r="9" fill="#fff" stroke="#5b6776" stroke-width="1.3"/>'+
-      '<text x="'+(x+8)+'" y="65" text-anchor="middle" font-size="11" fill="#5b6776">+</text>';
+  el.innerHTML=h;
+}
+
+// Sơ đồ: X (lam, cho sẵn) → LN→Attention (cam) + residual (lam) → ⊕ → Z → LN→FFN (tím) + residual (lam) → ⊕ → Y.
+function drawFlow(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var fI=WB.fmtInt;
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  function box(x,y,w,h,fill,stroke,sw,dash){
+    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sw||1.4)+'"'+(dash?' stroke-dasharray="3 2"':'')+'/>';
   }
-  var s='<defs><marker id="at" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6Z" fill="#5b6776"/></marker></defs>';
-  var xs=[6, 44, 86, 128, 162, 204];
-  s+=box(xs[0],'x','#5b6776');
-  s+=box(xs[1],'LN','#9aa3ad');
-  s+=box(xs[2],'Attn','#0e7490');
-  s+=plus(xs[3]);
-  s+=box(xs[4],'LN','#9aa3ad');
-  s+=box(xs[4]+34,'FFN','#7c5cff');  // overlap-safe: place FFN
-  s+=plus(xs[5]+18);
-  // simpler: redo linear chain
-  svg.innerHTML='';
-  s='<defs><marker id="at" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0L5,3L0,6Z" fill="#5b6776"/></marker></defs>';
-  var seq=[['x','#5b6776'],['LN','#9aa3ad'],['Attn','#0e7490'],['⊕','#16202e'],['LN','#9aa3ad'],['FFN','#7c5cff'],['⊕','#16202e'],['out','#b45309']];
-  var x=6, w=26, gap=30;
-  var cx=[];
-  for(var i=0;i<seq.length;i++){
-    s+='<rect x="'+x+'" y="48" width="'+w+'" height="26" rx="5" fill="'+seq[i][1]+'22" stroke="'+seq[i][1]+'" stroke-width="1.3"/>';
-    s+='<text x="'+(x+w/2)+'" y="64" text-anchor="middle" font-size="8" font-weight="700" fill="'+seq[i][1]+'">'+seq[i][0]+'</text>';
-    cx.push(x+w/2);
-    if(i<seq.length-1) s+='<line x1="'+(x+w)+'" y1="61" x2="'+(x+gap)+'" y2="61" stroke="#5b6776" stroke-width="1.1" marker-end="url(#at)"/>';
-    x+=gap;
+  function ctxt(x,y,t,c,fs,w){
+    return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="'+fs+'" font-weight="'+(w||400)+'" fill="'+c+'">'+t+'</text>';
   }
-  // residual arcs: x→⊕(idx3), ⊕(idx3)→⊕(idx6)
-  s+='<path d="M'+cx[0]+',48 Q'+((cx[0]+cx[3])/2)+',16 '+cx[3]+',48" fill="none" stroke="#cfd6dd" stroke-width="1.4"/>';
-  s+='<path d="M'+cx[3]+',48 Q'+((cx[3]+cx[6])/2)+',12 '+cx[6]+',48" fill="none" stroke="#cfd6dd" stroke-width="1.4"/>';
-  s+='<text x="125" y="100" text-anchor="middle" font-size="8.5" fill="#5b6776">cung trên = kết nối tắt (residual)</text>';
+  function plus(cx,cy,r){
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#fff" stroke="'+DIM+'" stroke-width="1.4"/>'+ctxt(cx,cy+4,'+',DIM,13,700);
+  }
+
+  var y0=60;
+
+  // --- X box (given, lam) ---
+  s += box(6,44,44,32,'#eaf4f6',BLU,1.6) + ctxt(28,58,'X',BLU,11,800) + ctxt(28,71,'('+fI(S.x1)+','+fI(S.x2)+')',DIM,7,600);
+
+  // --- nhánh 1: LN → Attention (cam), cong lên trên ---
+  s += '<path d="M50,'+y0+' Q66,20 86,20" fill="none" stroke="#94a3b8" stroke-width="1.3"/>';
+  s += box(86,8,26,24,'#f1f5f9','#94a3b8',1.2) + ctxt(99,23,'LN',DIM,8,700);
+  s += '<path d="M112,20 L124,20" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s += box(126,6,66,28,'#fff5e9',ORG,1.5) + ctxt(159,23,'Attention',ORG,9,800);
+  s += '<path d="M192,20 Q206,20 213,'+(y0-9)+'" fill="none" stroke="'+ORG+'" stroke-width="1.4" marker-end="url(#mk'+id+')"/>';
+
+  // --- đường residual thẳng (lam, đậm) ---
+  s += '<line x1="50" y1="'+y0+'" x2="214" y2="'+y0+'" stroke="'+BLU+'" stroke-width="2.4"/>';
+  s += ctxt(132,y0+13,'residual (+X)',BLU,7.4,700);
+
+  // ⊕1 → Z
+  s += plus(216,y0,10);
+  s += '<path d="M226,'+y0+' L240,'+y0+'" stroke="'+DIM+'" stroke-width="1.5" marker-end="url(#mk'+id+')"/>';
+  var zFill = showAns ? '#fff8f0' : '#fff', zStroke = showAns ? ORG : INK;
+  s += box(242,44,44,32,zFill,zStroke,showAns?1.5:1.6,!showAns);
+  s += ctxt(264,58,'Z',zStroke,11,800);
+  s += showAns ? ctxt(264,71,'('+fI(S.z1)+','+fI(S.z2)+')','#7a3d00',7,700) : ctxt(264,71,'?','#b8c1cc',11,700);
+
+  // --- nhánh 2: LN → FFN (tím), cong lên trên ---
+  s += '<path d="M286,'+y0+' Q302,20 322,20" fill="none" stroke="#94a3b8" stroke-width="1.3"/>';
+  s += box(322,8,26,24,'#f1f5f9','#94a3b8',1.2) + ctxt(335,23,'LN',DIM,8,700);
+  s += '<path d="M348,20 L360,20" stroke="#94a3b8" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s += box(362,6,54,28,'#f5f1fe',PUR,1.5) + ctxt(389,23,'FFN',PUR,9,800);
+  s += '<path d="M416,20 Q432,20 439,'+(y0-9)+'" fill="none" stroke="'+PUR+'" stroke-width="1.4" marker-end="url(#mk'+id+')"/>';
+
+  // --- đường residual thẳng nhánh 2 (lam) ---
+  s += '<line x1="286" y1="'+y0+'" x2="440" y2="'+y0+'" stroke="'+BLU+'" stroke-width="2.4"/>';
+  s += ctxt(363,y0+13,'residual (+Z)',BLU,7.4,700);
+
+  // ⊕2 → Y (đầu ra cuối)
+  s += plus(442,y0,10);
+  s += '<path d="M452,'+y0+' L466,'+y0+'" stroke="'+DIM+'" stroke-width="1.5" marker-end="url(#mk'+id+')"/>';
+  var yFill = showAns ? '#fff8f0' : '#fff', yStroke = showAns ? ORG : INK;
+  s += box(468,42,58,36,yFill,yStroke,showAns?1.8:1.8,!showAns);
+  s += ctxt(497,60,'Y',yStroke,12,800);
+  s += showAns ? ctxt(497,74,'('+fI(S.y1)+','+fI(S.y2)+')','#7a3d00',7.4,700) : ctxt(497,74,'?','#b8c1cc',12,700);
+  s += ctxt(497,34,'đầu ra khối',DIM,7,600);
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // ⚠️ BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

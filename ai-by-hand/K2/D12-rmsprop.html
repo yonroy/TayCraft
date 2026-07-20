@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D12 — RMSProp (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,116 +25,145 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D12</span><h1>RMSProp <small>— học suất thích nghi</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Một η chung không hợp khi các chiều có độ dốc rất khác nhau. RMSProp <b>tự co</b> bước ở chiều gradient lớn,
-    <b>nới</b> bước ở chiều gradient nhỏ → đi cân bằng trong thung lũng méo. Là tiền thân của Adam.
-    <div class="formula">
-      s ← ρ·s + (1−ρ)·g² &nbsp;&nbsp; w ← w − η·g / (√s + ε) &nbsp;&nbsp; (ρ ≈ 0.9)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài D12</span>
+    <h1>RMSProp <small>— học suất riêng cho từng chiều</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi tham số có <b>"bộ nhớ độ rung"</b> s: nếu liên tục bị đẩy mạnh (g² lớn) → chia cho √s lớn → <b>bước ngắn lại</b> cho đỡ vọt;
-    nếu yên ắng → bước được nới rộng. Như tự chỉnh ga riêng cho từng bánh xe.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Một η chung không hợp khi các chiều dốc rất khác nhau. RMSProp cho mỗi tham số một "bộ nhớ độ rung" s, rồi chia bước cho <b>√s</b>:
+    chiều rung mạnh <b>tự co</b> bước, chiều êm được <b>nới</b>. Hãy <b>tự tay</b> chạy 2 bước. Phần thưởng: thấy RMSProp <b>cân bằng</b> bước giữa chiều dốc và chiều thoải.
+    <div class="formula" style="margin-top:5px">
+      s ← ρ·s + (1−ρ)·g² &nbsp;·&nbsp; w ← w − η·g / √s &nbsp;·&nbsp; (ρ = 0.9, ε bỏ qua)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ρ=0.9, η=<span data-q="eta">0.1</span></span></div>
-    <div class="calc" style="font-size:14.5px">
-      w₀ = <span class="gv" data-q="w0">1.0</span> ; ρ = <span class="gv" data-q="rho">0.9</span> ; η = <span class="gv" data-q="eta">0.1</span> ;
-      gradient g = <span class="gv" data-q="g">2</span> (giữ vài bước) ; s₀ = 0 ; ε bỏ qua
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (gradient giữ nguyên vài bước)</h2><span class="tag">ρ = 0.9</span></div>
+    <div class="calc big">
+      w₀ = <span class="gv" data-q="w0">1.0</span> &nbsp;·&nbsp; ρ = <span class="gv" data-q="rho">0.9</span> &nbsp;·&nbsp; η = <span class="gv" data-q="eta">0.1</span> &nbsp;·&nbsp; g = <span class="gv" data-q="g">2</span> &nbsp;·&nbsp; s₀ = 0
     </div>
   </div>
 
-  <!-- BƯỚC 1 — cập nhật s -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Cập nhật bộ nhớ s</h2><span class="tag">tích lũy g²</span></div>
-    <div class="calc">
-      s₁ = 0.9·0 + 0.1·g² = 0.1·<span data-q="gsq">4</span> = <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Cập nhật bộ nhớ độ rung s</h2><span class="tag">tích lũy g²</span></div>
+    <div class="calc big">
+      s₁ = 0.9·0 + 0.1·g² = 0.1·<span data-q="gsq">4</span> = <span class="wcell" style="min-width:40px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> s tích lũy <b>bình phương</b> gradient → đo "độ rung" gần đây của tham số.</div>
+    <div class="why"><b>Vì sao:</b> s tích lũy <b>bình phương</b> gradient → đo "độ rung" gần đây của tham số này.</div>
   </div>
 
-  <!-- BƯỚC 2 — bước chuẩn hóa -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Bước có chuẩn hóa</h2><span class="tag">chia √s</span></div>
-    <div class="calc">
-      √s₁ ≈ <span class="blk" style="min-width:40px"></span> ;
-      w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="g">2</span>/√s₁ = <span class="blk" style="min-width:56px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Bước có chuẩn hóa — chia √s</h2><span class="tag">η·g/√s</span></div>
+    <div class="calc big">
+      √s₁ ≈ <span class="wcell" style="min-width:40px"></span> &nbsp;·&nbsp;
+      w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="g">2</span>/√s₁ = <span class="wcell" style="min-width:52px"></span>
     </div>
     <div class="hint">Chia cho √s biến bước thành "số bước chuẩn hóa", không phụ thuộc độ lớn tuyệt đối của g.</div>
   </div>
 
-  <!-- BƯỚC 3 — bước 2 -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước 2</h2><span class="tag">s lớn dần</span></div>
-    <div class="calc">
-      s₂ = 0.9·s₁ + 0.1·g² = <span class="blk" style="min-width:44px"></span> ;
-      √s₂ ≈ <span data-q="sq2">0.87</span> ; w₂ = w₁ − 0.1·<span data-q="g">2</span>/√s₂ = <span class="blk" style="min-width:56px"></span>
+    <div class="step-h"><div class="b">3</div><h2>Bước 2 — s lớn dần, bước tự co</h2><span class="tag">tự hãm</span></div>
+    <div class="calc big">
+      s₂ = 0.9·s₁ + 0.1·<span data-q="gsq">4</span> = <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp;
+      √s₂ ≈ <span data-q="sq2">0.87</span> &nbsp;·&nbsp; w₂ = w₁ − <span data-q="eta">0.1</span>·<span data-q="g">2</span>/√s₂ = <span class="wcell" style="min-width:52px"></span>
     </div>
     <div class="why"><b>Vì sao:</b> s lớn dần → bước <b>tự ngắn lại</b> dù g không đổi (tự hãm khi rung mạnh kéo dài).</div>
   </div>
 
-  <!-- BƯỚC 4 — vs SGD -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D12 · RMSProp</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>RMSProp — cân bằng bước giữa các chiều</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D12</span>
+    <h1>RMSProp <small>— chiều dốc &amp; chiều thoải bước như nhau</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: cân bằng bước giữa các chiều -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>So với SGD</h2><span class="tag">thích nghi</span></div>
-    <div class="note">SGD đi đều η·g; RMSProp đi η·g/√s → chiều gradient lớn bị <b>giảm tốc</b>, chiều nhỏ được <b>tăng tốc</b>.
-      Ghép với Momentum (D11) thành <b>Adam</b> (Bài D14).</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — hai chiều rất khác dốc</h2><span class="tag">cân bằng</span></div>
+    <div class="note" style="margin-top:0">
+      Chạy lâu với g cố định, s <b>bão hòa</b> tại điểm dừng: s = 0.9·s + 0.1·g² ⇒ s = <b>g²</b> ⇒ √s = <b>|g|</b>. Khi đó bước = η·g/√s = <b>η·(g/|g|) = ±η</b> — không còn phụ thuộc độ lớn g!
+      Kiểm với hai chiều: chiều dốc g = 4, chiều thoải g = 0.5.
+    </div>
+    <div class="calc big">
+      chiều dốc: √s = √16 = 4 → bước = <span data-q="eta">0.1</span>·4/4 = <span class="wcell" style="min-width:40px"></span><br>
+      chiều thoải: √s = √0.25 = 0.5 → bước = <span data-q="eta">0.1</span>·0.5/0.5 = <span class="wcell" style="min-width:40px"></span><br>
+      hai bước so nhau: <span class="wcell" style="min-width:64px"></span>
+      &nbsp;<small style="color:#7a8794">— bằng nhau hay lệch 8 lần?</small>
+    </div>
+    <div class="note">Hai chiều lệch gradient <b>8 lần</b> nhưng RMSProp bước <b>bằng nhau</b> (đều η). SGD thì bước dốc = η·4 vọt gấp 8 lần bước thoải η·0.5 → dao động. RMSProp <b>cân bằng</b> mọi chiều.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>So với SGD — và đường tới Adam</h2><span class="tag">thích nghi</span></div>
+    <div class="note" style="margin-top:2px">SGD đi đều η·g (chiều dốc vọt, chiều thoải ì); RMSProp đi η·g/√s → mọi chiều bước cỡ η, đi cân trong thung lũng méo.
+      Ghép RMSProp (chuẩn hóa) với Momentum (đà, D11) → <b>Adam</b> (Bài D13).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>RMSProp chia gradient cho cái gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Gradient lớn liên tục thì bước ra sao? → <span class="blk" style="min-width:120px"></span></li>
+      <li>RMSProp chia gradient cho cái gì? → <span class="blk" style="min-width:140px"></span></li>
+      <li>Hai chiều dốc khác nhau → bước ra sao? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D12 · RMSProp</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:18mm"><span class="lb">✏️ Nháp — bình phương, lấy căn, chia ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Bước chuẩn hóa</span>
+    <span><span class="ck"></span>Kiểm cân bằng chiều</span>
+    <span class="win">🎉 Bạn vừa cho mỗi tham số một học suất riêng!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D12 · RMSProp</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D12</span><h1>RMSProp <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D12</span><h1>RMSProp <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Bộ nhớ s</h2></div>
-    <div class="calc ans">s₁ = 0.1·<span data-q="gsq">4</span> = <span class="blk" data-q="s1">0.4</span></div>
+    <div class="calc ans">s₁ = 0.1·<span data-q="gsq">4</span> = <span class="wcell ans" data-q="s1">0.4</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Bước chuẩn hóa</h2></div>
-    <div class="calc ans">
-      √s₁ ≈ <span class="blk" data-q="sq1">0.63</span> ;
-      w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="g">2</span>/<span data-q="sq1">0.63</span> = <span data-q="w0">1.0</span> − <span data-q="stepv1">0.32</span> = <span class="blk" data-q="w1">0.68</span>
-    </div>
+    <div class="calc ans">√s₁ ≈ <span class="wcell ans" data-q="sq1">0.63</span> &nbsp;·&nbsp; w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="g">2</span>/<span data-q="sq1">0.63</span> = <span data-q="w0">1.0</span> − <span data-q="stepv1">0.32</span> = <span class="wcell ans" data-q="w1">0.68</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Bước 2</h2></div>
-    <div class="calc ans">
-      s₂ = 0.9·<span data-q="s1">0.4</span> + 0.1·<span data-q="gsq">4</span> = <span class="blk" data-q="s2">0.76</span> ;
-      w₂ = <span data-q="w1">0.68</span> − 0.1·<span data-q="g">2</span>/<span data-q="sq2">0.87</span> = <span data-q="w1">0.68</span> − <span data-q="stepv2">0.23</span> = <span class="blk" data-q="w2">0.45</span>
-    </div>
+    <div class="calc ans">s₂ = 0.9·<span data-q="s1">0.4</span> + 0.1·<span data-q="gsq">4</span> = <span class="wcell ans" data-q="s2">0.76</span> &nbsp;·&nbsp; w₂ = <span data-q="w1">0.68</span> − <span data-q="eta">0.1</span>·<span data-q="g">2</span>/<span data-q="sq2">0.87</span> = <span data-q="w1">0.68</span> − <span data-q="stepv2">0.23</span> = <span class="wcell ans" data-q="w2">0.45</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Bước tự co khi s tăng</h2><span class="tag">thích nghi</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Cân bằng bước giữa các chiều</h2><span class="tag">√s = |g|</span></div>
     <div class="figrow">
-      <svg id="figR" class="fig" viewBox="0 0 210 140" width="66mm" height="42mm" aria-label="cùng gradient nhưng bước ngắn dần khi s tăng qua các bước"></svg>
+      <svg id="figR" class="fig" viewBox="0 0 240 140" width="72mm" height="42mm" aria-label="SGD bước chiều dốc cao gấp 8 lần chiều thoải; RMSProp hai chiều bước bằng nhau"></svg>
       <div style="flex:1">
-        <div class="note">Cùng g, nhưng <b>√s tăng</b> qua mỗi bước → bước (cam) <b>ngắn dần</b>. RMSProp tự hãm chiều "rung mạnh", giữ bước
-          cân bằng trong thung lũng méo.</div>
+        <div class="calc ans">dốc = <span class="wcell ans" data-q="eqa">0.1</span> &nbsp;·&nbsp; thoải = <span class="wcell ans" data-q="eqb">0.1</span> &nbsp;·&nbsp; <span class="wcell ans" data-q="eqc">bằng nhau</span></div>
+        <div class="note">Bão hòa √s = |g| nên bước = ±η ở <b>mọi</b> chiều. SGD (cam) chiều dốc cao vọt so với thoải; RMSProp (lam) hai cột <b>bằng nhau</b> → đi cân.</div>
       </div>
     </div>
   </div>
@@ -148,16 +172,16 @@
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>Chia gradient cho? → <span class="qa">Căn trung bình bình phương gradient gần đây (√s).</span></li>
-      <li>Gradient lớn liên tục? → <span class="qa">Bước ngắn lại (chia cho √s lớn).</span></li>
+      <li>Hai chiều khác dốc? → <span class="qa">Bước bằng nhau (đều ≈ η) — RMSProp cân bằng các chiều.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> RMSProp = học suất thích nghi từng tham số qua s. Ghép với Momentum thành <b>Adam</b> — Bài tiếp (D14): AdamW thêm
-    weight decay tách rời.
+    <b style="color:var(--accent2)">Rút ra.</b> RMSProp = học suất thích nghi từng tham số qua s; bão hòa √s = |g| nên bước ≈ ±η, cân mọi chiều.
+    Ghép với Momentum → <b>Adam</b> (Bài D13): đà + chuẩn hóa + hiệu chỉnh thiên lệch.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D12 · RMSProp</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D12 · RMSProp</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -176,30 +200,42 @@ function generate(){
   var sq2 = Math.round(Math.sqrt(s2)*100)/100;
   var stepv2 = Math.round(eta*g/sq2*100)/100;
   var w2 = Math.round((w1 - stepv2)*100)/100;
+  // tự-kiểm: hai chiều bão hòa → bước = η ở cả hai
+  var eqStep = ft(eta);
 
   WB.setAll({
     w0: ft(w0), rho: '0.9', eta: ft(eta), g: ft(g), gsq: ft(gsq),
     s1: ft(s1), sq1: f2(sq1), stepv1: f2(stepv1), w1: ft(w1),
-    s2: ft(s2), sq2: f2(sq2), stepv2: f2(stepv2), w2: ft(w2)
+    s2: ft(s2), sq2: f2(sq2), stepv2: f2(stepv2), w2: ft(w2),
+    eqa: eqStep, eqb: eqStep, eqc: 'bằng nhau'
   });
-  drawShrink('figR', [sq1, sq2, Math.sqrt(0.9*s2+0.1*gsq)], eta, g);
+  drawEqual('figR', eta);
 }
 
-// bước ngắn dần khi √s tăng
-function drawShrink(id, sqs, eta, g){
+// SGD (cam): chiều dốc >> chiều thoải · RMSProp (lam): hai chiều bằng nhau
+function drawEqual(id, eta){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var x0 = 22, y0 = 112, H = 90;
-  var steps = sqs.map(function(sq){ return eta*g/sq; });
-  var smax = Math.max.apply(null, steps);
-  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+3*52)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
-  for (var i = 0; i < 3; i++){
-    var bx = x0 + 16 + i*52, h = steps[i]/smax*H;
-    s += '<rect x="'+bx+'" y="'+(y0-h).toFixed(1)+'" width="26" height="'+h.toFixed(1)+'" fill="#b4530933" stroke="#b45309" stroke-width="1.6"/>';
-    s += '<text x="'+(bx+13)+'" y="'+(y0-h-3).toFixed(1)+'" text-anchor="middle" style="font-size:8px" fill="#b45309" font-weight="700">'+steps[i].toFixed(2)+'</text>';
-    s += '<text x="'+(bx+13)+'" y="'+(y0+12)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">bước '+(i+1)+'</text>';
+  var y0 = 116, H = 88, bw = 22;
+  var sgdBig = eta*4, sgdSmall = eta*0.5, rmsBoth = eta;   // độ dài bước
+  var mx = sgdBig;                                          // chuẩn hóa chiều cao
+  var s = '<line x1="12" y1="'+y0+'" x2="236" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  function bar(x, val, col, lab){
+    var h = val/mx*H;
+    var t = '<rect x="'+x+'" y="'+(y0-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+col+'33" stroke="'+col+'" stroke-width="1.5"/>';
+    t += '<text x="'+(x+bw/2)+'" y="'+(y0+12)+'" text-anchor="middle" style="font-size:7.5px" fill="#5b6776">'+lab+'</text>';
+    return t;
   }
-  s += '<text x="'+x0+'" y="14" style="font-size:8px" fill="#5b6776">độ dài bước = η·g/√s</text>';
+  // nhóm SGD
+  s += bar(30, sgdBig, '#b45309', 'dốc');
+  s += bar(30+bw+6, sgdSmall, '#b45309', 'thoải');
+  s += '<text x="'+(30+bw+3)+'" y="16" text-anchor="middle" style="font-size:8px" fill="#b45309" font-weight="700">SGD</text>';
+  // nhóm RMSProp
+  var gx = 150;
+  s += bar(gx, rmsBoth, '#0e7490', 'dốc');
+  s += bar(gx+bw+6, rmsBoth, '#0e7490', 'thoải');
+  s += '<text x="'+(gx+bw+3)+'" y="16" text-anchor="middle" style="font-size:8px" fill="#0e7490" font-weight="700">RMSProp</text>';
+  s += '<line x1="'+(gx)+'" y1="'+(y0-rmsBoth/mx*H-4).toFixed(1)+'" x2="'+(gx+2*bw+6)+'" y2="'+(y0-rmsBoth/mx*H-4).toFixed(1)+'" stroke="#0e7490" stroke-width="1" stroke-dasharray="3 2"/>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

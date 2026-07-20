@@ -4,168 +4,380 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài H4 — Multi-Head Attention (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-</style>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H4</span>
+    <h1>Multi-Head Attention <small>— ghép nhiều đầu thành một</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>O₁ (đầu 1)</span>
+      <span><span class="sw" style="background:var(--purple)"></span>O₂ (đầu 2)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>Wᴼ &amp; đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H4</span><h1>Multi-Head Attention <small>— nhiều đầu, nhiều góc nhìn</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Một đầu attention chỉ bắt <b>một</b> kiểu quan hệ (vd "chủ–động từ"). Nhiều đầu cho mô hình nhìn <b>nhiều
-    mối liên hệ cùng lúc</b> (cú pháp, đồng tham chiếu, vị trí…) trên các không gian con khác nhau → biểu diễn giàu hơn, cùng chi phí.
-    <div class="formula">headᵢ = Attention(Q Wqᵢ, K Wkᵢ, V Wvᵢ) &nbsp;·&nbsp; out = Concat(head₁…head_h)·Wₒ</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Hai đầu attention đã chạy xong (đã học ở H1/H2), cho ra <b>O₁</b> và <b>O₂</b> — mỗi đầu dₖ=2 chiều.
+    Trọng tâm bài này <b>không phải</b> tính lại attention, mà là bước cuối: <b>Ghép</b> (Concat) hai đầu thành vectơ dài d=4,
+    rồi nhân với <b>Wᴼ</b> ra đầu ra cuối. Cuối phiếu bạn sẽ <b>tự chứng minh bằng số</b>: cắt đôi Wᴼ theo hàng thành W₁, W₂,
+    tính <b>RIÊNG</b> O₁·W₁ + O₂·W₂ — phải ra <b>ĐÚNG</b> kết quả của phép nhân concat đầy đủ. Multi-head hóa ra chỉ là <b>CỘNG</b> đóng góp từng đầu.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>nhiều chuyên gia</b> cùng đọc câu, mỗi người soi một loại quan hệ. Mỗi đầu làm việc trên một <b>lát chiều</b> nhỏ (d/h), nộp
-    kết quả; ghép các lát lại rồi trộn (Wₒ) thành đầu ra đầy đủ.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=4 · h=2 đầu</span></div>
-    <div class="calc" style="font-size:14px">
-      Kết quả mỗi đầu (đã tính attention riêng):<br>
-      head₁ = ( <span class="gv" data-q="h1a">0.7</span>, <span class="gv" data-q="h1b">0.3</span> ) · head₂ = ( <span class="gv" data-q="h2a">0.2</span>, <span class="gv" data-q="h2b">0.8</span> )
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mỗi đầu trên một lát chiều</h2><span class="tag">d/h = 2</span></div>
-    <div class="note">d=4 chia 2 đầu, mỗi đầu dₖ=2; chạy attention <b>độc lập</b> trên lát chiều của mình → mỗi đầu chuyên một kiểu quan hệ.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Ghép (concat)</h2><span class="tag">nối lại đủ d</span></div>
-    <div class="calc">
-      Concat(head₁, head₂) = ( <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:40px"></span> )
-    </div>
-    <div class="hint">Nối nối tiếp hai vectơ 2 chiều → lại đủ chiều d = 4.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Trộn bằng Wₒ</h2><span class="tag">các đầu "nói chuyện"</span></div>
-    <div class="note">Nhân vectơ ghép với Wₒ → đầu ra cuối. Wₒ cho các đầu <b>trộn thông tin</b> với nhau thành một biểu diễn thống nhất (không để rời rạc).</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Cùng chi phí</h2><span class="tag">d/h mỗi đầu</span></div>
-    <div class="note">Vì mỗi đầu chỉ d/h chiều, tổng tính toán ≈ một đầu d chiều → "nhiều góc nhìn gần như miễn phí".</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Vì sao dùng nhiều đầu? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Sau khi ghép các đầu, làm gì? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H4</span><h1>Multi-Head Attention <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Ghép (concat)</h2></div>
-    <div class="calc ans">( <span class="blk" data-q="c1">0.7</span>, <span class="blk" data-q="c2">0.3</span>, <span class="blk" data-q="c3">0.2</span>, <span class="blk" data-q="c4">0.8</span> )</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>x → 2 lát → 2 attention → ghép → Wₒ</h2><span class="tag">song song</span></div>
-    <div class="figrow">
-      <svg id="figH" class="fig" viewBox="0 0 250 140" width="82mm" height="44mm" aria-label="đầu vào chia hai lát, mỗi lát qua một đầu attention, ghép lại rồi trộn bằng W_o"></svg>
-      <div style="flex:1">
-        <div class="note">x chia 2 lát chiều → mỗi lát qua một đầu attention độc lập (lam, tím) → ghép thành vectơ d=4 → nhân Wₒ (cam) trộn lại.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">d=4 · h=2 đầu · mỗi đầu dₖ=2</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:7mm"><span>O₁&nbsp;(đầu&nbsp;1)</span><span>O₂&nbsp;(đầu&nbsp;2)</span></div>
+          <div class="mx c2" style="--cw:11mm;--ch:7mm">
+            <div class="gv" data-q="a1">2</div><div class="gv" data-q="a2">−1</div>
+            <div class="pv" data-q="b1">1</div><div class="pv" data-q="b2">2</div>
+          </div>
+        </div>
+        <div class="cap"><b>O₁, O₂</b> — kết quả mỗi đầu attention (đã tính xong ở H1/H2), mỗi vectơ 2 chiều.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.2mm"><span>hàng 1</span><span>hàng 2</span><span>hàng 3</span><span>hàng 4</span></div>
+          <div class="mx c2" style="--cw:11mm;--ch:6.2mm" id="mxWo">
+            <div class="pe" data-q="w11">1</div><div class="pe" data-q="w12">−1</div>
+            <div class="pe" data-q="w21">2</div><div class="pe" data-q="w22">1</div>
+            <div class="pe" data-q="w31">−1</div><div class="pe" data-q="w32">2</div>
+            <div class="pe" data-q="w41">1</div><div class="pe" data-q="w42">−2</div>
+          </div>
+        </div>
+        <div class="cap"><b>Wᴼ</b> (4 hàng × 2 cột) — 4 hàng vì z dài 4 chiều (2 đầu × dₖ=2), 2 cột vì đầu ra có 2 chiều.
+        Hàng 1–2 nhân với O₁, hàng 3–4 nhân với O₂ khi <b>tách khối</b> (xem bước ③).</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Vì sao nhiều đầu? → <span class="qa">Mỗi đầu bắt một kiểu quan hệ trên không gian con riêng → biểu diễn giàu hơn.</span></li>
-      <li>Sau khi ghép? → <span class="qa">Nhân Wₒ để trộn thông tin giữa các đầu.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">O₁,O₂ → concat → ×Wᴼ → o</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 520 120" width="100%" height="30mm"
+           aria-label="O1 và O2 ghép thành vectơ z 4 chiều, nhân với W_o ra đầu ra o 2 chiều"></svg>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Concat chỉ <b>xếp cạnh</b> (không cộng) — Wᴼ mới là bước các đầu <b>trộn</b> thông tin với nhau.</div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Multi-head = chia chiều → attention song song → ghép → Wₒ; nhiều quan hệ, cùng chi phí. Bài tiếp (H6): ghép
-    attention + FFN + LN + residual thành một khối Transformer.
+  <!-- ① GHÉP -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Ghép (Concat) — xếp cạnh nhau, không cộng</span><span class="f">z = (O₁ₐ, O₁_b, O₂ₐ, O₂_b)</span></div>
+    <div class="pb" style="display:flex;gap:8mm;align-items:center">
+      <div class="mxwrap">
+        <div class="rowlab" style="--ch:7mm"><span>z&nbsp;(d=4)</span></div>
+        <div class="mx c4" style="--cw:11mm;--ch:7mm">
+          <div class="blank"></div><div class="blank"></div><div class="blank"></div><div class="blank"></div>
+        </div>
+      </div>
+      <div class="cap" style="margin:0;max-width:78mm">Chỉ <b>xếp cạnh nhau</b> — không cộng, không nhân. z₁z₂ chép nguyên từ O₁ (lam), z₃z₄ chép nguyên từ O₂ (tím).</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② NHÂN Wo -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Nhân Wᴼ — đầu ra cuối o = z · Wᴼ</span><span class="f">cộng 4 số hạng cho mỗi cột</span></div>
+    <div class="pb">
+      <div class="eq">
+        o₁ = z₁·w₁₁ + z₂·w₂₁ + z₃·w₃₁ + z₄·w₄₁ = <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span><br>
+        o₂ = z₁·w₁₂ + z₂·w₂₂ + z₃·w₃₂ + z₄·w₄₂ = <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Đầu ra</th><th>Giá trị</th><th>Tô thanh</th></tr>
+        <tr><td class="l">o₁</td><td><span class="cellb"></span></td><td><div class="track" id="to1"></div></td></tr>
+        <tr><td class="l">o₂</td><td><span class="cellb"></span></td><td><div class="track" id="to2"></div></td></tr>
+      </table>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Thang thanh: <b>−16 … 0 … +16</b>.</div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — tách khối ma trận</span><span class="f">cắt Wᴼ: W₁ = 2 hàng trên · W₂ = 2 hàng dưới</span></div>
+    <div class="pb">
+      <div class="eq" style="margin-bottom:1.6mm">[O₁ | O₂] · Wᴼ &nbsp;=&nbsp; O₁·W₁ + O₂·W₂ — tính <b>RIÊNG</b> hai vế rồi cộng, so với o ở bước ②.</div>
+      <div class="split">
+        <div>
+          <div style="font:800 8.6px var(--sans);color:var(--blue);letter-spacing:.06em;margin-bottom:1mm">O₁ · W₁</div>
+          <div class="mxwrap">
+            <div class="rowlab" style="--ch:6mm"><span>hàng 1</span><span>hàng 2</span></div>
+            <div class="mx c2" style="--cw:9.5mm;--ch:6mm">
+              <div class="pe" data-q="w11">1</div><div class="pe" data-q="w12">−1</div>
+              <div class="pe" data-q="w21">2</div><div class="pe" data-q="w22">1</div>
+            </div>
+          </div>
+          <div class="eq" style="margin-top:1mm">O₁·W₁ = ( <span class="slot sm"></span>, <span class="slot sm"></span> )</div>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.6px var(--sans);color:var(--purple);letter-spacing:.06em;margin-bottom:1mm">O₂ · W₂</div>
+          <div class="mxwrap">
+            <div class="rowlab" style="--ch:6mm"><span>hàng 3</span><span>hàng 4</span></div>
+            <div class="mx c2" style="--cw:9.5mm;--ch:6mm">
+              <div class="pe" data-q="w31">−1</div><div class="pe" data-q="w32">2</div>
+              <div class="pe" data-q="w41">1</div><div class="pe" data-q="w42">−2</div>
+            </div>
+          </div>
+          <div class="eq" style="margin-top:1mm">O₂·W₂ = ( <span class="slot sm"></span>, <span class="slot sm"></span> )</div>
+        </div>
+      </div>
+      <div class="eq" style="margin-top:1.6mm;border-top:1px dashed var(--line);padding-top:1.6mm">
+        Cộng lại: O₁·W₁ + O₂·W₂ = ( <span class="slot sm"></span>, <span class="slot sm"></span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">So với o ở bước ② — khớp không?</span> <span class="slot" style="min-width:44mm"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:13mm"><span class="lb">✏️ Nháp — nhân tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Ghép xong z (4 chiều)</span>
+    <span><span class="ck"></span>Ra o₁ o₂ + tô thanh</span>
+    <span><span class="ck"></span>Tách khối khớp nhau</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao multi-head chỉ là CỘNG!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H4</span>
+    <h1>Multi-Head Attention <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>O₁</span>
+      <span><span class="sw" style="background:var(--purple)"></span>O₂</span>
+      <span><span class="sw" style="background:var(--orange)"></span>Wᴼ · đáp án</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">O₁,O₂ → concat → ×Wᴼ → o</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 520 120" width="100%" height="30mm" aria-label="sơ đồ với đầu ra o đã điền"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Ghép (Concat)</span></div>
+    <div class="pb" style="display:flex;gap:8mm;align-items:center">
+      <div class="mxwrap">
+        <div class="rowlab" style="--ch:7mm"><span>z&nbsp;(d=4)</span></div>
+        <div class="mx c4" style="--cw:11mm;--ch:7mm">
+          <div class="ansc" data-q="a1">2</div><div class="ansc" data-q="a2">−1</div><div class="ansc" data-q="b1">1</div><div class="ansc" data-q="b2">2</div>
+        </div>
+      </div>
+      <div class="why" style="margin:0;max-width:78mm"><b>Vì sao xếp cạnh, không cộng:</b> cộng sẽ trộn nghĩa hai đầu quá sớm (mất thông tin). Xếp cạnh giữ nguyên
+      từng đầu tách biệt tới tận lúc Wᴼ chủ động quyết định trộn thế nào.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Nhân Wᴼ → đầu ra cuối</span></div>
+    <div class="pb">
+      <div class="eq">
+        o₁ = <span class="slot ans sm" data-q="t1">2</span> + <span class="slot ans sm" data-q="t2">−2</span> + <span class="slot ans sm" data-q="t3">−1</span> + <span class="slot ans sm" data-q="t4">2</span> = <span class="slot ans" data-q="o1">1</span><br>
+        o₂ = <span class="slot ans sm" data-q="u1">−2</span> + <span class="slot ans sm" data-q="u2">−1</span> + <span class="slot ans sm" data-q="u3">2</span> + <span class="slot ans sm" data-q="u4">−4</span> = <span class="slot ans" data-q="o2">−5</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Đầu ra</th><th>Giá trị</th><th>Tô thanh</th></tr>
+        <tr><td class="l">o₁</td><td class="evt" data-q="o1">1</td><td><div class="track" id="ao1"></div></td></tr>
+        <tr><td class="l">o₂</td><td class="evt" data-q="o2">−5</td><td><div class="track" id="ao2"></div></td></tr>
+      </table>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao cần Wᴼ:</b> nếu lấy thẳng z làm đầu ra, hai đầu vẫn <b>rời rạc</b> — nửa đầu là "quan hệ A", nửa sau là "quan hệ B".
+    Nhân Wᴼ cho mỗi chiều ra được <b>đọc cả hai</b> đầu cùng lúc, thành một biểu diễn thống nhất.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — tách khối ma trận</span><span class="f">O₁·W₁ + O₂·W₂ = o</span></div>
+    <div class="pb">
+      <div class="eq" style="margin-bottom:1.6mm">[O₁ | O₂] · Wᴼ &nbsp;=&nbsp; O₁·W₁ + O₂·W₂</div>
+      <div class="split">
+        <div>
+          <div style="font:800 8.6px var(--sans);color:var(--blue);letter-spacing:.06em;margin-bottom:1mm">O₁ · W₁</div>
+          <div class="eq">O₁·W₁ = ( <span class="slot ans sm" data-q="p1">4</span>, <span class="slot ans sm" data-q="p2">−3</span> )</div>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.6px var(--sans);color:var(--purple);letter-spacing:.06em;margin-bottom:1mm">O₂ · W₂</div>
+          <div class="eq">O₂·W₂ = ( <span class="slot ans sm" data-q="q1">−3</span>, <span class="slot ans sm" data-q="q2">−2</span> )</div>
+        </div>
+      </div>
+      <div class="eq" style="margin-top:1.6mm;border-top:1px dashed var(--line);padding-top:1.6mm">
+        Cộng lại: O₁·W₁ + O₂·W₂ = ( <span class="slot ans sm" data-q="o1">1</span>, <span class="slot ans sm" data-q="o2">−5</span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">So với o ở bước ② —</span> <span class="qa">KHỚP tuyệt đối, vì đây là tính chất đại số luôn đúng (xem "vì sao" dưới).</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> Concat + Wᴼ <b>không phải</b> phép trộn bí ẩn — nó chỉ là <b>CỘNG</b> đóng góp riêng của
+    từng đầu, mỗi đầu có "phần riêng" của Wᴼ để phát biểu. Mỗi đầu nhìn câu theo một góc, rồi tất cả cộng lại thành kết luận chung.
+    Đây cũng là lý do thêm/bớt đầu là chuyện <b>tự nhiên</b> — mỗi đầu chỉ đóng góp thêm một số hạng vào tổng.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở multi-head</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Concat là cộng hai vectơ lại."</b><br>
+          <span style="color:var(--dim)">Sai — concat <b>xếp cạnh</b> (2+2=4 chiều), cộng sẽ ra vectơ 2 chiều và trộn nghĩa quá sớm. Hai phép hoàn toàn khác nhau.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Wᴼ phải là ma trận vuông d×d."</b><br>
+          <span style="color:var(--dim)">Không bắt buộc — Wᴼ là (h·dₖ)×d_model. Ở đây 4×2, không vuông, vẫn hợp lệ vì h·dₖ = 4 khớp số hàng.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Mỗi đầu có Wᴼ riêng của mình."</b><br>
+          <span style="color:var(--dim)">Sai — chỉ có <b>MỘT</b> Wᴼ dùng chung cho cả câu. Cắt theo khối (W₁, W₂) chỉ là cách <b>nhìn</b> để hiểu, không phải huấn luyện riêng.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Tách khối chỉ đúng với ví dụ này."</b><br>
+          <span style="color:var(--dim)">Không — đây là tính chất <b>đại số tổng quát</b> của nhân ma trận theo khối, đúng với <b>mọi</b> Wᴼ, mọi O₁, O₂. Bấm 🎲: luôn khớp.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Multi-head attention = chia chiều → attention song song (mỗi đầu một góc nhìn) → <b>ghép</b> (concat) → <b>trộn</b> (Wᴼ).
+    Bước trộn hóa ra chỉ là tổng các đóng góp riêng: O₁·W₁ + O₂·W₂ + … — thêm đầu chỉ là thêm số hạng vào tổng, không đổi bản chất phép tính.
+    Bài tiếp theo (<b>H5</b>): <b>cross-attention</b> — Q đến từ chuỗi này, K/V đến từ chuỗi khác.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H4 · Multi-Head Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var f2 = WB.fmt2;
-  var pool = [[0.7,0.3],[0.2,0.8],[0.5,0.5],[0.9,0.1],[0.4,0.6],[0.6,0.4]];
-  var hs = WB.pickDistinct(pool, 2);
-  var h1=hs[0], h2=hs[1];
+  var fI = WB.fmtInt;
+  // O1, O2: mỗi đầu 2 chiều, số nguyên nhỏ khác 0.
+  var a1 = WB.randIntNZ(-2,2), a2 = WB.randIntNZ(-2,2);
+  var b1 = WB.randIntNZ(-2,2), b2 = WB.randIntNZ(-2,2);
+  // Wo: 4 hàng x 2 cột, số nguyên nhỏ khác 0.
+  var w11 = WB.randIntNZ(-2,2), w12 = WB.randIntNZ(-2,2);
+  var w21 = WB.randIntNZ(-2,2), w22 = WB.randIntNZ(-2,2);
+  var w31 = WB.randIntNZ(-2,2), w32 = WB.randIntNZ(-2,2);
+  var w41 = WB.randIntNZ(-2,2), w42 = WB.randIntNZ(-2,2);
+
+  // z = concat(O1,O2) = (a1,a2,b1,b2) — xếp cạnh, không biến đổi giá trị.
+  // o = z · Wo (đường ①②: concat đầy đủ)
+  var t1=a1*w11, t2=a2*w21, t3=b1*w31, t4=b2*w41, o1=t1+t2+t3+t4;
+  var u1=a1*w12, u2=a2*w22, u3=b1*w32, u4=b2*w42, o2=u1+u2+u3+u4;
+
+  // Tự kiểm ③ — đường tách khối: W1 = 2 hàng trên, W2 = 2 hàng dưới.
+  var p1=t1+t2, p2=u1+u2;   // O1·W1
+  var q1=t3+t4, q2=u3+u4;   // O2·W2
+  // p1+q1 == o1  và  p2+q2 == o2  LUÔN đúng (tính chất đại số của nhân ma trận theo khối).
+
+  window.S = {a1:a1,a2:a2,b1:b1,b2:b2, w11:w11,w12:w12,w21:w21,w22:w22,w31:w31,w32:w32,w41:w41,w42:w42, o1:o1,o2:o2};
+
   WB.setAll({
-    h1a:f2(h1[0]), h1b:f2(h1[1]), h2a:f2(h2[0]), h2b:f2(h2[1]),
-    c1:f2(h1[0]), c2:f2(h1[1]), c3:f2(h2[0]), c4:f2(h2[1])
+    a1:fI(a1), a2:fI(a2), b1:fI(b1), b2:fI(b2),
+    w11:fI(w11), w12:fI(w12), w21:fI(w21), w22:fI(w22),
+    w31:fI(w31), w32:fI(w32), w41:fI(w41), w42:fI(w42),
+    t1:fI(t1), t2:fI(t2), t3:fI(t3), t4:fI(t4),
+    u1:fI(u1), u2:fI(u2), u3:fI(u3), u4:fI(u4),
+    o1:fI(o1), o2:fI(o2),
+    p1:fI(p1), p2:fI(p2), q1:fI(q1), q2:fI(q2)
   });
-  drawMHA('figH');
+
+  // thanh giá trị đầu ra: ĐỀ để TRỐNG, ĐÁP ÁN tô đầy. Thang −16…0…+16.
+  drawBar('to1', 0, 16, false); drawBar('to2', 0, 16, false);
+  drawBar('ao1', o1, 16, true); drawBar('ao2', o2, 16, true);
+
+  drawFlow('figQ', false);
+  drawFlow('figA', true);
 }
-function drawMHA(id){
-  var svg = document.getElementById(id); if(!svg) return;
-  function box(x,y,w,h,txt,col){
-    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+col+'22" stroke="'+col+'" stroke-width="1.4"/>'+
-      '<text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+col+'">'+txt+'</text>';
+
+// Thanh hai chiều: gốc giữa (0), dương chạy phải (lam), âm chạy trái (cam).
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  var s='<defs><marker id="am" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#5b6776"/></marker></defs>';
-  s+=box(8,52,34,28,'x','#5b6776');
-  s+=box(64,18,52,26,'attn đầu 1','#0e7490');
-  s+=box(64,86,52,26,'attn đầu 2','#7c5cff');
-  s+='<line x1="42" y1="60" x2="64" y2="31" stroke="#5b6776" stroke-width="1.2" marker-end="url(#am)"/>';
-  s+='<line x1="42" y1="72" x2="64" y2="99" stroke="#5b6776" stroke-width="1.2" marker-end="url(#am)"/>';
-  s+=box(138,52,42,28,'concat','#16202e');
-  s+='<line x1="116" y1="31" x2="138" y2="60" stroke="#5b6776" stroke-width="1.2" marker-end="url(#am)"/>';
-  s+='<line x1="116" y1="99" x2="138" y2="72" stroke="#5b6776" stroke-width="1.2" marker-end="url(#am)"/>';
-  s+=box(202,52,40,28,'· Wₒ','#b45309');
-  s+='<line x1="180" y1="66" x2="202" y2="66" stroke="#5b6776" stroke-width="1.2" marker-end="url(#am)"/>';
-  s+='<text x="125" y="132" text-anchor="middle" font-size="8.5" fill="#5b6776">2 đầu song song → ghép d=4 → trộn Wₒ</text>';
+  el.innerHTML=h;
+}
+
+// Sơ đồ: O1 (lam) + O2 (tím) → concat 4 ô → ×Wo → o (cam, 2 ô).
+function drawFlow(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var fI=WB.fmtInt, BLU='#0e7490', PUR='#6d28d9', ORG='#b45309', INK='#16202e', DIM='#6b7280';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  function cell(x,y,w,h,val,col,bg,dash){
+    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+bg+'" stroke="'+col+'" stroke-width="1.3"'+(dash?' stroke-dasharray="3 2"':'')+'/>'
+      + (val!==null ? '<text x="'+(x+w/2)+'" y="'+(y+h/2+3.2)+'" text-anchor="middle" font-size="7.5" font-weight="700" fill="'+col+'">'+val+'</text>' : '');
+  }
+
+  var S = window.S;
+  // O1: 2 ô lam
+  s+='<text x="10" y="16" font-size="8.5" font-weight="800" fill="'+BLU+'">O₁</text>';
+  s+=cell(34,8,26,18,fI(S.a1),BLU,'#eaf4f6');
+  s+=cell(62,8,26,18,fI(S.a2),BLU,'#eaf4f6');
+  // O2: 2 ô tím
+  s+='<text x="10" y="100" font-size="8.5" font-weight="800" fill="'+PUR+'">O₂</text>';
+  s+=cell(34,90,26,18,fI(S.b1),PUR,'#f5f1fe');
+  s+=cell(62,90,26,18,fI(S.b2),PUR,'#f5f1fe');
+
+  // mũi tên gộp vào concat
+  s+='<path d="M90,17 C 118,17 118,46 146,52" fill="none" stroke="'+BLU+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+  s+='<path d="M90,99 C 118,99 118,66 146,60" fill="none" stroke="'+PUR+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+
+  // concat: 4 ô — 2 lam, 2 tím
+  s+='<text x="192" y="34" text-anchor="middle" font-size="8" fill="'+DIM+'">Concat z (d=4)</text>';
+  s+=cell(150,40,26,20,fI(S.a1),BLU,'#eaf4f6');
+  s+=cell(176,40,26,20,fI(S.a2),BLU,'#eaf4f6');
+  s+=cell(202,40,26,20,fI(S.b1),PUR,'#f5f1fe');
+  s+=cell(228,40,26,20,fI(S.b2),PUR,'#f5f1fe');
+
+  // × Wo
+  s+='<line x1="254" y1="50" x2="278" y2="50" stroke="'+DIM+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="315" y="54" text-anchor="middle" font-size="11" font-weight="800" fill="'+ORG+'">× Wᴼ</text>';
+  s+='<line x1="352" y1="50" x2="376" y2="50" stroke="'+DIM+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+
+  // output o: 2 ô cam
+  s+='<text x="415" y="26" text-anchor="middle" font-size="8.5" font-weight="800" fill="'+ORG+'">o</text>';
+  var oVal1 = showAns ? fI(S.o1) : null, oVal2 = showAns ? fI(S.o2) : null;
+  s+=cell(382,32,66,20,oVal1,ORG,showAns?'#fff8f0':'#fff',!showAns);
+  s+=cell(382,60,66,20,oVal2,ORG,showAns?'#fff8f0':'#fff',!showAns);
+  s+='<text x="376" y="46" text-anchor="end" font-size="7.5" font-weight="700" fill="'+DIM+'">o₁</text>';
+  s+='<text x="376" y="74" text-anchor="end" font-size="7.5" font-weight="700" fill="'+DIM+'">o₂</text>';
+  if(!showAns){ s+='<text x="453" y="46" text-anchor="middle" font-size="8" fill="#c3ccd6">✍</text>'; s+='<text x="453" y="74" text-anchor="middle" font-size="8" fill="#c3ccd6">✍</text>'; }
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // ⚠️ BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

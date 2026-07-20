@@ -1,177 +1,269 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài K2 — Phương trình Bellman (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài K2 — Phương trình Bellman (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7.4px var(--sans);letter-spacing:.03em;text-transform:uppercase;color:var(--dim);padding:1mm .6mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.7mm .6mm;border-bottom:1px solid var(--line2);font:700 10px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--dim);font-size:8.6px}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--blue);font-weight:800}
+.cmp{display:grid;grid-template-columns:auto 1fr;gap:1.4mm 3mm;align-items:center;font-size:9.4px}
+.cmp .lab{font:800 9px var(--sans)}
+.cmp .lab.a{color:var(--blue)} .cmp .lab.b{color:var(--orange)}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.5}
+.trap li{margin:.6mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Phương trình Bellman <small>— giá trị = thưởng ngay + γ·giá trị kế · <i>Bellman equation</i></small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~14 phút · Bài K2</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>giá trị cho sẵn</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>thưởng r / γ</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>giá trị tính / đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài K2</span><h1>Phương trình Bellman <small>— Bellman equation</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Tính return đòi nhìn vô tận tương lai. Bellman <b>gói</b> toàn bộ tương lai vào "giá trị trạng thái kế" → biến
-    bài toán vô hạn thành <b>một bước đệ quy</b>. Q-learning, value iteration, TD đều là Bellman dưới dạng cập nhật.
-    <div class="formula">V(s) = E[ r + γ·V(s') ] &nbsp;&nbsp;&nbsp; Q(s,a) = E[ r + γ·maxₐ' Q(s', a') ]</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Tính <b>giá trị một trạng thái</b> mà KHÔNG cộng vô hạn tương lai: dùng <b>Bellman</b> gói cả tương lai vào "giá trị trạng thái kế". Áp Bellman 1 bước, viết dạng Q, rồi <b>lặp từ 0</b> để thấy nó <b>hội tụ</b> về điểm bất động. <i>Trực giác:</i> giá trị chỗ đứng = thưởng khi rời đi + giá trị (chiết khấu) chỗ đến — như định giá nhà = tiền thuê năm nay + giá trị căn nhà năm sau.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    "Giá trị chỗ tôi đứng = thưởng khi rời đi + giá trị (đã chiết khấu) của chỗ tôi đến." Như <b>định giá nhà</b> = tiền thuê năm nay + giá
-    trị (chiết khấu) căn nhà năm sau. Đệ quy gói cả tương lai vào một bước.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">γ = <span data-q="gamma">0.9</span></span></div>
-    <div class="calc" style="font-size:14px">
-      ở trạng thái s: thưởng r = <span class="gv" data-q="r">1</span> ; sang s' có V(s') = <span class="gv" data-q="vNext">10</span> ;
-      giả định maxₐ' Q(s',a') = <span class="gv" data-q="maxQ">8</span>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Áp Bellman cho V(s)</h2><span class="tag">r + γ·V(s')</span></div>
-    <div class="calc">
-      V(s) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="vNext">10</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> không cần cộng vô hạn thưởng — V(s') đã tóm gọn toàn bộ tương lai tính từ s'.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Dạng Q (có hành động)</h2><span class="tag">r + γ·maxQ'</span></div>
-    <div class="calc">
-      Q(s,a) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">8</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="hint">Q nhìn theo (trạng thái, hành động); V nhìn theo trạng thái.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vì sao đệ quy giải được</h2><span class="tag">γ &lt; 1 → co</span></div>
-    <div class="why"><b>Vì sao:</b> γ&lt;1 làm phép lặp <b>co</b> (mỗi vòng kéo sai số nhỏ lại) → lặp cập nhật hội tụ về <b>nghiệm duy nhất</b>. Đây là lý do value iteration chạy được.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Từ phương trình → thuật toán</h2><span class="tag">cập nhật</span></div>
-    <div class="note">Thay "=" bằng "cập nhật một phần" → <b>TD / Q-learning</b> (Bài K3). Bellman là <i>phương trình</i>; các thuật toán là cách <i>giải xấp xỉ</i>.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Bellman gói cái gì vào một bước? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Q(s,a) khác V(s) ở đâu? → <span class="blk" style="min-width:160px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K2 · Phương trình Bellman</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài K2</span><h1>Phương trình Bellman <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Giá trị trạng thái V(s)</h2></div>
-    <div class="calc ans">V(s) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="vNext">10</span> = <span class="blk" data-q="V">10</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Giá trị hành động Q(s,a)</h2></div>
-    <div class="calc ans">Q(s,a) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">8</span> = <span class="blk" data-q="Q">8.2</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Giá trị truyền ngược qua một bước</h2><span class="tag">đệ quy</span></div>
-    <div class="figrow">
-      <svg id="figB" class="fig" viewBox="0 0 250 110" width="82mm" height="36mm" aria-label="trạng thái s nhận thưởng r sang s prime, giá trị của s prime truyền ngược về s"></svg>
-      <div style="flex:1">
-        <div class="note">Mũi tên xuôi (lam): s →(r)→ s'. Mũi tên ngược (cam): V(s') đã chiết khấu γ chảy ngược vào V(s). Cứ một bước đệ quy là gói trọn tương lai.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn</span><span class="f">γ = <span data-q="gamma">0.9</span></span></div>
+    <div class="pb">
+      <div class="split" style="grid-template-columns:1.15fr 1px 1fr">
+        <div class="storybox">
+          Ở trạng thái <b>s</b>: nhận thưởng ngay <b class="gk" data-q="r">1</b>, rồi sang trạng thái kế <b>s'</b> đã biết giá trị <b class="rw" data-q="vNext">10</b>.
+          <div class="cap" style="margin-top:1.4mm"><b>V(s) = r + γ·V(s')</b> · <b>Q(s,a) = r + γ·maxₐ'Q(s',a')</b></div>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div class="cap" style="margin:0 0 1mm"><b>Giá trị đã biết:</b></div>
+          <div class="mxwrap">
+            <div class="rowlab" style="--ch:6.4mm"><span>V(s')</span></div>
+            <div class="mx c1" style="--cw:16mm;--ch:6.4mm"><div class="gv" data-q="vNext">10</div></div>
+          </div>
+          <div class="cap">r=<span class="gk" data-q="r">1</span> · γ=<span class="gk" data-q="gamma">0.9</span> → tìm <b class="qa">V(s)</b>.</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Bellman gói cái gì? → <span class="qa">Toàn bộ tương lai — qua giá trị trạng thái kế V(s').</span></li>
-      <li>Q khác V? → <span class="qa">Q xét theo cả hành động a; V chỉ theo trạng thái.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ — giá trị truyền ngược từ s' về s</span><span class="f">backup</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figQ" viewBox="0 0 360 116" width="104mm" height="34mm" aria-label="hai trạng thái s và s phẩy, thưởng r đi tới, giá trị truyền ngược"></svg>
+      <div class="cap" style="margin:0">Xuôi (lam): agent đi s→s', nhận r. Ngược đứt (cam): <b>giá trị</b> s' truyền <i>ngược</i> về s sau khi nhân γ. V(s)=r+γ·V(s').</div>
+    </div></div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Bellman: V(s)=r+γV(s'); gói tương lai vào trạng thái kế, γ&lt;1 đảm bảo hội tụ. Bài tiếp (K3): học Q từ
-    kinh nghiệm — <b style="color:var(--accent2)">Q-learning</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">① Áp Bellman — tính V(s)</span><span class="f">V(s)=r+γ·V(s')</span></div>
+    <div class="pb">
+      <div class="eq">V(s) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="vNext">10</span> = <span class="slot ans"></span></div>
+      <div class="cmp" style="margin-top:1mm"><span class="lab b">V(s) · thang 0…14</span><div class="track uni" id="b_V"></div></div>
+      <div class="why" style="margin-top:1mm"><b>Vì sao chỉ 1 bước?</b> V(s') <b>đã tóm gọn</b> toàn bộ tương lai từ s' — Bellman biến bài toán vô hạn thành một phép cộng.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K2 · Phương trình Bellman</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">② Dạng Q — thêm hành động</span><span class="f">maxₐ'Q' = <span data-q="maxQ">8</span></span></div>
+    <div class="pb">
+      <div class="eq">Q(s,a) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">8</span> = <span class="slot ans"></span></div>
+      <div class="why p" style="margin-top:.8mm"><b>V hay Q?</b> V xét <i>trạng thái</i>; Q xét <i>cả hành động</i> &amp; dùng <b>max</b> → chọn nước tốt nhất. Q-learning (K3) học Q này từ kinh nghiệm.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Vì sao GIẢI ĐƯỢC — lặp từ 0</span><span class="f">value iteration · Vₙ₊₁=r+γ·Vₙ</span></div>
+    <div class="pb">
+      <div class="cap" style="margin:0 0 1mm">Đoán <b>V₀=0</b> rồi lặp (r=<span class="gk" data-q="r">1</span>, γ=<span class="gk" data-q="gamma">0.9</span>). Điền từng vòng — xem nó bò lên:</div>
+      <table class="tbl-disc">
+        <thead><tr><th>vòng n</th><th>0</th><th>1</th><th>2</th><th>3</th><th>…</th><th>V*</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Vₙ</td><td class="rw">0</td><td><span class="cellb" style="width:12mm"></span></td><td><span class="cellb" style="width:12mm"></span></td><td><span class="cellb" style="width:12mm"></span></td><td>→</td><td><span class="slot ans sm"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="why" style="margin-top:1mm"><b>Vì sao chắc hội tụ?</b> γ&lt;1 làm mỗi vòng <b>co</b> khoảng cách tới nghiệm (×γ) → tiến về <b>một nghiệm duy nhất</b>, bất kể đoán đầu. Đó là lý do value iteration &amp; Q-learning chạy được.</div>
+    </div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 ④ Tự kiểm — điểm bất động V* thỏa CHÍNH NÓ</div>
+    <div style="font-size:9.2px;line-height:1.45">V* là nghiệm của <b>V* = r + γ·V*</b> (đứng yên khi lặp) → V* = r/(1−γ). Tính rồi <b>thử lại</b>:</div>
+    <div class="cmp" style="margin-top:1mm">
+      <span class="lab a">V*=r/(1−γ)=<span data-q="r">1</span>/(1−<span data-q="gamma">0.9</span>)=</span><span class="slot ans sm"></span>
+      <span class="lab b">Thử lại r+γ·V* =</span><span class="slot ans sm"></span>
+    </div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Hai ô phải <b>bằng nhau</b>: đưa V* vào Bellman lại ra chính V* = "điểm bất động". r/(1−γ) trùng tổng chuỗi vô hạn (Bài K1) — V* chính là Return khi thưởng r lặp mãi.</div>
+  </div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính V(s) &amp; Q ①②</span>
+    <span><span class="ck"></span>Điền 3 vòng lặp ③</span>
+    <span><span class="ck"></span>Tính V* &amp; thử lại ④</span>
+    <span class="win">🎉 Xong Bài K2!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K2 · Bellman</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Phương trình Bellman <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① V(s) · ② Q(s,a) — đáp án</span><span class="f">với bộ số hiện trên đề</span></div>
+    <div class="pb">
+      <div class="eq">V(s) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="vNext">10</span> = <span class="qa" data-q="V">10</span>
+        &nbsp;·&nbsp; Q(s,a) = <span data-q="r">1</span> + <span data-q="gamma">0.9</span>·<span data-q="maxQ">8</span> = <span class="qa" data-q="Q">8.2</span></div>
+      <div class="cmp" style="margin-top:1mm"><span class="lab b">V(s)</span><div class="track uni" id="b_Vk"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figA" viewBox="0 0 360 116" width="104mm" height="34mm" aria-label="sơ đồ Bellman đã điền V(s)"></svg>
+      <div class="cap" style="margin:0">V(s') (lam) nhân γ rồi cộng r → V(s) (cam). Giá trị "chảy ngược" theo mũi tên đứt. Đây là một bước <b>backup</b> — nền của mọi thuật toán RL dựa giá trị.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Lặp value iteration — đáp án</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th>vòng n</th><th>0</th><th>1</th><th>2</th><th>3</th><th>…</th><th>V*</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Vₙ</td><td class="rw">0</td><td class="qa" data-q="v1">1</td><td class="qa" data-q="v2">1.9</td><td class="qa" data-q="v3">2.71</td><td>→</td><td class="qa" data-q="vstar">10</td></tr>
+        </tbody>
+      </table>
+      <div class="why p" style="margin-top:1mm"><b>Đọc dãy:</b> V₀=0 tăng dần, mỗi vòng thu hẹp khoảng cách tới V* một hệ số γ. Sau 3 vòng chưa tới nơi — γ càng gần 1 hội tụ càng chậm, nhưng <b>chắc chắn</b> tiến tới V*.</div>
+    </div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 ④ Điểm bất động — đáp án</div>
+    <div class="cmp">
+      <span class="lab a">V* = r/(1−γ) =</span><b class="qa" data-q="vstar2">10</b>
+      <span class="lab b">Thử lại r + γ·V* =</span><b class="qa" data-q="vcheck">10</b>
+    </div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> Hai vế bằng nhau ⇒ V* là <b>điểm bất động</b> của phép Bellman (đưa vào lại ra chính nó → lặp mãi vẫn đứng yên). r/(1−γ) chính là Return chuỗi vô hạn (K1) — Bellman &amp; Return là hai cách nhìn cùng một đại lượng.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">🔬 Bellman sinh ra cả họ thuật toán RL</span><span class="f">= vs ← vs kinh nghiệm</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th>Cách dùng Bellman</th><th>Làm gì</th><th>Cần biết mô hình?</th></tr></thead>
+        <tbody>
+          <tr><td class="l"><b>Value iteration</b></td><td>lặp V ← r+γV cho tới hội tụ (③)</td><td>Có (biết r, s')</td></tr>
+          <tr><td class="l"><b>TD / Q-learning</b></td><td>thay "=" bằng cập nhật <i>một phần</i> từ (s,a,r,s')</td><td class="gk">KHÔNG</td></tr>
+          <tr><td class="l"><b>DQN</b></td><td>Q là mạng nơ-ron, mục tiêu vẫn r+γ·maxQ'</td><td class="gk">KHÔNG</td></tr>
+        </tbody>
+      </table>
+      <div class="cap">Bellman là <b>phương trình</b>; các thuật toán chỉ khác nhau ở <b>cách giải xấp xỉ</b> nó. Nắm Bellman là nắm xương sống của value-based RL.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên γ trước V(s'):</b> viết V(s)=r+V(s') → giá trị phồng, không hội tụ.</li>
+        <li><b>Lẫn V và Q:</b> Q có thêm hành động a &amp; dùng <b>max</b>; V chỉ theo trạng thái.</li>
+        <li><b>Tưởng phải cộng vô hạn:</b> Bellman gói tương lai vào V(s') — chỉ 1 bước.</li>
+        <li><b>Nghĩ value iteration dừng sau vài vòng:</b> γ gần 1 cần rất nhiều vòng mới sát V*.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="why t"><b>Rút ra.</b> Bellman: <b>V(s)=r+γ·V(s')</b> (và Q=r+γ·maxQ'); gói cả tương lai vào trạng thái kế, γ&lt;1 khiến phép lặp <b>co</b> → hội tụ về điểm bất động V*=r/(1−γ). Thay "=" bằng "cập nhật một phần" → <b>TD/Q-learning</b>. Bài tiếp <b>K3 · Q-learning</b>: học Q từ kinh nghiệm (s,a,r,s'), không cần biết trước mô hình.</div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K2 · Bellman</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var gamma = WB.pick([0.9, 0.5]);
-  var r = WB.randInt(1,3);
-  var vNext = WB.pick([8,10,12]);
-  var maxQ = vNext - WB.randInt(1,3);
-  var V = Math.round((r + gamma*vNext)*100)/100;
-  var Q = Math.round((r + gamma*maxQ)*100)/100;
-  WB.setAll({
-    gamma:f(gamma), r:String(r), vNext:String(vNext), maxQ:String(maxQ),
-    V:f(V), Q:f(Q)
-  });
-  drawBellman('figB', r, gamma, vNext);
+function drawBar(id,v,max){
+  const el=document.getElementById(id); if(!el) return;
+  let h='<div class="zero" style="left:0"></div><div class="tick" style="left:33.3%"></div><div class="tick" style="left:66.6%"></div>';
+  if(v>0){ const pct=Math.min(v/max,1)*100; h+='<div class="fill pos" style="left:0;width:'+pct+'%"></div>'; }
+  el.innerHTML=h;
 }
-function drawBellman(id, r, g, vNext){
-  var svg = document.getElementById(id); if(!svg) return;
-  var s='';
-  s+='<defs><marker id="aB1" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#0e7490"/></marker>'
-    +'<marker id="aB2" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#b45309"/></marker></defs>';
-  s+='<circle cx="46" cy="55" r="22" fill="#0e749022" stroke="#0e7490" stroke-width="1.6"/>';
-  s+='<text x="46" y="59" text-anchor="middle" font-size="13" fill="#0e7490" font-weight="700">s</text>';
-  s+='<circle cx="204" cy="55" r="22" fill="#7c5cff22" stroke="#7c5cff" stroke-width="1.6"/>';
-  s+='<text x="204" y="59" text-anchor="middle" font-size="12" fill="#7c5cff" font-weight="700">s′</text>';
-  s+='<line x1="70" y1="44" x2="180" y2="44" stroke="#0e7490" stroke-width="1.6" marker-end="url(#aB1)"/>';
-  s+='<text x="125" y="36" text-anchor="middle" font-size="9.5" fill="#0e7490">r = '+r+'</text>';
-  s+='<line x1="180" y1="70" x2="72" y2="70" stroke="#b45309" stroke-width="1.6" marker-end="url(#aB2)"/>';
-  s+='<text x="125" y="86" text-anchor="middle" font-size="9.5" fill="#b45309">+ γ·V(s′) = '+WB.fmtTrim(g)+'·'+vNext+'</text>';
+function emptyBar(id){const el=document.getElementById(id); if(el) el.innerHTML='<div class="zero" style="left:0"></div><div class="tick" style="left:33.3%"></div><div class="tick" style="left:66.6%"></div>';}
+function drawBellman(id, r, g, vNext, V, show){
+  const svg=document.getElementById(id); if(!svg) return;
+  const sy=56, sx=70, spx=290, rad=28;
+  let s='';
+  s+='<line x1="'+(sx+rad)+'" y1="'+(sy-8)+'" x2="'+(spx-rad)+'" y2="'+(sy-8)+'" stroke="#0e7490" stroke-width="1.6"/>';
+  s+='<polygon points="'+(spx-rad)+','+(sy-8)+' '+(spx-rad-7)+','+(sy-12)+' '+(spx-rad-7)+','+(sy-4)+'" fill="#0e7490"/>';
+  s+='<text x="'+((sx+spx)/2)+'" y="'+(sy-13)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#6d28d9" font-family="Consolas,monospace">thưởng r='+r+'</text>';
+  s+='<line x1="'+(spx-rad)+'" y1="'+(sy+10)+'" x2="'+(sx+rad)+'" y2="'+(sy+10)+'" stroke="#b45309" stroke-width="1.6" stroke-dasharray="5 3"/>';
+  s+='<polygon points="'+(sx+rad)+','+(sy+10)+' '+(sx+rad+7)+','+(sy+6)+' '+(sx+rad+7)+','+(sy+14)+'" fill="#b45309"/>';
+  s+='<text x="'+((sx+spx)/2)+'" y="'+(sy+24)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309" font-family="Consolas,monospace">γ·V(s′)='+WB.fmtTrim(g*vNext)+'</text>';
+  s+='<circle cx="'+sx+'" cy="'+sy+'" r="'+rad+'" fill="#fff5e9" stroke="#b45309" stroke-width="1.8"/>';
+  s+='<text x="'+sx+'" y="'+(sy-5)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#16202e">s</text>';
+  s+='<text x="'+sx+'" y="'+(sy+9)+'" text-anchor="middle" font-size="9" fill="#b45309" font-family="Consolas,monospace">V='+(show?WB.fmtTrim(V):'?')+'</text>';
+  s+='<circle cx="'+spx+'" cy="'+sy+'" r="'+rad+'" fill="#eaf4f6" stroke="#0e7490" stroke-width="1.8"/>';
+  s+='<text x="'+spx+'" y="'+(sy-5)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#16202e">s′</text>';
+  s+='<text x="'+spx+'" y="'+(sy+9)+'" text-anchor="middle" font-size="9" fill="#0e7490" font-family="Consolas,monospace">V='+WB.fmtTrim(vNext)+'</text>';
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function gen(){
+  const f=WB.fmtTrim;
+  const gamma=WB.pick([0.5,0.9]);
+  const r=WB.randInt(1,2);
+  const vNext=WB.pick([4,6,8,10]);
+  const maxQ=WB.pick([4,6,8]);
+  const V=Math.round((r+gamma*vNext)*100)/100;
+  const Q=Math.round((r+gamma*maxQ)*100)/100;
+  const v1=r, v2=Math.round((r+gamma*v1)*100)/100, v3=Math.round((r+gamma*v2)*100)/100;
+  const vstar=Math.round(r/(1-gamma)*100)/100;
+  const vcheck=Math.round((r+gamma*vstar)*100)/100;
+  WB.setAll({
+    gamma:f(gamma), r:String(r), vNext:String(vNext), maxQ:String(maxQ),
+    V:f(V), Q:f(Q), v1:f(v1), v2:f(v2), v3:f(v3),
+    vstar:f(vstar), vstar2:f(vstar), vcheck:f(vcheck)
+  });
+  drawBar('b_Vk', V, 14); emptyBar('b_V');
+  drawBellman('figQ', r, gamma, vNext, V, false);
+  drawBellman('figA', r, gamma, vNext, V, true);
+  const pages=[...document.querySelectorAll('.page')];
+  const meas=pages.map((p,i)=>'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight)).join(' ');
+  const md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

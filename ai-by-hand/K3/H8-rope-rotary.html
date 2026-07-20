@@ -3,188 +3,354 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài H8 — RoPE Rotary embedding (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
-</style>
+<title>Làm toán AI · Bài H8 — RoPE Rotary Embedding (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H8</span>
+    <h1>RoPE — Rotary Embedding <small>— xoay vectơ theo vị trí, thay vì cộng</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>x (trước xoay)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>x' (sau xoay) &amp; đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H8</span><h1>RoPE — Rotary Embedding <small>— nhúng vị trí bằng phép quay</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> RoPE làm điểm attention Q·K chỉ phụ thuộc <b>hiệu vị trí</b> (m−n), không phụ thuộc vị trí tuyệt đối →
-    khái quát tốt cho chuỗi dài. Là chuẩn của LLaMA, GPT-NeoX và nhiều LLM hiện đại.
-    <div class="formula">(x₁, x₂) →ᵣₒₜ ( x₁cosθ − x₂sinθ , &nbsp; x₁sinθ + x₂cosθ ),&nbsp; θ = pos · ωₖ</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Ở Bài H7, dấu vị trí được <b>CỘNG</b> vào embedding. RoPE đổi cách chơi: thay vì cộng, nó <b>XOAY</b>
+    một cặp chiều (x₁,x₂) của Q (hoặc K) một góc θ tỉ lệ với vị trí. Tra bảng cosθ, sinθ có sẵn, áp công thức quay để ra
+    x'₁, x'₂ — rồi cuối phiếu bạn sẽ <b>tự chứng minh bằng số</b>: phép xoay này <b>BẢO TOÀN độ dài</b> của vectơ (‖x'‖=‖x‖), chỉ đổi <b>HƯỚNG</b>.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Thay vì <b>cộng</b> dấu vị trí (như H7), RoPE <b>xoay</b> vectơ Q, K một góc theo vị trí. Hai token cách nhau k vị trí → vectơ lệch
-    nhau một góc cố định → điểm tương đồng chỉ phụ thuộc <b>khoảng cách</b>, không phụ thuộc đứng ở đâu.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 cặp chiều · góc θ = <span data-q="thetad">90</span>°</span></div>
-    <div class="calc" style="font-size:14px">
-      x = ( <span class="gv" data-q="x1">3</span>, <span class="gv" data-q="x2">1</span> )
-    </div>
-    <table class="extbl"><tr><td class="h">θ</td><td>cos θ</td><td>sin θ</td></tr>
-      <tr><td class="h"><span data-q="thetad">90</span>°</td><td><span data-q="cos">0</span></td><td><span data-q="sin">1</span></td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Áp công thức quay</h2><span class="tag">nhân ma trận quay</span></div>
-    <div class="calc">
-      x₁' = x₁cosθ − x₂sinθ = <span data-q="x1">3</span>·<span data-q="cos">0</span> − <span data-q="x2">1</span>·<span data-q="sin">1</span> = <span class="blk" style="min-width:40px"></span><br>
-      x₂' = x₁sinθ + x₂cosθ = <span data-q="x1">3</span>·<span data-q="sin">1</span> + <span data-q="x2">1</span>·<span data-q="cos">0</span> = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> đúng phép nhân ma trận quay (Bài 02): cột của R cho biết mỗi trục gốc đi về đâu sau khi xoay.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Vectơ sau quay</h2><span class="tag">giữ độ dài</span></div>
-    <div class="calc">
-      x' = ( <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:40px"></span> ) &nbsp;·&nbsp;
-      ‖x'‖ = ‖x‖ = √(<span data-q="x1">3</span>² + <span data-q="x2">1</span>²) = √<span class="blk" style="min-width:34px"></span>
-    </div>
-    <div class="hint">Quay chỉ đổi hướng, <b>không đổi độ dài</b> → ‖x'‖ = ‖x‖.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vì sao "tương đối"</h2><span class="tag">q'·k' phụ thuộc m−n</span></div>
-    <div class="note">Điểm q'·k' của hai token là hàm của góc lệch θₘ − θₙ = (m−n)·ω → chỉ phụ thuộc <b>hiệu vị trí m−n</b>. Nhờ quay, thông tin
-      vị trí đi thẳng vào tích vô hướng dưới dạng khoảng cách.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Nhiều tần số</h2><span class="tag">mỗi cặp chiều</span></div>
-    <div class="note">Chia vectơ thành các cặp chiều, mỗi cặp quay với tần số ωₖ riêng (như H7 nhiều tần số). Áp <b>lên Q và K</b> trước khi
-      tính điểm attention.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>RoPE nhúng vị trí bằng phép gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Điểm attention RoPE phụ thuộc vị trí kiểu nào? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H8 · RoPE</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H8</span><h1>RoPE — Rotary Embedding <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Áp công thức quay</h2></div>
-    <div class="calc ans">
-      x₁' = <span data-q="x1">3</span>·<span data-q="cos">0</span> − <span data-q="x2">1</span>·<span data-q="sin">1</span> = <span class="blk" data-q="xp1">−1</span> ;
-      x₂' = <span data-q="x1">3</span>·<span data-q="sin">1</span> + <span data-q="x2">1</span>·<span data-q="cos">0</span> = <span class="blk" data-q="xp2">3</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Vectơ sau quay & độ dài</h2></div>
-    <div class="calc ans">x' = ( <span class="blk" data-q="xp1">−1</span>, <span class="blk" data-q="xp2">3</span> ) &nbsp;·&nbsp; ‖·‖² = <span class="blk" data-q="nrm2">10</span> (giữ nguyên)</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>x quay thành x' (cùng độ dài)</h2><span class="tag">cung góc θ</span></div>
-    <div class="figrow">
-      <svg id="figR" class="fig" viewBox="0 0 200 160" width="62mm" height="50mm" aria-label="vectơ x quay thành x phẩy quanh gốc, hai vectơ cùng độ dài, có cung góc theta"></svg>
-      <div style="flex:1">
-        <div class="note">Vectơ <b>lam</b> = x (gốc), <b>cam</b> = x' (sau quay θ). Hai mũi tên cùng độ dài, chỉ khác hướng → quay bảo toàn độ lớn,
-          chỉ "ghi" vị trí vào góc.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">1 cặp chiều (x₁,x₂) · góc θ tra sẵn cos/sin</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:7mm"><span>x</span></div>
+          <div class="mx c2" style="--cw:13mm;--ch:7mm">
+            <div class="gv" data-q="x1">2</div><div class="gv" data-q="x2">−1</div>
+          </div>
+        </div>
+        <div class="cap"><b>x = (x₁, x₂)</b> — một cặp chiều của vectơ Q (hoặc K), <b>trước khi xoay</b>.</div>
+        <div style="margin-top:2mm;padding-top:1.6mm;border-top:1px solid var(--line2)">
+          <span style="font:700 9px var(--sans);color:var(--dim)">GÓC XOAY:</span>
+          <span style="display:inline-block;margin-left:4px;font:800 13px var(--mono);color:var(--orange)">θ = <span data-q="theta">90</span>°</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table id="tabQ">
+          <tr><th class="l">θ</th><th>30°</th><th>60°</th><th>90°</th></tr>
+          <tr><td class="l">cos θ</td><td>0.87</td><td>0.50</td><td>0.00</td></tr>
+          <tr><td class="l">sin θ</td><td>0.50</td><td>0.87</td><td>1.00</td></tr>
+        </table>
+        <div class="cap"><b>Bảng tra cos/sin</b> — θ = pos·ωₖ tỉ lệ vị trí; giá trị lấy sẵn, <b>không cần tự tính lượng giác</b>. Cột đang dùng được tô sáng.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>RoPE bằng phép gì? → <span class="qa">Phép quay (rotation) lên các cặp chiều của Q, K.</span></li>
-      <li>Phụ thuộc vị trí kiểu nào? → <span class="qa">Tương đối — chỉ hiệu vị trí (m−n).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ — x xoay thành x'</span><span class="f">quay quanh gốc, giữ nguyên bán kính</span></div>
+    <div class="pb" style="display:flex;gap:6mm;align-items:center">
+      <svg id="figQ" viewBox="0 0 260 170" width="52mm" height="36mm"
+           aria-label="vectơ x xoay quanh gốc một góc theta thành x phẩy, cả hai nằm trên cùng một đường tròn"></svg>
+      <div class="cap" style="margin:0;flex:1">x (lam) xoay quanh <b>gốc tọa độ</b> một góc <b>θ</b> thành x' (cam, còn ẩn — nét đứt).
+      Vòng tròn nét đứt có bán kính = <b>‖x‖</b> — nếu xoay đúng, mũi tên cam phải chạm đúng vòng tròn này (đó chính là điều cần chứng minh ở bước ③).</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> RoPE = quay Q, K theo vị trí → điểm chỉ phụ thuộc khoảng cách; quay giữ độ dài. Bài tiếp (H9): chặn
-    token không hợp lệ bằng <b>padding mask</b>.
+  <!-- ① TRA BẢNG -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Tra bảng — lấy cos θ, sin θ</span><span class="f">θ = <span data-q="theta">90</span>° → đọc đúng cột</span></div>
+    <div class="pb" style="display:flex;gap:10mm;align-items:center">
+      <div class="eq">cos θ = <span class="cellb"></span> &nbsp;·&nbsp; sin θ = <span class="cellb"></span></div>
+      <div class="cap" style="margin:0;max-width:80mm">Không tự tính lượng giác — chỉ <b>đọc</b> đúng cột θ trong bảng tra ở trên.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H8 · RoPE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② ÁP CÔNG THỨC QUAY -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Áp công thức quay — x → x'</span><span class="f">x₁'=x₁cosθ−x₂sinθ ; x₂'=x₁sinθ+x₂cosθ</span></div>
+    <div class="pb">
+      <div class="eq">
+        x₁' = x₁·cosθ − x₂·sinθ = <span class="slot sm"></span> − <span class="slot sm"></span> = <span class="slot"></span><br>
+        x₂' = x₁·sinθ + x₂·cosθ = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tọa độ</th><th>Giá trị</th><th>Tô thanh</th></tr>
+        <tr><td class="l">x₁'</td><td><span class="cellb"></span></td><td><div class="track" id="t1v"></div></td></tr>
+        <tr><td class="l">x₂'</td><td><span class="cellb"></span></td><td><div class="track" id="t2v"></div></td></tr>
+      </table>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Thang thanh: <b>−4 … 0 … +4</b>.</div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — phép xoay có BẢO TOÀN độ dài?</span><span class="f">so ‖x‖² với ‖x'‖²</span></div>
+    <div class="pb">
+      <div class="eq">
+        ‖x‖² = x₁² + x₂² = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span><br>
+        ‖x'‖² = x₁'² + x₂'² = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span><br>
+        <span style="font-size:9.2px;color:var(--dim)">So hai kết quả — bằng nhau hay khác hẳn?</span> <span class="slot" style="min-width:50mm"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:34mm"><span class="lb">✏️ Nháp — nhân tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tra xong cosθ, sinθ</span>
+    <span><span class="ck"></span>Ra x₁' x₂' + tô thanh</span>
+    <span><span class="ck"></span>Chứng minh giữ nguyên độ dài</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao RoPE thay PE bằng phép xoay!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H8 · RoPE Rotary Embedding</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H8</span>
+    <h1>RoPE — Rotary Embedding <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>x</span>
+      <span><span class="sw" style="background:var(--orange)"></span>x' · đáp án</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">x xoay góc θ thành x'</span></div>
+    <div class="pb" style="display:flex;gap:6mm;align-items:center">
+      <svg id="figA" viewBox="0 0 260 170" width="52mm" height="36mm" aria-label="sơ đồ với x phẩy đã điền, hai vectơ cùng nằm trên một đường tròn"></svg>
+      <div class="cap" style="margin:0;flex:1">x' <b>chạm đúng vòng tròn</b> bán kính ‖x‖ — bằng chứng trực quan rằng xoay không đổi độ dài, chỉ đổi hướng.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Tra bảng — lấy cos θ, sin θ</span><span class="f">θ = <span data-q="theta">90</span>°</span></div>
+    <div class="pb" style="display:flex;gap:10mm;align-items:center">
+      <div class="eq">cos θ = <span class="slot ans" data-q="cosv">0.00</span> &nbsp;·&nbsp; sin θ = <span class="slot ans" data-q="sinv">1.00</span></div>
+      <div class="why" style="margin:0;max-width:80mm"><b>Vì sao tra bảng:</b> trong forward pass thật, cos/sin của mọi vị trí được <b>tính sẵn một lần</b>
+      (không phải tham số học), lưu thành bảng để tái dùng cho mọi lớp — cực rẻ, không tốn phép tính lượng giác lặp lại.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Áp công thức quay — x → x'</span></div>
+    <div class="pb">
+      <div class="eq">
+        x₁' = <span data-q="x1w">2</span>·<span data-q="cosv">0.00</span> − <span data-q="x2w">(−1)</span>·<span data-q="sinv">1.00</span> = <span class="slot ans sm" data-q="t1">0.00</span> − <span class="slot ans sm" data-q="t2w">(−1.00)</span> = <span class="slot ans" data-q="xp1">1.00</span><br>
+        x₂' = <span data-q="x1w">2</span>·<span data-q="sinv">1.00</span> + <span data-q="x2w">(−1)</span>·<span data-q="cosv">0.00</span> = <span class="slot ans sm" data-q="u1">2.00</span> + <span class="slot ans sm" data-q="u2w">0.00</span> = <span class="slot ans" data-q="xp2">2.00</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tọa độ</th><th>Giá trị</th><th>Tô thanh</th></tr>
+        <tr><td class="l">x₁'</td><td class="evt" data-q="xp1">1.00</td><td><div class="track" id="a1v"></div></td></tr>
+        <tr><td class="l">x₂'</td><td class="evt" data-q="xp2">2.00</td><td><div class="track" id="a2v"></div></td></tr>
+      </table>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao đây là phép QUAY:</b> công thức trên đúng bằng nhân vectơ (x₁,x₂) với <b>ma trận quay 2×2</b>
+    [[cosθ,−sinθ],[sinθ,cosθ]] (Bài A7) — xoay ngược chiều kim đồng hồ một góc θ quanh gốc tọa độ.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — phép xoay BẢO TOÀN độ dài</span><span class="f">‖x'‖² ≈ ‖x‖²</span></div>
+    <div class="pb">
+      <div class="eq">
+        ‖x‖² = <span data-q="x1w">2</span>² + <span data-q="x2w">(−1)</span>² = <span class="slot ans sm" data-q="sq1">4.00</span> + <span class="slot ans sm" data-q="sq2">1.00</span> = <span class="slot ans" data-q="nrm">5.00</span><br>
+        ‖x'‖² = <span data-q="xp1w">1.00</span>² + <span data-q="xp2w">2.00</span>² = <span class="slot ans sm" data-q="sqp1">1.00</span> + <span class="slot ans sm" data-q="sqp2">4.00</span> = <span class="slot ans" data-q="nrm2">5.00</span><br>
+        <span class="qa">Hai kết quả BẰNG NHAU (sai số ≤0.1 nếu có, chỉ do bảng cos/sin làm tròn 2 chữ số — phép xoay thật bảo toàn tuyệt đối).
+        Bấm 🎲 đổi θ khác: độ dài vẫn <b>đứng yên</b>, chỉ HƯỚNG đổi.</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> RoPE bơm vị trí bằng cách đổi <b>góc/hướng</b> của Q, K mà <b>không đổi độ lớn</b> —
+    "độ quan trọng" (norm) của token không bị vị trí làm méo. Hơn nữa, tích vô hướng Q·K giữa hai token sau khi xoay chỉ phụ thuộc
+    <b>hiệu góc = hiệu vị trí (m−n)</b> — đây là lý do RoPE ngoại suy tốt tới câu <b>dài hơn</b> khi train, điều mà PE cộng (Bài H7) không làm được.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở RoPE</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "RoPE cũng CỘNG dấu vị trí, chỉ khác công thức."</b><br>
+          <span style="color:var(--dim)">Sai — H7 <b>cộng</b> PE vào embedding; RoPE <b>xoay</b> trực tiếp Q, K. Hai cơ chế hoàn toàn khác: cộng làm lệch vectơ theo một hướng cố định, xoay chỉ đổi hướng.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Xoay làm vectơ 'phóng to/thu nhỏ' theo vị trí."</b><br>
+          <span style="color:var(--dim)">Sai — bước ③ vừa chứng minh ‖x'‖=‖x‖. Xoay <b>chỉ đổi hướng</b>, không đổi độ lớn.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Mỗi chiều của Q, K quay riêng lẻ, độc lập."</b><br>
+          <span style="color:var(--dim)">Sai — RoPE quay theo từng <b>CẶP</b> chiều (x₁,x₂) cùng nhau bằng ma trận quay 2×2, không phải từng chiều đơn lẻ.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Mọi cặp chiều dùng chung một góc θ."</b><br>
+          <span style="color:var(--dim)">Sai — mỗi cặp chiều có tần số ωₖ <b>riêng</b> (cặp đầu quay nhanh, cặp sau quay chậm — như nhiều tần số ở H7), θ = pos·ωₖ khác nhau theo cặp.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> RoPE = xoay từng <b>cặp chiều</b> của Q, K một góc θ = pos·ωₖ theo vị trí (không cộng như PE ở <b>H7</b>).
+    Phép xoay luôn <b>giữ nguyên độ dài</b>, chỉ đổi hướng — nhờ vậy điểm attention Q·K chỉ phụ thuộc <b>hiệu vị trí</b> (khoảng cách tương đối),
+    giúp mô hình khái quát tốt tới những câu <b>dài hơn</b> mọi câu từng thấy khi train. Bài tiếp theo (<b>H9</b>): <b>padding mask</b> —
+    chặn token đệm khỏi phép chú ý.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H8 · RoPE Rotary Embedding</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+// Bảng tra cos/sin cố định (θ ∈ {30°,60°,90°}) — hằng số tham chiếu, KHÔNG phải kết quả bài toán
+// nên không cần data-q; giống PE tra sẵn ở G1. [cosθ, sinθ].
+var TAB = {30:[0.87,0.50], 60:[0.50,0.87], 90:[0.00,1.00]};
+var THETAS = [30,60,90];
+var S = {};
+
 function generate(){
-  var x1 = WB.randInt(1,4), x2 = WB.randInt(1,4);
-  var theta = WB.pick([90, 270]);
-  var cos = 0, sin = theta===90 ? 1 : -1;
-  var xp1 = x1*cos - x2*sin;
-  var xp2 = x1*sin + x2*cos;
-  var nrm2 = x1*x1 + x2*x2;
+  var fI=WB.fmtInt, f2=WB.fmt2, wrap=WB.wrap;
+
+  // x = (x1,x2): 1 cặp chiều của Q/K, số nguyên nhỏ khác 0, cả hai dấu.
+  var x1 = WB.randIntNZ(-2,2), x2 = WB.randIntNZ(-2,2);
+  var theta = WB.pick(THETAS);
+  var cosv = TAB[theta][0], sinv = TAB[theta][1];
+
+  // Công thức quay: x1' = x1·cosθ − x2·sinθ ; x2' = x1·sinθ + x2·cosθ
+  var t1 = x1*cosv, t2 = x2*sinv, xp1 = t1 - t2;
+  var u1 = x1*sinv, u2 = x2*cosv, xp2 = u1 + u2;
+
+  // Tự kiểm: ‖x‖² so với ‖x'‖² (bảo toàn độ dài — cốt lõi bài học).
+  var sq1 = x1*x1, sq2 = x2*x2, nrm = sq1+sq2;
+  var sqp1 = xp1*xp1, sqp2 = xp2*xp2, nrm2 = sqp1+sqp2;
+
+  S = {x1:x1, x2:x2, theta:theta, cosv:cosv, sinv:sinv, xp1:xp1, xp2:xp2, nrm:nrm, nrm2:nrm2};
+
   WB.setAll({
-    x1: String(x1), x2: String(x2), thetad: String(theta),
-    cos: WB.fmtInt(cos), sin: WB.fmtInt(sin),
-    xp1: WB.fmtInt(xp1), xp2: WB.fmtInt(xp2), nrm2: String(nrm2)
+    x1: fI(x1), x2: fI(x2),
+    x1w: wrap(fI(x1)), x2w: wrap(fI(x2)),
+    theta: String(theta),
+    cosv: f2(cosv), sinv: f2(sinv),
+    t1: f2(t1), t2w: wrap(f2(t2)),
+    u1: f2(u1), u2w: wrap(f2(u2)),
+    xp1: f2(xp1), xp2: f2(xp2),
+    xp1w: wrap(f2(xp1)), xp2w: wrap(f2(xp2)),
+    sq1: f2(sq1), sq2: f2(sq2), nrm: f2(nrm),
+    sqp1: f2(sqp1), sqp2: f2(sqp2), nrm2: f2(nrm2)
   });
-  drawRot('figR', x1, x2, xp1, xp2);
+
+  highlightCol('tabQ', theta);
+  highlightCol('tabA', theta);
+
+  // thanh giá trị x': ĐỀ để TRỐNG, ĐÁP ÁN tô đầy. Thang −4…0…+4 (|x'|max ≈ 2.83).
+  drawBar('t1v', 0, 4, false); drawBar('t2v', 0, 4, false);
+  drawBar('a1v', xp1, 4, true); drawBar('a2v', xp2, 4, true);
+
+  drawFig('figQ', false);
+  drawFig('figA', true);
 }
-function drawRot(id, x1, x2, xp1, xp2){
-  var svg = document.getElementById(id); if(!svg) return;
-  var ox=100, oy=82, sc=14;
-  function vec(vx,vy,col,lab){
-    var ex=ox+vx*sc, ey=oy-vy*sc;
-    return '<line x1="'+ox+'" y1="'+oy+'" x2="'+ex.toFixed(1)+'" y2="'+ey.toFixed(1)+'" stroke="'+col+'" stroke-width="2" marker-end="url(#ah'+col.replace('#','')+')"/>'+
-      '<text x="'+(ex+ (vx>=0?6:-6)).toFixed(1)+'" y="'+(ey-4).toFixed(1)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+col+'">'+lab+'</text>';
+
+// Tô sáng cột θ đang dùng trong bảng tra cos/sin (cả 2 trang).
+function highlightCol(tableId, theta){
+  var tbl = document.getElementById(tableId); if (!tbl) return;
+  var idx = {30:1, 60:2, 90:3}[theta];
+  var rows = tbl.querySelectorAll('tr');
+  rows.forEach(function(row){
+    var cells = row.querySelectorAll('th,td');
+    cells.forEach(function(cell, ci){
+      if (ci === idx){ cell.style.background='#dff0f3'; cell.style.color='var(--blue)'; cell.style.fontWeight='800'; }
+      else { cell.style.background=''; cell.style.color=''; cell.style.fontWeight=''; }
+    });
+  });
+}
+
+// Thanh hai chiều: gốc giữa (0), dương chạy phải (lam), âm chạy trái (cam).
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  function mk(col){return '<marker id="ah'+col.replace('#','')+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+col+'"/></marker>';}
-  var s='<defs>'+mk('#0e7490')+mk('#b45309')+'</defs>';
-  s+='<line x1="16" y1="'+oy+'" x2="184" y2="'+oy+'" stroke="#e0e0e0" stroke-width="1"/>';
-  s+='<line x1="'+ox+'" y1="14" x2="'+ox+'" y2="150" stroke="#e0e0e0" stroke-width="1"/>';
-  s+=vec(x1,x2,'#0e7490','x');
-  s+=vec(xp1,xp2,'#b45309',"x'");
-  svg.innerHTML=s;
+  el.innerHTML=h;
 }
+
+function arrow(x1,y1,x2,y2,col,w){
+  var a=Math.atan2(y2-y1,x2-x1), L=8;
+  var ax=x2-L*Math.cos(a-0.42), ay=y2-L*Math.sin(a-0.42);
+  var bx=x2-L*Math.cos(a+0.42), by=y2-L*Math.sin(a+0.42);
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+w+'"/>'
+       + '<path d="M'+x2+' '+y2+' L'+ax.toFixed(1)+' '+ay.toFixed(1)+' L'+bx.toFixed(1)+' '+by.toFixed(1)+' z" fill="'+col+'"/>';
+}
+function darrow(x1,y1,x2,y2,col,w){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+w+'" stroke-dasharray="4 3"/>';
+}
+function arcBetween(ox,oy,r,a1,a2,col){
+  var d=a2-a1; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+  var pts=''; for(var i=0;i<=16;i++){ var a=a1+d*i/16; pts+=(ox+r*Math.cos(a)).toFixed(1)+','+(oy+r*Math.sin(a)).toFixed(1)+' '; }
+  return '<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.3"/>';
+}
+
+// Sơ đồ: x (lam) xoay quanh gốc thành x' (cam ở ĐÁP ÁN, nét đứt "?" ở ĐỀ) + vòng tròn bán kính ‖x‖.
+function drawFig(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var BLU='#0e7490', ORG='#b45309', DIM='#6b7280', LINE='#cbd5e1';
+  var ox=110, oy=95, u=26;
+  var R = Math.sqrt(S.x1*S.x1 + S.x2*S.x2) * u;
+  var s = '';
+  s += '<line x1="16" y1="'+oy+'" x2="224" y2="'+oy+'" stroke="'+LINE+'" stroke-width="1"/>';
+  s += '<line x1="'+ox+'" y1="10" x2="'+ox+'" y2="168" stroke="'+LINE+'" stroke-width="1"/>';
+  s += '<circle cx="'+ox+'" cy="'+oy+'" r="'+R.toFixed(1)+'" fill="none" stroke="#e2e8f0" stroke-width="1.3" stroke-dasharray="3 2"/>';
+
+  var xa=ox+S.x1*u, ya=oy-S.x2*u;
+  var pxp=ox+S.xp1*u, pyp=oy-S.xp2*u;
+
+  s += arrow(ox,oy,xa,ya,BLU,2.6);
+  s += '<text x="'+(xa+(S.x1>=0?5:-5)).toFixed(1)+'" y="'+(ya-3).toFixed(1)+'" text-anchor="'+(S.x1>=0?'start':'end')+'" font-size="11" font-weight="800" fill="'+BLU+'">x</text>';
+
+  var a1=Math.atan2(ya-oy,xa-ox), a2=Math.atan2(pyp-oy,pxp-ox);
+  s += arcBetween(ox,oy,20,a1,a2,DIM);
+  var d=a2-a1; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+  var am=a1+d/2;
+  s += '<text x="'+(ox+34*Math.cos(am)).toFixed(1)+'" y="'+(oy+34*Math.sin(am)).toFixed(1)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+DIM+'">θ</text>';
+
+  if (showAns){
+    s += arrow(ox,oy,pxp,pyp,ORG,2.6);
+    s += '<text x="'+(pxp+(S.xp1>=0?5:-5)).toFixed(1)+'" y="'+(pyp-3).toFixed(1)+'" text-anchor="'+(S.xp1>=0?'start':'end')+'" font-size="11" font-weight="800" fill="'+ORG+'">x′</text>';
+  } else {
+    s += darrow(ox,oy,pxp,pyp,'#c3ccd6',2.2);
+    s += '<text x="'+(pxp+6).toFixed(1)+'" y="'+(pyp-4).toFixed(1)+'" font-size="9.5" font-weight="700" fill="#9aa5b1">x′ = ?</text>';
+  }
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
-generate();
+generate();   // ⚠️ BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

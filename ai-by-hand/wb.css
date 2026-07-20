@@ -144,3 +144,53 @@ body{font-family:var(--sans);color:var(--ink);background:#dfe4ea;line-height:1.4
    Khác .cell.given (là ô lưới block 9mm) — .gv không ngắt dòng, không chiếm cả chiều ngang. */
 .gv{background:var(--given);border:1px solid var(--givenline);border-radius:3px;padding:0 5px;
   font-weight:700;font-family:var(--mono);white-space:nowrap;}
+
+/* ====== BỘ PATTERN "BẢN ĐẸP" (additive — chốt 2026-07-05) ======
+   Mục tiêu: HÌNH + Ô ĐIỀN TO là nhân vật chính, chữ giảng là phụ.
+   Mẫu chuẩn: K2/D7-backpropagation-dep.html · quy tắc: CACH-TAO-PHIEU.md §2. */
+
+/* --- Màu theo PHẦN: <body class="part pX"> — chỉ tô CHROME trang ĐỀ (badge bài,
+       chip phần, hộp nhiệm vụ). KHÔNG thay quy ước màu số học lam/cam/tím;
+       trang ĐÁP ÁN giữ badge cam chuẩn (.page.key không bị ảnh hưởng). --- */
+.pA{--part:#0e7490;} .pB{--part:#15803d;} .pC{--part:#6d28d9;} .pD{--part:#be185d;}
+.pE{--part:#b91c1c;} .pF{--part:#c2410c;} .pG{--part:#0f766e;} .pH{--part:#1d4ed8;}
+.pI{--part:#a16207;} .pJ{--part:#86198f;} .pK{--part:#4d7c0f;} .pL{--part:#0369a1;}
+.pM{--part:#713f12;} .pN{--part:#1f2937;}
+.part .page:not(.key) .wb-title .no{background:var(--part,var(--accent));}
+.part-chip{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;
+  color:var(--part,var(--accent));border:1.2px solid #d5dde6;background:#f6f8fa;
+  border-radius:20px;padding:2px 10px;white-space:nowrap;}
+
+/* --- Hộp NHIỆM VỤ 🎯 — 2–3 dòng mời gọn MỞ trang ĐỀ (thay intro dày;
+       phần giảng "Vì sao quan trọng" đầy đủ dời sang trang ĐÁP ÁN). --- */
+.mission{margin-top:9px;border:1px solid #d5dde6;border-left:4px solid var(--part,var(--accent));
+  border-radius:8px;background:#f7f9fb;padding:8px 14px;font-size:13.5px;break-inside:avoid;}
+.mission b{color:var(--part,var(--accent));}
+@supports (color:color-mix(in srgb,red,white)){
+  .part-chip{border-color:color-mix(in srgb,var(--part,#0e7490) 35%,white);
+    background:color-mix(in srgb,var(--part,#0e7490) 7%,white);}
+  .part .mission{border-color:color-mix(in srgb,var(--part) 35%,white);
+    border-left-color:var(--part);background:color-mix(in srgb,var(--part) 6%,white);}
+}
+
+/* --- Ô ĐIỀN TO .wcell — đáp án CHÍNH của mỗi bước viết vào ô ≥17×10mm
+       (.blk gạch chân chỉ còn cho đáp phụ/quiz). Ở ĐÁP ÁN thêm .ans + data-q. --- */
+.wcell{display:inline-grid;place-items:center;min-width:17mm;height:10mm;
+  border:1.8px solid var(--ink);border-radius:7px;background:#fff;
+  font-family:var(--mono);font-size:16px;font-weight:700;vertical-align:middle;margin:0 3px;}
+.page.key .wcell.ans{background:#fff5e9;border-color:#e3b780;color:#7a3d00;}
+.calc.big{font-size:14.5px;line-height:2.4;}
+
+/* --- Ô NHÁP ✏️ — lấp khoảng trắng ≥15mm cuối trang ĐỀ; chỉnh height inline theo chỗ còn. --- */
+.scratch{margin-top:9px;border:1.5px dashed var(--line);border-radius:10px;height:24mm;
+  position:relative;background-image:radial-gradient(#d9e1ea 1px,transparent 1.2px);
+  background-size:6mm 6mm;background-position:3mm 3mm;}
+.scratch .lb{position:absolute;top:4px;left:10px;font-family:var(--mono);font-size:11px;
+  color:var(--dim);background:#fff;padding:0 5px;border-radius:4px;}
+
+/* --- Dòng HOÀN THÀNH — 2–3 ô tick mốc + câu thưởng 🎉, đặt cuối trang ĐỀ. --- */
+.done-row{margin-top:9px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12.5px;background:#fbfcfe;}
+.done-row .ck{width:4.5mm;height:4.5mm;border:1.6px solid var(--ink);border-radius:2px;
+  display:inline-block;vertical-align:-1mm;margin-right:5px;flex:none;}
+.done-row .win{margin-left:auto;font-weight:700;color:var(--part,var(--accent2));}

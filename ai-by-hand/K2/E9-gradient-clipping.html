@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E9 — Gradient clipping (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,173 +25,244 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E9</span><h1>Gradient clipping <small>— đặt trần ‖g‖</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Một bước gradient khổng lồ (exploding) đẩy trọng số đi xa → loss thành NaN, hỏng cả phiên huấn luyện.
-    Clipping đặt <b>trần</b> cho bước đó: vẫn đi đúng hướng nhưng không quá một độ dài an toàn. Gần như bắt buộc với RNN/LSTM.
-    <div class="formula">
-      nếu ‖g‖ &gt; c: &nbsp; g ← g · (c / ‖g‖) &nbsp;&nbsp; ngược lại giữ nguyên g
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E9</span>
+    <h1>Gradient clipping <small>— giữ hướng, chỉ co độ dài</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>giới hạn tốc độ</b>: gradient được phép chỉ hướng nào tùy ý, nhưng độ dài bước bị <b>cắt trần</b> ở c. Hướng giữ nguyên
-    (chia cho ‖g‖ rồi nhân c) — chỉ rút ngắn, không bẻ lái.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Khi lan truyền ngược qua nhiều bước (đặc biệt RNN/LSTM), gradient có thể "nổ" (exploding) → một bước cập nhật khổng lồ → loss thành NaN, hỏng cả phiên huấn luyện.
+    Gradient clipping đặt <b>trần</b> cho độ dài ‖g‖: vượt trần thì co lại đúng bằng trần, <b>giữ nguyên hướng</b> — như bóp phanh chứ không bẻ lái.
+    <div class="formula" style="margin-top:5px">
+      nếu ‖g‖ &gt; τ: &nbsp; g ← g · (τ / ‖g‖) &nbsp;&nbsp; ngược lại: giữ nguyên g
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ngưỡng c = <span data-q="c">2</span></span></div>
-    <div class="calc" style="font-size:15px">
-      gradient g = (<span class="gv" data-q="g1">3</span>, <span class="gv" data-q="g2">4</span>); ngưỡng (trần) c = <span class="gv" data-q="c">2</span>.
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ngưỡng τ = <span data-q="c">5</span></span></div>
+    <div class="calc big">
+      gradient g = (<span class="gv" data-q="g1">6</span>, <span class="gv" data-q="g2">8</span>) &nbsp;·&nbsp; ngưỡng (trần) τ = <span class="gv" data-q="c">5</span>
     </div>
-    <div class="note">Nếu độ dài ‖g‖ vượt c thì co g lại đúng bằng c, giữ nguyên hướng.</div>
+    <div class="note">Nếu độ dài ‖g‖ vượt τ thì co g lại đúng bằng τ, giữ nguyên hướng (g₁ : g₂).</div>
   </div>
 
-  <!-- BƯỚC 1 — chuẩn -->
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Chuẩn gradient</h2><span class="tag">‖g‖</span></div>
-    <div class="calc">
-      ‖g‖ = √(<span data-q="g1">3</span>² + <span data-q="g2">4</span>²) = √<span data-q="sq">25</span> = <span class="blk" style="min-width:40px"></span>
+    <div class="calc big">
+      ‖g‖ = √(g₁² + g₂²) = √<span class="gv" data-q="sq">100</span> = <span class="wcell" style="min-width:40px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> clipping theo <b>norm</b> (cả vectơ) chứ không từng phần tử → giữ nguyên hướng.</div>
+    <div class="why"><b>Vì sao:</b> clip theo <b>norm</b> nghĩa là xét cả vectơ (g₁, g₂) làm MỘT khối, không xử lý riêng từng thành phần — điều này sẽ quyết định liệu hướng có đổi hay không (xem Bước Tự-kiểm).</div>
   </div>
 
-  <!-- BƯỚC 2 — vượt ngưỡng -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Vượt ngưỡng?</h2><span class="tag">c / ‖g‖</span></div>
-    <div class="calc">
-      ‖g‖ = <span data-q="norm">5</span> &gt; c = <span data-q="c">2</span> → cần cắt. Hệ số = c/‖g‖ = <span data-q="c">2</span>/<span data-q="norm">5</span> = <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Vượt ngưỡng? Hệ số cắt</h2><span class="tag">τ / ‖g‖</span></div>
+    <div class="calc big">
+      So ‖g‖ (Bước 1) với τ = <span class="gv" data-q="c">5</span>: nếu ‖g‖ &gt; τ → cần cắt. Hệ số cắt = τ/‖g‖ = <span class="wcell" style="min-width:40px"></span>
     </div>
-    <div class="hint">Hệ số &lt; 1 → co lại. Nếu hệ số ≥ 1 (‖g‖ ≤ c) thì khỏi cắt.</div>
+    <div class="hint">Hệ số &lt; 1 nghĩa là co lại đúng theo tỉ lệ đó. Nếu ‖g‖ ≤ τ thì hệ số ≥ 1 — khỏi cắt (xem Bước 4).</div>
   </div>
 
-  <!-- BƯỚC 3 — gradient sau cắt -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E9 · Gradient clipping</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Giữ hướng, chỉ co độ dài — vì sao clip-by-value thì không</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E9</span>
+    <h1>Gradient clipping <small>— tự kiểm: hướng có đổi không?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Gradient sau cắt</h2><span class="tag">g ← hệ số · g</span></div>
-    <div class="calc">
-      g ← <span data-q="scale">0.4</span>·(<span data-q="g1">3</span>, <span data-q="g2">4</span>) = (<span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:44px"></span>);
-      kiểm ‖g_mới‖ = <span class="blk" style="min-width:36px"></span> = c
+    <div class="calc big">
+      g_clip = hệ số·(g₁, g₂) = (<span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:40px"></span>) &nbsp;·&nbsp;
+      kiểm ‖g_clip‖ = <span class="wcell" style="min-width:36px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> độ dài đúng bằng trần c, hướng (g₁, g₂) giữ nguyên.</div>
+    <div class="why"><b>Vì sao:</b> ta nhân CẢ HAI thành phần với CÙNG một số dương (hệ số) → độ dài co lại đúng bằng τ, nhưng hướng (g₁ : g₂) không đổi.</div>
   </div>
 
-  <!-- BƯỚC 4 — khi nào không cắt -->
+  <!-- STEP 4 — khi nào không cắt -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Khi nào không cắt</h2><span class="tag">‖g‖ ≤ c</span></div>
-    <div class="note">Nếu ‖g‖ đã ≤ c thì giữ nguyên (đa số bước). Có biến thể <b>clip từng phần tử</b> (đơn giản nhưng đổi hướng).
-      RNN/LSTM gần như luôn bật clipping.</div>
+    <div class="step-h"><div class="b">4</div><h2>Khi nào không cắt</h2><span class="tag">‖g‖ ≤ τ</span></div>
+    <div class="note" style="margin-top:0">Một gradient <b>khác</b> g′ có ‖g′‖ = <span class="gv" data-q="norm2">3</span> (đã tính sẵn). So với τ = <span class="gv" data-q="c">5</span>:</div>
+    <div class="calc big">
+      ‖g′‖ <span class="blk" style="min-width:26px"></span> τ &nbsp;<small style="color:#7a8794">(điền dấu &lt;, &gt; hoặc =)</small> &nbsp;→&nbsp; quyết định: <span class="blk" style="min-width:110px"></span>
+    </div>
+  </div>
+
+  <!-- STEP 5 — TỰ KIỂM LÕI -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — clip-by-norm có đổi hướng?</h2><span class="tag">giữ hướng, co độ dài</span></div>
+    <div class="note" style="margin-top:0">
+      Clip-by-norm nhân g với <b>MỘT số dương chung</b> (hệ số) cho cả hai thành phần → tỉ lệ g₁ : g₂ phải giữ nguyên ở g_clip.
+      Kiểm bằng <b>tích chéo</b>: nếu tỉ lệ giữ nguyên thì g₁×gc₂ phải BẰNG g₂×gc₁.
+    </div>
+    <div class="calc big">
+      g₁ × gc₂ = <span class="wcell" style="min-width:40px"></span> &nbsp;·&nbsp; g₂ × gc₁ = <span class="wcell" style="min-width:40px"></span>
+      &nbsp;→&nbsp; hai tích này <span class="blk" style="min-width:90px"></span>
+    </div>
+    <div class="note">
+      <b>So sánh với clip-by-value</b> (cắt RIÊNG từng thành phần về một trần cap = min(g₁,g₂) = <span class="gv" data-q="cap">6</span>):
+      thành phần 1 → <span class="wcell" style="min-width:32px"></span>, thành phần 2 → <span class="wcell" style="min-width:32px"></span>.
+      Tỉ lệ mới (so với tỉ lệ gốc g₁ : g₂) có còn như cũ không?
+    </div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Clipping theo norm có đổi hướng gradient không? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao RNN cần clipping? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Clip-by-norm có làm đổi hướng gradient không? Vì sao? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao clip-by-value có thể làm lệch hướng? → <span class="blk" style="min-width:140px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E9 · Gradient clipping</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — tính √, tích chéo, min(g₁,g₂) ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Cắt theo norm, giữ hướng</span>
+    <span><span class="ck"></span>Đối chiếu clip-by-value</span>
+    <span class="win">🎉 Bạn vừa bảo vệ mạng khỏi gradient nổ!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E9 · Gradient clipping</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E9</span><h1>Gradient clipping <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E9</span><h1>Gradient clipping <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>‖g‖</h2></div>
-    <div class="calc ans">√<span data-q="sq">25</span> = <span class="blk" data-q="norm">5</span></div>
+    <div class="calc ans">√<span class="gv" data-q="sq">100</span> = <span class="wcell ans" data-q="norm">10</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Hệ số c/‖g‖</h2></div>
-    <div class="calc ans"><span data-q="c">2</span>/<span data-q="norm">5</span> = <span class="blk" data-q="scale">0.4</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Hệ số τ/‖g‖</h2></div>
+    <div class="calc ans">τ/‖g‖ = <span class="wcell ans" data-q="scale">0.5</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>g sau cắt</h2></div>
-    <div class="calc ans">(<span class="blk" data-q="gc1">1.2</span>, <span class="blk" data-q="gc2">1.6</span>); ‖g_mới‖ = <span class="blk" data-q="cnorm">2</span> = c</div>
+    <div class="calc ans">g_clip = (<span class="wcell ans" data-q="gc1">3</span>, <span class="wcell ans" data-q="gc2">4</span>) &nbsp;·&nbsp; ‖g_clip‖ = <span class="wcell ans" data-q="cnorm">5</span> = τ</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent2)">⬤</div><h2>Cắt vectơ về vòng tròn bán kính c</h2><span class="tag">giữ hướng</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">⬤</div><h2>Cắt vectơ về vòng tròn bán kính τ</h2><span class="tag">giữ hướng</span></div>
     <div class="figrow">
-      <svg id="figC" class="fig" viewBox="0 0 200 170" width="58mm" height="49mm" aria-label="vectơ g dài bị cắt về vòng tròn bán kính c, cùng hướng"></svg>
+      <svg id="figC" class="fig" viewBox="0 0 220 190" width="62mm" height="53mm" aria-label="vectơ g dài bị cắt về vòng tròn bán kính tau, cùng hướng; vectơ clip-by-value lệch hướng"></svg>
       <div style="flex:1">
-        <div class="note">Vectơ <b>cam</b> = g gốc (dài, vượt vòng). Vòng tròn = ngưỡng ‖·‖ = c. Vectơ <b>lam</b> = g sau cắt: <b>cùng hướng</b>,
-          dừng đúng trên vòng. Clipping chỉ rút ngắn, không bẻ lái.</div>
+        <div class="note">Vòng tròn = ngưỡng ‖·‖ = τ. <b>Cam</b> = g gốc (vượt vòng). <b>Lam</b> = g_clip: <b>cùng hướng</b>, dừng trên vòng.
+          <b>Tím nét đứt</b> = clip-by-value — chĩa <b>hướng khác</b>, lệch khỏi tia của g gốc.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Khi ‖g′‖ ≤ τ</h2></div>
+    <div class="calc ans">‖g′‖ <span class="blk" data-q="cmpsign">&lt;</span> τ &nbsp;→&nbsp; quyết định: <span class="blk" data-q="decision" style="min-width:110px">giữ nguyên</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — tích chéo &amp; clip-by-value</h2></div>
+    <div class="calc ans">
+      g₁×gc₂ = <span class="wcell ans" data-q="crossA">24</span> &nbsp;·&nbsp; g₂×gc₁ = <span class="wcell ans" data-q="crossB">24</span> &nbsp;→&nbsp;
+      <span class="blk" data-q="eqword" style="min-width:90px">bằng nhau</span>
+    </div>
+    <div class="calc ans">clip-by-value (cap = <span class="gv" data-q="cap">6</span>): thành phần 1 = <span class="wcell ans" data-q="v1clip">6</span>, thành phần 2 = <span class="wcell ans" data-q="v2clip">6</span> → tỉ lệ 1:1, <b>khác</b> tỉ lệ gốc g₁:g₂</div>
+    <div class="why"><b>Vì sao:</b> tích chéo bằng nhau ⇒ tỉ lệ g₁:g₂ = gc₁:gc₂ — clip-by-norm chỉ co độ dài. Clip-by-value cắt mỗi thành phần về CÙNG trần cap dù chênh lệch gốc khác nhau → tỉ lệ mới lệch, tức <b>đổi hướng</b>.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Đổi hướng? → <span class="qa">Không — chỉ rút ngắn độ dài về c.</span></li>
-      <li>RNN cần clipping? → <span class="qa">Gradient dễ nổ qua nhiều bước thời gian (exploding).</span></li>
+      <li>Đổi hướng? → <span class="qa">Không — nhân MỘT số dương chung cho cả hai thành phần nên tỉ lệ g₁:g₂ giữ nguyên.</span></li>
+      <li>Vì sao clip-by-value lệch hướng? → <span class="qa">Mỗi thành phần bị "vạt" về cùng trần cap nhưng mức vạt khác nhau → tỉ lệ mới đổi.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Clipping = đặt trần ‖g‖ ở c, giữ hướng; chống exploding. Bài tiếp (E10): gradient ước lượng từ
-    <b style="color:var(--accent2)">mini-batch vs full-batch</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> Clipping theo norm nhân g với MỘT hệ số dương chung → <b>giữ hướng, chỉ co độ dài</b>, chống exploding. Clip-by-value cắt riêng từng thành phần nên có thể <b>đổi hướng</b>.
+    Bài tiếp (E10): <b style="color:var(--accent2)">Mini-batch</b> — nhiễu (phương sai) giảm theo cỡ batch.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E9 · Gradient clipping</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E9 · Gradient clipping</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  function f(v){ return WB.fmtTrim(Math.round(v*1000)/1000); }
-  // bộ Pythagore + ngưỡng c < ‖g‖, scale đẹp
+  // bộ (g, ‖g‖, τ, g_clip) đẹp: g_clip nguyên, hệ số = τ/‖g‖ nguyên/thập phân gọn
   var combos = [
-    {g:[3,4], norm:5, c:2},   // scale 0.4
-    {g:[3,4], norm:5, c:1},   // scale 0.2
-    {g:[6,8], norm:10, c:4},  // scale 0.4
-    {g:[6,8], norm:10, c:5}   // scale 0.5
+    {g:[6,8],   norm:10, c:5,  gc:[3,4]},   // hệ số 0.5
+    {g:[12,16], norm:20, c:10, gc:[6,8]},   // hệ số 0.5
+    {g:[10,24], norm:26, c:13, gc:[5,12]},  // hệ số 0.5
+    {g:[16,12], norm:20, c:15, gc:[12,9]},  // hệ số 0.75
+    {g:[15,20], norm:25, c:15, gc:[9,12]}   // hệ số 0.6
   ];
   var x = WB.pick(combos);
-  var scale = x.c / x.norm;
-  var gc = x.g.map(function(v){ return v*scale; });
+  var g1 = x.g[0], g2 = x.g[1], norm = x.norm, c = x.c, gc1 = x.gc[0], gc2 = x.gc[1];
+  var scale = c / norm;
+  var sq = g1*g1 + g2*g2;
+  var cap = Math.min(g1, g2);
+  var crossA = g1*gc2, crossB = g2*gc1;
+  var norm2 = WB.randInt(1, c-1);
+
   WB.setAll({
-    g1: String(x.g[0]), g2: String(x.g[1]), c: String(x.c),
-    sq: String(x.g[0]*x.g[0] + x.g[1]*x.g[1]),
-    norm: String(x.norm), scale: f(scale),
-    gc1: f(gc[0]), gc2: f(gc[1]), cnorm: String(x.c)
+    g1: String(g1), g2: String(g2), c: String(c), sq: String(sq), norm: String(norm),
+    scale: WB.fmtTrim(scale), gc1: String(gc1), gc2: String(gc2), cnorm: String(c),
+    cap: String(cap), crossA: String(crossA), crossB: String(crossB),
+    norm2: String(norm2), v1clip: String(cap), v2clip: String(cap)
   });
-  drawClip('figC', x.g, x.norm, x.c, gc);
+  drawClip('figC', [g1,g2], norm, c, [gc1,gc2], cap);
 }
 
-// vectơ g cắt về vòng tròn bán kính c (cùng hướng)
-function drawClip(id, g, norm, c, gc){
+// vectơ g cắt về vòng tròn bán kính c (cùng hướng) + vectơ clip-by-value (lệch hướng)
+function drawClip(id, g, norm, c, gc, cap){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var ox = 30, oy = 140;                 // gốc tọa độ (góc dưới-trái)
-  var u = 11;                            // px mỗi đơn vị
-  function P(vx, vy){ return (ox+vx*u).toFixed(1)+','+(oy-vy*u).toFixed(1); }
+  var vbW = 220, vbH = 190;
+  var ox = 34, oy = 168;                 // gốc tọa độ (góc dưới-trái)
+  var padX = vbW - ox - 16, padY = oy - 18;
+  var maxExtent = Math.max(g[0], g[1], c, cap) * 1.1;
+  var u = Math.min(padX / maxExtent, padY / maxExtent);   // px mỗi đơn vị, co giãn theo số liệu
+  function P(vx, vy){ return [(ox+vx*u).toFixed(1), (oy-vy*u).toFixed(1)]; }
   var s = '';
   // trục
-  s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+(ox+150)+'" y2="'+oy+'" stroke="#cbd2da" stroke-width="1"/>';
-  s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+ox+'" y2="20" stroke="#cbd2da" stroke-width="1"/>';
+  s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+(ox+padX+8)+'" y2="'+oy+'" stroke="#cbd2da" stroke-width="1"/>';
+  s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+ox+'" y2="'+(oy-padY-8)+'" stroke="#cbd2da" stroke-width="1"/>';
   // vòng tròn bán kính c
   s += '<circle cx="'+ox+'" cy="'+oy+'" r="'+(c*u)+'" fill="rgba(14,116,144,0.06)" stroke="#0e7490" stroke-width="1.4" stroke-dasharray="4 3"/>';
-  s += '<defs><marker id="ah9o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#b45309"/></marker>'
-     + '<marker id="ah9b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#0e7490"/></marker></defs>';
+  s += '<defs>'
+     + '<marker id="ah9o" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#b45309"/></marker>'
+     + '<marker id="ah9b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#0e7490"/></marker>'
+     + '<marker id="ah9v" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#7c5cff"/></marker>'
+     + '</defs>';
+  var p0 = P(0,0), pg = P(g[0],g[1]), pgc = P(gc[0],gc[1]), pv = P(cap,cap);
   // g gốc (cam)
-  s += '<line x1="'+P(0,0).split(',')[0]+'" y1="'+P(0,0).split(',')[1]+'" x2="'+P(g[0],g[1]).split(',')[0]+'" y2="'+P(g[0],g[1]).split(',')[1]+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#ah9o)"/>';
-  s += '<text x="'+(ox+g[0]*u+3)+'" y="'+(oy-g[1]*u-2)+'" style="font-size:8px" fill="#b45309" font-weight="700">g (‖·‖='+norm+')</text>';
-  // g sau cắt (lam)
-  s += '<line x1="'+P(0,0).split(',')[0]+'" y1="'+P(0,0).split(',')[1]+'" x2="'+P(gc[0],gc[1]).split(',')[0]+'" y2="'+P(gc[0],gc[1]).split(',')[1]+'" stroke="#0e7490" stroke-width="2.8" marker-end="url(#ah9b)"/>';
-  s += '<text x="'+(ox+gc[0]*u+3)+'" y="'+(oy-gc[1]*u+10)+'" style="font-size:8px" fill="#0e7490" font-weight="700">g cắt (=c)</text>';
+  s += '<line x1="'+p0[0]+'" y1="'+p0[1]+'" x2="'+pg[0]+'" y2="'+pg[1]+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#ah9o)"/>';
+  s += '<text x="'+(parseFloat(pg[0])+4)+'" y="'+(parseFloat(pg[1])-3)+'" style="font-size:8px" fill="#b45309" font-weight="700">g (‖·‖='+norm+')</text>';
+  // g sau cắt theo norm (lam)
+  s += '<line x1="'+p0[0]+'" y1="'+p0[1]+'" x2="'+pgc[0]+'" y2="'+pgc[1]+'" stroke="#0e7490" stroke-width="2.8" marker-end="url(#ah9b)"/>';
+  s += '<text x="'+(parseFloat(pgc[0])+4)+'" y="'+(parseFloat(pgc[1])+11)+'" style="font-size:8px" fill="#0e7490" font-weight="700">g_clip (=τ)</text>';
+  // clip-by-value (tím, nét đứt) — lệch hướng
+  s += '<line x1="'+p0[0]+'" y1="'+p0[1]+'" x2="'+pv[0]+'" y2="'+pv[1]+'" stroke="#7c5cff" stroke-width="2.2" stroke-dasharray="3 2" marker-end="url(#ah9v)"/>';
+  s += '<text x="'+(parseFloat(pv[0])+4)+'" y="'+(parseFloat(pv[1])+2)+'" style="font-size:8px" fill="#7c5cff" font-weight="700">clip-by-value</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

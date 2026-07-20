@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B11 — Gradient Boosting (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,43 +22,39 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B11</span><h1>Gradient Boosting <small>— ý tưởng (XGBoost/LightGBM)</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Một cây nông dự đoán dở, nhưng <b>cộng dồn nhiều cây</b>, mỗi cây sửa lỗi còn lại của cây trước,
-    thì rất mạnh — chiến thắng nhiều cuộc thi ML trên dữ liệu bảng. "Gradient" vì phần dư chính là gradient của loss MSE.
-    <div class="formula">
-      F₀ = trung bình &nbsp;|&nbsp; rₘ = y − Fₘ₋₁ (phần dư) &nbsp;|&nbsp; Fₘ = Fₘ₋₁ + η·hₘ(x) &nbsp;(hₘ khớp rₘ)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài B11</span>
+    <h1>Gradient Boosting <small>— cộng dồn cây, mỗi cây chữa phần dư</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>sửa bài nhiều lượt</b>: dự đoán thô trước, xem <b>còn sai bao nhiêu</b> (phần dư), rồi thêm một "miếng vá" nhỏ chuyên
-    chữa phần sai đó. Lặp vài lượt, mỗi lượt vá thêm một ít (×η để khỏi vá quá tay).
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Bắt đầu bằng dự đoán thô F₀ = trung bình. Hãy <b>tự tay</b> tính phần dư r,
+    khớp một "miếng vá" h₁ ≈ r, cập nhật F₁ = F₀ + η·h₁, rồi đo dư mới nhỏ đi.
+    Phần thưởng: chứng minh <b>phần dư = −gradient</b> của loss MSE — đó là chữ "gradient" trong tên.
   </div>
 
   <!-- BƯỚC 0 -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 mẫu</span></div>
     <div class="calc">
-      y = (<span class="gv" data-q="y1">2</span>, <span class="gv" data-q="y2">4</span>, <span class="gv" data-q="y3">9</span>) &nbsp;|&nbsp;
-      F₀ = trung bình &nbsp;|&nbsp; η = <span class="gv" data-q="eta">0.5</span>
+      y = (<span class="gv" data-q="y1">2</span>, <span class="gv" data-q="y2">4</span>, <span class="gv" data-q="y3">9</span>) &nbsp;·&nbsp;
+      F₀ = trung bình &nbsp;·&nbsp; η = <span class="gv" data-q="eta">0.5</span>
     </div>
-    <div class="why" style="margin-top:5px"><b>Vì sao:</b> bắt đầu bằng dự đoán "ngu nhất nhưng hợp lý" = trung bình; rồi sửa dần.</div>
+    <div class="why"><b>Vì sao:</b> bắt đầu bằng dự đoán "ngu nhất nhưng hợp lý" = trung bình; rồi sửa dần.</div>
   </div>
 
   <div class="grid2">
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>F₀ &amp; phần dư</h2><span class="tag">r = y − F₀</span></div>
-    <div class="calc">
-      F₀ = (y₁+y₂+y₃)/3 = <span class="blk"></span><br>
-      r = (<span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>)
+    <div class="calc big">
+      F₀ = (y₁+y₂+y₃)/3 = <span class="wcell"></span><br>
+      r = (<span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>)
     </div>
     <div class="why"><b>Vì sao:</b> với loss MSE, <b>phần dư chính là −gradient</b> → "boosting theo gradient".</div>
   </div>
@@ -62,8 +62,8 @@
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Mô hình yếu h₁ khớp dư</h2><span class="tag">≈ r</span></div>
-    <div class="calc">
-      h₁ = (<span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>) &nbsp;(khớp đúng r ở ví dụ tối giản)
+    <div class="calc big">
+      h₁ = (<span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>, <span class="blk" style="min-width:30px"></span>)<br><small style="color:#7a8794">(khớp đúng r ở ví dụ tối giản)</small>
     </div>
     <div class="hint"><b>Mẹo:</b> thực tế h₁ chỉ <b>xấp xỉ</b> r, không khớp hoàn hảo.</div>
   </div>
@@ -72,8 +72,8 @@
   <!-- BƯỚC 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Cập nhật F₁ = F₀ + η·h₁</h2><span class="tag">bước một phần</span></div>
-    <div class="calc">
-      F₁ = F₀ + η·h₁ = (<span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>)
+    <div class="calc big">
+      F₁ = F₀ + η·h₁ = (<span class="wcell" style="min-width:44px"></span>, <span class="wcell" style="min-width:44px"></span>, <span class="wcell" style="min-width:44px"></span>)
     </div>
     <div class="why"><b>Vì sao:</b> chỉ bước <b>một phần</b> (η&lt;1) về phía đúng → giảm sai từ từ, tránh khớp quá (overfit).</div>
   </div>
@@ -87,26 +87,39 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A4 · tính tay<br>Gradient Boosting — tiếp theo</div>
   </div>
-  <div class="wb-title"><span class="no">Bài B11</span><h1>Gradient Boosting <small>— dư mới &amp; hội tụ</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài B11</span>
+    <h1>Gradient Boosting <small>— dư = −gradient &amp; hội tụ</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
 
   <!-- BƯỚC 4 -->
   <div class="step">
     <div class="step-h"><div class="b">4</div><h2>Dư mới &amp; lặp</h2><span class="tag">r₂ = y − F₁</span></div>
-    <div class="calc">
-      r₂ = y − F₁ = (<span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>) → so với r₁ thì <span class="blk" style="min-width:80px"></span>
+    <div class="calc big">
+      r₂ = y − F₁ = (<span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span>) → so với r₁: <span class="wcell" style="min-width:80px"></span>
     </div>
     <div class="why"><b>Vì sao:</b> sau khi vá một phần, sai số còn lại (dư mới) <b>nhỏ hơn</b> dư cũ → vòng sau tiếp tục co lại.</div>
-    <div class="note">Lặp tiếp với h₂ khớp r₂… tổng các cây hội tụ về y. Mỗi vòng phần dư co lại.</div>
   </div>
 
-  <!-- BƯỚC 5 -->
+  <!-- BƯỚC 5 — TỰ KIỂM: DƯ = −GRADIENT -->
   <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Vẽ sai số qua các vòng</h2><span class="tag">|r₁| → |r₂|</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — vì sao gọi là "gradient"?</h2><span class="tag">dư = −∇</span></div>
+    <div class="calc big" style="line-height:2.15">
+      Loss MSE mỗi mẫu: L = ½(y − F)². Đạo hàm theo F: ∂L/∂F = <span class="wcell" style="min-width:74px"></span> = −r<br>
+      Bước "ngược gradient": F₁ = F₀ − η·(∂L/∂F) = F₀ + η·<span class="blk" style="min-width:26px"></span> <small style="color:#7a8794">— đúng Bước 3</small><br>
+      Kiểm mẫu 1: g₁ = −r₁ = <span class="wcell" style="min-width:40px"></span> → F₀ + η·r₁ = <span class="wcell" style="min-width:44px"></span>
+    </div>
+    <div class="note">Khớp phần dư <b>chính là</b> đi ngược gradient của loss (với MSE: −∇ = r). Đó là lý do gọi <b>gradient</b> boosting — đúng ra mỗi cây xấp xỉ −gradient, dùng được cho mọi loss khả vi (không riêng MSE).</div>
+  </div>
+
+  <!-- BƯỚC 6 — HERO: sai số qua các vòng -->
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Vẽ sai số qua các vòng</h2><span class="tag">|r₁| → |r₂|</span></div>
     <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 200 120" width="70mm" height="42mm" aria-label="khung trống để vẽ hai nhóm cột sai số |r₁| và |r₂|"></svg>
-      <div style="flex:1">
-        <div class="why"><b>Vì sao:</b> mỗi nhóm 3 cột là <b>|dư|</b> của 3 mẫu; nhóm sau (|r₂|) phải thấp hơn nhóm trước (|r₁|).</div>
-        <div class="note">Tự vẽ chiều cao từng cột theo |r₁|, |r₂| đã tính; boosting kéo sai số xuống dần.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 200 120" width="66mm" height="39.6mm" aria-label="khung trống để vẽ hai nhóm cột sai số |r₁| và |r₂|"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="note"><b>Vẽ tay:</b> mỗi nhóm 3 cột là <b>|dư|</b> của 3 mẫu theo |r₁|, |r₂| đã tính; nhóm sau (|r₂|) phải thấp hơn nhóm trước.</div>
       </div>
     </div>
   </div>
@@ -116,14 +129,20 @@
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Mỗi mô hình mới học cái gì? → <span class="blk" style="min-width:200px"></span></li>
-      <li>Vì sao nhân học suất η &lt; 1? → <span class="blk" style="min-width:200px"></span></li>
+      <li>"Gradient" trong tên đến từ đâu? → <span class="blk" style="min-width:180px"></span></li>
     </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Dư → vá → F₁</span>
+    <span><span class="ck"></span>Kiểm dư = −gradient</span>
+    <span class="win">🎉 Bạn vừa hoàn tất Phần B!</span>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B11 · Gradient Boosting</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -133,33 +152,42 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>F₀ &amp; phần dư</h2></div>
-    <div class="calc ans">
-      F₀ = <span class="blk" data-q="F0">5</span> &nbsp;|&nbsp;
-      r = (<span class="blk" data-q="r1">−3</span>, <span class="blk" data-q="r2">−1</span>, <span class="blk" data-q="r3">4</span>)
+    <div class="calc ans big">
+      F₀ = <span class="wcell ans" data-q="F0">5</span> &nbsp;·&nbsp;
+      r = (<span class="wcell ans" data-q="r1">−3</span>, <span class="wcell ans" data-q="r2">−1</span>, <span class="wcell ans" data-q="r3">4</span>)
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2–3</div><h2>h₁ &amp; cập nhật F₁</h2></div>
-    <div class="calc ans">
+    <div class="calc ans big">
       h₁ = r = (<span data-q="r1">−3</span>, <span data-q="r2">−1</span>, <span data-q="r3">4</span>)<br>
-      F₁ = 5 + <span data-q="eta">0.5</span>·h₁ = (<span class="blk" data-q="F1_1">3.5</span>, <span class="blk" data-q="F1_2">4.5</span>, <span class="blk" data-q="F1_3">7</span>)
+      F₁ = 5 + <span data-q="eta">0.5</span>·h₁ = (<span class="wcell ans" data-q="F1_1">3.5</span>, <span class="wcell ans" data-q="F1_2">4.5</span>, <span class="wcell ans" data-q="F1_3">7</span>)
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">4</div><h2>Dư mới &amp; lặp</h2><span class="tag">nhỏ dần</span></div>
-    <div class="calc ans">
-      r₂ = y − F₁ = (<span class="blk" data-q="r2_1">−1.5</span>, <span class="blk" data-q="r2_2">−0.5</span>, <span class="blk" data-q="r2_3">2</span>) → nhỏ hơn r₁
+    <div class="calc ans big">
+      r₂ = y − F₁ = (<span class="wcell ans" data-q="r2_1">−1.5</span>, <span class="wcell ans" data-q="r2_2">−0.5</span>, <span class="wcell ans" data-q="r2_3">2</span>) → <span class="wcell ans" data-q="cmp">nhỏ hơn r₁</span>
     </div>
     <div class="note">Lặp tiếp với h₂ khớp r₂… tổng các cây hội tụ về y. Mỗi vòng phần dư co lại.</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Sai số thu nhỏ qua các vòng</h2><span class="tag">|r₁| → |r₂|</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — dư = −gradient</h2><span class="tag">MSE</span></div>
+    <div class="calc ans big">
+      ∂L/∂F = <span class="wcell ans" data-q="grad">−(y−F)</span> = −r &nbsp;→&nbsp; F₁ = F₀ − η·(−r) = F₀ + η·<span class="wcell ans" data-q="rsym">r</span><br>
+      mẫu 1: g₁ = −r₁ = <span class="wcell ans" data-q="g1">3</span> → F₀ + η·r₁ = <span data-q="F0">5</span> + <span data-q="eta">0.5</span>·(<span data-q="r1">−3</span>) = <span class="wcell ans" data-q="F1_1">3.5</span> ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> L = ½(y−F)² → ∂L/∂F = −(y−F) = −r. "Khớp phần dư r" = đi <b>ngược</b> gradient (−∇ = r). Vì thế đổi loss khác (khả vi) thì mỗi cây khớp −gradient tương ứng — tổng quát hóa của boosting.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Sai số thu nhỏ qua các vòng</h2><span class="tag">|r₁| → |r₂|</span></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 200 120" width="70mm" height="42mm" aria-label="hai nhóm cột sai số, nhóm sau thấp hơn nhóm trước"></svg>
-      <div style="flex:1">
+      <svg id="figK" class="fig" viewBox="0 0 200 120" width="62mm" height="37.2mm" aria-label="hai nhóm cột sai số, nhóm sau thấp hơn nhóm trước"></svg>
+      <div style="flex:1;min-width:44mm">
         <div class="note">Nhóm cột <b>|r₁|</b> (trước) cao hơn nhóm <b>|r₂|</b> (sau) — boosting kéo sai số xuống dần.</div>
       </div>
     </div>
@@ -169,12 +197,12 @@
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>Mô hình mới học → <span class="qa">Phần dư (sai số) của tổng các mô hình trước.</span></li>
-      <li>Vì sao η &lt; 1 → <span class="qa">Bước từ từ để tránh khớp quá, tăng khái quát.</span></li>
+      <li>"Gradient" từ đâu → <span class="qa">Phần dư = −gradient của loss MSE → khớp dư = bước gradient descent.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Boosting = cộng dồn mô hình yếu, mỗi cái chữa dư của tổng trước (= đi theo gradient của loss).
+    <b style="color:var(--accent2)">Rút ra.</b> Boosting = cộng dồn mô hình yếu, mỗi cái chữa dư của tổng trước (= đi theo −gradient của loss).
     Hết Phần B. Sang Phần C (nơ-ron) — Bài tiếp: lớp tuyến tính, hàm kích hoạt, một nơ-ron.
   </div>
 
@@ -186,19 +214,21 @@
 function generate(){
   var m = WB.randInt(4, 6);                            // trung bình (= F0)
   var rset = WB.pick([[-3,-1,4], [-2,-2,4], [-4,2,2], [-3,0,3]]);
-  var eta = WB.pick([0.5, 1]);
+  var eta = 0.5;                                        // giữ 0.5: bước một phần → dư luôn co (không về 0)
   var y = rset.map(function(r){ return m + r; });
   var F0 = m;
   var r = rset.slice();
   var F1 = r.map(function(ri){ return F0 + eta*ri; });
   var r2 = y.map(function(yi, i){ return yi - F1[i]; });
+  var g1 = -r[0];
 
   WB.setAll({
     y1: ''+y[0], y2: ''+y[1], y3: ''+y[2], eta: WB.fmtTrim(eta),
     F0: WB.fmtInt(F0),
     r1: WB.fmtInt(r[0]), r2: WB.fmtInt(r[1]), r3: WB.fmtInt(r[2]),
     F1_1: WB.fmtTrim(F1[0]), F1_2: WB.fmtTrim(F1[1]), F1_3: WB.fmtTrim(F1[2]),
-    r2_1: WB.fmtTrim(r2[0]), r2_2: WB.fmtTrim(r2[1]), r2_3: WB.fmtTrim(r2[2])
+    r2_1: WB.fmtTrim(r2[0]), r2_2: WB.fmtTrim(r2[1]), r2_3: WB.fmtTrim(r2[2]),
+    cmp: 'nhỏ hơn r₁', grad: '−(y−F)', rsym: 'r', g1: WB.fmtInt(g1)
   });
 
   drawErr('figK', r.map(Math.abs), r2.map(Math.abs));

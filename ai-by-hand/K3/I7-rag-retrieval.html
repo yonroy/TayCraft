@@ -3,193 +3,424 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài I7 — RAG retrieval (cosine) (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài I7 — RAG Retrieval (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.5}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
+  <div class="top">
+    <span class="no">I7</span>
+    <h1>RAG Retrieval <small>— tìm tài liệu giống nhất bằng cosine</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>q · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>dᵢ, dot, cos · trọng số/đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>tài liệu chọn · thành phần 3</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I7</span><h1>RAG Retrieval <small>— tìm tài liệu giống nhất bằng cosine</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> LLM không nhớ hết mọi tài liệu & dễ "bịa". RAG <b>tra cứu</b> đoạn liên quan theo độ giống ngữ nghĩa rồi
-    cho LLM đọc → trả lời có căn cứ, cập nhật kiến thức mới mà không cần huấn luyện lại.
-    <div class="formula">cos(q, dᵢ) = (q·dᵢ) / (‖q‖·‖dᵢ‖) &nbsp;→&nbsp; chọn tài liệu có cosine lớn nhất (top-k)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> RAG (Retrieval-Augmented Generation) tra kho tài liệu bằng <b>cosine similarity</b>: so câu hỏi
+    <b>q</b> với từng tài liệu <b>dᵢ</b>, tính cos(q,dᵢ) = (q·dᵢ)/(‖q‖‖dᵢ‖), rồi chọn <b>top-1</b> (cosine lớn nhất) đưa
+    vào ngữ cảnh LLM. Cuối phiếu bạn tự chứng minh: với vectơ đã <b>chuẩn hóa</b>, ‖q̂−d̂‖² = 2−2·cos(q,d) — tài liệu
+    cosine cao nhất <b>cũng là</b> tài liệu gần q nhất theo khoảng cách Euclid.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Câu hỏi và mỗi tài liệu là một <b>mũi tên ngữ nghĩa</b>. Tài liệu nào <b>cùng hướng</b> câu hỏi nhất (cosine cao) thì liên quan
-    nhất → lấy nó đưa cho LLM. Như tìm sách theo "chủ đề" chứ không theo từ khóa khớp chính xác.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">q + 3 tài liệu · mọi ‖·‖ = 5</span></div>
-    <div class="calc" style="font-size:14px">
-      q = ( <span class="gv" data-q="q1">3</span>, <span class="gv" data-q="q2">4</span> ) ·
-      d₁=( <span class="gv" data-q="d11">4</span>,<span class="gv" data-q="d12">3</span> ),
-      d₂=( <span class="gv" data-q="d21">0</span>,<span class="gv" data-q="d22">5</span> ),
-      d₃=( <span class="gv" data-q="d31">−3</span>,<span class="gv" data-q="d32">4</span> )
-    </div>
-    <div class="note">Mọi vectơ có độ dài 5 → mẫu số cosine = 5·5 = 25 (tính nhẩm).</div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tích vô hướng q·dᵢ</h2><span class="tag">tử số cosine</span></div>
-    <div class="calc">
-      q·d₁ = <span class="blk" style="min-width:36px"></span> ; q·d₂ = <span class="blk" style="min-width:36px"></span> ; q·d₃ = <span class="blk" style="min-width:36px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> tích vô hướng là "mức cùng chiều" thô giữa câu hỏi và tài liệu.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa (÷ 25)</h2><span class="tag">cosine</span></div>
-    <div class="calc">
-      cos = ( <span data-q="dot1">24</span>/25, <span data-q="dot2">20</span>/25, <span data-q="dot3">7</span>/25 ) = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
-    </div>
-    <div class="hint">Mọi ‖·‖ = 5 nên mẫu chung = 25 → chỉ việc chia.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chọn top-1</h2><span class="tag">cosine lớn nhất</span></div>
-    <div class="calc">
-      cosine lớn nhất → tài liệu <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> tài liệu liên quan nhất được đưa vào ngữ cảnh LLM (thực tế lấy top-k).</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đường ống RAG</h2><span class="tag">tra → đọc → trả lời</span></div>
-    <div class="note">Nhúng câu hỏi → tìm top-k đoạn gần nhất trong kho vectơ → dán vào prompt → LLM trả lời <b>dựa trên</b> đoạn đó (có căn cứ).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>RAG chọn tài liệu theo gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>RAG khắc phục điều gì của LLM? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài I7</span><h1>RAG Retrieval <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tích vô hướng</h2></div>
-    <div class="calc ans">q·d₁ = <span class="blk" data-q="dot1">24</span> ; q·d₂ = <span class="blk" data-q="dot2">20</span> ; q·d₃ = <span class="blk" data-q="dot3">7</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cosine (÷ 25)</h2></div>
-    <div class="calc ans">cos = ( <span class="blk" data-q="cos1">0.96</span>, <span class="blk" data-q="cos2">0.80</span>, <span class="blk" data-q="cos3">0.28</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Top-1</h2></div>
-    <div class="calc ans">tài liệu <span class="blk" data-q="best">d₁</span> (cosine lớn nhất)</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>q và 3 tài liệu trên mặt phẳng</h2><span class="tag">góc nhỏ nhất = chọn</span></div>
-    <div class="figrow">
-      <svg id="figV" class="fig" viewBox="0 0 200 160" width="60mm" height="48mm" aria-label="vectơ câu hỏi q và ba tài liệu, tài liệu cùng hướng q nhất được tô đậm"></svg>
-      <div style="flex:1">
-        <div class="note">Mũi tên <b>lam</b> = câu hỏi q; các mũi tên <b>cam</b> = tài liệu. Cái <b>gần hướng q nhất</b> (góc nhỏ nhất) có cosine cao nhất → được chọn.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">1 câu hỏi q · 3 tài liệu · mọi ‖·‖ = 5</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm"><span>q</span><span>d₁</span><span>d₂</span><span>d₃</span></div>
+          <div class="mx c2" style="--cw:9.5mm;--ch:6.4mm">
+            <div class="gv" data-q="q1">3</div><div class="gv" data-q="q2">4</div>
+            <div class="pe" data-q="d11">4</div><div class="pe" data-q="d12">3</div>
+            <div class="pe" data-q="d21">0</div><div class="pe" data-q="d22">5</div>
+            <div class="pe" data-q="d31">−3</div><div class="pe" data-q="d32">4</div>
+          </div>
+        </div>
+        <div class="cap"><b>q</b> = câu hỏi (lam) · <b>d₁,d₂,d₃</b> = tài liệu (cam). Mọi vectơ có ‖·‖=5 (bộ ba
+        Pythagore 3-4-5) → mẫu số cosine = ‖q‖·‖dᵢ‖ = 5·5 = <b>25</b> luôn (tính nhẩm, không cần bấm máy).</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:5.6mm"><span>x</span><span>x÷5</span></div>
+          <div class="mx c6" style="--cw:9mm;--ch:5.6mm">
+            <div>−4</div><div>−3</div><div>0</div><div>3</div><div>4</div><div>5</div>
+            <div class="pe">−0.8</div><div class="pe">−0.6</div><div class="pe">0</div><div class="pe">0.6</div><div class="pe">0.8</div><div class="pe">1</div>
+          </div>
+        </div>
+        <div class="cap">Bảng tra <b>÷5</b> — dùng ở Bước④ để chuẩn hóa (q̂=q/5, d̂=d/5), KHÔNG cần bấm máy tính.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Chọn theo gì? → <span class="qa">Cosine similarity cao nhất với câu hỏi (top-k).</span></li>
-      <li>Khắc phục? → <span class="qa">Bịa đặt / kiến thức cũ — đưa căn cứ thật vào ngữ cảnh.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">q·dᵢ → ÷25 (cosine) → chọn top-1</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 100" width="100%" height="30mm"
+           aria-label="ba tài liệu qua tích vô hướng rồi chia 25 ra cosine rồi chọn tài liệu cosine cao nhất, các ô số để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> RAG = nhúng + cosine + lấy top-k đoạn liên quan cho LLM đọc → trả lời có căn cứ. Bài tiếp (I8): sinh trọn một
-    chuỗi bằng <b>greedy decode</b>.
+  <!-- ① DOT -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Tích vô hướng q·dᵢ</span><span class="f">tử số cosine</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Tài liệu</th><th>q · dᵢ (tích vô hướng)</th></tr>
+        <tr><td class="l">d₁ = (<span data-q="d11">4</span>, <span data-q="d12">3</span>)</td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">d₂ = (<span data-q="d21">0</span>, <span data-q="d22">5</span>)</td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">d₃ = (<span data-q="d31">−3</span>, <span data-q="d32">4</span>)</td><td><span class="cellb"></span></td></tr>
+      </table>
+      <div class="cap">q·dᵢ = q₁·dᵢ₁ + q₂·dᵢ₂. Nhìn số, bạn <b>đoán</b> tài liệu nào giống q nhất? → <span class="slot" style="min-width:14mm"></span>
+      · Vì sao dot số thô <b>chưa đủ</b> để so công bằng nếu ‖dᵢ‖ khác nhau? → <span class="slot" style="min-width:30mm"></span></div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② COSINE -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Chuẩn hóa thành cosine</span><span class="f">cos = (q·dᵢ) ÷ 25</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Tài liệu</th><th>cos = q·dᵢ ÷ 25</th><th>Tô thanh</th></tr>
+        <tr><td class="l">d₁</td><td><span class="cellb"></span></td><td><div class="track" id="t_c1"></div></td></tr>
+        <tr><td class="l">d₂</td><td><span class="cellb"></span></td><td><div class="track" id="t_c2"></div></td></tr>
+        <tr><td class="l">d₃</td><td><span class="cellb"></span></td><td><div class="track" id="t_c3"></div></td></tr>
+      </table>
+      <div class="cap">Lấy q·dᵢ từ Bước① rồi chia 25 (mẫu số cố định). Thang thanh: <b>−1 … 0 … +1</b> · cos gần <b>+1</b> = gần cùng hướng q.</div>
+    </div>
+  </div>
+
+  <!-- ③ TOP-1 -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Chọn top-1</span><span class="f">cosine lớn nhất → đưa vào ngữ cảnh LLM</span></div>
+    <div class="pb">
+      <div class="eq">max(cos₁, cos₂, cos₃) = <span class="slot sm"></span> &nbsp;→&nbsp; tài liệu được chọn = <span class="slot sm"></span></div>
+      <div class="cap">Nếu lấy <b>top-2</b> thay vì top-1, hai tài liệu nào được đưa vào ngữ cảnh? → <span class="slot" style="min-width:26mm"></span></div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — cos cao nhất ⇔ khoảng cách gần nhất</span><span class="f">chuẩn hóa rồi so ‖q̂−d̂‖² với 2−2cos</span></div>
+    <div class="pb">
+      <div class="eq">
+        q̂ = q ÷ 5 = ( <span class="slot sm"></span>, <span class="slot sm"></span> )<br>
+        <b style="color:var(--orange)">Chọn (cos cao nhất, Bước③):</b> d̂ = d÷5 = ( <span class="slot sm"></span>, <span class="slot sm"></span> )
+        &nbsp;→&nbsp; ‖q̂−d̂‖² = <span class="slot sm"></span> &nbsp;·&nbsp; 2−2cos (Bước②) = <span class="slot sm"></span><br>
+        <b style="color:var(--purple)">Loại (cos thấp nhất):</b> d̂ = d÷5 = ( <span class="slot sm"></span>, <span class="slot sm"></span> )
+        &nbsp;→&nbsp; ‖q̂−d̂‖² = <span class="slot sm"></span> &nbsp;·&nbsp; 2−2cos (Bước②) = <span class="slot sm"></span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">ĐƯỢC CHỌN (cos cao nhất)</div>
+          <table><tr><td class="l">‖q̂−d̂‖²</td><td><div class="track uni" id="t_db"></div></td></tr></table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--purple);letter-spacing:.08em;margin-bottom:1mm">BỊ LOẠI (cos thấp nhất)</div>
+          <table><tr><td class="l">‖q̂−d̂‖²</td><td><div class="track uni" id="t_dw"></div></td></tr></table>
+        </div>
+      </div>
+      <div class="cap">Thang thanh: <b>0…4</b> (vì 2−2cos, cos∈[−1,1]) · cột nào <b>NGẮN hơn</b> = tài liệu <b>gần</b> q hơn theo Euclid
+      — có trùng với tài liệu cosine cao nhất không? → <span class="slot" style="min-width:14mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:11mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Ra cosine &amp; chọn top-1</span>
+    <span><span class="ck"></span>Chuẩn hóa &amp; tô thanh khoảng cách</span>
+    <span><span class="ck"></span>Chứng minh cos cao ⇔ gần nhất</span>
+    <span class="win">🎉 Bạn vừa làm phép tính lõi của mọi hệ thống RAG!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">I7</span>
+    <h1>RAG Retrieval <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>q · cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>dᵢ, dot, cos · trọng số/đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>tài liệu chọn · thành phần 3</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">q·dᵢ → ÷25 (cosine) → chọn top-1</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 100" width="100%" height="30mm" aria-label="sơ đồ ba stage đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Tích vô hướng q·dᵢ</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Tài liệu</th><th>q · dᵢ (tích vô hướng)</th></tr>
+        <tr><td class="l">d₁ = (<span data-q="d11">4</span>, <span data-q="d12">3</span>)</td><td><span class="cellb ans" data-q="dot1">24</span></td></tr>
+        <tr><td class="l">d₂ = (<span data-q="d21">0</span>, <span data-q="d22">5</span>)</td><td><span class="cellb ans" data-q="dot2">20</span></td></tr>
+        <tr><td class="l">d₃ = (<span data-q="d31">−3</span>, <span data-q="d32">4</span>)</td><td><span class="cellb ans" data-q="dot3">7</span></td></tr>
+      </table>
+      <div class="why"><b>Vì sao dot chưa đủ:</b> dot lớn khi cùng chiều <b>và</b> khi vectơ dài — nếu ‖dᵢ‖ khác nhau, tài liệu dài hơn có thể "thắng" dù không giống hướng q hơn. Ở đây mọi ‖dᵢ‖=5 bằng nhau nên xếp hạng theo dot cũng đúng, nhưng nói chung phải chia độ dài (chuẩn hóa) mới công bằng.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Chuẩn hóa thành cosine</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Tài liệu</th><th>cos = q·dᵢ ÷ 25</th><th>Tô thanh</th></tr>
+        <tr><td class="l">d₁</td><td><span class="cellb ans" data-q="cos1">0.96</span></td><td><div class="track" id="a_c1"></div></td></tr>
+        <tr><td class="l">d₂</td><td><span class="cellb ans" data-q="cos2">0.80</span></td><td><div class="track" id="a_c2"></div></td></tr>
+        <tr><td class="l">d₃</td><td><span class="cellb ans" data-q="cos3">0.28</span></td><td><div class="track" id="a_c3"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao chia 25:</b> 25 = ‖q‖·‖dᵢ‖ luôn đúng (mọi vectơ dài 5) — chia đưa mọi giá trị về [−1,1], loại bỏ ảnh hưởng độ dài, chỉ còn "mức cùng hướng" thuần túy.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Chọn top-1</span></div>
+    <div class="pb">
+      <div class="eq">max(cos₁, cos₂, cos₃) = <span class="slot ans sm" data-q="cosBest">0.96</span> &nbsp;→&nbsp; tài liệu được chọn = <span class="slot ans sm" data-q="best">d₁</span></div>
+      <div class="why"><b>top-2:</b> lấy hai cosine cao nhất — thường tốt hơn top-1 vì câu hỏi có thể liên quan nhiều tài liệu; giảm rủi ro sót ngữ cảnh cần thiết.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — cos cao nhất ⇔ khoảng cách gần nhất</span></div>
+    <div class="pb">
+      <div class="eq">
+        q̂ = q ÷ 5 = ( <span class="slot ans sm" data-q="qh1">0.60</span>, <span class="slot ans sm" data-q="qh2">0.80</span> )<br>
+        <b style="color:var(--orange)">Chọn (cos cao nhất):</b> d̂ = d÷5 = ( <span class="slot ans sm" data-q="dbh1">0.80</span>, <span class="slot ans sm" data-q="dbh2">0.60</span> )
+        &nbsp;→&nbsp; ‖q̂−d̂‖² = <span class="slot ans sm" data-q="distBest">0.08</span> &nbsp;·&nbsp; 2−2cos = <span class="slot ans sm" data-q="twoMinusBest">0.08</span><br>
+        <b style="color:var(--purple)">Loại (cos thấp nhất):</b> d̂ = d÷5 = ( <span class="slot ans sm" data-q="dwh1">−0.60</span>, <span class="slot ans sm" data-q="dwh2">0.80</span> )
+        &nbsp;→&nbsp; ‖q̂−d̂‖² = <span class="slot ans sm" data-q="distWorst">1.44</span> &nbsp;·&nbsp; 2−2cos = <span class="slot ans sm" data-q="twoMinusWorst">1.44</span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">ĐƯỢC CHỌN (cos cao nhất)</div>
+          <table><tr><td class="l">‖q̂−d̂‖²</td><td><div class="track uni" id="a_db"></div></td></tr></table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--purple);letter-spacing:.08em;margin-bottom:1mm">BỊ LOẠI (cos thấp nhất)</div>
+          <table><tr><td class="l">‖q̂−d̂‖²</td><td><div class="track uni" id="a_dw"></div></td></tr></table>
+        </div>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> ‖q̂−d̂‖² và 2−2cos(q,d) <b>luôn bằng nhau</b> khi q̂,d̂ là vectơ
+      đơn vị — đây là đẳng thức đại số (‖q̂−d̂‖² = ‖q̂‖²+‖d̂‖²−2q̂·d̂ = 1+1−2cos = 2−2cos), đúng với <b>mọi</b> cặp vectơ đã chuẩn hóa, không phải trùng hợp.
+      Vì cos <b>càng lớn</b> thì 2−2cos <b>càng nhỏ</b> → tài liệu cosine cao nhất <b>chính là</b> tài liệu gần q nhất theo khoảng cách Euclid — hai cách
+      xếp hạng "giống nhất" và "gần nhất" trùng nhau (đối ngẫu). Đây là lý do retrieval có thể dùng <b>cosine hoặc khoảng cách</b> tùy engine, miễn là vectơ
+      đã <b>chuẩn hóa</b> trước.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi làm retrieval</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Tài liệu có tích vô hướng lớn nhất luôn giống nhất."</b><br>
+          <span style="color:var(--dim)">Dot phụ thuộc cả <b>góc lẫn độ dài</b>. Nếu ‖dᵢ‖ khác nhau, tài liệu dài hơn có thể thắng dù không cùng hướng q hơn — phải chia
+          cho ‖q‖‖dᵢ‖ (ra cosine) mới so công bằng.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Cosine luôn dương."</b><br>
+          <span style="color:var(--dim)">cos ∈ [−1,1]. Góc &gt;90° cho cosine <b>âm</b> — nghĩa là ngược hướng, không liên quan (hoặc trái nghĩa), không phải "giống ít".</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Chỉ cần lấy top-1, không cần top-k."</b><br>
+          <span style="color:var(--dim)">Top-1 rủi ro nếu câu hỏi có <b>nhiều khía cạnh</b>. Top-k (k≥2) phủ nhiều góc thông tin hơn, giảm rủi ro thiếu ngữ cảnh cần thiết.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Cosine và khoảng cách Euclid dùng cái nào cũng như nhau, kể cả khi chưa chuẩn hóa."</b><br>
+          <span style="color:var(--dim)">Đẳng thức 2−2cos chỉ đúng với vectơ <b>đã chuẩn hóa</b> (‖·‖=1). Với vectơ thô, khoảng cách còn bị ảnh hưởng bởi độ dài → xếp hạng có thể khác cosine.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> RAG = nhúng câu hỏi &amp; tài liệu → xếp hạng bằng <b>cosine</b> (hoặc khoảng cách Euclid nếu đã <b>chuẩn hóa</b> — hai cách
+    tương đương) → lấy top-k đưa vào ngữ cảnh LLM → trả lời có căn cứ. Bài tiếp theo <b>I8</b>: sinh trọn một chuỗi bằng <b>greedy decode</b>.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I7 · RAG Retrieval</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-// các vectơ ‖·‖ = 5
+// 8 vectơ 2D, mọi ‖·‖ = 5 (bộ ba Pythagore 3-4-5) — thành phần chỉ rơi vào {−4,−3,0,3,4,5}.
 var VS = [[3,4],[4,3],[0,5],[5,0],[-3,4],[-4,3],[3,-4],[4,-3]];
+var DLAB = {1:'d₁',2:'d₂',3:'d₃'};
+var S = {};
+
 function generate(){
-  var f2 = WB.fmt2;
-  var pickset = WB.pickDistinct(VS, 4);
-  var q = pickset[0], d = [pickset[1], pickset[2], pickset[3]];
-  function dot(a,b){return a[0]*b[0]+a[1]*b[1];}
-  var dots = d.map(function(x){return dot(q,x);});
-  var cos = dots.map(function(v){return Math.round(v/25*100)/100;});
-  var bi = cos.indexOf(Math.max(cos[0],cos[1],cos[2]));
-  function v(x){return WB.fmtInt(x);}
+  var f2 = WB.fmt2, fI = WB.fmtInt;
+  var q, d, dots, cos, bestIdx, worstIdx;
+  do {                                                       // guard: cần 3 cosine khác biệt rõ (top-1 & "bị loại" không mập mờ)
+    var pickset = WB.pickDistinct(VS, 4);
+    q = pickset[0]; d = [pickset[1], pickset[2], pickset[3]];
+    dots = d.map(function(x){ return q[0]*x[0] + q[1]*x[1]; });
+    cos = dots.map(function(v){ return Math.round(v/25*100)/100; });
+    bestIdx = cos.indexOf(Math.max(cos[0], cos[1], cos[2]));
+    worstIdx = cos.indexOf(Math.min(cos[0], cos[1], cos[2]));
+  } while (cos[0]===cos[1] || cos[1]===cos[2] || cos[0]===cos[2] || bestIdx===worstIdx);
+
+  var qHat = [q[0]/5, q[1]/5];
+  var dBest = d[bestIdx], dWorst = d[worstIdx];
+  var dHatBest = [dBest[0]/5, dBest[1]/5];
+  var dHatWorst = [dWorst[0]/5, dWorst[1]/5];
+  function dist2(a,b){ var dx=a[0]-b[0], dy=a[1]-b[1]; return Math.round((dx*dx+dy*dy)*100)/100; }
+  var distBest = dist2(qHat, dHatBest);
+  var distWorst = dist2(qHat, dHatWorst);
+  var twoMinusBest = Math.round((2 - 2*cos[bestIdx])*100)/100;
+  var twoMinusWorst = Math.round((2 - 2*cos[worstIdx])*100)/100;
+
+  S = { q:q, d:d, dots:dots, cos:cos, bestIdx:bestIdx, worstIdx:worstIdx };
+
   WB.setAll({
-    q1:v(q[0]), q2:v(q[1]),
-    d11:v(d[0][0]), d12:v(d[0][1]), d21:v(d[1][0]), d22:v(d[1][1]), d31:v(d[2][0]), d32:v(d[2][1]),
-    dot1:v(dots[0]), dot2:v(dots[1]), dot3:v(dots[2]),
-    cos1:f2(cos[0]), cos2:f2(cos[1]), cos3:f2(cos[2]),
-    best:'d'+(bi+1)
+    q1: fI(q[0]), q2: fI(q[1]),
+    d11: fI(d[0][0]), d12: fI(d[0][1]), d21: fI(d[1][0]), d22: fI(d[1][1]), d31: fI(d[2][0]), d32: fI(d[2][1]),
+    dot1: fI(dots[0]), dot2: fI(dots[1]), dot3: fI(dots[2]),
+    cos1: f2(cos[0]), cos2: f2(cos[1]), cos3: f2(cos[2]),
+    cosBest: f2(cos[bestIdx]), best: DLAB[bestIdx+1], worst: DLAB[worstIdx+1],
+    qh1: f2(qHat[0]), qh2: f2(qHat[1]),
+    dbh1: f2(dHatBest[0]), dbh2: f2(dHatBest[1]),
+    dwh1: f2(dHatWorst[0]), dwh2: f2(dHatWorst[1]),
+    distBest: f2(distBest), distWorst: f2(distWorst),
+    twoMinusBest: f2(twoMinusBest), twoMinusWorst: f2(twoMinusWorst)
   });
-  drawVecs('figV', q, d, bi);
+
+  // ĐỀ: thanh trống (chỉ vạch mốc). ĐÁP ÁN: tô đầy.
+  drawBar('t_c1', 0, 1, false); drawBar('t_c2', 0, 1, false); drawBar('t_c3', 0, 1, false);
+  drawBar('a_c1', cos[0], 1, true); drawBar('a_c2', cos[1], 1, true); drawBar('a_c3', cos[2], 1, true);
+
+  drawBarUni('t_db', 0, 4, false); drawBarUni('t_dw', 0, 4, false);
+  drawBarUni('a_db', distBest, 4, true); drawBarUni('a_dw', distWorst, 4, true);
+
+  drawPipe('figQ', false);
+  drawPipe('figA', true);
 }
-function drawVecs(id, q, d, bi){
-  var svg = document.getElementById(id); if(!svg) return;
-  var ox=100, oy=85, sc=11;
-  function mk(col){return '<marker id="m'+col.replace('#','')+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="'+col+'"/></marker>';}
-  function arrow(vx,vy,col,w,lab){
-    var ex=ox+vx*sc, ey=oy-vy*sc;
-    return '<line x1="'+ox+'" y1="'+oy+'" x2="'+ex.toFixed(1)+'" y2="'+ey.toFixed(1)+'" stroke="'+col+'" stroke-width="'+w+'" marker-end="url(#m'+col.replace('#','')+')"/>'+
-      (lab?'<text x="'+(ex+(vx>=0?5:-5)).toFixed(1)+'" y="'+(ey-3).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+col+'">'+lab+'</text>':'');
+
+// Thanh HAI CHIỀU (−max…0…+max, gốc giữa) — dùng cho cosine (có thể âm).
+// fill=false → chỉ vạch mốc, chừa trống cho người học tô bút chì (ĐỀ).
+function drawBar(id, v, max, fill){
+  var el = document.getElementById(id); if(!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if (fill && v !== 0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v > 0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+               : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  var s='<defs>'+mk('#0e7490')+mk('#b45309')+mk('#7c5cff')+'</defs>';
-  s+='<line x1="16" y1="'+oy+'" x2="184" y2="'+oy+'" stroke="#e8e8e8" stroke-width="1"/>';
-  s+='<line x1="'+ox+'" y1="14" x2="'+ox+'" y2="156" stroke="#e8e8e8" stroke-width="1"/>';
-  for(var i=0;i<3;i++){ var hot=(i===bi); s+=arrow(d[i][0],d[i][1], hot?'#7c5cff':'#b45309', hot?2.4:1.4, 'd'+(i+1)); }
-  s+=arrow(q[0],q[1],'#0e7490',2.4,'q');
-  svg.innerHTML=s;
+  el.innerHTML = h;
 }
+
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho ‖q̂−d̂‖² (chỉ dương/0).
+function drawBarUni(id, v, max, fill){
+  var el = document.getElementById(id); if(!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if (fill && v > 0){
+    var pct = Math.min(v/max, 1) * 100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
+  }
+  el.innerHTML = h;
+}
+
+// Hộp giá trị của sơ đồ: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var stroke = filled?ORG:INK, fill = filled?'#fff8f0':'#fff';
+  var dash = filled?'':' stroke-dasharray="3 2"';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(filled?1.2:1.4)+'"'+dash+'/>';
+  if (filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ 3 stage: ① q·dᵢ (3 hàng) → ② cosine ÷25 (3 hàng) → ③ chọn top-1 (1 hàng). showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawPipe(id, showAns){
+  var svg = document.getElementById(id); if(!svg) return;
+  var fI = WB.fmtInt, f2 = WB.fmt2, DIM='#6b7280', INK='#16202e';
+  var s = '<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+        + '<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  var Ax=4, Aw=180, Bx=200, Bw=180, Cx=396, Cw=152;
+
+  s += '<text x="'+(Ax+Aw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">① q·dᵢ</text>';
+  for (var i=0;i<3;i++){
+    var ry = 22 + i*24;
+    s += '<text x="'+(Ax+2)+'" y="'+(ry+11)+'" font-size="7.6" fill="'+DIM+'">'+DLAB[i+1]+'</text>';
+    s += stageBox(Ax+Aw-46, ry, 44, 17, fI(S.dots ? S.dots[i] : 0), showAns);
+  }
+
+  s += '<line x1="'+(Ax+Aw+1)+'" y1="47" x2="'+(Bx-1)+'" y2="47" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s += '<text x="'+((Ax+Aw+Bx)/2)+'" y="41" text-anchor="middle" font-size="7.4" fill="'+DIM+'">÷25</text>';
+
+  s += '<text x="'+(Bx+Bw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">② cosine</text>';
+  for (var j=0;j<3;j++){
+    var ry2 = 22 + j*24;
+    s += '<text x="'+(Bx+2)+'" y="'+(ry2+11)+'" font-size="7.6" fill="'+DIM+'">'+DLAB[j+1]+'</text>';
+    s += stageBox(Bx+Bw-46, ry2, 44, 17, f2(S.cos ? S.cos[j] : 0), showAns);
+  }
+
+  s += '<line x1="'+(Bx+Bw+1)+'" y1="47" x2="'+(Cx-1)+'" y2="47" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s += '<text x="'+((Bx+Bw+Cx)/2)+'" y="41" text-anchor="middle" font-size="7.4" fill="'+DIM+'">top-1</text>';
+
+  s += '<text x="'+(Cx+Cw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">③ chọn</text>';
+  s += '<text x="'+(Cx+2)+'" y="58" font-size="7.6" fill="'+DIM+'">tài liệu</text>';
+  s += stageBox(Cx+Cw-58, 47, 56, 17, S.bestIdx!==undefined ? DLAB[S.bestIdx+1] : '?', showAns);
+
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D11 — Momentum (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,119 +25,146 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D11</span><h1>Momentum <small>— quán tính cho gradient</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> SGD thuần dao động mạnh ở "thung lũng hẹp" (dốc đứng một chiều, thoải chiều kia). Momentum <b>tích lũy</b>
-    hướng đi → lăn nhanh dọc thung lũng, triệt tiêu dao động ngang → hội tụ nhanh và êm hơn.
-    <div class="formula">
-      v ← β·v + g &nbsp;&nbsp; w ← w − η·v &nbsp;&nbsp; (β ≈ 0.9, v khởi tạo 0)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài D11</span>
+    <h1>Momentum <small>— cộng dồn đà cho gradient</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>viên bi có khối lượng</b> lăn xuống dốc: không đổi hướng tức thì theo mỗi gradient mà <b>giữ đà</b> từ các bước trước. Hướng
-    đi nhất quán được cộng dồn (nhanh dần); hướng đổi qua-lại bị <b>triệt tiêu</b>.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> SGD thuần dao động mạnh ở "thung lũng hẹp". Momentum giữ một <b>vận tốc</b> v tích lũy hướng đi — như viên bi có khối lượng lăn xuống dốc: giữ đà, không đổi hướng tức thì.
+    Hãy <b>tự tay</b> lăn 3 bước và xem đà lớn dần. Phần thưởng: tính <b>tốc độ tối đa</b> khi đà bão hòa — nhanh gấp 1/(1−β) lần SGD.
+    <div class="formula" style="margin-top:5px">
+      v ← β·v + g &nbsp;·&nbsp; w ← w − η·v &nbsp;·&nbsp; (v₀ = 0)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">β=0.9, η=<span data-q="eta">0.1</span></span></div>
-    <div class="calc" style="font-size:14.5px">
-      w₀ = <span class="gv" data-q="w0">1.0</span> ; β = <span class="gv" data-q="beta">0.9</span> ; η = <span class="gv" data-q="eta">0.1</span> ;
-      gradient g₁ = g₂ = g₃ = <span class="gv" data-q="g">2</span> ; vận tốc v₀ = 0
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn (gradient giữ nguyên mỗi bước)</h2><span class="tag">β = 0.9</span></div>
+    <div class="calc big">
+      w₀ = <span class="gv" data-q="w0">1.0</span> &nbsp;·&nbsp; β = <span class="gv" data-q="beta">0.9</span> &nbsp;·&nbsp; η = <span class="gv" data-q="eta">0.1</span> &nbsp;·&nbsp; g₁ = g₂ = g₃ = <span class="gv" data-q="g">2</span> &nbsp;·&nbsp; v₀ = 0
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Bước 1</h2><span class="tag">chưa có đà</span></div>
-    <div class="calc">
-      v₁ = <span data-q="beta">0.9</span>·0 + <span data-q="g">2</span> = <span class="blk" style="min-width:34px"></span> ;
-      w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·v₁ = <span class="blk" style="min-width:44px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Bước 1 — chưa có đà</h2><span class="tag">v₀ = 0</span></div>
+    <div class="calc big">
+      v₁ = <span data-q="beta">0.9</span>·0 + <span data-q="g">2</span> = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·v₁ = <span class="wcell" style="min-width:46px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> bước đầu giống SGD vì chưa có đà tích lũy (v₀ = 0).</div>
+    <div class="why"><b>Vì sao:</b> bước đầu giống hệt SGD vì chưa có đà tích lũy (v₀ = 0).</div>
   </div>
 
-  <!-- BƯỚC 2 -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Bước 2</h2><span class="tag">tăng tốc</span></div>
-    <div class="calc">
-      v₂ = <span data-q="beta">0.9</span>·v₁ + <span data-q="g">2</span> = <span class="blk" style="min-width:40px"></span> ;
-      w₂ = w₁ − <span data-q="eta">0.1</span>·v₂ = <span class="blk" style="min-width:46px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Bước 2 — tăng tốc</h2><span class="tag">cộng đà cũ</span></div>
+    <div class="calc big">
+      v₂ = <span data-q="beta">0.9</span>·v₁ + <span data-q="g">2</span> = <span class="wcell" style="min-width:40px"></span> &nbsp;·&nbsp;
+      w₂ = w₁ − <span data-q="eta">0.1</span>·v₂ = <span class="wcell" style="min-width:48px"></span>
     </div>
-    <div class="hint">v lớn dần khi gradient cùng dấu → bước ngày càng dài (tăng tốc).</div>
+    <div class="hint">v lớn dần khi gradient cùng dấu → bước ngày càng dài. Dùng v₁ ở Bước 1.</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Bước 3</h2><span class="tag">quán tính</span></div>
-    <div class="calc">
-      v₃ = <span data-q="beta">0.9</span>·v₂ + <span data-q="g">2</span> = <span class="blk" style="min-width:44px"></span> ;
-      w₃ = w₂ − <span data-q="eta">0.1</span>·v₃ = <span class="blk" style="min-width:46px"></span>
+    <div class="step-h"><div class="b">3</div><h2>Bước 3 — quán tính</h2><span class="tag">đà cộng dồn</span></div>
+    <div class="calc big">
+      v₃ = <span data-q="beta">0.9</span>·v₂ + <span data-q="g">2</span> = <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp;
+      w₃ = w₂ − <span data-q="eta">0.1</span>·v₃ = <span class="wcell" style="min-width:48px"></span>
     </div>
     <div class="why"><b>Vì sao:</b> cùng gradient 2 nhưng bước ngày càng dài — đó chính là quán tính tích lũy.</div>
   </div>
 
-  <!-- BƯỚC 4 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D11 · Momentum</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Momentum — đà bão hòa = tổng cấp số nhân</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D11</span>
+    <h1>Momentum <small>— tốc độ tối đa nhanh gấp 1/(1−β) lần</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: cấp số nhân → vận tốc bão hòa -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Dập dao động</h2><span class="tag">triệt tiêu ngang</span></div>
-    <div class="note">Nếu gradient đổi dấu liên tục (+2, −2, +2…), v gần như <b>triệt tiêu</b> → không dao động. Momentum vừa <b>tăng tốc</b>
-      hướng ổn định vừa <b>làm êm</b> hướng nhiễu.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đà lớn tới đâu?</h2><span class="tag">cấp số nhân</span></div>
+    <div class="note" style="margin-top:0">
+      Với gradient <b>không đổi</b> g, mở v ra: v = g + βg + β²g + … = g·(1 + β + β² + …). Đây là <b>tổng cấp số nhân</b> vô hạn, bằng
+      <b>g / (1 − β)</b>. Vận tốc <b>bão hòa</b> tại đó (v mới = v cũ):
+    </div>
+    <div class="calc big">
+      1 / (1 − <span data-q="beta">0.9</span>) = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      v<sub>∞</sub> = <span data-q="g">2</span> / (1 − <span data-q="beta">0.9</span>) = <span class="wcell" style="min-width:40px"></span><br>
+      bước tối đa = η·v<sub>∞</sub> = <span class="wcell" style="min-width:44px"></span>
+      &nbsp;<small style="color:#7a8794">— gấp mấy lần bước SGD (η·g)?</small>
+    </div>
+    <div class="note">Kiểm bão hòa: v = 0.9·v + g ⇒ 0.1·v = g ⇒ v = g/0.1 = <b>10g</b>. Dọc một triền dốc nhất quán, Momentum cuối cùng đi <b>gấp 1/(1−β) = 10 lần</b> SGD.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Mặt còn lại — dập dao động</h2><span class="tag">triệt tiêu ngang</span></div>
+    <div class="note" style="margin-top:2px">Nếu gradient đổi dấu liên tục (+g, −g, +g…) thì các số hạng <b>triệt tiêu</b> nhau → v ≈ 0, không dao động. Vậy Momentum vừa <b>tăng tốc</b>
+      hướng nhất quán vừa <b>làm êm</b> hướng nhiễu — một mũi tên trúng hai đích.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Momentum tích lũy cái gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Khi gradient đổi dấu liên tục, v ra sao? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Vận tốc v tích lũy cái gì? → <span class="blk" style="min-width:140px"></span></li>
+      <li>Với g cố định, v bão hòa bằng? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D11 · Momentum</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — nhân β &amp; cộng đà ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Lăn 3 bước</span>
+    <span><span class="ck"></span>Tính đà bão hòa</span>
+    <span class="win">🎉 Bạn vừa cho gradient một khối lượng!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D11 · Momentum</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D11</span><h1>Momentum <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D11</span><h1>Momentum <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Bước 1</h2></div>
-    <div class="calc ans">
-      v₁ = <span data-q="g">2</span> ; w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="v1">2</span> = <span class="blk" data-q="w1">0.8</span>
-    </div>
+    <div class="calc ans">v₁ = <span data-q="g">2</span> &nbsp;·&nbsp; w₁ = <span data-q="w0">1.0</span> − <span data-q="eta">0.1</span>·<span data-q="v1">2</span> = <span class="wcell ans" data-q="w1">0.8</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Bước 2</h2></div>
-    <div class="calc ans">
-      v₂ = 0.9·<span data-q="v1">2</span> + <span data-q="g">2</span> = <span class="blk" data-q="v2">3.8</span> ;
-      w₂ = <span data-q="w1">0.8</span> − 0.1·<span data-q="v2">3.8</span> = <span class="blk" data-q="w2">0.42</span>
-    </div>
+    <div class="calc ans">v₂ = 0.9·<span data-q="v1">2</span> + <span data-q="g">2</span> = <span class="wcell ans" data-q="v2">3.8</span> &nbsp;·&nbsp; w₂ = <span data-q="w1">0.8</span> − <span data-q="eta">0.1</span>·<span data-q="v2">3.8</span> = <span class="wcell ans" data-q="w2">0.42</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Bước 3</h2></div>
-    <div class="calc ans">
-      v₃ = 0.9·<span data-q="v2">3.8</span> + <span data-q="g">2</span> = <span class="blk" data-q="v3">5.42</span> ;
-      w₃ = <span data-q="w2">0.42</span> − 0.1·<span data-q="v3">5.42</span> = <span class="blk" data-q="w3">−0.12</span>
-    </div>
+    <div class="calc ans">v₃ = 0.9·<span data-q="v2">3.8</span> + <span data-q="g">2</span> = <span class="wcell ans" data-q="v3">5.42</span> &nbsp;·&nbsp; w₃ = <span data-q="w2">0.42</span> − <span data-q="eta">0.1</span>·<span data-q="v3">5.42</span> = <span class="wcell ans" data-q="w3">−0.12</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>SGD răng cưa vs Momentum mượt</h2><span class="tag">thung lũng</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Đà bão hòa = tổng cấp số nhân</h2><span class="tag">×1/(1−β)</span></div>
     <div class="figrow">
-      <svg id="figV" class="fig" viewBox="0 0 210 150" width="66mm" height="46mm" aria-label="trong thung lũng hẹp: SGD dao động ngang, momentum lăn mượt dọc đáy"></svg>
+      <svg id="figV" class="fig" viewBox="0 0 220 140" width="66mm" height="42mm" aria-label="cột vận tốc v lớn dần qua các bước rồi bằng phẳng tại giá trị bão hòa g chia một trừ beta"></svg>
       <div style="flex:1">
-        <div class="note">Trong thung lũng hẹp: <b>SGD (cam)</b> dao động ngang qua-lại; <b>Momentum (lam)</b> triệt tiêu dao động, lăn nhanh
-          dọc đáy. v tăng dần → bước dài dần theo hướng ổn định.</div>
+        <div class="calc ans">1/(1−0.9) = <span class="wcell ans" data-q="amp">10</span> &nbsp;·&nbsp; v<sub>∞</sub> = <span class="wcell ans" data-q="vinf">20</span> &nbsp;·&nbsp; bước tối đa = <span class="wcell ans" data-q="stepmax">2</span></div>
+        <div class="note">v tăng 2 → 3.8 → 5.42 → … tiến tới <b>trần</b> v<sub>∞</sub> = g/(1−β). Bước tối đa η·v<sub>∞</sub> gấp <b>10 lần</b> bước SGD (η·g) — đó là vì sao Momentum nhanh hơn.</div>
       </div>
     </div>
   </div>
@@ -151,16 +173,16 @@
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>Tích lũy gì? → <span class="qa">Trung bình trượt của gradient (vận tốc v).</span></li>
-      <li>Gradient đổi dấu liên tục? → <span class="qa">v bị triệt tiêu → dập dao động.</span></li>
+      <li>v bão hòa? → <span class="qa">g/(1−β) = 10g khi β = 0.9 (tổng cấp số nhân).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Momentum: v ← βv + g, w ← w − ηv; tăng tốc hướng nhất quán, dập dao động. Nhưng mọi tham số dùng chung η →
-    Bài tiếp (D12): <b>RMSProp</b> chia tỉ lệ học theo từng tham số.
+    <b style="color:var(--accent2)">Rút ra.</b> Momentum: v ← βv + g, w ← w − ηv; đà bão hòa g/(1−β) → tăng tốc hướng nhất quán, dập dao động ngang.
+    Nhưng mọi tham số vẫn dùng chung η → Bài D12: <b>RMSProp</b> chỉnh bước riêng theo từng chiều.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D11 · Momentum</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D11 · Momentum</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -176,34 +198,39 @@ function generate(){
   var w1 = Math.round((w0 - eta*v1)*100)/100;
   var w2 = Math.round((w1 - eta*v2)*100)/100;
   var w3 = Math.round((w2 - eta*v3)*100)/100;
+  var amp = 10;                          // 1/(1−0.9)
+  var vinf = g*amp;                      // g/(1−β)
+  var stepmax = Math.round(eta*vinf*100)/100;   // η·v∞ = amp·(η·g)
 
   WB.setAll({
     w0: ft(w0), beta: '0.9', eta: ft(eta), g: ft(g),
     v1: ft(v1), v2: ft(v2), v3: ft(v3),
-    w1: ft(w1), w2: ft(w2), w3: ft(w3)
+    w1: ft(w1), w2: ft(w2), w3: ft(w3),
+    amp: ft(amp), vinf: ft(vinf), stepmax: ft(stepmax)
   });
-  drawValley('figV');
+  drawRamp('figV', [v1, v2, v3], vinf);
 }
 
-// thung lũng hẹp: SGD răng cưa (cam) vs momentum mượt (lam)
-function drawValley(id){
+// cột vận tốc lớn dần rồi bằng phẳng tại trần v∞
+function drawRamp(id, vs, vinf){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var X0 = 14, X1 = 196, midY = 78;
-  var s = '';
-  // hai vách thung lũng (parabol ngang) — minh họa
-  s += '<path d="M'+X0+',18 Q'+((X0+X1)/2)+',132 '+X1+',18" fill="none" stroke="#e3e7ea" stroke-width="1.4"/>';
-  s += '<path d="M'+X0+',30 Q'+((X0+X1)/2)+',128 '+X1+',30" fill="none" stroke="#eef0f2" stroke-width="1"/>';
-  // SGD răng cưa (cam): dao động ngang trong khi tiến chậm
-  var sx = 30, d = 'M'+sx+',40';
-  var ys = [40, 96, 50, 92, 58, 90, 66, 88];
-  var step = 20;
-  for (var i = 0; i < ys.length; i++) d += ' L'+(sx + i*step)+','+ys[i];
-  s += '<path d="'+d+'" fill="none" stroke="#b45309" stroke-width="1.6"/>';
-  // Momentum mượt (lam): theo đáy
-  s += '<path d="M30,70 Q90,104 186,76" fill="none" stroke="#0e7490" stroke-width="2.4"/>';
-  s += '<text x="40" y="34" style="font-size:8px" fill="#b45309" font-weight="700">SGD</text>';
-  s += '<text x="120" y="98" style="font-size:8px" fill="#0e7490" font-weight="700">Momentum</text>';
+  var x0 = 20, y0 = 116, H = 92, bw = 26, gap = 44;
+  var capY = y0 - H;                     // đường trần v∞
+  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+4.4*gap)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
+  // đường trần v∞ (nét đứt)
+  s += '<line x1="'+x0+'" y1="'+capY+'" x2="'+(x0+4.4*gap)+'" y2="'+capY+'" stroke="#b45309" stroke-width="1.3" stroke-dasharray="4 3"/>';
+  s += '<text x="'+(x0+4.4*gap)+'" y="'+(capY-3)+'" text-anchor="end" style="font-size:7.5px" fill="#b45309" font-weight="700">v∞ = g/(1−β)</text>';
+  var labels = ['v₁','v₂','v₃'];
+  for (var i = 0; i < 3; i++){
+    var bx = x0 + 14 + i*gap, h = vs[i]/vinf*H;
+    s += '<rect x="'+bx+'" y="'+(y0-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="#0e749033" stroke="#0e7490" stroke-width="1.5"/>';
+    s += '<text x="'+(bx+bw/2)+'" y="'+(y0+12)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">'+labels[i]+'</text>';
+  }
+  // cột "…" tiến tới trần
+  var bx4 = x0 + 14 + 3*gap;
+  s += '<rect x="'+bx4+'" y="'+capY+'" width="'+bw+'" height="'+H+'" fill="#0e749022" stroke="#0e7490" stroke-width="1.2" stroke-dasharray="3 2"/>';
+  s += '<text x="'+(bx4+bw/2)+'" y="'+(y0+12)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">v∞</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

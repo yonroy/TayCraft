@@ -3,18 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài E7 — LayerNorm / RMSNorm (A4 in được)</title>
+<title>Làm toán AI · Bài E7 — LayerNorm (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,167 +25,238 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— chuẩn hóa trong một mẫu</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài E7</span>
+    <h1>LayerNorm <small>— chuẩn hóa trong MỘT mẫu</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> BatchNorm cần batch lớn & cố định → kẹt với chuỗi độ dài thay đổi (NLP). LayerNorm chuẩn hóa <b>mỗi token tự thân</b>
-    → hoạt động với batch=1, độ dài bất kỳ. Mọi Transformer đều dùng nó để train ổn định, sâu.
-    <div class="formula">
-      μ, σ trên các ĐẶC TRƯNG của một mẫu · x̂ = (x − μ)/√(σ²+ε) · y = γ·x̂ + β &nbsp;·&nbsp; RMSNorm: y = γ·x/√(mean(x²)+ε)
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> BatchNorm (Bài E6) cần thống kê <b>qua cả batch</b> → kẹt khi batch nhỏ hoặc chuỗi độ dài đổi (NLP/RNN).
+    LayerNorm né vấn đề đó: chuẩn hóa <b>một mẫu tự thân</b> — μ, σ tính trên chính các đặc trưng của mẫu ấy, không cần nhìn mẫu khác.
+    Hãy tự tay tính μ, σ, x̂, y — rồi ở Bước tự-kiểm, xem điều gì xảy ra khi bạn kéo/giãn <b>cả vectơ đặc trưng</b> của một mẫu.
+    <div class="formula" style="margin-top:5px">
+      μ, σ trên 4 đặc trưng của MỘT mẫu &nbsp;·&nbsp; x̂ = (x − μ)/σ &nbsp;·&nbsp; y = γ·x̂ + β &nbsp;(γ, β học được, mỗi đặc trưng riêng)
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Với <b>từng token</b>, đặt lại thước: kéo vectơ đặc trưng về trung bình 0, độ trải 1, rồi cho γ, β chỉnh lại. Khác BatchNorm (so các mẫu
-    với nhau), LayerNorm <b>chỉ nhìn bên trong một mẫu</b> → không lệ thuộc bạn cùng batch.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">d=2 đặc trưng</span></div>
-    <div class="calc" style="font-size:15px">Một mẫu x = ( <span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">4</span> ); γ = (<span class="gv" data-q="g1">1</span>, <span class="gv" data-q="g2">1</span>), β = (<span class="gv" data-q="b1">0</span>, <span class="gv" data-q="b2">0</span>); ε bỏ qua.</div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Trung bình & độ lệch (qua đặc trưng)</h2><span class="tag">μ, σ</span></div>
-    <div class="calc">
-      μ = (<span data-q="x1">2</span>+<span data-q="x2">4</span>)/2 = <span class="blk" style="min-width:34px"></span> · σ² = ((x₁−μ)²+(x₂−μ)²)/2 = <span class="blk" style="min-width:34px"></span> → σ = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 mẫu · 4 đặc trưng</span></div>
+    <div class="calc big">
+      x = (<span class="gv" data-q="x1">1</span>, <span class="gv" data-q="x2">1</span>, <span class="gv" data-q="x3">7</span>, <span class="gv" data-q="x4">7</span>) &nbsp;·&nbsp;
+      γ = (<span class="gv" data-q="g1">2</span>, <span class="gv" data-q="g2">1</span>, <span class="gv" data-q="g3">1</span>, <span class="gv" data-q="g4">2</span>), β = (<span class="gv" data-q="b1">0</span>, <span class="gv" data-q="b2">1</span>, <span class="gv" data-q="b3">−1</span>, <span class="gv" data-q="b4">0</span>)
     </div>
-    <div class="why"><b>Vì sao:</b> thống kê <b>trên 2 đặc trưng của chính mẫu này</b>, không liên quan mẫu khác (≠ BatchNorm).</div>
+    <div class="note">4 giá trị này là 4 <b>đặc trưng của CÙNG MỘT mẫu</b> (không phải 4 mẫu khác nhau). Bỏ qua ε.</div>
   </div>
 
-  <!-- BƯỚC 2 -->
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Trung bình &amp; độ lệch chuẩn của mẫu</h2><span class="tag">μ, σ</span></div>
+    <div class="calc big">
+      μ = (x₁+x₂+x₃+x₄)/4 = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      σ² = Σ(x−μ)²/4 = <span class="wcell" style="min-width:40px"></span> → σ = <span class="wcell" style="min-width:34px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> thống kê tính <b>trên 4 đặc trưng của chính mẫu này</b>, không đụng tới mẫu khác trong batch (≠ BatchNorm).</div>
+  </div>
+
+  <!-- STEP 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa</h2><span class="tag">x̂ = (x−μ)/σ</span></div>
-    <div class="calc">x̂ = (x − <span data-q="mu">3</span>)/<span data-q="sigma">1</span> = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )</div>
-    <div class="hint">chọn d=2 → x̂ luôn ra ±1 (mẹo tính tay).</div>
+    <div class="calc big">
+      x̂ = (<span class="wcell" style="min-width:32px"></span>, <span class="wcell" style="min-width:32px"></span>, <span class="wcell" style="min-width:32px"></span>, <span class="wcell" style="min-width:32px"></span>)
+    </div>
+    <div class="hint">Mọi đặc trưng giờ có μ = 0, σ = 1 — "cùng thước" trong nội bộ một mẫu.</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Co & dịch</h2><span class="tag">y = γ·x̂ + β</span></div>
-    <div class="calc">y = γ·x̂ + β = (<span data-q="g1">1</span>·x̂₁+<span data-q="b1">0</span>, <span data-q="g2">1</span>·x̂₂+<span data-q="b2">0</span>) = ( <span class="blk" style="min-width:36px"></span>, <span class="blk" style="min-width:36px"></span> )</div>
-    <div class="why"><b>Vì sao:</b> γ, β học được cho mạng quyền chỉnh lại phân phối sau chuẩn hóa (nếu cần độ trải/độ dịch khác).</div>
+    <div class="step-h"><div class="b">3</div><h2>Co &amp; dịch</h2><span class="tag">y = γ·x̂ + β</span></div>
+    <div class="calc big">
+      y = (<span class="wcell" style="min-width:36px"></span>, <span class="wcell" style="min-width:36px"></span>, <span class="wcell" style="min-width:36px"></span>, <span class="wcell" style="min-width:36px"></span>)
+    </div>
+    <div class="why"><b>Vì sao:</b> γ, β <b>học được cho mỗi đặc trưng</b> → mạng tự chọn lại độ trải/độ dịch nếu cần.</div>
   </div>
 
-  <!-- BƯỚC 4 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>LayerNorm có "quên" gì khi cả mẫu bị kéo/giãn?</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E7</span>
+    <h1>LayerNorm <small>— bất biến affine &amp; độc lập batch</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — so sánh LN vs BN -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>RMSNorm (biến thể gọn)</h2><span class="tag">bỏ trừ μ</span></div>
-    <div class="calc">mean(x²) = (<span data-q="x1">2</span>²+<span data-q="x2">4</span>²)/2 = <span class="blk" style="min-width:36px"></span> → √ = <span class="blk" style="min-width:40px"></span> · y = x/√ = ( <span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:44px"></span> )</div>
-    <div class="note">RMSNorm <b>bỏ bước trừ μ</b> (chỉ chia RMS) → rẻ hơn, dùng trong LLaMA.</div>
+    <div class="step-h"><div class="b">4</div><h2>LayerNorm so với BatchNorm</h2><span class="tag">trục nào?</span></div>
+    <div class="note" style="margin-top:0">LayerNorm chuẩn hóa <b>theo các đặc trưng của một mẫu</b> (hàng) — không cần nhìn mẫu khác.
+      BatchNorm (Bài E6) chuẩn hóa <b>theo các mẫu trong batch</b> (cột) — cần batch đủ lớn &amp; cố định. Vì độc lập batch,
+      LayerNorm hợp Transformer/RNN: batch=1 hay độ dài chuỗi đổi vẫn tính được.</div>
+  </div>
+
+  <!-- STEP 5 — TỰ KIỂM lõi: bất biến affine -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — LayerNorm bất biến với affine toàn vectơ?</h2><span class="tag">x' = a·x + b</span></div>
+    <div class="note" style="margin-top:0">
+      Lấy <b>a = <span class="gv" data-q="a">2</span></b>, <b>b = <span class="gv" data-q="bb">1</span></b>, áp <b>CÙNG a, b cho cả 4 đặc trưng</b>: x' = a·x + b. Tính lại μ', σ', x̂' rồi so với x̂ ở Bước 2:
+    </div>
+    <div class="calc big">
+      x' = a·x + b = (<span class="wcell" style="min-width:30px"></span>, <span class="wcell" style="min-width:30px"></span>, <span class="wcell" style="min-width:30px"></span>, <span class="wcell" style="min-width:30px"></span>)<br>
+      μ' = <span class="wcell" style="min-width:32px"></span> &nbsp;·&nbsp; σ' = <span class="wcell" style="min-width:32px"></span> &nbsp;→&nbsp;
+      x̂' = (<span class="wcell" style="min-width:30px"></span>, <span class="wcell" style="min-width:30px"></span>, <span class="wcell" style="min-width:30px"></span>, <span class="wcell" style="min-width:30px"></span>)
+    </div>
+    <div class="hint">So x̂' vừa tính với x̂ ở Bước 2 — TRÙNG hay khác?</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>LayerNorm tính μ, σ theo chiều nào? → <span class="blk" style="min-width:170px"></span></li>
-      <li>RMSNorm khác LayerNorm ở đâu? → <span class="blk" style="min-width:150px"></span></li>
+      <li>LayerNorm bất biến với phép biến đổi nào của x? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Vì sao LayerNorm không cần biết mẫu khác trong batch? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm / RMSNorm</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — tính a·x+b rồi μ', σ', x̂' ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính μ, σ, x̂, y</span>
+    <span><span class="ck"></span>Kiểm bất biến affine</span>
+    <span class="win">🎉 Bạn vừa thấy LayerNorm "phớt lờ" scale/dịch toàn cục!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm / RMSNorm <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E7</span><h1>LayerNorm <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>μ, σ</h2></div>
-    <div class="calc ans">μ = (<span data-q="x1">2</span>+<span data-q="x2">4</span>)/2 = <span class="blk" data-q="mu">3</span> · σ² = <span class="blk" data-q="var">1</span> → σ = <span class="blk" data-q="sigma">1</span></div>
+    <div class="calc ans">μ = <span class="wcell ans" data-q="mu">4</span> · σ² = <span class="wcell ans" data-q="var">9</span> → σ = <span class="wcell ans" data-q="sigma">3</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chuẩn hóa</h2></div>
-    <div class="calc ans">x̂ = ( <span class="blk" data-q="xh1">−1</span>, <span class="blk" data-q="xh2">1</span> )</div>
+    <div class="step-h"><div class="b">2</div><h2>x̂</h2></div>
+    <div class="calc ans">(<span class="wcell ans" data-q="xh1">−1</span>, <span class="wcell ans" data-q="xh2">−1</span>, <span class="wcell ans" data-q="xh3">1</span>, <span class="wcell ans" data-q="xh4">1</span>)</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Co & dịch</h2></div>
-    <div class="calc ans">y = ( <span class="blk" data-q="y1">−1</span>, <span class="blk" data-q="y2">1</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>RMSNorm</h2></div>
-    <div class="calc ans">mean(x²) = <span class="blk" data-q="msq">10</span> → √ = <span class="blk" data-q="rms">3.16</span> · y = ( <span class="blk" data-q="ry1">0.63</span>, <span class="blk" data-q="ry2">1.27</span> )</div>
+    <div class="step-h"><div class="b">3</div><h2>y = γ·x̂ + β</h2></div>
+    <div class="calc ans">(<span class="wcell ans" data-q="y1">−2</span>, <span class="wcell ans" data-q="y2">0</span>, <span class="wcell ans" data-q="y3">0</span>, <span class="wcell ans" data-q="y4">2</span>)</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Vectơ đặc trưng → chuẩn hóa</h2><span class="tag">về μ=0, σ=1</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>4 đặc trưng của 1 mẫu → chuẩn hóa → co/dịch</h2><span class="tag">1 hàng, không phải 1 cột</span></div>
     <div class="figrow">
-      <svg id="figLN" class="fig" viewBox="0 0 220 110" width="70mm" height="34mm" aria-label="vectơ đặc trưng lệch được kéo về trung bình 0 độ trải 1"></svg>
+      <svg id="figLN" class="fig" viewBox="0 0 260 150" width="76mm" height="42mm" aria-label="4 đặc trưng của một mẫu lệch, sau chuẩn hóa quanh 0, sau co dịch theo gamma beta"></svg>
       <div style="flex:1">
-        <div class="note">Trái = x gốc (lệch quanh μ); phải = x̂ quanh 0 (một ô xuống, một ô lên). γ, β co/dịch lại nếu cần. RMSNorm bỏ bước trừ μ → chỉ
-          chia RMS, giữ hướng vectơ.</div>
+        <div class="note">Trái = x gốc (4 đặc trưng, lệch quanh μ). Giữa = x̂ (quanh <b>0</b>, độ trải <b>1</b>). Phải = y = γ·x̂+β
+          (co/dịch riêng từng đặc trưng). Trục ở đây là <b>4 ĐẶC TRƯNG của MỘT mẫu (hàng)</b> — khác BatchNorm (Bài E6)
+          chuẩn hóa theo <b>CỘT</b> (nhiều mẫu, một đặc trưng).</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Tự kiểm — bất biến affine toàn vectơ</h2><span class="tag">x' = a·x+b, a&gt;0</span></div>
+    <div class="calc ans">
+      x' = (<span class="wcell ans" data-q="xp1">3</span>, <span class="wcell ans" data-q="xp2">3</span>, <span class="wcell ans" data-q="xp3">15</span>, <span class="wcell ans" data-q="xp4">15</span>)<br>
+      μ' = <span class="wcell ans" data-q="mup">9</span> · σ' = <span class="wcell ans" data-q="sigmap">6</span> →
+      x̂' = (<span class="wcell ans" data-q="xhp1">−1</span>, <span class="wcell ans" data-q="xhp2">−1</span>, <span class="wcell ans" data-q="xhp3">1</span>, <span class="wcell ans" data-q="xhp4">1</span>) = <b>TRÙNG x̂ ở Bước 2!</b>
+    </div>
+    <div class="why"><b>Vì sao:</b> x̂'ᵢ = (a·xᵢ+b − (a·μ+b))/(a·σ) = a·(xᵢ−μ)/(a·σ) = (xᵢ−μ)/σ = x̂ᵢ — hệ số <b>a</b> và độ dịch <b>b</b> triệt tiêu hoàn toàn.
+      LayerNorm bất biến với dịch/scale toàn cục của MỘT mẫu, và hoàn toàn độc lập với các mẫu khác trong batch.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>μ, σ theo chiều nào? → <span class="qa">Qua các đặc trưng của MỘT mẫu (không theo batch).</span></li>
-      <li>RMSNorm khác? → <span class="qa">Bỏ trừ trung bình, chỉ chia RMS → gọn hơn.</span></li>
+      <li>Bất biến với gì? → <span class="qa">x → a·x+b (a&gt;0) áp cho CẢ vectơ đặc trưng của 1 mẫu — x̂ không đổi.</span></li>
+      <li>Vì sao không cần batch? → <span class="qa">μ, σ chỉ tính trên đặc trưng của CHÍNH mẫu đó, không qua mẫu khác → độc lập batch.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> LayerNorm chuẩn hóa trong một mẫu → hợp seq/Transformer, batch-độc-lập; RMSNorm gọn hơn.
-    Bài tiếp <b style="color:var(--accent2)">E8</b>: lịch học suất (learning-rate schedule).
+    <b style="color:var(--accent2)">Rút ra.</b> LayerNorm chuẩn hóa trong một mẫu, bất biến với affine toàn cục của mẫu đó, và độc lập hoàn toàn với batch
+    (≠ BatchNorm Bài E6) → hợp Transformer/RNN, batch=1 hay độ dài chuỗi đổi vẫn ổn.
+    Bài E8: lịch học suất (learning-rate schedule).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm / RMSNorm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E7 · LayerNorm</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var fT=WB.fmtTrim, f2=WB.fmt2;
-  // d=2, x1−x2 chẵn để σ nguyên, x̂=±1
-  var pairs=[[2,4],[1,5],[3,1],[6,2],[2,6],[5,1]];
-  var x=WB.pick(pairs), a=x[0], b=x[1];
-  var mu=(a+b)/2, varr=(Math.pow(a-mu,2)+Math.pow(b-mu,2))/2, sigma=Math.sqrt(varr);
-  var xh1=(a-mu)/sigma, xh2=(b-mu)/sigma;
-  var g1=1,g2=1,b1=0,b2=0;
-  var y1=g1*xh1+b1, y2=g2*xh2+b2;
-  var msq=(a*a+b*b)/2, rms=Math.sqrt(msq);
-  var ry1=a/rms, ry2=b/rms;
-  WB.setAll({
-    x1:fT(a), x2:fT(b), g1:fT(g1), g2:fT(g2), b1:fT(b1), b2:fT(b2),
-    mu:fT(mu), var:fT(varr), sigma:fT(sigma),
-    xh1:fT(xh1), xh2:fT(xh2), y1:fT(y1), y2:fT(y2),
-    msq:fT(msq), rms:f2(rms), ry1:f2(ry1), ry2:f2(ry2)
-  });
-  drawLN(a, b, mu, xh1, xh2);
+  var fT=WB.fmtInt;
+  // x = (μ−d, μ−d, μ+d, μ+d) → σ = d (nguyên đẹp), x̂ luôn (−1,−1,1,1)
+  var mu = WB.randInt(3, 6);
+  var d  = WB.pick([2, 3]);
+  var x  = [mu-d, mu-d, mu+d, mu+d];
+  var xh = [-1, -1, 1, 1];
+  var g  = [WB.randInt(1,3), WB.randInt(1,3), WB.randInt(1,3), WB.randInt(1,3)];
+  var b  = [WB.randIntNZ(-2,2), WB.randIntNZ(-2,2), WB.randIntNZ(-2,2), WB.randIntNZ(-2,2)];
+  var y  = xh.map(function(v,i){ return g[i]*v + b[i]; });
+
+  // Tự kiểm: x' = a·x + b (a>0, CÙNG a,b cho cả 4 đặc trưng) → μ'=a·μ+b, σ'=a·d, x̂' = x̂ (bất biến)
+  var a  = WB.pick([2, 3]);
+  var bb = WB.randIntNZ(-4, 4);
+  var xp = x.map(function(v){ return a*v + bb; });
+  var mup = a*mu + bb, sigmap = a*d;
+  var xhp = xh.slice(); // bất biến — trùng x̂ gốc
+
+  var set = {
+    mu: String(mu), var: String(d*d), sigma: String(d),
+    a: String(a), bb: String(bb),
+    mup: String(mup), sigmap: String(sigmap)
+  };
+  for (var k=0;k<4;k++){
+    set['x'+(k+1)]  = String(x[k]);
+    set['g'+(k+1)]  = String(g[k]);
+    set['b'+(k+1)]  = fT(b[k]);
+    set['xh'+(k+1)] = fT(xh[k]);
+    set['y'+(k+1)]  = fT(y[k]);
+    set['xp'+(k+1)] = String(xp[k]);
+    set['xhp'+(k+1)] = fT(xhp[k]);
+  }
+  WB.setAll(set);
+  drawLN('figLN', x, xh, y);
 }
 
-function drawLN(a, b, mu, xh1, xh2){
-  var svg=document.getElementById('figLN'); if(!svg) return;
-  var defs='<defs><marker id="aLN" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
-  var s='';
-  // trái: x gốc (2 cột lam) trên baseline
-  var bx=[18,40], base=78, sc=10;
-  var mx=Math.max(a,b,1);
-  s += '<line x1="10" y1="'+base+'" x2="64" y2="'+base+'" stroke="#c2ccd8" stroke-width="1"/>';
-  [a,b].forEach(function(v,i){ var h=v/mx*52; s += '<rect x="'+bx[i]+'" y="'+(base-h)+'" width="14" height="'+h+'" fill="#d6ecf6" stroke="#0e7490"/><text x="'+(bx[i]+7)+'" y="'+(base-h-2)+'" text-anchor="middle" style="font-size:8px" fill="#0c4a5e">'+v+'</text>'; });
-  s += '<text x="34" y="'+(base+11)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">x gốc (μ='+mu+')</text>';
-  // mũi tên
-  s += '<line x1="74" y1="55" x2="110" y2="55" stroke="#777" stroke-width="1.4" marker-end="url(#aLN)"/>';
-  s += '<text x="92" y="50" text-anchor="middle" style="font-size:8px" fill="#5b6776">(x−μ)/σ</text>';
-  // phải: x̂ quanh 0
-  var cx=[140,166], zero=55, sc2=20;
-  s += '<line x1="120" y1="'+zero+'" x2="200" y2="'+zero+'" stroke="#c2ccd8" stroke-width="1"/>';
-  [xh1,xh2].forEach(function(v,i){ var h=v*sc2; var top=v>=0?zero-h:zero; var hh=Math.abs(h); s += '<rect x="'+cx[i]+'" y="'+top+'" width="14" height="'+hh+'" fill="#ffe6cc" stroke="#b45309"/><text x="'+(cx[i]+7)+'" y="'+(v>=0?top-2:top+hh+9)+'" text-anchor="middle" style="font-size:8px" fill="#7a3d00">'+v+'</text>'; });
-  s += '<text x="160" y="'+(zero+22)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">x̂ quanh 0 (±1)</text>';
-  svg.innerHTML=defs+s;
+// 3 cụm: x gốc (4 đặc trưng, lệch) → x̂ (quanh 0) → y (co/dịch theo γ,β)
+function drawLN(id, x, xh, y){
+  var svg = document.getElementById(id);
+  if (!svg) return;
+  function panel(ox, label, vals, col){
+    var s = '<text x="'+(ox+34)+'" y="14" text-anchor="middle" style="font-size:9px" fill="#475569" font-weight="700">'+label+'</text>';
+    var zero = 70;
+    s += '<line x1="'+(ox+4)+'" y1="'+zero+'" x2="'+(ox+64)+'" y2="'+zero+'" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"/>';
+    s += '<text x="'+(ox+66)+'" y="'+(zero+3)+'" style="font-size:7px" fill="#9aa3ad">0</text>';
+    for (var i=0;i<vals.length;i++){
+      var px = ox+12 + i*13;
+      var py = zero - vals[i]*7;
+      s += '<circle cx="'+px+'" cy="'+py.toFixed(1)+'" r="3.4" fill="'+col+'"/>';
+    }
+    return s;
+  }
+  svg.innerHTML =
+      panel(0,   'x gốc (4 đt)', x,  '#0e7490')
+    + panel(90,  'x̂',            xh, '#475569')
+    + panel(180, 'y=γx̂+β',       y,  '#b45309');
 }
 WB.wire(generate);
 generate();

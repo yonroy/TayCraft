@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài G6 — Bi-directional RNN (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,98 +25,150 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G6</span><h1>Bi-directional RNN <small>— RNN hai chiều</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nghĩa một từ phụ thuộc <b>cả trước lẫn sau</b> ("con <b>ba ba</b>" vs "số <b>ba</b>"). RNN một chiều chỉ thấy quá khứ.
-    Bi-RNN cho mỗi vị trí ngữ cảnh đầy đủ → mạnh cho gán nhãn chuỗi, NER, hiểu câu (không dùng được khi phải sinh tuần tự).
-    <div class="formula">
-      h→<sub>t</sub> = RNN<sub>xuôi</sub>(x<sub>t</sub>, h→<sub>t−1</sub>) · h←<sub>t</sub> = RNN<sub>ngược</sub>(x<sub>t</sub>, h←<sub>t+1</sub>) · h<sub>t</sub> = [h→<sub>t</sub> ; h←<sub>t</sub>]
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài G6</span>
+    <h1>Bi-directional RNN <small>— RNN hai chiều, nhìn cả quá khứ lẫn tương lai</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Một người <b>đọc xuôi</b>, một người <b>đọc ngược</b>; tại mỗi từ, gộp ghi chú của cả hai → hiểu từ đó trong <b>toàn cảnh câu</b>, không chỉ
-    phần đã đọc. (Lấy w=1: h→ là tổng dồn từ trái, h← là tổng dồn từ phải.)
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> RNN một chiều tại vị trí t chỉ biết <b>quá khứ</b> (các bước ≤ t) — nghĩa một từ ("con <b>ba ba</b>" vs "số <b>ba</b>") nhiều khi cần <b>cả từ phía sau</b>.
+    Bi-RNN chạy <b>hai</b> RNN — xuôi (→, đọc trái→phải) và ngược (←, đọc phải→trái) — rồi <b>nối</b> hai trạng thái tại mỗi vị trí. Hãy tự tay chạy cả hai chiều rồi ghép lại.
+    <div class="formula" style="margin-top:5px">
+      h→<sub>t</sub> = RNN<sub>xuôi</sub>(x<sub>t</sub>, h→<sub>t−1</sub>) &nbsp;·&nbsp; h←<sub>t</sub> = RNN<sub>ngược</sub>(x<sub>t</sub>, h←<sub>t+1</sub>) &nbsp;·&nbsp; h<sub>t</sub> = [h→<sub>t</sub> ; h←<sub>t</sub>]
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">chuỗi 3 token · w=1</span></div>
-    <div class="calc" style="font-size:15px">x = ( <span class="gv" data-q="x1">1</span>, <span class="gv" data-q="x2">2</span>, <span class="gv" data-q="x3">3</span> ). Trạng thái: h<sub>t</sub> = w·h<sub>trước</sub> + x<sub>t</sub> với w=1.</div>
+    <div class="calc big">
+      x = ( <span class="gv" data-q="x1">1</span>, <span class="gv" data-q="x2">2</span>, <span class="gv" data-q="x3">3</span> )
+    </div>
+    <div class="note">Đơn giản hoá: trạng thái cộng dồn h<sub>t</sub> = h<sub>trước</sub> + x<sub>t</sub> (w=1, bỏ phi tuyến) — vẫn giữ đúng bản chất "gộp thông tin theo <b>một chiều</b>".</div>
   </div>
 
-  <!-- BƯỚC 1 -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Chạy xuôi h→ (tổng dồn từ trái)</h2><span class="tag">trái → phải</span></div>
-    <div class="calc">
-      h→₁ = x₁ = <span class="blk" style="min-width:34px"></span> · h→₂ = h→₁ + x₂ = <span class="blk" style="min-width:34px"></span> · h→₃ = h→₂ + x₃ = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Chạy xuôi h→ (trái → phải)</h2><span class="tag">chỉ thấy quá khứ</span></div>
+    <div class="calc big">
+      h→₁ = x₁ = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      h→₂ = h→₁ + x₂ = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      h→₃ = h→₂ + x₃ = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> mỗi bước cộng token mới vào trí nhớ → h→ tóm "đã đọc gì từ đầu tới đây".</div>
+    <div class="why"><b>Vì sao:</b> h→ₜ chỉ cộng dồn từ x₁ đến xₜ → nó "mù" với mọi thứ đứng SAU vị trí t.</div>
   </div>
 
-  <!-- BƯỚC 2 -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Chạy ngược h← (tổng dồn từ phải)</h2><span class="tag">phải → trái</span></div>
-    <div class="calc">
-      h←₃ = x₃ = <span class="blk" style="min-width:34px"></span> · h←₂ = h←₃ + x₂ = <span class="blk" style="min-width:34px"></span> · h←₁ = h←₂ + x₁ = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Chạy ngược h← (phải → trái)</h2><span class="tag">chỉ thấy tương lai</span></div>
+    <div class="calc big">
+      h←₃ = x₃ = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      h←₂ = h←₃ + x₂ = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      h←₁ = h←₂ + x₁ = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="hint">chạy từ cuối câu về đầu → h← tóm "còn gì phía sau".</div>
+    <div class="hint">Chạy từ cuối chuỗi ngược về đầu → h←ₜ cộng dồn từ xₜ đến hết chuỗi, "mù" với mọi thứ đứng TRƯỚC vị trí t.</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Ghép hai chiều tại token giữa</h2><span class="tag">kích thước gấp đôi</span></div>
-    <div class="calc">
-      h₂ = [ h→₂ ; h←₂ ] = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
+    <div class="step-h"><div class="b">3</div><h2>Nối 2 hướng tại vị trí giữa (t=2)</h2><span class="tag">h₂ = [h→₂ ; h←₂]</span></div>
+    <div class="calc big">
+      h₂ = ( <span class="wcell" style="min-width:34px"></span>, <span class="wcell" style="min-width:34px"></span> )
     </div>
-    <div class="why"><b>Vì sao:</b> nối nối tiếp → vectơ chứa cả ngữ cảnh trái và phải; chiều <b>gấp đôi</b>. Lớp ra quyết định trên toàn cảnh.</div>
+    <div class="why"><b>Vì sao:</b> nối nối tiếp (không cộng) → vectơ tại t=2 mang <b>cả</b> thông tin bên trái (qua h→) lẫn bên phải (qua h←) — chiều gấp đôi.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G6 · Bi-directional RNN</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mỗi vị trí thấy được cả quá khứ lẫn tương lai</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G6</span>
+    <h1>Bi-directional RNN <small>— tự kiểm: ai đổi, ai không đổi?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM lõi -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đổi từ CUỐI chuỗi, ai đổi ai không?</h2><span class="tag">quá khứ vs tương lai</span></div>
+    <div class="note" style="margin-top:0">Đổi token cuối x₃ → x₃′ = <span class="gv" data-q="x3b">5</span> (x₁, x₂ giữ nguyên). Tính lại h→₂ và h←₂ tại vị trí <b>giữa</b>:</div>
+    <div class="calc big">
+      h→₂ (mới) = x₁ + x₂ = <span class="wcell" style="min-width:34px"></span> &nbsp;<small style="color:#7a8794">(so với Bước 1 — có đổi không?)</small><br>
+      h←₂ (mới) = x₂ + x₃′ = <span class="wcell" style="min-width:34px"></span> &nbsp;<small style="color:#7a8794">(so với Bước 2 — có đổi không?)</small>
+    </div>
+    <div class="note">h→₂ chỉ phụ thuộc x₁, x₂ (bên TRÁI) → đổi x₃ ở cuối <b>KHÔNG</b> ảnh hưởng h→₂. Nhưng h←₂ phụ thuộc x₂, x₃ (bên PHẢI) → đổi x₃ làm h←₂ <b>ĐỔI ngay</b>. Ghép [h→₂ ; h←₂] tại mỗi vị trí ⇒ nơ-ron đó "nhìn" toàn bộ chuỗi cả hai phía.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vì sao không dùng để SINH văn bản</h2><span class="tag">cần biết trước cả chuỗi</span></div>
+    <div class="note" style="margin-top:2px">h← chỉ tính được khi đã có <b>toàn bộ</b> chuỗi phía sau. Khi <b>sinh tự hồi quy</b> (dịch/sinh văn bản từng từ), token tương lai <b>chưa tồn tại</b> lúc quyết định token hiện tại → không thể chạy chiều ngược.
+    Bi-RNN chỉ hợp bài toán có sẵn <b>cả câu</b> (gán nhãn, NER, phân loại); sinh tuần tự dùng RNN một chiều ở decoder (xem Bài G7 — seq2seq).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Bi-RNN cho mỗi vị trí thấy gì? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Vì sao không dùng Bi-RNN để sinh văn bản? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao ghép [h→ₜ ; h←ₜ] cho mỗi vị trí "thấy" toàn bộ chuỗi? → <span class="blk" style="min-width:180px"></span></li>
+      <li>Đổi từ ở CUỐI chuỗi, hướng nào ở vị trí giữa bị đổi, hướng nào không? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G6 · Bi-directional RNN</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — cộng dồn xuôi/ngược, so sánh 2 lần chạy ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Chạy xuôi + ngược</span>
+    <span><span class="ck"></span>Kiểm quá khứ/tương lai</span>
+    <span class="win">🎉 Bạn vừa cho mỗi vị trí "nhìn" cả hai phía!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G6 · Bi-directional RNN</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G6</span><h1>Bi-directional RNN <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G6</span><h1>Bi-directional RNN <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Chạy xuôi h→</h2></div>
-    <div class="calc ans">h→₁ = <span class="blk" data-q="hf1">1</span> · h→₂ = <span class="blk" data-q="hf2">3</span> · h→₃ = <span class="blk" data-q="hf3">6</span></div>
+    <div class="calc ans">h→₁ = <span class="wcell ans" data-q="hf1">1</span> &nbsp;·&nbsp; h→₂ = <span class="wcell ans" data-q="hf2">3</span> &nbsp;·&nbsp; h→₃ = <span class="wcell ans" data-q="hf3">6</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Chạy ngược h←</h2></div>
-    <div class="calc ans">h←₃ = <span class="blk" data-q="hb3">3</span> · h←₂ = <span class="blk" data-q="hb2">5</span> · h←₁ = <span class="blk" data-q="hb1">6</span></div>
+    <div class="calc ans">h←₃ = <span class="wcell ans" data-q="hb3">3</span> &nbsp;·&nbsp; h←₂ = <span class="wcell ans" data-q="hb2">5</span> &nbsp;·&nbsp; h←₁ = <span class="wcell ans" data-q="hb1">6</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Ghép tại token giữa</h2></div>
-    <div class="calc ans">h₂ = [ <span data-q="hf2">3</span> ; <span data-q="hb2">5</span> ] = ( <span class="blk" data-q="c1">3</span>, <span class="blk" data-q="c2">5</span> ) → thấy cả 2 phía</div>
+    <div class="step-h"><div class="b">3</div><h2>Nối tại vị trí giữa</h2></div>
+    <div class="calc ans">h₂ = [ h→₂ ; h←₂ ] = ( <span class="wcell ans" data-q="c1">3</span>, <span class="wcell ans" data-q="c2">5</span> ) — mang cả trái (qua h→) lẫn phải (qua h←)</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đổi token cuối</h2><span class="tag">quá khứ giữ · tương lai đổi</span></div>
+    <div class="calc ans">h→₂ (mới) = <span class="wcell ans" data-q="hf2b">3</span> &nbsp;<small style="color:#7a8794">(= h→₂ Bước 1 — KHÔNG đổi)</small> &nbsp;·&nbsp; h←₂ (mới) = <span class="wcell ans" data-q="hb2n">7</span> &nbsp;<small style="color:#7a8794">(≠ h←₂ Bước 2 — CÓ đổi)</small></div>
+    <div class="why"><b>Vì sao:</b> h→₂ chỉ nhìn x₁,x₂ (quá khứ, cố định) nên bất biến với thay đổi ở cuối chuỗi; h←₂ nhìn x₂,x₃ (tương lai của vị trí 2) nên đổi ngay khi x₃ đổi. Đây chính là bằng chứng mỗi hướng chỉ mang <b>một phía</b>.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hai chiều rồi ghép</h2><span class="tag">lam xuôi · cam ngược</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hai hàng ngược chiều, nối tại mỗi vị trí</h2><span class="tag">lam xuôi · cam ngược · tím nối</span></div>
     <div class="figrow">
-      <svg id="figBi" class="fig" viewBox="0 0 220 120" width="70mm" height="38mm" aria-label="BiRNN chạy xuôi và ngược rồi ghép"></svg>
+      <svg id="figBi" class="fig" viewBox="0 0 220 130" width="72mm" height="42mm" aria-label="BiRNN chạy xuôi và ngược rồi nối tại mỗi vị trí"></svg>
       <div style="flex:1">
-        <div class="note">Cần <b>cả chuỗi</b> mới chạy được chiều ngược → Bi-RNN hợp bài <b>đã có đủ câu</b> (gán nhãn/phân loại), không hợp sinh tuần tự real-time.
-          Hidden ghép → chiều gấp đôi → lớp sau &amp; tham số tăng theo.</div>
+        <div class="note">Hàng <b>lam</b> chạy xuôi trái→phải (chỉ thấy quá khứ), hàng <b>cam</b> chạy ngược phải→trái (chỉ thấy tương lai); đường <b>tím</b> đứt nét nối hai hướng tại từng vị trí = phép ghép [h→ₜ ; h←ₜ].
+        Vì h← cần chạy từ CUỐI chuỗi trở về, Bi-RNN chỉ hợp bài toán có sẵn <b>cả câu</b> — không hợp sinh tự hồi quy từng từ.</div>
       </div>
     </div>
   </div>
@@ -128,31 +176,38 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Mỗi vị trí thấy gì? → <span class="qa">Ngữ cảnh cả hai phía (trước và sau).</span></li>
-      <li>Vì sao không sinh văn bản? → <span class="qa">Sinh tuần tự không có "tương lai" để đọc ngược.</span></li>
+      <li>Vì sao ghép cho mỗi vị trí thấy toàn bộ chuỗi? → <span class="qa">Vì h→ₜ mang thông tin các bước ≤ t (quá khứ), h←ₜ mang thông tin các bước ≥ t (tương lai); ghép lại = cả hai phía.</span></li>
+      <li>Đổi từ ở cuối, hướng nào đổi? → <span class="qa">h← ở vị trí giữa đổi (vì nó nhìn về phía cuối); h→ ở vị trí giữa KHÔNG đổi (vì nó chỉ nhìn về phía đầu).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Bi-RNN = RNN xuôi + ngược, ghép trạng thái → ngữ cảnh hai chiều (hợp hiểu, không hợp sinh).
-    Bài tiếp <b style="color:var(--accent2)">G7</b>: nối encoder→decoder cho dịch máy — seq2seq.
+    <b style="color:var(--accent2)">Rút ra.</b> Bi-RNN = RNN xuôi + ngược, ghép trạng thái tại mỗi vị trí → mỗi nơ-ron "nhìn" cả quá khứ lẫn tương lai (hợp gán nhãn/phân loại, KHÔNG hợp sinh tự hồi quy vì cần biết trước cả chuỗi).
+    Bài tiếp <b style="color:var(--accent2)">G7</b>: nối encoder→decoder cho dịch máy — seq2seq (decoder dùng RNN một chiều).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G6 · Bi-directional RNN</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G6 · Bi-directional RNN</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var fI=WB.fmtInt;
-  var x1=WB.randInt(1,5), x2=WB.randInt(1,5), x3=WB.randInt(1,5);
-  var hf1=x1, hf2=x1+x2, hf3=x1+x2+x3;
-  var hb3=x3, hb2=x2+x3, hb1=x1+x2+x3;
+  var fI = WB.fmtInt;
+  var x1 = WB.randInt(1,6), x2 = WB.randInt(1,6), x3 = WB.randInt(1,6);
+  var hf1 = x1, hf2 = hf1+x2, hf3 = hf2+x3;
+  var hb3 = x3, hb2 = hb3+x2, hb1 = hb2+x1;
+
+  var x3b = x3;
+  while (x3b === x3) { x3b = WB.randInt(1,6); }   // token cuối MỚI, chắc chắn khác x3
+  var hf2b = x1+x2;     // h→₂ chỉ phụ thuộc x1,x2 → luôn bằng hf2, KHÔNG đổi
+  var hb2n = x2+x3b;    // h←₂ phụ thuộc x3 → đổi theo x3b
+
   WB.setAll({
-    x1:fI(x1), x2:fI(x2), x3:fI(x3),
-    hf1:fI(hf1), hf2:fI(hf2), hf3:fI(hf3),
-    hb1:fI(hb1), hb2:fI(hb2), hb3:fI(hb3),
-    c1:fI(hf2), c2:fI(hb2)
+    x1: fI(x1), x2: fI(x2), x3: fI(x3), x3b: fI(x3b),
+    hf1: fI(hf1), hf2: fI(hf2), hf3: fI(hf3),
+    hb1: fI(hb1), hb2: fI(hb2), hb3: fI(hb3),
+    c1: fI(hf2), c2: fI(hb2),
+    hf2b: fI(hf2b), hb2n: fI(hb2n)
   });
   drawBi('figBi', [x1,x2,x3]);
 }
@@ -160,21 +215,23 @@ function generate(){
 function drawBi(id, x){
   var svg=document.getElementById(id); if(!svg) return;
   var xs=[40,110,180];
+  var yF=30, yB=62, yT=98;
   var defs='<defs>'
     +'<marker id="afG6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#0e7490"/></marker>'
     +'<marker id="abG6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#b45309"/></marker>'
     +'</defs>';
   var s='';
   for(var i=0;i<3;i++){
-    s += '<rect x="'+(xs[i]-11)+'" y="92" width="22" height="16" rx="2" fill="#fdecd2" stroke="#e3c489"/>';
-    s += '<text x="'+xs[i]+'" y="103" text-anchor="middle" style="font-size:8px">x'+(i+1)+'='+x[i]+'</text>';
-    s += '<circle cx="'+xs[i]+'" cy="34" r="11" fill="#d6ecf6" stroke="#0e7490"/><text x="'+xs[i]+'" y="37" text-anchor="middle" style="font-size:8px">h→</text>';
-    s += '<circle cx="'+xs[i]+'" cy="64" r="11" fill="#ffe6cc" stroke="#b45309"/><text x="'+xs[i]+'" y="67" text-anchor="middle" style="font-size:8px">h←</text>';
-    s += '<line x1="'+xs[i]+'" y1="92" x2="'+xs[i]+'" y2="75" stroke="#bbb" stroke-width="1"/>';
+    s += '<rect x="'+(xs[i]-11)+'" y="'+(yT-8)+'" width="22" height="16" rx="2" fill="#fdecd2" stroke="#e3c489"/>';
+    s += '<text x="'+xs[i]+'" y="'+(yT+3)+'" text-anchor="middle" style="font-size:8px">x'+(i+1)+'='+x[i]+'</text>';
+    s += '<line x1="'+xs[i]+'" y1="'+(yT-8)+'" x2="'+xs[i]+'" y2="'+(yB+11)+'" stroke="#bbb" stroke-width="1"/>';
+    s += '<circle cx="'+xs[i]+'" cy="'+yF+'" r="11" fill="#d6ecf6" stroke="#0e7490"/><text x="'+xs[i]+'" y="'+(yF+3)+'" text-anchor="middle" style="font-size:8px">h→</text>';
+    s += '<circle cx="'+xs[i]+'" cy="'+yB+'" r="11" fill="#ffe6cc" stroke="#b45309"/><text x="'+xs[i]+'" y="'+(yB+3)+'" text-anchor="middle" style="font-size:8px">h←</text>';
+    s += '<line x1="'+xs[i]+'" y1="'+(yF+11)+'" x2="'+xs[i]+'" y2="'+(yB-11)+'" stroke="#7c5cff" stroke-width="1.6" stroke-dasharray="2 2"/>';
   }
-  for(var f=0;f<2;f++) s += '<line x1="'+(xs[f]+11)+'" y1="34" x2="'+(xs[f+1]-11)+'" y2="34" stroke="#0e7490" stroke-width="1.5" marker-end="url(#afG6)"/>';
-  for(var b=2;b>0;b--) s += '<line x1="'+(xs[b]-11)+'" y1="64" x2="'+(xs[b-1]+11)+'" y2="64" stroke="#b45309" stroke-width="1.5" marker-end="url(#abG6)"/>';
-  s += '<text x="110" y="16" text-anchor="middle" style="font-size:8px" fill="#6b7280">đọc 2 chiều rồi ghép tại mỗi token</text>';
+  for(var f=0;f<2;f++) s += '<line x1="'+(xs[f]+11)+'" y1="'+yF+'" x2="'+(xs[f+1]-11)+'" y2="'+yF+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#afG6)"/>';
+  for(var b=2;b>0;b--) s += '<line x1="'+(xs[b]-11)+'" y1="'+yB+'" x2="'+(xs[b-1]+11)+'" y2="'+yB+'" stroke="#b45309" stroke-width="1.5" marker-end="url(#abG6)"/>';
+  s += '<text x="110" y="14" text-anchor="middle" style="font-size:8px" fill="#6b7280">đọc 2 chiều rồi nối [h→ ; h←] tại mỗi token</text>';
   svg.innerHTML=defs+s;
 }
 WB.wire(generate);

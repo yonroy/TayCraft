@@ -4,197 +4,474 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài H2 — Self-Attention (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (2 trang thay vì 4): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách/line-height tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.45}
+  .cap{margin-top:.4mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  .scratch{margin-top:1.4mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ (A) ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H2</span>
+    <h1>Self-Attention <small>— mỗi token tự hỏi cả câu</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~20 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>Q·Kᵀ cho sẵn</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V (nội dung)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>α &amp; đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H2</span><h1>Self-Attention <small>— mỗi token nhìn cả câu</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Đây là lớp lõi của Transformer: mỗi từ tự "hỏi" mọi từ trong câu xem ai liên quan → gom thông tin. Phá
-    giới hạn tuần tự của RNN, học được quan hệ xa (đại từ ↔ danh từ cách nhiều từ).
-    <div class="formula">Q = X·Wq, K = X·Wₖ, V = X·Wᵥ &nbsp;·&nbsp; out = softmax(Q·Kᵀ/√dₖ)·V &nbsp;(X = cùng chuỗi)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mỗi token phát ra một "câu hỏi" (Q) và mang một "nhãn" (K); so khớp <b>Q·Kᵀ</b> ra điểm chú ý,
+    chia <b>√dₖ</b> rồi <b>softmax theo từng hàng</b> ra trọng số α (mỗi hàng cộng đúng 1), cuối cùng <b>trộn nội dung V</b>
+    theo α đó ra đầu ra O. Cuối phiếu bạn sẽ tự tay <b>đảo thứ tự 2 token</b> và chứng minh: phép toán này hoàn toàn
+    <b>không biết ai đứng trước</b> — đó là lý do Transformer cần Bài G1 (Embedding &amp; Vị trí) để "cấy" thứ tự vào.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi token phát một <b>câu hỏi</b> (Q), mang một <b>nhãn</b> (K) và một <b>nội dung</b> (V). Token i so câu hỏi của mình với nhãn mọi
-    token → trọng số chú ý → trộn nội dung. "Self" vì hỏi và trả lời <b>đều trong cùng câu</b>.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 token · Q=K=V=X · dₖ=4</span></div>
-    <div class="calc" style="font-size:14px">
-      Điểm thô của token 1: q₁·k₁ = <span class="gv" data-q="s1">2</span> , q₁·k₂ = <span class="gv" data-q="s2">0</span> &nbsp;·&nbsp;
-      nội dung v₁ = ( <span class="gv" data-q="v11">1</span>,<span class="gv" data-q="v12">0</span> ), v₂ = ( <span class="gv" data-q="v21">0</span>,<span class="gv" data-q="v22">1</span> )
-    </div>
-    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
-      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Điểm token 1 (chia √dₖ)</h2><span class="tag">√4 = 2</span></div>
-    <div class="calc">
-      ( <span data-q="s1">2</span>/2 , <span data-q="s2">0</span>/2 ) = ( <span class="blk" style="min-width:32px"></span>, <span class="blk" style="min-width:32px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> token 1 khớp token nào mạnh (điểm cao); chia √dₖ giữ điểm ổn định.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax → trọng số chú ý α₁</h2><span class="tag">eˣ / Σ</span></div>
-    <div class="calc">
-      e<sup><span data-q="sc1">1</span></sup>=<span data-q="e1">2.72</span>, e<sup><span data-q="sc2">0</span></sup>=<span data-q="e2">1.00</span>, Σ=<span data-q="Z">3.72</span> →
-      α₁ = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
-    </div>
-    <div class="hint">α₁ = trọng số chú ý của token 1 lên [token 1, token 2]; tổng = 1.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Trộn V → out₁</h2><span class="tag">α₁·V</span></div>
-    <div class="calc">
-      out₁ = <span data-q="a1">0.73</span>·(<span data-q="v11">1</span>,<span data-q="v12">0</span>) + <span data-q="a2">0.27</span>·(<span data-q="v21">0</span>,<span data-q="v22">1</span>) = ( <span class="blk" style="min-width:46px"></span>, <span class="blk" style="min-width:46px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> đầu ra token 1 = hỗn hợp ngữ cảnh cả câu, nghiêng về token liên quan nhất.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Lặp cho mọi token</h2><span class="tag">một phép ma trận</span></div>
-    <div class="note">Làm song song cho token 2 → cả lớp là <b>một phép ma trận</b> softmax(QKᵀ/√d)·V. Thêm nhiều đầu (H4), causal mask (H3).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>"Self" trong self-attention nghĩa là gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Token i lấy thông tin từ đâu? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H2 · Self-Attention</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H2</span><h1>Self-Attention <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Điểm /√dₖ</h2></div>
-    <div class="calc ans">( <span class="blk" data-q="sc1">1</span>, <span class="blk" data-q="sc2">0</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax → α₁</h2></div>
-    <div class="calc ans">α₁ = ( <span class="blk" data-q="a1">0.73</span>, <span class="blk" data-q="a2">0.27</span> ) &nbsp;<span class="note" style="display:inline">(2.72/3.72 = 0.73)</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Trộn V</h2></div>
-    <div class="calc ans">out₁ = ( <span class="blk" data-q="o1">0.73</span>, <span class="blk" data-q="o2">0.27</span> )</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>2 token tự chú ý (độ đậm = α)</h2><span class="tag">self-attention</span></div>
-    <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 240 150" width="76mm" height="48mm" aria-label="hai token với mũi tên chú ý qua lại, độ đậm tỉ lệ trọng số alpha"></svg>
-      <div style="flex:1">
-        <div class="note">Token 1 (lam) chú ý mạnh vào chính nó và một phần token 2 (cam) theo α₁. Mỗi token đều làm vậy → cả câu trộn ngữ cảnh.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">2 token · V,O ∈ ℝ²</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l"></th><th style="color:var(--orange)">k₁</th><th style="color:var(--orange)">k₂</th></tr>
+          <tr><td class="l" style="color:var(--blue)">q₁</td><td class="evt" data-q="sr11">4</td><td class="evt" data-q="sr12">0</td></tr>
+          <tr><td class="l" style="color:var(--blue)">q₂</td><td class="evt" data-q="sr21">0</td><td class="evt" data-q="sr22">4</td></tr>
+        </table>
+        <div class="cap"><b>S = Q·Kᵀ</b> (điểm thô) — ô (qᵢ,kⱼ) = token i hỏi token j khớp tới đâu.</div>
+        <table style="margin-top:2.2mm">
+          <tr><th class="l">x</th><th>0</th><th>1</th><th>2</th></tr>
+          <tr><td class="l">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr>
+        </table>
+        <div class="cap">Bảng tra sẵn — dùng ở Bước ② thay máy tính.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table>
+          <tr><th class="l"></th><th>chiều 0</th><th>chiều 1</th></tr>
+          <tr><td class="l" style="color:var(--purple)">v₁</td><td style="color:var(--purple);font-weight:800" data-q="v10">1</td><td style="color:var(--purple);font-weight:800" data-q="v11">0</td></tr>
+          <tr><td class="l" style="color:var(--purple)">v₂</td><td style="color:var(--purple);font-weight:800" data-q="v20">0</td><td style="color:var(--purple);font-weight:800" data-q="v21">1</td></tr>
+        </table>
+        <div class="cap"><b>V</b> — nội dung mỗi token mang theo, sẽ được <b>trộn</b> theo α ở Bước ③.</div>
+        <div style="margin-top:2mm;border-top:1px solid var(--line2);padding-top:1.8mm;font:400 8.6px var(--sans);color:var(--dim);line-height:1.5">
+          Trong Self-Attention thật, Q,K,V đều là hình chiếu của X qua Wq,Wₖ,Wᵥ (X chính là bài <b>G1</b> đã dựng).
+          Phiếu này cho sẵn S=Q·Kᵀ và V để bạn tập trung vào chuỗi <b>chia → softmax → trộn</b>.
+          <br><b style="color:var(--ink)">Lưu ý:</b> dₖ (chiều Q,K dùng để chia) chọn = 4 cho phép chia ra số tròn;
+          V/O vẫn giữ 2 chiều — hai con số này <b>không cần bằng nhau</b>.
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>"Self"? → <span class="qa">Q, K, V cùng sinh từ một chuỗi (token tự hỏi các token trong câu).</span></li>
-      <li>Lấy thông tin? → <span class="qa">Trộn V của mọi token theo trọng số chú ý (softmax điểm Q·K).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">X → Q,K,V → S → chia → softmax → ·V → O</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 560 118" width="100%" height="32mm"
+           aria-label="X chiếu qua Wq Wk Wv ra Q K V, Q K ra điểm S, chia scale rồi softmax nhân V ra O"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Self-attention = mỗi token trộn V cả câu theo độ liên quan Q·K; lõi của Transformer. Bài tiếp (H3): thêm causal
-    mask → khối GPT (chỉ nhìn quá khứ).
+  <!-- ① CHIA √dk -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Chia √dₖ — ổn định phương sai</span><span class="f">dₖ=4 → √dₖ=2</span></div>
+    <div class="pb">
+      <div class="eq">
+        S₁₁ = <span data-q="sr11">4</span> ÷ 2 = <span class="cellb" style="width:11mm;height:5.4mm;line-height:5.2mm"></span>
+        &nbsp;&nbsp; S₁₂ = <span data-q="sr12">0</span> ÷ 2 = <span class="cellb" style="width:11mm;height:5.4mm;line-height:5.2mm"></span><br>
+        S₂₁ = <span data-q="sr21">0</span> ÷ 2 = <span class="cellb" style="width:11mm;height:5.4mm;line-height:5.2mm"></span>
+        &nbsp;&nbsp; S₂₂ = <span data-q="sr22">4</span> ÷ 2 = <span class="cellb" style="width:11mm;height:5.4mm;line-height:5.2mm"></span>
+      </div>
+      <div class="cap">Chia <b>mọi ô</b> cho cùng một số — hình dạng ma trận không đổi, chỉ thu nhỏ độ lớn.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H2 · Self-Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② SOFTMAX HÀNG -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax theo TỪNG HÀNG → α</span><span class="f">tra eˣ ở bảng cho sẵn</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Hàng</th><th>e^(S·,k₁)</th><th>e^(S·,k₂)</th><th>Σ</th><th>α (→k₁, →k₂)</th></tr>
+        <tr><td class="l">q₁</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td>
+          <td><span class="cellb" style="width:23mm"></span></td></tr>
+        <tr><td class="l">q₂</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td>
+          <td><span class="cellb" style="width:23mm"></span></td></tr>
+      </table>
+      <div class="cap">Điểm lấy từ Bước ①. Mỗi <b>HÀNG</b> cộng đúng <b>1.00</b> — cách kiểm tra nhanh xem có tính sai không.</div>
+    </div>
+  </div>
+
+  <!-- ③ TRỘN V -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Trộn V theo α → đầu ra O</span><span class="f">O = α · V (mỗi hàng)</span></div>
+    <div class="split">
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">TOKEN 1 — hàng α₁</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>α₁₁·v₁</th><th>+α₁₂·v₂</th><th>=O₁</th><th>Tô thanh</th></tr>
+          <tr><td class="l">0</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track" id="tO10"></div></td></tr>
+          <tr><td class="l">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track" id="tO11"></div></td></tr>
+        </table>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">TOKEN 2 — hàng α₂</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>α₂₁·v₁</th><th>+α₂₂·v₂</th><th>=O₂</th><th>Tô thanh</th></tr>
+          <tr><td class="l">0</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track" id="tO20"></div></td></tr>
+          <tr><td class="l">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track" id="tO21"></div></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Thang thanh: <b>−5 … 0 … +5</b> · v từ Bước 0, α từ Bước ②.</div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — chú ý MÙ THỨ TỰ</span><span class="f">đảo 2 token, chạy lại</span></div>
+    <div class="pb">
+      <div class="cap" style="margin:0 0 1.6mm">
+        Đổi thứ tự: giờ <b>"token 2" đứng trước "token 1"</b>. Trong S, việc này đảo <b>cả hàng lẫn cột</b>
+        (ai hỏi ⇄ ai được hỏi đều đổi chỗ); trong V, chỉ đảo <b>hàng</b> (nội dung mỗi token không đổi, chỉ đổi vị trí).
+      </div>
+      <table>
+        <tr><th class="l">S′ (đã chia √dₖ)</th><th>→ k mới #1(=k₂)</th><th>→ k mới #2(=k₁)</th>
+          <th class="l" style="padding-left:6mm">V′</th><th>chiều 0</th><th>chiều 1</th></tr>
+        <tr><td class="l">q mới #1(=q₂)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td>
+          <td class="l" style="padding-left:6mm">v′₁(=v₂)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">q mới #2(=q₁)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td>
+          <td class="l" style="padding-left:6mm">v′₂(=v₁)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        α′ (softmax S′) = ( <span class="slot sm"></span>, <span class="slot sm"></span> ) và ( <span class="slot sm"></span>, <span class="slot sm"></span> )<br>
+        O′₁ = <span class="slot" style="min-width:26mm"></span> &nbsp;&nbsp; O′₂ = <span class="slot" style="min-width:26mm"></span><br>
+        <span style="font-size:9.2px;color:var(--dim)">So với O₁, O₂ ở Bước ③: O′₁ ?= <span class="slot sm"></span> &nbsp; O′₂ ?= <span class="slot sm"></span></span>
+      </div>
+      <div class="cap" style="margin-top:1mm"><b>Câu hỏi:</b> khi đảo token, cái gì ĐỔI và cái gì KHÔNG đổi?
+        <span class="slot" style="min-width:70mm"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:10mm"><span class="lb">✏️ Nháp — cộng nhân tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Chia √dₖ &amp; softmax ①②</span>
+    <span><span class="ck"></span>Trộn V → O + tô thanh ③</span>
+    <span><span class="ck"></span>Đảo token → O′ đảo theo ④</span>
+    <span class="win">🎉 Bạn vừa tự tay chứng minh vì sao Transformer cần Vị trí!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H2 · Self-Attention</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H2</span>
+    <h1>Self-Attention <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>đáp án</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">O ở cuối chuỗi tính</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 560 118" width="100%" height="32mm" aria-label="sơ đồ với O đã điền"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Chia √dₖ = 2</span></div>
+    <div class="pb">
+      <div class="eq">
+        S₁₁ = <span data-q="sr11">4</span> ÷ 2 = <span class="slot ans" data-q="sc11">2</span>
+        &nbsp;&nbsp; S₁₂ = <span data-q="sr12">0</span> ÷ 2 = <span class="slot ans" data-q="sc12">0</span><br>
+        S₂₁ = <span data-q="sr21">0</span> ÷ 2 = <span class="slot ans" data-q="sc21">0</span>
+        &nbsp;&nbsp; S₂₂ = <span data-q="sr22">4</span> ÷ 2 = <span class="slot ans" data-q="sc22">2</span>
+      </div>
+      <div class="why" style="margin:1.6mm 0 0"><b>Vì sao chia:</b> điểm thô càng lớn (dₖ càng cao) thì phương sai Q·Kᵀ càng lớn →
+        softmax dễ "bão hòa" (một ô gần 1, các ô còn lại gần 0, gradient tắt lịm khi train). Chia √dₖ kéo điểm về vùng ổn định.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Softmax theo hàng → α</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Hàng</th><th>e^(S·,k₁)</th><th>e^(S·,k₂)</th><th>Σ</th><th>α (→k₁, →k₂)</th></tr>
+        <tr><td class="l">q₁</td><td class="gvt" data-q="e11">7.39</td><td class="gvt" data-q="e12">1.00</td><td class="gvt" data-q="Z1">8.39</td>
+          <td class="gvt"><span data-q="a11">0.88</span> , <span data-q="a12">0.12</span></td></tr>
+        <tr><td class="l">q₂</td><td class="gvt" data-q="e21">1.00</td><td class="gvt" data-q="e22">7.39</td><td class="gvt" data-q="Z2">8.39</td>
+          <td class="gvt"><span data-q="a21">0.12</span> , <span data-q="a22">0.88</span></td></tr>
+      </table>
+      <div class="why" style="margin:1.6mm 0 0"><b>Vì sao độc lập từng hàng:</b> mỗi hàng là <b>ngân sách chú ý riêng</b> của một token (100% chia
+        cho các token khác) — token này rải chú ý không ảnh hưởng ngân sách của token kia, nên softmax chạy tách biệt trên từng hàng, không phải toàn ma trận.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Trộn V theo α → O</span></div>
+    <div class="split">
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">TOKEN 1 — hàng α₁</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>α₁₁·v₁</th><th>+α₁₂·v₂</th><th>=O₁</th><th>O₁</th></tr>
+          <tr><td class="l">0</td><td class="evt" data-q="a11">0.88</td><td class="evt" data-q="a12">0.12</td><td><span class="cellb ans" data-q="o10">0.88</span></td><td><div class="track" id="aO10"></div></td></tr>
+          <tr><td class="l">1</td><td class="evt" data-q="a11">0.88</td><td class="evt" data-q="a12">0.12</td><td><span class="cellb ans" data-q="o11">0.12</span></td><td><div class="track" id="aO11"></div></td></tr>
+        </table>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">TOKEN 2 — hàng α₂</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>α₂₁·v₁</th><th>+α₂₂·v₂</th><th>=O₂</th><th>O₂</th></tr>
+          <tr><td class="l">0</td><td class="evt" data-q="a21">0.12</td><td class="evt" data-q="a22">0.88</td><td><span class="cellb ans" data-q="o20">0.12</span></td><td><div class="track" id="aO20"></div></td></tr>
+          <tr><td class="l">1</td><td class="evt" data-q="a21">0.12</td><td class="evt" data-q="a22">0.88</td><td><span class="cellb ans" data-q="o21">0.88</span></td><td><div class="track" id="aO21"></div></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao O khác nhau dù chung V:</b> token 1 và 2 dùng <b>chung</b> bộ V, nhưng mỗi token trộn theo
+      <b>hàng α của riêng nó</b> — hàng α khác nhau → tỉ lệ trộn khác nhau → ngữ cảnh (O) khác nhau. Đây chính là "chú ý": mỗi token tự chọn cách nó nhìn phần còn lại.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — chú ý MÙ THỨ TỰ</span><span class="f">đảo token: O đảo theo, giá trị y nguyên</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">S′ (đã chia √dₖ)</th><th>→ k mới #1(=k₂)</th><th>→ k mới #2(=k₁)</th>
+          <th class="l" style="padding-left:6mm">V′</th><th>chiều 0</th><th>chiều 1</th></tr>
+        <tr><td class="l">q mới #1(=q₂)</td><td class="gvt" data-q="sc22">2</td><td class="gvt" data-q="sc21">0</td>
+          <td class="l" style="padding-left:6mm">v′₁(=v₂)</td><td class="gvt" data-q="v20">0</td><td class="gvt" data-q="v21">1</td></tr>
+        <tr><td class="l">q mới #2(=q₁)</td><td class="gvt" data-q="sc12">0</td><td class="gvt" data-q="sc11">2</td>
+          <td class="l" style="padding-left:6mm">v′₂(=v₁)</td><td class="gvt" data-q="v10">1</td><td class="gvt" data-q="v11">0</td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        α′ = ( <span class="slot ans" data-q="a22">0.88</span>, <span class="slot ans" data-q="a21">0.12</span> ) và
+             ( <span class="slot ans" data-q="a12">0.12</span>, <span class="slot ans" data-q="a11">0.88</span> )
+        <span class="qa">— đúng bằng α cũ với cả hàng lẫn cột đảo chỗ (α₂₂,α₂₁ rồi α₁₂,α₁₁).</span><br>
+        O′₁ = ( <span class="slot ans" data-q="o20">0.12</span>, <span class="slot ans" data-q="o21">0.88</span> ) &nbsp;&nbsp;
+        O′₂ = ( <span class="slot ans" data-q="o10">0.88</span>, <span class="slot ans" data-q="o11">0.12</span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">So với O₁, O₂ ở Bước ③:</span>
+        <span class="qa">O′₁ = O₂ hệt · O′₂ = O₁ hệt — chỉ VỊ TRÍ đổi, GIÁ TRỊ không đổi một chữ số nào.</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> S=Q·Kᵀ, softmax và α·V đều chỉ nhìn <b>nội dung</b> của
+      từng token (qua Q,K,V) — không có phép toán nào đọc "token nào đứng trước". Đảo thứ tự 2 token chỉ đảo <b>nhãn</b> ta gán cho hàng/cột;
+      kết quả O đảo theo nhãn đó, còn <b>từng con số bên trong</b> giữ nguyên tuyệt đối. Bấm 🎲 đổi bộ số khác — quan hệ này vẫn đúng.
+      Chính vì Self-Attention <b>"mù thứ tự"</b> như vậy nên Bài <b>G1 (Embedding &amp; Vị trí)</b> phải cộng thêm <b>PE</b> vào X trước khi
+      đưa vào đây: bỏ PE đi, "tôi yêu AI" và "AI yêu tôi" tạo ra đúng một bộ O như nhau (chỉ đổi chỗ) — với mô hình, đó gần như là hai câu <b>giống hệt nhau</b>.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở Self-Attention</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Softmax theo CỘT."</b><br>
+          <span style="color:var(--dim)">Sai — softmax chạy theo <b>HÀNG</b>: mỗi hàng là ngân sách chú ý 100% của MỘT token.
+          Theo cột sẽ trộn ngân sách của các token khác nhau, vô nghĩa.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Quên chia √dₖ."</b><br>
+          <span style="color:var(--dim)">Điểm thô lớn → softmax gần như one-hot (một ô ≈1, còn lại ≈0) → gradient các ô còn lại ≈0, mô hình khó học.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Thấy nhãn 'token 1/2' nên attention biết thứ tự."</b><br>
+          <span style="color:var(--dim)">Nhãn đó là do <b>ta</b> đặt tên khi đọc bảng — phép toán chỉ thấy con số trong S,V. Không có PE, không có thứ tự nào cả.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "O = A + V (cộng)."</b><br>
+          <span style="color:var(--dim)">Sai — O = A·V là <b>trộn theo trọng số</b> (mỗi dòng O là tổ hợp lồi của các dòng V), không phải cộng ma trận.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Self-Attention = mỗi token tự hỏi (Q) — so khớp với nhãn mọi token (K) — rồi trộn nội dung (V)
+    theo đúng mức khớp đó (α, softmax theo hàng). Toàn bộ phép toán này <b>không hề biết thứ tự token</b> — đảo token chỉ đảo O theo,
+    giá trị bên trong y nguyên. <b>Vị trí (Bài G1 — PE)</b> là mảnh ghép duy nhất bơm thông tin thứ tự vào trước khi tới đây.
+    Bài tiếp theo (<b>H3</b>) giới hạn attention chỉ được nhìn về <b>quá khứ</b> bằng causal mask — biến khối này thành khối GPT.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H2 · Self-Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 var EXP = {0:1, 1:2.72, 2:7.39};
+var BLU='#0e7490', ORG='#b45309', PUR='#6d28d9', INK='#16202e', DIM='#6b7280';
+var S = {};
+
+function round2(x){ return Math.round(x*100)/100; }
+
 function generate(){
-  var f2 = WB.fmt2;
-  var a = WB.pick([1,2]);
-  var s1 = 2*a, s2 = 0;            // điểm thô token 1
-  var sc1 = s1/2, sc2 = s2/2;
-  var e1 = EXP[sc1], e2 = EXP[sc2];
-  var Z = Math.round((e1+e2)*100)/100;
-  var al1 = Math.round(e1/(e1+e2)*100)/100, al2 = Math.round((1-al1)*100)/100;
-  var v1 = [WB.randInt(0,3), WB.randInt(0,3)], v2 = [WB.randInt(0,3), WB.randInt(0,3)];
-  var o1 = Math.round((al1*v1[0]+al2*v2[0])*100)/100;
-  var o2 = Math.round((al1*v1[1]+al2*v2[1])*100)/100;
+  var f2 = WB.fmt2, fI = WB.fmtInt;
+
+  // Bước 0: điểm thô S (đã /2 ra số tròn 0/1/2 để tra bảng eˣ) — GUARD tránh 2 hàng
+  // của A trùng hệt nhau (mọi hàng lệch bằng nhau) để tự kiểm ④ thấy rõ O đảo chỗ.
+  var sd1, sd2, so1, so2;
+  do {
+    sd1 = WB.pick([1,2]); sd2 = WB.pick([1,2]);
+    so1 = WB.pick([0,1]); so2 = WB.pick([0,1]);
+  } while (sd1 === so2 && so1 === sd2);
+  var sc11=sd1, sc12=so1, sc21=so2, sc22=sd2;               // đã chia √dₖ=2
+  var sr11=sc11*2, sr12=sc12*2, sr21=sc21*2, sr22=sc22*2;   // điểm thô (cho sẵn)
+
+  var e11=EXP[sc11], e12=EXP[sc12], e21=EXP[sc21], e22=EXP[sc22];
+  var Z1=round2(e11+e12), Z2=round2(e21+e22);
+  var a11=round2(e11/Z1), a12=round2(1-a11);
+  var a21=round2(e21/Z2), a22=round2(1-a21);
+
+  // V — GUARD v1≠v2 để O thực sự khác nhau (trộn có ý nghĩa)
+  var v1, v2;
+  do {
+    v1=[WB.randInt(-3,3), WB.randInt(-3,3)];
+    v2=[WB.randInt(-3,3), WB.randInt(-3,3)];
+  } while (v1[0]===v2[0] && v1[1]===v2[1]);
+
+  var o10=round2(a11*v1[0]+a12*v2[0]), o11=round2(a11*v1[1]+a12*v2[1]);
+  var o20=round2(a21*v1[0]+a22*v2[0]), o21=round2(a21*v1[1]+a22*v2[1]);
+
+  S = {sc11:sc11,sc12:sc12,sc21:sc21,sc22:sc22, a11:a11,a12:a12,a21:a21,a22:a22,
+       v1:v1, v2:v2, o1:[o10,o11], o2:[o20,o21]};
+
   WB.setAll({
-    s1:String(s1), s2:String(s2), sc1:String(sc1), sc2:String(sc2),
-    v11:String(v1[0]), v12:String(v1[1]), v21:String(v2[0]), v22:String(v2[1]),
-    e1:f2(e1), e2:f2(e2), Z:f2(Z), a1:f2(al1), a2:f2(al2), o1:f2(o1), o2:f2(o2)
+    sr11:fI(sr11), sr12:fI(sr12), sr21:fI(sr21), sr22:fI(sr22),
+    sc11:fI(sc11), sc12:fI(sc12), sc21:fI(sc21), sc22:fI(sc22),
+    e11:f2(e11), e12:f2(e12), e21:f2(e21), e22:f2(e22),
+    Z1:f2(Z1), Z2:f2(Z2),
+    a11:f2(a11), a12:f2(a12), a21:f2(a21), a22:f2(a22),
+    v10:fI(v1[0]), v11:fI(v1[1]), v20:fI(v2[0]), v21:fI(v2[1]),
+    o10:f2(o10), o11:f2(o11), o20:f2(o20), o21:f2(o21)
   });
-  drawSelf('figA', al1, al2);
+
+  // thanh giá trị O: ĐỀ để TRỐNG, ĐÁP ÁN tô đầy (thang −5…0…+5)
+  drawBar('tO10', 0, 5, false); drawBar('tO11', 0, 5, false);
+  drawBar('tO20', 0, 5, false); drawBar('tO21', 0, 5, false);
+  drawBar('aO10', o10, 5, true); drawBar('aO11', o11, 5, true);
+  drawBar('aO20', o20, 5, true); drawBar('aO21', o21, 5, true);
+
+  drawFlow('figQ', false);
+  drawFlow('figA', true);
 }
-function drawSelf(id, a1, a2){
-  var svg = document.getElementById(id); if(!svg) return;
-  var t1x=70, t2x=180, ty=80;
-  function node(x,txt,col){
-    return '<circle cx="'+x+'" cy="'+ty+'" r="20" fill="'+col+'22" stroke="'+col+'" stroke-width="1.7"/>'+
-      '<text x="'+x+'" y="'+(ty+4)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+col+'">'+txt+'</text>';
+
+// fill=false → chỉ vạch 0 + mốc, chừa TRỐNG cho người học tô bút chì (trang ĐỀ)
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  var s='';
-  // self loop token1 (α1)
-  s+='<path d="M'+(t1x-14)+','+(ty-14)+' Q'+(t1x-44)+','+(ty-44)+' '+(t1x-2)+','+(ty-20)+'" fill="none" stroke="#0e7490" stroke-width="'+(1+a1*7)+'" opacity="0.75"/>';
-  s+='<text x="'+(t1x-38)+'" y="'+(ty-38)+'" font-size="9" font-weight="700" fill="#0e7490">α='+WB.fmt2(a1)+'</text>';
-  // token1 → token2 (α2)
-  s+='<line x1="'+(t1x+20)+'" y1="'+ty+'" x2="'+(t2x-20)+'" y2="'+ty+'" stroke="#b45309" stroke-width="'+(1+a2*7)+'" opacity="0.75"/>';
-  s+='<text x="'+((t1x+t2x)/2)+'" y="'+(ty-8)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">α='+WB.fmt2(a2)+'</text>';
-  s+=node(t1x,'tok₁','#0e7490');
-  s+=node(t2x,'tok₂','#b45309');
-  s+='<text x="'+t1x+'" y="'+(ty+36)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">tự chú ý mạnh</text>';
+  el.innerHTML=h;
+}
+
+// Sơ đồ: X →(·Wq,·Wk,·Wv)→ Q,K,V (vai trò, tĩnh) → S (điểm cho sẵn) → ÷2 → softmax → ·V → O (ẩn/lộ)
+function drawFlow(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2;
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  function arrow(x1,y1,x2,y2,c){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>'; }
+  function rbox(x,y,w,h,fill,stroke,label,tc,fs){
+    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.3"/>'
+      +'<text x="'+(x+w/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="'+(fs||10)+'" font-weight="700" fill="'+tc+'">'+label+'</text>';
+  }
+
+  // X (đầu vào)
+  s += rbox(6,44,42,30,'#f1f5f9','#94a3b8','X','#334155');
+  s += '<text x="27" y="40" text-anchor="middle" font-size="7" fill="'+DIM+'">2 token</text>';
+
+  // Q,K,V vai trò (tĩnh, không số)
+  var ry=[10,44,78];
+  s += arrow(48,52,84,ry[0]+11,BLU) + '<text x="60" y="'+(ry[0]+2)+'" font-size="7" fill="'+BLU+'">·Wq</text>';
+  s += arrow(48,59,84,ry[1]+11,ORG) + '<text x="60" y="'+(ry[1]+9)+'" font-size="7" fill="'+ORG+'">·Wₖ</text>';
+  s += arrow(48,66,84,ry[2]+11,PUR) + '<text x="60" y="'+(ry[2]+9)+'" font-size="7" fill="'+PUR+'">·Wᵥ</text>';
+  s += rbox(84,ry[0],38,22,'#eaf4f6',BLU,'Q',BLU);
+  s += rbox(84,ry[1],38,22,'#fff5e9',ORG,'K',ORG);
+  s += rbox(84,ry[2],38,22,'#f5f1fe',PUR,'V',PUR);
+
+  // S grid (điểm cho sẵn, luôn hiện)
+  var sx=168, sy=30, c=15;
+  s += '<text x="'+(sx+c)+'" y="'+(sy-6)+'" text-anchor="middle" font-size="7.5" fill="'+DIM+'">S=Q·Kᵀ</text>';
+  s += arrow(126,ry[0]+11,sx-4,sy+c/2,BLU);
+  s += arrow(126,ry[1]+11,sx-4,sy+1.5*c,ORG);
+  var Sv=[[S.sc11*2,S.sc12*2],[S.sc21*2,S.sc22*2]];
+  for(var r=0;r<2;r++) for(var cc=0;cc<2;cc++){
+    var x=sx+cc*c, y=sy+r*c;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+c+'" height="'+c+'" fill="#eaf4f6" stroke="'+BLU+'" stroke-width="0.9"/>'
+      +'<text x="'+(x+c/2)+'" y="'+(y+c/2+3)+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+BLU+'">'+Sv[r][cc]+'</text>';
+  }
+
+  // mũi tên chia + softmax
+  s += arrow(sx+2*c+6, sy+c, sx+2*c+58, sy+c, DIM);
+  s += '<text x="'+(sx+2*c+32)+'" y="'+(sy+c-5)+'" text-anchor="middle" font-size="7.2" fill="'+DIM+'">÷√dₖ</text>';
+  s += '<text x="'+(sx+2*c+32)+'" y="'+(sy+c+11)+'" text-anchor="middle" font-size="7.2" fill="'+DIM+'">softmax hàng</text>';
+
+  // ·V rồi ra O
+  var ox=sx+2*c+64;
+  s += arrow(ox+2,ry[2]+11,ox+2,sy+c,PUR);
+  s += '<text x="'+(ox+8)+'" y="'+((ry[2]+11+sy+c)/2)+'" font-size="7" fill="'+PUR+'">·V</text>';
+
+  var obx=ox+16, oby=sy-4, obw=44, obh=22;
+  ['O₁','O₂'].forEach(function(lab,k){
+    var y=oby+k*(obh+8);
+    var fillc = showAns?'#fff8f0':'#fff';
+    var strokec = showAns?ORG:INK;
+    s += '<rect x="'+obx+'" y="'+y+'" width="'+obw+'" height="'+obh+'" rx="4" fill="'+fillc+'" stroke="'+strokec+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+    s += '<text x="'+(obx-4)+'" y="'+(y+obh/2+3)+'" text-anchor="end" font-size="8" font-weight="700" fill="'+DIM+'">'+lab+'</text>';
+    if(showAns){
+      var ov = k===0?S.o1:S.o2;
+      s += '<text x="'+(obx+obw/2)+'" y="'+(y+obh/2+3)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#7a3d00">('+f2(ov[0])+', '+f2(ov[1])+')</text>';
+    } else {
+      s += '<text x="'+(obx+obw/2)+'" y="'+(y+obh/2+3)+'" text-anchor="middle" font-size="10" fill="#c3ccd6">?</text>';
+    }
+  });
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

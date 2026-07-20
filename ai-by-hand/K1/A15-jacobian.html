@@ -5,19 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A15 — Ma trận Jacobian (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:5px;}
-.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
-.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
-.page .calc{line-height:1.75;}
-.page .why{margin-top:4px;}
-.page .note{margin-top:3px;}
+.page .step{margin-top:6px;}
 .page .cell{height:8mm;}
 .page .mtx{--cell:12mm;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -32,84 +27,113 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A15</span><h1>Ma trận Jacobian <small>— Jacobian</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A15</span>
+    <h1>Ma trận Jacobian <small>— gradient cho hàm nhiều đầu ra</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mỗi lớp mạng là một hàm <b>vectơ → vectơ</b>. Để lan gradient qua lớp, ta cần biết <b>mỗi đầu ra nhạy
-    thế nào với mỗi đầu vào</b> — đúng là Jacobian. Nó là "gradient" cho hàm nhiều đầu ra.
-    <div class="formula">
-      f: ℝⁿ → ℝᵐ &nbsp;&nbsp; J<sub>ij</sub> = ∂f<sub>i</sub> / ∂x<sub>j</sub> &nbsp;&nbsp; (J là ma trận m×n)
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mỗi lớp mạng là hàm <b>vectơ → vectơ</b>; Jacobian là bảng "mỗi đầu ra nhạy thế nào với mỗi đầu vào".
+    Hãy tính 4 đạo hàm riêng, <b>điền ma trận J</b>, tính <b>det J</b> và <b>điền |det J| = diện tích vào ô ✍ trong hình</b>,
+    rồi (Trang 2) xem <b>J biến hình vuông đơn vị</b> thành gì.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Jacobian xếp chồng các gradient: <b>mỗi hàng là gradient của một đầu ra</b>. Tại một điểm, nó là <b>phép biến đổi tuyến tính
-    xấp xỉ</b> hàm — cho biết một nhiễu nhỏ ở đầu vào lan ra đầu ra thế nào.
-  </div>
-
-  <!-- GIVEN -->
+  <!-- BƯỚC 0 — GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn hàm vectơ→vectơ</h2><span class="tag">f: ℝ²→ℝ²</span></div>
     <div class="calc" style="font-size:15px">
       f₁ = x² <span data-q="bs">+ y</span> &nbsp;,&nbsp; f₂ = x·y &nbsp;;&nbsp; xét tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> )
     </div>
-    <div class="note">Hai đầu ra (f₁, f₂), hai đầu vào (x, y) → Jacobian là ma trận 2×2.</div>
+    <div class="note">Hai đầu ra (f₁, f₂), hai đầu vào (x, y) → Jacobian là ma trận 2×2, vị trí (i, j) = ∂fᵢ/∂xⱼ.</div>
   </div>
 
-  <!-- BƯỚC 1 — hàng 1 -->
+  <!-- BƯỚC 1 — điền J -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Hàng 1 = ∇f₁</h2><span class="tag">đầu ra f₁</span></div>
-    <div class="calc">
-      ∂f₁/∂x = 2x = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
-      ∂f₁/∂y = <span class="blk" style="min-width:30px"></span> &nbsp; (tại ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ))
-    </div>
-    <div class="why"><b>Vì sao:</b> hàng i chỉ quan tâm đầu ra fᵢ; mỗi <b>cột</b> là một biến đầu vào (x trước, y sau).</div>
-  </div>
-
-  <!-- BƯỚC 2 — hàng 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Hàng 2 = ∇f₂</h2><span class="tag">đầu ra f₂</span></div>
-    <div class="calc">
-      ∂f₂/∂x = y = <span class="blk" style="min-width:36px"></span> &nbsp;;&nbsp;
-      ∂f₂/∂y = x = <span class="blk" style="min-width:36px"></span>
-    </div>
-    <div class="hint">f₂ = x·y nên đạo hàm theo x là y, theo y là x (biến kia đóng vai hằng số nhân).</div>
-  </div>
-
-  <!-- BƯỚC 3 — gom J -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Gom thành J(<span data-q="x0">1</span>, <span data-q="y0">2</span>)</h2><span class="tag">2×2</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Bốn đạo hàm riêng → điền ma trận J</h2><span class="tag">hàng 1 = ∇f₁, hàng 2 = ∇f₂</span></div>
     <div class="row">
-      <div class="mwrap"><div class="mlabel">J</div>
+      <div class="mwrap"><div class="mlabel">J <s>2×2</s></div>
         <div class="mtx c2">
           <div class="cell blank"></div><div class="cell blank"></div>
           <div class="cell blank"></div><div class="cell blank"></div>
         </div></div>
-      <div class="note" style="max-width:74mm">Vị trí (i, j) = ∂fᵢ/∂xⱼ. Hàng trên = ∇f₁, hàng dưới = ∇f₂.</div>
+      <div class="note" style="max-width:80mm">Hàng 1: ∂f₁/∂x = 2x, ∂f₁/∂y = <span data-q="bnum">1</span>.
+        Hàng 2: ∂f₂/∂x = y, ∂f₂/∂y = x. Thay ( <span data-q="x0">1</span>, <span data-q="y0">2</span> ) vào từng ô.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 4 — ý nghĩa -->
+  <!-- BƯỚC 2 — HERO: det J + hình -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Ý nghĩa: biến đổi cục bộ</h2><span class="tag">J·dx</span></div>
-    <div class="note">Một nhiễu nhỏ dx = (Δx, Δy) đổi đầu ra ≈ <b>J·dx</b> (đúng phép ma trận × vectơ ở A8).
-      <b>det J</b> = hệ số phóng đại diện tích cục bộ; det J = 0 ⇒ lớp "ép phẳng" thông tin.</div>
+    <div class="step-h"><div class="b">2</div><h2>det J = diện tích hình bình hành → điền vào hình</h2><span class="tag">hero · phóng đại cục bộ</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 176 150" width="56mm" height="47.7mm" aria-label="hai cột của J căng hình bình hành; ô để điền |det J| = diện tích"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc big" style="margin:0">det J = <span data-q="j11">2</span>·<span data-q="j22">1</span> − <span data-q="j12">1</span>·<span data-q="j21">2</span> = <span class="wcell"></span></div>
+        <div class="note" style="margin-top:6px">Hai <b>cột</b> của J = ảnh của hai vectơ đơn vị: lam &amp; cam. <b>Điền |det J| = diện tích vùng tô vào ô ✍ trong hình.</b>
+          det J = 0 ⇒ lớp "ép phẳng" thông tin.</div>
+      </div>
+    </div>
   </div>
+
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — thay số vào 4 đạo hàm riêng rồi tính det ở đây</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài A15</span>
+    <h1>Ma trận Jacobian <small>— J biến hình vuông đơn vị thành gì?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+
+  <div class="mission">
+    🎯 <b>Tiếp.</b> Jacobian là <b>xấp xỉ tuyến tính cục bộ</b>: quanh điểm đang xét, một nhiễu nhỏ dx đổi đầu ra ≈ <b>J·dx</b> (đúng phép ma trận×vectơ A8).
+    Hãy đẩy 4 đỉnh của hình vuông đơn vị qua J để thấy <b>cột của J = nơi vectơ đơn vị rơi tới</b>, và diện tích = |det J|.
+  </div>
+
+  <!-- BƯỚC 3 — J biến hình vuông đơn vị -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Đẩy 4 đỉnh hình vuông qua J (mỗi đỉnh = J·vectơ, phép A8)</h2><span class="tag">cột = ảnh vectơ đơn vị</span></div>
+    <div class="calc big">
+      J·(1, 0) = ( J₁₁ , J₂₁ ) = ( <span class="wcell"></span>, <span class="wcell"></span> ) <small style="color:#7a8794">← cột 1 của J</small><br>
+      J·(0, 1) = ( J₁₂ , J₂₂ ) = ( <span class="wcell"></span>, <span class="wcell"></span> ) <small style="color:#7a8794">← cột 2 của J</small><br>
+      J·(1, 1) = ( J₁₁+J₁₂ , J₂₁+J₂₂ ) = ( <span class="wcell"></span>, <span class="wcell"></span> ) <small style="color:#7a8794">← đỉnh xa (cộng 2 cột)</small><br>
+      <span class="lead">4 đỉnh</span>: (0,0), cột1, đỉnh xa, cột2 → diện tích hình bình hành = |det J| = <span class="wcell"></span>
+        <small style="color:#7a8794">(khớp Bước 2 ✓)</small>
+    </div>
+    <div class="note">Vectơ đơn vị (1,0) rơi vào <b>cột 1</b> của J, (0,1) vào <b>cột 2</b>. Hình vuông diện tích 1 biến thành hình bình hành diện tích |det J|
+      — đó là "hệ số phóng đại diện tích" cục bộ của lớp.</div>
+  </div>
+
+  <div class="scratch" style="height:30mm"><span class="lb">✏️ Nháp — đẩy từng đỉnh qua J ở đây</span></div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>f: ℝⁿ→ℝᵐ thì Jacobian kích thước gì? → <span class="blk" style="min-width:60px"></span></li>
-      <li>Mỗi <b>hàng</b> của Jacobian là gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Kích thước Jacobian của f: ℝⁿ→ℝᵐ? → <span class="blk" style="min-width:70px"></span></li>
+      <li>Mỗi hàng của J là gì? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Vectơ đơn vị (1,0) rơi vào đâu của J? → <span class="blk" style="min-width:90px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Điền 4 ô của J</span>
+    <span><span class="ck"></span>det J + diện tích vào hình</span>
+    <span><span class="ck"></span>Đẩy hình vuông qua J</span>
+    <span class="win">🎉 Bạn vừa dựng Jacobian của một lớp!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -118,41 +142,40 @@
   <div class="wb-title"><span class="no">Bài A15</span><h1>Ma trận Jacobian <small>— lời giải</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Hàng 1 = ∇f₁</h2></div>
-    <div class="calc ans">
-      ∂f₁/∂x = 2x = <span class="blk" data-q="j11">2</span> ; ∂f₁/∂y = <span class="blk" data-q="j12">1</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Hàng 2 = ∇f₂</h2></div>
-    <div class="calc ans">
-      ∂f₂/∂x = y = <span class="blk" data-q="j21">2</span> ; ∂f₂/∂y = x = <span class="blk" data-q="j22">1</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>J(<span data-q="x0">1</span>, <span data-q="y0">2</span>)</h2></div>
+    <div class="step-h"><div class="b">1</div><h2>Ma trận J(<span data-q="x0">1</span>, <span data-q="y0">2</span>)</h2></div>
     <div class="row">
       <div class="mwrap"><div class="mlabel">J</div>
         <div class="mtx c2">
           <div class="cell ans" data-q="j11">2</div><div class="cell ans" data-q="j12">1</div>
           <div class="cell ans" data-q="j21">2</div><div class="cell ans" data-q="j22">1</div>
         </div></div>
-      <div class="calc ans" style="flex:1">det J = <span data-q="j11">2</span>·<span data-q="j22">1</span> − <span data-q="j12">1</span>·<span data-q="j21">2</span> = <span data-q="detj">0</span>
-        <div class="note" style="margin-top:4px">det J = <span data-q="detj">0</span> ⇒ tại điểm này lớp <span data-q="detword">ép phẳng (suy biến)</span>.</div>
+      <div class="calc ans" style="flex:1">Hàng 1 = ∇f₁ = (2x, <span data-q="bnum">1</span>); hàng 2 = ∇f₂ = (y, x).
+        <div class="why" style="margin-top:4px"><b>Vì sao:</b> hàng i chỉ quan tâm đầu ra fᵢ; mỗi cột là một biến đầu vào (x trước, y sau). Jacobian = chồng các gradient.</div>
       </div>
     </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: J biến hình vuông → hình bình hành</h2><span class="tag">xấp xỉ cục bộ</span></div>
+    <div class="step-h"><div class="b">2</div><h2>det J</h2></div>
+    <div class="calc ans big">det J = <span data-q="j11">2</span>·<span data-q="j22">1</span> − <span data-q="j12">1</span>·<span data-q="j21">2</span> = <span class="wcell ans" data-q="detj">0</span>
+      &nbsp;→&nbsp; |det J| = diện tích = <span class="blk" data-q="absdetj">0</span></div>
+    <div class="why" style="max-width:150mm"><b>Vì sao:</b> hai cột của J căng một hình bình hành, |det J| = diện tích = hệ số phóng đại diện tích cục bộ.
+      Ở điểm này lớp <span data-q="detword">ép phẳng (suy biến)</span>. Một nhiễu nhỏ dx đổi đầu ra ≈ J·dx (đúng phép ma trận × vectơ ở A8).</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>J biến hình vuông đơn vị</h2></div>
     <div class="figrow">
-      <svg id="figJ" class="fig" viewBox="0 0 180 150" width="56mm" height="46mm" aria-label="hai cột của Jacobian căng thành hình bình hành, diện tích bằng det"></svg>
-      <div style="flex:1">
-        <div class="note">Hai <b>cột</b> của J là ảnh của hai vectơ đơn vị: lam (<span data-q="j11">2</span>, <span data-q="j21">2</span>) và cam (<span data-q="j12">1</span>, <span data-q="j22">1</span>).
-          Diện tích vùng tô = <b>|det J|</b>. Vùng dẹt ⇒ thông tin bị nén.</div>
+      <svg id="figA" class="fig" viewBox="0 0 176 150" width="52mm" height="44mm"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc ans big" style="margin:0">
+          J·(1,0) = ( <span class="wcell ans" data-q="j11">2</span>, <span class="wcell ans" data-q="j21">2</span> ) &nbsp;·&nbsp;
+          J·(0,1) = ( <span class="wcell ans" data-q="j12">1</span>, <span class="wcell ans" data-q="j22">1</span> )<br>
+          J·(1,1) = ( <span class="wcell ans" data-q="cfx">3</span>, <span class="wcell ans" data-q="cfy">3</span> ) &nbsp;·&nbsp;
+          diện tích = <span class="wcell ans" data-q="absdetj">0</span>
+        </div>
+        <div class="why"><b>Vì sao:</b> cột 1 = ảnh của (1,0), cột 2 = ảnh của (0,1); hình vuông diện tích 1 → hình bình hành diện tích |det J|.
+          det J = 0 nghĩa 4 đỉnh thẳng hàng (bẹp).</div>
       </div>
     </div>
   </div>
@@ -162,19 +185,22 @@
     <ol>
       <li>Kích thước Jacobian? → <span class="qa">m×n.</span></li>
       <li>Mỗi hàng là? → <span class="qa">Gradient của một thành phần đầu ra.</span></li>
+      <li>(1,0) rơi vào? → <span class="qa">Cột 1 của J.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Jacobian = chồng các gradient = xấp xỉ tuyến tính cục bộ của hàm vectơ→vectơ; backprop nhân các Jacobian dọc
-    mạng. Hết phần giải tích nền. Bài tiếp (A16): sang <b>xác suất</b> — kỳ vọng &amp; phương sai.
+    <b style="color:var(--accent2)">Rút ra.</b> Jacobian = chồng các gradient = xấp xỉ tuyến tính cục bộ của hàm vectơ→vectơ; cột của nó là ảnh các vectơ đơn vị,
+    det J là hệ số phóng đại diện tích. Backprop nhân các Jacobian dọc mạng. Hết phần giải tích nền. Bài tiếp (A16): sang <b>xác suất</b> — kỳ vọng &amp; phương sai.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A15 · Ma trận Jacobian</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var STATE = {j11:2,j21:2,j12:1,j22:1};
+
 function generate(){
   var f = WB.fmtInt;
   // f1 = x² + b·y, f2 = x·y ; điểm (x0,y0)
@@ -182,45 +208,53 @@ function generate(){
   var x0 = WB.randIntNZ(-2, 3), y0 = WB.randIntNZ(-2, 3);
   var j11 = 2*x0, j12 = b, j21 = y0, j22 = x0;
   var detj = j11*j22 - j12*j21;
+  STATE = {j11:j11, j21:j21, j12:j12, j22:j22};
   var detword = detj === 0 ? 'ép phẳng (suy biến)' : 'phóng đại diện tích × ' + f(Math.abs(detj));
+  var cfx = j11 + j12, cfy = j21 + j22;   // J·(1,1) = cột1 + cột2
 
   function signed(v){ var s = f(v), neg = /^−/.test(s), mag = neg ? s.slice(1) : s; if (mag==='1') mag=''; return (neg ? '− ' : '+ ') + mag; }
 
   WB.setAll({
-    bs: signed(b) + 'y',
+    bs: signed(b) + 'y', bnum: f(b),
     x0: f(x0), y0: f(y0),
     j11: f(j11), j12: f(j12), j21: f(j21), j22: f(j22),
-    detj: f(detj), detword: detword
+    detj: f(detj), absdetj: f(Math.abs(detj)), detword: detword,
+    cfx: f(cfx), cfy: f(cfy)
   });
-  drawJac('figJ', j11, j21, j12, j22);
+  drawJac('figQ', j11, j21, j12, j22, false);
+  drawJac('figA', j11, j21, j12, j22, true);
 }
 
-// hình bình hành căng bởi hai cột của J: col1=(j11,j21) lam, col2=(j12,j22) cam
-function drawJac(id, c1x, c1y, c2x, c2y){
+// hình bình hành căng bởi hai cột của J: col1=(j11,j21) lam, col2=(j12,j22) cam; ô điền |det J|.
+function drawJac(id, c1x, c1y, c2x, c2y, showAns){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var O = {x: 90, y: 78};
+  var O = {x: 92, y: 84};
   var mx = Math.max(2, Math.abs(c1x), Math.abs(c2x), Math.abs(c1x+c2x), Math.abs(c1y), Math.abs(c2y), Math.abs(c1y+c2y));
-  var u = 62 / mx;
+  var u = 52 / mx;
   function X(v){ return (O.x + v*u).toFixed(1); }
   function Y(v){ return (O.y - v*u).toFixed(1); }
   var s = '<defs>'
     + '<marker id="j1'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'
     + '<marker id="j2'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
     + '</defs>';
-  // trục
-  s += '<line x1="14" y1="'+Y(0)+'" x2="166" y2="'+Y(0)+'" stroke="#cdd3d9" stroke-width="1"/>';
-  s += '<line x1="'+X(0)+'" y1="8" x2="'+X(0)+'" y2="142" stroke="#cdd3d9" stroke-width="1"/>';
-  // hình bình hành
+  s += '<line x1="16" y1="'+Y(0)+'" x2="168" y2="'+Y(0)+'" stroke="#cdd3d9" stroke-width="1"/>';
+  s += '<line x1="'+X(0)+'" y1="40" x2="'+X(0)+'" y2="146" stroke="#cdd3d9" stroke-width="1"/>';
+  var detj = c1x*c2y - c2x*c1y;
   s += '<polygon points="'+X(0)+','+Y(0)+' '+X(c1x)+','+Y(c1y)+' '+X(c1x+c2x)+','+Y(c1y+c2y)+' '+X(c2x)+','+Y(c2y)
     + '" fill="#7c5cff22" stroke="#7c5cff" stroke-width="0.8"/>';
-  // cột 1 lam
   s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(c1x)+'" y2="'+Y(c1y)+'" stroke="#0e7490" stroke-width="2.4" marker-end="url(#j1'+id+')"/>';
-  // cột 2 cam
   s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(c2x)+'" y2="'+Y(c2y)+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#j2'+id+')"/>';
+  // ô điền |det J| = diện tích, góc trên-trái
+  var bx = 6, by = 6;
+  s += '<rect x="'+bx+'" y="'+by+'" width="66" height="26" rx="7" fill="'+(showAns?'#f3f0ff':'#fff')+'" stroke="'+(showAns?'#a99cf0':'#7c5cff')+'" stroke-width="1.6"/>';
+  s += '<text x="'+bx+'" y="'+(by-3)+'" style="font-size:8.5px" fill="#7c5cff" font-weight="700">diện tích |det J| ✍</text>';
+  if (showAns) s += '<text x="'+(bx+33)+'" y="'+(by+18)+'" text-anchor="middle" style="font-size:14px" fill="#5b43c9" font-weight="700">'+WB.fmtInt(Math.abs(detj))+'</text>';
+  else s += '<text x="'+(bx+33)+'" y="'+(by+17)+'" text-anchor="middle" style="font-size:12px" fill="#c3ccd6">?</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);
+drawJac('figQ', STATE.j11, STATE.j21, STATE.j12, STATE.j22, false);
 generate();
 </script>
 </body>

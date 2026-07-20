@@ -3,180 +3,318 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài J6 — Noise schedule (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài J6 — Noise Schedule (A4 in được)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .eq{line-height:1.95}
+  .why{line-height:1.6}
+  .mission{line-height:1.6}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J</div>
+  <div class="top">
+    <span class="no">J6</span>
+    <h1>Noise Schedule <small>— β → α → tích lũy ᾱ</small></h1>
+    <span class="chip">PHẦN J · SINH</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~13 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--purple)"></span>βₜ · liều nhiễu</span>
+      <span><span class="sw" style="background:var(--blue)"></span>αₜ · giữ lại 1 bước</span>
+      <span><span class="sw" style="background:var(--orange)"></span>ᾱₜ, SNR · tích lũy</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài J6</span><h1>Noise Schedule <small>— β → α → tích lũy ᾱ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Lịch nhiễu xấu (thêm quá nhanh/chậm) làm diffusion học kém. ᾱₜ là đại lượng then chốt: cho phép "nhảy
-    thẳng" (Bài J4) và định "ảnh gốc tan ở bước nào". Hiểu nó để đọc/chỉnh diffusion.
-    <div class="formula">αₜ = 1 − βₜ &nbsp;·&nbsp; ᾱₜ = α₁·α₂·…·αₜ &nbsp;(tích lũy, giảm dần về 0)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> "Lịch nhiễu" quyết định thêm nhiễu nhanh/chậm. Mỗi bước giữ lại <b>αₜ = 1 − βₜ</b> phần ảnh; nhân dồn qua t bước ra
+    <b>ᾱₜ = α₁·α₂·…·αₜ</b> = "phần ảnh gốc còn sống sau t bước". Cuối phiếu bạn tự chứng minh <b>ᾱₜ giảm đơn điệu</b> (tích các số &lt;1 luôn nhỏ dần)
+    và <b>tỉ số tín/nhiễu SNR = ᾱ/(1−ᾱ) cũng giảm đơn điệu</b> — nên bước càng lớn, ảnh càng chìm trong nhiễu, tiến tới nhiễu thuần khi ᾱ→0.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    βₜ là "liều nhiễu mỗi bước". αₜ là "phần ảnh sống sót qua một bước". Nhân dồn các αₜ ra ᾱₜ = "phần ảnh sống sót sau t bước" — như
-    <b>độ trong còn lại</b> của ly nước khi nhỏ mực liên tục.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 bước</span></div>
-    <div class="calc" style="font-size:14px">
-      β₁ = <span class="gv" data-q="b1">0.1</span> · β₂ = <span class="gv" data-q="b2">0.2</span>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>αₜ = 1 − βₜ</h2><span class="tag">phần giữ lại</span></div>
-    <div class="calc">
-      α₁ = 1 − <span data-q="b1">0.1</span> = <span class="blk" style="min-width:40px"></span> ; &nbsp;
-      α₂ = 1 − <span data-q="b2">0.2</span> = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> phần ảnh giữ lại mỗi bước = 1 trừ liều nhiễu βₜ.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tích lũy ᾱ</h2><span class="tag">nhân dồn</span></div>
-    <div class="calc">
-      ᾱ₁ = α₁ = <span class="blk" style="min-width:40px"></span> ; &nbsp;
-      ᾱ₂ = α₁·α₂ = <span data-q="a1">0.9</span>·<span data-q="a2">0.8</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="hint">ᾱ là <b>tích dồn</b>, luôn giảm sau mỗi bước.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đọc ý nghĩa</h2><span class="tag">√ᾱ ≈ ảnh còn lại</span></div>
-    <div class="note">ᾱ₂ = <span data-q="abar2">0.72</span> → √ᾱ₂ ≈ 0.85 còn lại ảnh gốc, phần nhiễu √(1−0.72) ≈ 0.53. ᾱ càng nhỏ → ảnh gốc càng tan → tiến tới nhiễu thuần.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Kiểu lịch</h2><span class="tag">linear / cosine</span></div>
-    <div class="note">Lịch <b>tuyến tính</b> tăng β đều; <b>cosine</b> giữ ảnh lâu hơn ở đầu, tan nhanh ở cuối → thường cho mẫu đẹp hơn.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>ᾱₜ tính thế nào từ αᵢ? → <span class="blk" style="min-width:150px"></span></li>
-      <li>ᾱₜ nhỏ nghĩa là gì? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J6 · Noise Schedule</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài J6</span><h1>Noise Schedule <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>αₜ</h2></div>
-    <div class="calc ans">α₁ = <span class="blk" data-q="a1">0.9</span> ; α₂ = <span class="blk" data-q="a2">0.8</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Tích lũy ᾱ</h2></div>
-    <div class="calc ans">ᾱ₁ = <span class="blk" data-q="abar1">0.9</span> ; ᾱ₂ = <span class="blk" data-q="abar2">0.72</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>ᾱₜ giảm theo t (linear vs cosine)</h2><span class="tag">phần ảnh còn lại</span></div>
-    <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 240 140" width="78mm" height="46mm" aria-label="đường tích lũy alpha-bar giảm theo bước t, so sánh lịch tuyến tính và cosine"></svg>
-      <div style="flex:1">
-        <div class="note">Đường <b>lam</b> = lịch tuyến tính (giảm đều), <b>cam</b> = cosine (giữ cao ở đầu, tụt nhanh ở cuối). ᾱ chạm 0 = ảnh tan hết.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">2 bước · βₜ = liều nhiễu mỗi bước</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Bước t</th><th>βₜ (liều nhiễu)</th></tr>
+          <tr><td class="l">t = 1</td><td style="color:var(--purple);font-weight:800" data-q="b1">0.20</td></tr>
+          <tr><td class="l">t = 2</td><td style="color:var(--purple);font-weight:800" data-q="b2">0.25</td></tr>
+        </table>
+        <div class="cap">βₜ = phần nhiễu thêm ở bước t (0 &lt; β &lt; 1). Chỉ 2 bước cho dễ tính; thực tế hàng trăm–nghìn bước.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div style="padding:1.4mm 2.6mm;background:#f7fafb;border-left:3px solid var(--purple);font-size:9px;line-height:1.55">
+          💡 <b>Trực giác:</b> như <b>nhỏ mực vào ly nước trong</b>. βₜ = giọt mực bước t; αₜ = độ trong <b>còn giữ</b> qua một bước;
+          ᾱₜ = độ trong <b>còn lại sau t bước</b> (nhân dồn). Mỗi giọt chỉ làm đục thêm → ᾱ chỉ có thể <b>tụt</b>, không tăng.
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>ᾱₜ? → <span class="qa">Tích dồn α₁·…·αₜ (giảm dần).</span></li>
-      <li>ᾱₜ nhỏ? → <span class="qa">Ảnh gốc đã tan nhiều, nhiễu lấn át.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">β → α=1−β → nhân dồn ᾱ (cột tụt dần) → SNR</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 116" width="100%" height="34mm"
+           aria-label="cột phần ảnh gốc còn lại alpha ngang giảm dần qua các bước, kèm tỉ số tín trên nhiễu, các ô để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> βₜ → αₜ = 1−βₜ → ᾱₜ = ∏αᵢ; ᾱ đo phần ảnh gốc còn lại. Bài tiếp (J7): chọn cách lấy mẫu ngược — <b>DDPM vs DDIM</b>.
+  <!-- ① α = 1 − β -->
+  <div class="panel">
+    <div class="ph"><span class="t">① αₜ = 1 − βₜ</span><span class="f">phần ảnh giữ lại qua MỘT bước</span></div>
+    <div class="pb">
+      <div class="eq">
+        α₁ = 1 − <span data-q="b1">0.20</span> = <span class="slot sm"></span> &nbsp;·&nbsp;
+        α₂ = 1 − <span data-q="b2">0.25</span> = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…1</th><th>α₁ giữ lại</th><th>α₂ giữ lại</th></tr>
+        <tr><td class="l">tỉ lệ</td><td><div class="track uni" id="t_a1"></div></td><td><div class="track uni" id="t_a2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…1. α + β = 1 mỗi bước (giữ lại + thành nhiễu = trọn). β lớn → α nhỏ (giữ ít).</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J6 · Noise Schedule</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② ᾱ tích lũy -->
+  <div class="panel">
+    <div class="ph"><span class="t">② ᾱₜ = α₁·α₂·…·αₜ (nhân dồn)</span><span class="f">phần ảnh gốc còn lại SAU t bước</span></div>
+    <div class="pb">
+      <div class="eq">
+        ᾱ₁ = α₁ = <span class="slot sm"></span> &nbsp;·&nbsp;
+        ᾱ₂ = α₁·α₂ = <span class="slot sm"></span>·<span class="slot sm"></span> = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…1</th><th>ᾱ₁ (sau 1 bước)</th><th>ᾱ₂ (sau 2 bước)</th></tr>
+        <tr><td class="l">ảnh gốc còn lại</td><td><div class="track uni" id="t_A1"></div></td><td><div class="track uni" id="t_A2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…1. ᾱ₂ so với ᾱ₁ — cao hơn hay thấp hơn? → <span class="slot" style="min-width:22mm"></span> (vì nhân thêm α₂ &lt; 1).</div>
+    </div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — ᾱ và SNR đều giảm đơn điệu</span><span class="f">SNR = ᾱ ÷ (1−ᾱ)</span></div>
+    <div class="pb">
+      <div class="eq">
+        SNR₁ = ᾱ₁ ÷ (1−ᾱ₁) = <span class="slot sm"></span> ÷ <span class="slot sm"></span> = <span class="slot sm"></span><br>
+        SNR₂ = ᾱ₂ ÷ (1−ᾱ₂) = <span class="slot sm"></span> ÷ <span class="slot sm"></span> = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…10</th><th>SNR₁ (bước 1)</th><th>SNR₂ (bước 2)</th></tr>
+        <tr><td class="l">tín/nhiễu</td><td><div class="track uni" id="t_s1"></div></td><td><div class="track uni" id="t_s2"></div></td></tr>
+      </table>
+      <div class="cap">SNR₂ &lt; SNR₁? → <span class="slot" style="min-width:16mm"></span> · ᾱ giảm → SNR giảm (cùng chiều). Bước càng lớn, tín hiệu càng chìm trong nhiễu.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính αₜ = 1−βₜ</span>
+    <span><span class="ck"></span>Nhân dồn ra ᾱₜ</span>
+    <span><span class="ck"></span>Chứng minh ᾱ &amp; SNR giảm</span>
+    <span class="win">🎉 Bạn vừa đọc được "lịch nhiễu" như dân diffusion!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J6 · Noise Schedule</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">J6</span>
+    <h1>Noise Schedule <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--purple)"></span>βₜ · liều nhiễu</span>
+      <span><span class="sw" style="background:var(--blue)"></span>αₜ · giữ lại 1 bước</span>
+      <span><span class="sw" style="background:var(--orange)"></span>ᾱₜ, SNR · tích lũy</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">β → α → ᾱ (cột tụt dần) → SNR</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 116" width="100%" height="34mm" aria-label="cột ảnh gốc còn lại giảm dần đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① αₜ = 1 − βₜ</span></div>
+    <div class="pb">
+      <div class="eq">
+        α₁ = 1 − <span data-q="b1">0.20</span> = <span class="slot ans sm" data-q="a1">0.80</span> &nbsp;·&nbsp;
+        α₂ = 1 − <span data-q="b2">0.25</span> = <span class="slot ans sm" data-q="a2">0.75</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…1</th><th>α₁</th><th>α₂</th></tr>
+        <tr><td class="l">giữ lại</td><td><div class="track uni" id="a_a1"></div></td><td><div class="track uni" id="a_a2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao α+β=1:</b> mỗi bước, phần ảnh <b>giữ lại</b> cộng phần biến thành <b>nhiễu</b> phải bằng trọn (1). α là "tỉ lệ tín hiệu sống qua một bước".</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② ᾱₜ = α₁·α₂·…·αₜ (nhân dồn)</span></div>
+    <div class="pb">
+      <div class="eq">
+        ᾱ₁ = α₁ = <span class="slot ans sm" data-q="A1">0.80</span> &nbsp;·&nbsp;
+        ᾱ₂ = α₁·α₂ = <span data-q="a1">0.80</span>·<span data-q="a2">0.75</span> = <span class="slot ans sm" data-q="A2">0.60</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…1</th><th>ᾱ₁</th><th>ᾱ₂</th></tr>
+        <tr><td class="l">ảnh gốc còn lại</td><td><div class="track uni" id="a_A1"></div></td><td><div class="track uni" id="a_A2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao ᾱ luôn tụt:</b> mỗi αₜ &lt; 1, nên nhân thêm một αₜ chỉ làm tích <b>nhỏ đi</b> (ᾱ₂ = ᾱ₁·α₂ &lt; ᾱ₁). Đây là "phần ảnh gốc sống sót" — chỉ có thể mất bớt qua mỗi bước, không tự mọc lại.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — ᾱ và SNR đều giảm đơn điệu</span></div>
+    <div class="pb">
+      <div class="eq">
+        SNR₁ = <span data-q="A1">0.80</span> ÷ (1−<span data-q="A1">0.80</span>) = <span data-q="A1">0.80</span> ÷ <span class="slot ans sm" data-q="c1">0.20</span> = <span class="slot ans sm" data-q="snr1">4</span><br>
+        SNR₂ = <span data-q="A2">0.60</span> ÷ (1−<span data-q="A2">0.60</span>) = <span data-q="A2">0.60</span> ÷ <span class="slot ans sm" data-q="c2">0.40</span> = <span class="slot ans sm" data-q="snr2">1.5</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh 0…10</th><th>SNR₁</th><th>SNR₂</th></tr>
+        <tr><td class="l">tín/nhiễu</td><td><div class="track uni" id="a_s1"></div></td><td><div class="track uni" id="a_s2"></div></td></tr>
+      </table>
+      <div class="why p" style="margin:0"><b>Đây là điểm cốt lõi:</b> ᾱₜ là tích của các số dương &lt; 1 → <b>giảm đơn điệu</b> về 0 (mỗi bước nhân thêm α&lt;1 chỉ kéo xuống).
+        Và SNR = ᾱ/(1−ᾱ) là <b>hàm tăng theo ᾱ</b> (ᾱ lớn → tử lớn, mẫu nhỏ), nên khi ᾱ giảm thì SNR <b>cũng giảm</b> theo (4 → 1.5). Nghĩa là: đi càng sâu (t lớn),
+        tỉ lệ tín hiệu trên nhiễu càng tụt → ảnh gốc càng chìm. Khi ᾱ→0 thì SNR→0: xₜ trở thành <b>nhiễu thuần</b> N(0,1) — đúng điểm xuất phát để khử nhiễu ngược (J5).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy khi đọc lịch nhiễu</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "ᾱₜ = β₁+β₂+… (cộng dồn)."</b><br>
+          <span style="color:var(--dim)">Sai — ᾱ là <b>tích</b> các αₜ (nhân dồn), không phải cộng. Cộng các β mới cho "tổng liều", khác hẳn "phần ảnh còn lại".</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "ᾱ có thể tăng lại ở bước sau."</b><br>
+          <span style="color:var(--dim)">Không — nhân thêm α&lt;1 luôn làm tích nhỏ đi. ᾱ <b>đơn điệu giảm</b>, tiến tới 0.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "β lớn hơn thì giữ được nhiều ảnh hơn."</b><br>
+          <span style="color:var(--dim)">Ngược lại — β là <b>liều nhiễu</b>; β lớn → α = 1−β nhỏ → giữ <b>ít</b> ảnh. Lịch cosine giữ β nhỏ ở đầu để giữ chi tiết lâu.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "SNR không liên quan tới ᾱ."</b><br>
+          <span style="color:var(--dim)">Có — SNR = ᾱ/(1−ᾱ), tăng/giảm <b>cùng chiều</b> với ᾱ. ᾱ↓ ⟹ SNR↓, đó là thước đo "ảnh còn rõ tới đâu".</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Lịch nhiễu: αₜ=1−βₜ (giữ lại một bước), ᾱₜ=∏αᵢ (giữ lại sau t bước) <b>giảm đơn điệu</b> về 0; SNR=ᾱ/(1−ᾱ) giảm cùng chiều.
+    ᾱ là đại lượng cho phép "nhảy thẳng" (J4) và định ảnh tan ở bước nào. Bài tiếp <b>J7</b>: <b>DDPM vs DDIM</b> — cùng lịch nhiễu, hai cách lấy mẫu (ngẫu nhiên vs tất định).
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J6 · Noise Schedule</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var S = {};
+// bộ hoàn toàn tra được: β → α → ᾱ (tích) → SNR đều tròn/đẹp
+var SETS = [
+  {b1:0.20, b2:0.25, a1:0.80, a2:0.75, A1:0.80, A2:0.60, snr1:4,   snr2:1.5},
+  {b1:0.25, b2:0.20, a1:0.75, a2:0.80, A1:0.75, A2:0.60, snr1:3,   snr2:1.5},
+  {b1:0.20, b2:0.375,a1:0.80, a2:0.625,A1:0.80, A2:0.50, snr1:4,   snr2:1}
+];
+
 function generate(){
-  var f = WB.fmtTrim;
-  var b1 = WB.pick([0.1,0.2]), b2 = WB.pick([0.2,0.3]);
-  var a1 = Math.round((1-b1)*100)/100, a2 = Math.round((1-b2)*100)/100;
-  var abar1 = a1, abar2 = Math.round(a1*a2*100)/100;
+  var f2 = WB.fmt2, f = WB.fmtTrim;
+  var d = WB.pick(SETS);
+  var c1 = Math.round((1-d.A1)*100)/100;   // 1 − ᾱ₁
+  var c2 = Math.round((1-d.A2)*100)/100;   // 1 − ᾱ₂
+  S = {b1:d.b1,b2:d.b2,a1:d.a1,a2:d.a2,A1:d.A1,A2:d.A2,snr1:d.snr1,snr2:d.snr2,c1:c1,c2:c2};
+
   WB.setAll({
-    b1:f(b1), b2:f(b2), a1:f(a1), a2:f(a2), abar1:f(abar1), abar2:f(abar2)
+    b1:f2(d.b1), b2:f2(d.b2), a1:f2(d.a1), a2:f2(d.a2),
+    A1:f2(d.A1), A2:f2(d.A2), c1:f2(c1), c2:f2(c2),
+    snr1:f(d.snr1), snr2:f(d.snr2)
   });
-  drawAbar('figA', abar2);
+
+  drawBarUni('t_a1',0,1,false); drawBarUni('t_a2',0,1,false);
+  drawBarUni('a_a1',d.a1,1,true); drawBarUni('a_a2',d.a2,1,true);
+  drawBarUni('t_A1',0,1,false); drawBarUni('t_A2',0,1,false);
+  drawBarUni('a_A1',d.A1,1,true); drawBarUni('a_A2',d.A2,1,true);
+  drawBarUni('t_s1',0,10,false); drawBarUni('t_s2',0,10,false);
+  drawBarUni('a_s1',d.snr1,10,true); drawBarUni('a_s2',d.snr2,10,true);
+
+  drawFig('figQ', false);
+  drawFig('figA', true);
 }
-function drawAbar(id, abar2){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=26, x1=222, y0=18, y1=112;
-  function py(v){return y1 - v*(y1-y0);}   // v∈[0,1]
-  var s='<line x1="'+x0+'" y1="'+y1+'" x2="'+x1+'" y2="'+y1+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+y1+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s+='<text x="'+(x0-4)+'" y="'+(py(1)+3)+'" text-anchor="end" font-size="7.5" fill="#9aa3ad">1</text>';
-  s+='<text x="'+(x0-4)+'" y="'+(y1+3)+'" text-anchor="end" font-size="7.5" fill="#9aa3ad">0</text>';
-  s+='<text x="'+x1+'" y="'+(y1+12)+'" text-anchor="end" font-size="8" fill="#5b6776">t →</text>';
-  // linear
-  var dL='', dC='', n=40;
-  for(var i=0;i<=n;i++){
-    var t=i/n, px=x0+t*(x1-x0);
-    var lin=1-t;                       // ᾱ tuyến tính
-    var cos=Math.cos(t*Math.PI/2);     // cosine
-    dL+=(i?'L':'M')+px.toFixed(1)+','+py(lin).toFixed(1);
-    dC+=(i?'L':'M')+px.toFixed(1)+','+py(cos).toFixed(1);
+
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:33%"></div><div class="tick" style="left:67%"></div>';
+  if(fill && v>0){ var pct=Math.min(v/max,1)*100; h+='<div class="fill pos" style="left:0%;width:'+pct+'%"></div>'; }
+  el.innerHTML=h;
+}
+
+function box(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+(filled?'#fff8f0':'#fff')+'" stroke="'+(filled?ORG:INK)+'" stroke-width="'+(filled?1.2:1.4)+'"'+(filled?'':' stroke-dasharray="3 2"')+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+2.6)+'" text-anchor="middle" font-size="7.2" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ: cột "ảnh gốc còn lại" ᾱ tụt dần ᾱ₀=1 → ᾱ₁ → ᾱ₂ → …→ 0, kèm SNR.
+function drawFig(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2, f=WB.fmtTrim, DIM='#6b7280', INK='#16202e', BLU='#0e7490', ORG='#b45309', PUR='#6d28d9';
+  var base=96, sc=76, x0=44, gap=96;
+  var s='<text x="6" y="12" font-size="8.4" font-weight="800" fill="'+INK+'">Phần ảnh gốc còn lại ᾱ — nhân dồn, chỉ tụt xuống</text>';
+  s+='<line x1="'+(x0-14)+'" y1="'+base+'" x2="530" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<line x1="'+(x0-14)+'" y1="'+(base-sc)+'" x2="'+(x0-14)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s+='<text x="'+(x0-18)+'" y="'+(base-sc)+'" text-anchor="end" font-size="6.6" fill="'+DIM+'">1</text>';
+  s+='<text x="'+(x0-18)+'" y="'+(base+2)+'" text-anchor="end" font-size="6.6" fill="'+DIM+'">0</text>';
+
+  var cols=[{lab:'ᾱ₀=1',v:1,fixed:true},{lab:'ᾱ₁',v:S.A1,fixed:false},{lab:'ᾱ₂',v:S.A2,fixed:false},{lab:'ᾱ_T→0',v:0.04,fixed:true}];
+  for(var k=0;k<cols.length;k++){
+    var c=cols[k], bx=x0+k*gap, h=c.v*sc, y=base-h, show=c.fixed||showAns;
+    var col = k===0?BLU:(k===3?PUR:ORG);
+    s+='<rect x="'+bx+'" y="'+y.toFixed(1)+'" width="46" height="'+h.toFixed(1)+'" rx="2" fill="'+col+'22" stroke="'+col+'" stroke-width="1.2"/>';
+    s+='<text x="'+(bx+23)+'" y="'+(base+11)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="'+col+'">'+c.lab+'</text>';
+    if(!c.fixed){
+      if(showAns) s+='<text x="'+(bx+23)+'" y="'+(y-3)+'" text-anchor="middle" font-size="7.6" font-weight="800" fill="'+ORG+'">'+f2(c.v)+'</text>';
+      else { s+=box(bx+9, y-14, 28, 12, '', false); }
+    } else if(k===0){ s+='<text x="'+(bx+23)+'" y="'+(y-3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="'+DIM+'">1.00</text>'; }
+    // mũi tên tụt
+    if(k>0 && k<3){ s+='<text x="'+(bx-gap/2+8)+'" y="'+(base-h/2-6)+'" text-anchor="middle" font-size="9" fill="'+ORG+'">↘</text>'; }
   }
-  s+='<path d="'+dL+'" fill="none" stroke="#0e7490" stroke-width="1.6"/>';
-  s+='<path d="'+dC+'" fill="none" stroke="#b45309" stroke-width="1.6"/>';
-  s+='<text x="'+(x0+8)+'" y="'+(y0+8)+'" font-size="8" fill="#0e7490" font-weight="700">■ linear</text>';
-  s+='<text x="'+(x0+58)+'" y="'+(y0+8)+'" font-size="8" fill="#b45309" font-weight="700">■ cosine</text>';
+  // SNR chú thích
+  s+='<text x="'+(x0+gap)+'" y="'+(base-sc-3)+'" text-anchor="middle" font-size="6.8" fill="'+DIM+'">SNR '+(showAns?f(S.snr1):'?')+'</text>';
+  s+='<text x="'+(x0+2*gap)+'" y="'+(base-sc-3)+'" text-anchor="middle" font-size="6.8" fill="'+DIM+'">SNR '+(showAns?f(S.snr2):'?')+'</text>';
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC
 </script>
 </body>
 </html>

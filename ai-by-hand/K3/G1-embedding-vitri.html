@@ -1,272 +1,422 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài G1 — Embedding &amp; Positional Encoding (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-  /* siết khoảng cách riêng cho bài này (additive, không đụng wb.css) */
-  .page .step{ margin-top:4px; }
-  .page .grid2{ margin-top:2px; gap:4px 24px; }
-  .page .intro{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .intuition{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .quiz{ margin-top:5px; padding-top:6px; padding-bottom:6px; }
-  .page .why{ margin-top:3px; }
-  .page .calc{ line-height:1.55; }
-  .page .note{ margin-top:3px; }
-  .page .mtx .cell{ height:7mm; }
-</style>
+<title>Làm toán AI · Bài G1 — Embedding &amp; Vị trí (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · cửa vào Transformer</div>
+  <div class="top">
+    <span class="no">G1</span>
+    <h1>Embedding &amp; Vị trí <small>— biến chữ thành vectơ có thứ tự</small></h1>
+    <span class="chip">PHẦN G · CỬA VÀO TRANSFORMER</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>nghĩa (bảng E)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>vị trí (PE) &amp; đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G1</span><h1>Embedding &amp; Vị trí <small>— biến chữ thành vectơ có thứ tự</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
-
-  <div class="intro">
-    <b>Transformer không đọc chữ — chỉ đọc số.</b> Mỗi <b>token</b> được tra trong <b>bảng nhúng E</b> ra một vectơ. Vì
-    chú ý (Bài H2) không phân biệt thứ tự, ta cộng thêm <b>dấu vị trí</b> sin/cos cố định → cùng một từ ở vị trí khác nhau
-    sẽ có vectơ khác nhau. Kết quả là đầu vào <b>X</b> cho Transformer.
-    <div class="formula">
-      X<sub>pos</sub> = E[token<sub>pos</sub>] <s style="color:var(--accent2)">+ PE[pos]</s>
-      &nbsp;&nbsp;|&nbsp;&nbsp; PE(pos,2i)=sin(pos/10000<sup>2i/d</sup>), &nbsp;PE(pos,2i+1)=cos(…)
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Transformer không đọc chữ — chỉ đọc số. Hãy <b>tra bảng nhúng E</b> để biến 2 token thành vectơ,
+    rồi <b>cộng dấu vị trí PE</b> để chúng "biết mình đứng ở đâu". Kết quả là ma trận <b>X</b> — đầu vào thật của
+    Self-Attention (Bài H2). Cuối phiếu bạn sẽ tự chứng minh: <b>vị trí là thứ duy nhất</b> phân biệt hai token giống hệt nhau.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Bảng embedding là <b>từ điển vectơ</b>: mỗi token một dòng. "Tra" = nhân one-hot với bảng = lấy đúng dòng đó. Token nghĩa gần nhau →
-    vectơ gần nhau. PE thêm "dấu vị trí" để mô hình phân biệt thứ tự (cùng từ ở vị trí khác → vectơ khác).
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn: bảng nhúng E, câu, bảng vị trí PE</h2><span class="tag">vocab 4 từ · d = 4</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">E <s>bảng nhúng (4 từ × d=4)</s></div>
-        <div class="mtx c4" style="--cell:10mm">
-          <div class="cell given" data-q="e00">2</div><div class="cell given" data-q="e01">-1</div><div class="cell given" data-q="e02">0</div><div class="cell given" data-q="e03">3</div>
-          <div class="cell given" data-q="e10">1</div><div class="cell given" data-q="e11">2</div><div class="cell given" data-q="e12">-2</div><div class="cell given" data-q="e13">0</div>
-          <div class="cell given" data-q="e20">-1</div><div class="cell given" data-q="e21">3</div><div class="cell given" data-q="e22">1</div><div class="cell given" data-q="e23">-2</div>
-          <div class="cell given" data-q="e30">0</div><div class="cell given" data-q="e31">-2</div><div class="cell given" data-q="e32">2</div><div class="cell given" data-q="e33">1</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">vocab 4 từ · d = 4</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm">
+            <span>0 tôi</span><span>1 yêu</span><span>2 AI</span><span>3 nhiều</span>
+          </div>
+          <div class="mx c4" style="--cw:9.5mm;--ch:6.4mm" id="mxE">
+            <div class="gv" data-q="e00">2</div><div class="gv" data-q="e01">−1</div><div class="gv" data-q="e02">3</div><div class="gv" data-q="e03">3</div>
+            <div class="gv" data-q="e10">1</div><div class="gv" data-q="e11">2</div><div class="gv" data-q="e12">−2</div><div class="gv" data-q="e13">1</div>
+            <div class="gv" data-q="e20">−1</div><div class="gv" data-q="e21">3</div><div class="gv" data-q="e22">1</div><div class="gv" data-q="e23">−2</div>
+            <div class="gv" data-q="e30">3</div><div class="gv" data-q="e31">−2</div><div class="gv" data-q="e32">2</div><div class="gv" data-q="e33">1</div>
+          </div>
         </div>
-        <div class="note" style="text-align:center">hàng 0=<b>tôi</b> · 1=<b>yêu</b> · 2=<b>AI</b> · 3=<b>nhiều</b></div>
+        <div class="cap"><b>Bảng nhúng E</b> (4 từ × d=4) — mỗi <b>hàng</b> là "nghĩa" của một từ. E <b>học được</b> khi train.</div>
       </div>
-      <div class="mwrap" style="margin-left:6px"><div class="mlabel">PE <s>dấu vị trí (cho sẵn)</s></div>
-        <div class="mtx c4" style="--cell:10mm;border-color:var(--accent2)">
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.00</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">1.00</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.00</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">1.00</div>
-          <div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.84</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.54</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">0.01</div><div class="cell given" style="background:#fff5e9;border-color:#e3b780">1.00</div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm"><span>vị trí 0</span><span>vị trí 1</span></div>
+          <div class="mx c4" style="--cw:9.5mm;--ch:6.4mm">
+            <div class="pe">0.00</div><div class="pe">1.00</div><div class="pe">0.00</div><div class="pe">1.00</div>
+            <div class="pe">0.84</div><div class="pe">0.54</div><div class="pe">0.01</div><div class="pe">1.00</div>
+          </div>
         </div>
-        <div class="note" style="text-align:center">hàng = vị trí <b>0</b> rồi <b>1</b> · sin/cos tra sẵn</div>
+        <div class="cap"><b>Bảng vị trí PE</b> — sin/cos tra sẵn, <b>cố định</b> (không học), chỉ phụ thuộc vị trí chứ không phụ thuộc từ.</div>
+        <div style="margin-top:1.6mm;border-top:1px solid var(--line2);padding-top:1.6mm">
+          <span style="font:700 9px var(--sans);color:var(--dim)">CÂU CẦN MÃ HÓA:</span><br>
+          <span style="display:inline-block;margin-top:1.2mm">
+            <span class="tok"><span data-q="w0">tôi</span><i>id <span data-q="id0">0</span></i></span>
+            <span class="tok"><span data-q="w1">yêu</span><i>id <span data-q="id1">1</span></i></span>
+          </span>
+        </div>
       </div>
     </div>
-    <div class="note" style="max-width:165mm">Câu cần mã hóa: <b>“<span data-q="w0">tôi</span> <span data-q="w1">yêu</span>”</b>
-      → token id = (<b data-q="id0">0</b>, <b data-q="id1">1</b>). Mỗi từ lấy <b>một hàng</b> của E theo id; PE không đổi theo từ, chỉ theo vị trí.</div>
   </div>
 
-  <div class="grid2">
-  <!-- STEP 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tra bảng: token → vectơ E</h2><span class="tag">lookup</span></div>
-    <div class="calc">
-      e<sub>0</sub> (“<span data-q="w0b">tôi</span>”, hàng <span data-q="id0c">0</span>) = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
-      e<sub>1</sub> (“<span data-q="w1b">yêu</span>”, hàng <span data-q="id1c">1</span>) = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="hint"><b>Mẹo:</b> "embedding" chỉ là <b>tra bảng</b> — chép đúng hàng, chưa tính gì.</div>
-    <div class="why"><b>Vì sao:</b> tra bảng = nhân one-hot(id)·E = lấy đúng dòng id; rẻ và <b>học được</b> (E là tham số).</div>
-  </div>
-
-  <!-- STEP 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cộng dấu vị trí</h2><span class="tag">e + PE</span></div>
-    <div class="calc">
-      X<sub>0</sub> = e<sub>0</sub>+PE[0] = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )<br>
-      X<sub>1</sub> = e<sub>1</sub>+PE[1] = ( <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span>, <span class="blk"></span> )
-    </div>
-    <div class="note">Cộng <b>theo từng ô</b> (element-wise). PE[0]=(0,1,0,1) nên vị trí 0 chỉ thêm 1 vào ô lẻ.</div>
-    <div class="why"><b>Vì sao:</b> PE và embedding <b>cùng chiều d</b> → cộng (không nối) là cách rẻ để hợp nhất "nghĩa" + "vị trí", khối sau không phình.</div>
-  </div>
-  </div><!-- /grid2 -->
-
-  <!-- STEP 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Ma trận đầu vào X (2 × d)</h2><span class="tag">gửi vào Transformer</span></div>
-    <div class="row" style="gap:14px">
-      <div class="mwrap"><div class="mlabel">X = E[token] + PE</div>
-        <div class="mtx c4" style="--cell:13mm">
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-      <div class="note" style="align-self:center;max-width:95mm">Mỗi hàng = 1 token đã "biết mình đứng ở đâu" — đầu vào thật của <b>Bài H2/13</b>.</div>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">token → tra bảng → + PE → X</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 520 116" width="100%" height="30mm"
+           aria-label="token tra hàng bảng nhúng ra vectơ, cộng dấu vị trí lấy mẫu từ sóng sin cos, ra vectơ X"></svg>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>"Tra embedding" tương đương phép gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao cộng PE thay vì nối? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
+  <!-- ① TRA BẢNG -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Tra bảng — token → vectơ</span><span class="f">lookup: chép đúng hàng id của E</span></div>
+    <div class="pb" style="display:flex;gap:8mm;align-items:center">
+      <div class="mxwrap">
+        <!-- &nbsp; bắt buộc: .rowlab span là flex → khoảng trắng giữa các flex item bị nuốt ("hàng3") -->
+        <div class="rowlab" style="--ch:6.6mm"><span>e₀ ← hàng&nbsp;<span data-q="id0">0</span></span><span>e₁ ← hàng&nbsp;<span data-q="id1">1</span></span></div>
+        <div class="mx c4" style="--cw:11mm;--ch:6.6mm">
+          <div class="blank"></div><div class="blank"></div><div class="blank"></div><div class="blank"></div>
+          <div class="blank"></div><div class="blank"></div><div class="blank"></div><div class="blank"></div>
+        </div>
+      </div>
+      <div class="cap" style="margin:0;max-width:72mm">Chưa tính gì cả — <b>chỉ chép</b>. "Tra embedding" = nhân one-hot(id) với E = lấy đúng dòng id.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Positional</span><span>Trang 1/2 · ĐỀ</span></div>
+  <!-- ② CỘNG PE -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Cộng dấu vị trí — theo từng chiều</span><span class="f">X = e + PE[vị trí]</span></div>
+    <div class="split">
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">VỊ TRÍ 0 — "<span data-q="w0">tôi</span>"</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>e₀ (từ ①)</th><th>+ PE[0]</th><th>= X₀</th><th>Tô thanh X₀</th></tr>
+          <tr><td class="l">d₀</td><td><span class="cellb"></span></td><td class="gvt">0.00</td><td><span class="cellb"></span></td><td><div class="track" id="t00"></div></td></tr>
+          <tr><td class="l">d₁</td><td><span class="cellb"></span></td><td class="gvt">1.00</td><td><span class="cellb"></span></td><td><div class="track" id="t01"></div></td></tr>
+          <tr><td class="l">d₂</td><td><span class="cellb"></span></td><td class="gvt">0.00</td><td><span class="cellb"></span></td><td><div class="track" id="t02"></div></td></tr>
+          <tr><td class="l">d₃</td><td><span class="cellb"></span></td><td class="gvt">1.00</td><td><span class="cellb"></span></td><td><div class="track" id="t03"></div></td></tr>
+        </table>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">VỊ TRÍ 1 — "<span data-q="w1">yêu</span>"</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>e₁ (từ ①)</th><th>+ PE[1]</th><th>= X₁</th><th>Tô thanh X₁</th></tr>
+          <tr><td class="l">d₀</td><td><span class="cellb"></span></td><td class="gvt">0.84</td><td><span class="cellb"></span></td><td><div class="track" id="t10"></div></td></tr>
+          <tr><td class="l">d₁</td><td><span class="cellb"></span></td><td class="gvt">0.54</td><td><span class="cellb"></span></td><td><div class="track" id="t11"></div></td></tr>
+          <tr><td class="l">d₂</td><td><span class="cellb"></span></td><td class="gvt">0.01</td><td><span class="cellb"></span></td><td><div class="track" id="t12"></div></td></tr>
+          <tr><td class="l">d₃</td><td><span class="cellb"></span></td><td class="gvt">1.00</td><td><span class="cellb"></span></td><td><div class="track" id="t13"></div></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Thang thanh: <b>−5 … 0 … +5</b> · cộng <b>theo từng ô</b> (element-wise) — PE cùng chiều d nên <b>cộng</b> được, không phải nối.</div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — vị trí là thứ duy nhất phân biệt</span><span class="f">thử câu "<span data-q="ws">tôi</span> <span data-q="ws">tôi</span>"</span></div>
+    <div class="pb">
+      <div class="eq">
+        Giả sử câu là <b>"<span data-q="ws">tôi</span> <span data-q="ws">tôi</span>"</b> — <b>cùng một từ</b> ở cả hai vị trí, nên e₀ = e₁ = e.
+        Hãy tính <b>hiệu</b> hai vectơ đầu ra (không cần biết e là gì):<br>
+        X₀ − X₁ = (e + PE[0]) − (e + PE[1]) = <span class="slot" style="min-width:26mm"></span>
+        = ( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">Kết quả có phụ thuộc <b>từ nào</b> / bảng E không? Vì sao?</span>
+        <span class="slot" style="min-width:56mm"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:32mm"><span class="lb">✏️ Nháp — cộng tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tra xong e₀ e₁</span>
+    <span><span class="ck"></span>Ra X₀ X₁ + tô thanh</span>
+    <span><span class="ck"></span>Chứng minh E triệt tiêu</span>
+    <span class="win">🎉 Bạn vừa mở cửa vào Transformer!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Vị trí</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<!-- class "key" là quy ước dự án: tools/check-de-key.mjs dò trang đáp án bằng `.page.key` -->
 <section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  <div class="top">
+    <span class="no">G1</span>
+    <h1>Embedding &amp; Vị trí <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
   </div>
-  <div class="wb-title"><span class="no">Bài G1</span><h1>Embedding &amp; Vị trí <small>— lời giải &amp; kiểm tra</small></h1></div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>nghĩa</span>
+      <span><span class="sw" style="background:var(--orange)"></span>vị trí · đáp án</span></span>
+  </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tra bảng (chép hàng của E)</h2></div>
-    <div class="calc ans">
-      e<sub>0</sub> = ( <span class="blk" data-q="r0_0">2</span> , <span class="blk" data-q="r0_1">−1</span> , <span class="blk" data-q="r0_2">0</span> , <span class="blk" data-q="r0_3">3</span> )<br>
-      e<sub>1</sub> = ( <span class="blk" data-q="r1_0">1</span> , <span class="blk" data-q="r1_1">2</span> , <span class="blk" data-q="r1_2">−2</span> , <span class="blk" data-q="r1_3">0</span> )
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">nghĩa + vị trí = X</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 520 116" width="100%" height="30mm" aria-label="sơ đồ với vectơ X đã điền"></svg>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cộng PE theo từng ô</h2></div>
-    <div class="calc ans">
-      X<sub>0</sub> = (<span data-q="s0">2+0, −1+1, 0+0, 3+1</span>) = ( <span class="blk" data-q="x0_0">2.00</span> , <span class="blk" data-q="x0_1">0.00</span> , <span class="blk" data-q="x0_2">0.00</span> , <span class="blk" data-q="x0_3">4.00</span> )<br>
-      X<sub>1</sub> = (<span data-q="s1">1+0.84, 2+0.54, −2+0.01, 0+1</span>) = ( <span class="blk" data-q="x1_0">1.84</span> , <span class="blk" data-q="x1_1">2.54</span> , <span class="blk" data-q="x1_2">−1.99</span> , <span class="blk" data-q="x1_3">1.00</span> )
+  <div class="panel">
+    <div class="ph"><span class="t">① Tra bảng — chép hàng của E</span></div>
+    <div class="pb" style="display:flex;gap:8mm;align-items:center">
+      <div class="mxwrap">
+        <!-- &nbsp; bắt buộc: .rowlab span là flex → khoảng trắng giữa các flex item bị nuốt ("hàng3") -->
+        <div class="rowlab" style="--ch:6.6mm"><span>e₀ ← hàng&nbsp;<span data-q="id0">0</span></span><span>e₁ ← hàng&nbsp;<span data-q="id1">1</span></span></div>
+        <div class="mx c4" style="--cw:11mm;--ch:6.6mm">
+          <div class="ansc" data-q="r0_0">2</div><div class="ansc" data-q="r0_1">−1</div><div class="ansc" data-q="r0_2">3</div><div class="ansc" data-q="r0_3">3</div>
+          <div class="ansc" data-q="r1_0">1</div><div class="ansc" data-q="r1_1">2</div><div class="ansc" data-q="r1_2">−2</div><div class="ansc" data-q="r1_3">1</div>
+        </div>
+      </div>
+      <div class="why" style="margin:0;max-width:74mm"><b>Vì sao rẻ:</b> one-hot(id)·E chỉ giữ lại đúng một dòng → không cần nhân thật, chỉ <b>đánh chỉ số</b>. Nhưng E vẫn là <b>tham số học được</b>.</div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Ma trận đầu vào X</h2></div>
-    <div class="mwrap"><div class="mlabel">X (hàng = token đã gắn vị trí)</div>
-      <div class="mtx c4" style="--cell:18mm">
-        <div class="cell ans" data-q="x0_0b">2.00</div><div class="cell ans" data-q="x0_1b">0.00</div><div class="cell ans" data-q="x0_2b">0.00</div><div class="cell ans" data-q="x0_3b">4.00</div>
-        <div class="cell ans" data-q="x1_0b">1.84</div><div class="cell ans" data-q="x1_1b">2.54</div><div class="cell ans" data-q="x1_2b">−1.99</div><div class="cell ans" data-q="x1_3b">1.00</div>
-      </div></div>
-    <div class="note">Hai token có thể là <b>cùng một từ</b> mà vẫn ra vectơ khác nhau — đó chính là tác dụng của dấu vị trí.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">② Cộng dấu vị trí → X</span></div>
+    <div class="split">
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">VỊ TRÍ 0 — "<span data-q="w0">tôi</span>"</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>e₀</th><th>+ PE[0]</th><th>= X₀</th><th>X₀</th></tr>
+          <tr><td class="l">d₀</td><td class="evt" data-q="r0_0">2</td><td class="gvt">0.00</td><td><span class="cellb ans" data-q="x0_0">2.00</span></td><td><div class="track" id="a00"></div></td></tr>
+          <tr><td class="l">d₁</td><td class="evt" data-q="r0_1">−1</td><td class="gvt">1.00</td><td><span class="cellb ans" data-q="x0_1">0.00</span></td><td><div class="track" id="a01"></div></td></tr>
+          <tr><td class="l">d₂</td><td class="evt" data-q="r0_2">3</td><td class="gvt">0.00</td><td><span class="cellb ans" data-q="x0_2">3.00</span></td><td><div class="track" id="a02"></div></td></tr>
+          <tr><td class="l">d₃</td><td class="evt" data-q="r0_3">3</td><td class="gvt">1.00</td><td><span class="cellb ans" data-q="x0_3">4.00</span></td><td><div class="track" id="a03"></div></td></tr>
+        </table>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div style="font:800 8.4px var(--sans);color:var(--blue);letter-spacing:.08em;margin-bottom:1mm">VỊ TRÍ 1 — "<span data-q="w1">yêu</span>"</div>
+        <table>
+          <tr><th class="l">Chiều</th><th>e₁</th><th>+ PE[1]</th><th>= X₁</th><th>X₁</th></tr>
+          <tr><td class="l">d₀</td><td class="evt" data-q="r1_0">1</td><td class="gvt">0.84</td><td><span class="cellb ans" data-q="x1_0">1.84</span></td><td><div class="track" id="a10"></div></td></tr>
+          <tr><td class="l">d₁</td><td class="evt" data-q="r1_1">2</td><td class="gvt">0.54</td><td><span class="cellb ans" data-q="x1_1">2.54</span></td><td><div class="track" id="a11"></div></td></tr>
+          <tr><td class="l">d₂</td><td class="evt" data-q="r1_2">−2</td><td class="gvt">0.01</td><td><span class="cellb ans" data-q="x1_2">−1.99</span></td><td><div class="track" id="a12"></div></td></tr>
+          <tr><td class="l">d₃</td><td class="evt" data-q="r1_3">1</td><td class="gvt">1.00</td><td><span class="cellb ans" data-q="x1_3">2.00</span></td><td><div class="track" id="a13"></div></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao cộng chứ không nối:</b> PE cùng chiều d với embedding → cộng xong <b>X vẫn là 2×4</b>,
+      khối Transformer phía sau không phình. Nối sẽ làm d gấp đôi và mọi ma trận W sau đó to theo.</div>
   </div>
 
-  <!-- FIGURE (chuyển sang trang ĐÁP ÁN cho cân budget) -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: tra bảng + cộng sóng vị trí</h2><span class="tag">đổi theo 🎲</span></div>
-    <svg id="figEmb" class="fig" viewBox="0 0 270 104" width="100mm" height="38mm" aria-label="trái: bảng nhúng E với hai hàng được chọn tô đậm, mũi tên kéo ra hai vectơ token; phải: hai sóng sin và cos, chấm lấy mẫu tại vị trí 0 và 1 minh họa dấu vị trí cộng thêm"></svg>
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — E triệt tiêu</span><span class="f">câu "<span data-q="ws">tôi</span> <span data-q="ws">tôi</span>"</span></div>
+    <div class="pb">
+      <div class="eq">
+        X₀ − X₁ = (e + PE[0]) − (e + PE[1]) = <span class="slot ans" style="min-width:26mm">PE[0] − PE[1]</span>
+        = ( <span class="slot ans" data-q="df0">−0.84</span>, <span class="slot ans" data-q="df1">0.46</span>, <span class="slot ans" data-q="df2">−0.01</span>, <span class="slot ans" data-q="df3">0.00</span> )<br>
+        <span style="font-size:9.2px;color:var(--dim)">Phụ thuộc từ nào / bảng E không?</span>
+        <span class="qa">Không — e xuất hiện ở cả hai số hạng nên <b>bị trừ triệt tiêu</b>. Bấm 🎲 đổi sang từ khác: hiệu vẫn y nguyên.</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> hai token <b>giống hệt nhau</b> vẫn ra hai vectơ <b>khác nhau</b>,
+      và phần khác nhau <b>đúng bằng PE[0] − PE[1]</b> — không dính gì tới nghĩa. Chú ý (Bài H2) vốn <b>không phân biệt thứ tự</b>
+      (đảo token thì kết quả đảo theo, y hệt); PE chính là thứ duy nhất bơm thông tin thứ tự vào. Bỏ PE đi → "tôi yêu AI" và "AI yêu tôi" là <b>một</b> với mô hình.</div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Tra embedding? → <span class="qa">Nhân one-hot với bảng E (lấy đúng dòng id).</span></li>
-      <li>Cộng PE thay vì nối? → <span class="qa">Giữ nguyên chiều d → khối sau không phình; hợp nhất nghĩa + vị trí.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở cửa vào Transformer</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Nối PE vào cuối vectơ cho chắc."</b><br>
+          <span style="color:var(--dim)">Nối → d gấp đôi (4→8) → <b>mọi</b> ma trận W của khối sau to gấp đôi theo. Cộng giữ d=4, miễn phí. Đó là lý do Transformer chọn cộng.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "PE là tham số, sẽ được học."</b><br>
+          <span style="color:var(--dim)">PE sin/cos <b>cố định</b>, 0 tham số — nên chạy được với câu <b>dài hơn</b> mọi câu từng thấy khi train. (Biến thể <i>learned PE</i> của BERT/GPT-2 thì có học, nhưng bị chặn ở độ dài tối đa.)</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Tra bảng là nhân ma trận, tốn kém."</b><br>
+          <span style="color:var(--dim)">Về <b>toán</b> thì đúng là one-hot·E, nhưng one-hot chỉ có một số 1 → máy chỉ cần <b>đánh chỉ số</b> đúng dòng. Nhân thật là phí.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Chiều chẵn/lẻ dùng nhầm sin/cos."</b><br>
+          <span style="color:var(--dim)">Quy ước: chiều <b>chẵn</b> = sin, chiều <b>lẻ</b> = cos. Kiểm nhanh tại vị trí 0: sin(0)=0, cos(0)=1 → PE[0] = (0, 1, 0, 1) — đúng như bảng cho sẵn.</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> "Hiểu chữ" của AI bắt đầu từ hai phép cực đơn giản: <b>tra bảng</b> (E, học được khi train)
-    và <b>cộng một dấu vị trí cố định</b> (PE, không học). Sóng sin/cos có tần số giảm dần nên mỗi vị trí mang một
-    "vân tay" riêng mà mô hình có thể suy ra khoảng cách giữa các token. Ma trận X này chính là đầu vào cho
-    <b>Self-Attention (Bài H2)</b> và <b>Khối Transformer (Bài H6)</b> — cửa đã mở, phần còn lại là các bài đã học.
+  <div class="why p">
+    <b>Mở rộng — vì sao là sóng, và tần số giảm dần?</b> Mỗi cặp chiều dùng một <b>tần số</b> khác nhau (chiều càng cao, sóng càng chậm),
+    y như đồng hồ có kim giây/phút/giờ: đọc đủ các kim là biết chính xác "mấy giờ" mà không kim nào phải quay quá nhanh.
+    Nhờ vậy <b>hiệu</b> PE giữa hai vị trí chỉ phụ thuộc <b>khoảng cách</b> giữa chúng — mô hình học được "cách nhau 1 token" trông ra sao,
+    rồi áp cho mọi vị trí. Bài <b>H7</b> đào sâu sóng này; bài <b>H8 (RoPE)</b> đổi cách chơi: <b>xoay</b> vectơ theo vị trí thay vì cộng vào.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Positional</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> "Hiểu chữ" của AI bắt đầu bằng hai phép cực đơn giản: <b>tra bảng</b> (E — học được)
+    và <b>cộng một dấu vị trí cố định</b> (PE — không học). Sóng sin/cos tần số giảm dần khiến mỗi vị trí có một "vân tay" riêng,
+    và hiệu giữa hai vị trí chỉ phụ thuộc <b>khoảng cách</b> — nhờ vậy mô hình suy ra được thứ tự. Ma trận <b>X</b> vừa dựng
+    chính là đầu vào của <b>Self-Attention (H2)</b> và <b>Khối Transformer (H6)</b>.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài G1 · Embedding &amp; Vị trí</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-// PE cố định cho 2 vị trí đầu, d=4 (sin/cos đã làm tròn 2 chữ số — học sinh tra, không tự tính).
+// PE cố định cho 2 vị trí đầu, d=4 (sin/cos đã tra sẵn — người học không tự tính sin).
 var PE = [[0,1,0,1],[0.84,0.54,0.01,1.00]];
 var VOCAB = ['tôi','yêu','AI','nhiều'];
+var S = {};
 
 function generate(){
-  // Bảng nhúng E: 4 từ × d=4, số nguyên nhỏ.
+  // Bảng nhúng E: 4 từ × d=4, số nguyên nhỏ khác 0.
   var E = [];
-  for (var r=0;r<4;r++){ E.push([WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3)]); }
-  // Câu: 2 token (cho phép trùng để minh họa "cùng từ, khác vị trí").
-  var id0 = WB.randInt(0,3), id1 = WB.randInt(0,3);
+  for (var r=0;r<4;r++) E.push([WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3),WB.randIntNZ(-3,3)]);
+  // Câu 2 token. GUARD id0≠id1: câu "cùng từ" đã là kịch bản riêng của Bước ③,
+  // để ở ①② nữa thì hai hàng tra trùng nhau → mất ý "hai từ khác nhau".
+  var id0 = WB.randInt(0,3), id1;
+  do { id1 = WB.randInt(0,3); } while (id1 === id0);
   var e0 = E[id0], e1 = E[id1];
   var X0 = e0.map(function(v,i){ return v + PE[0][i]; });
   var X1 = e1.map(function(v,i){ return v + PE[1][i]; });
+  // Bước ③: từ dùng cho kịch bản "cùng một từ ở cả hai vị trí" (đổi theo 🎲 để lộ ra
+  // rằng ĐÁP ÁN không đổi → chính là bằng chứng E triệt tiêu).
+  var ids = WB.randInt(0,3);
+  var DF = PE[0].map(function(v,i){ return v - PE[1][i]; });
+
+  S = {E:E, id0:id0, id1:id1, e0:e0, e1:e1, X0:X0, X1:X1};
 
   var map = {
-    w0: VOCAB[id0], w1: VOCAB[id1], w0b: VOCAB[id0], w1b: VOCAB[id1],
-    id0: String(id0), id1: String(id1), id0b: String(id0), id1b: String(id1), id0c: String(id0), id1c: String(id1),
-    s0: e0.map(function(v,i){ return WB.fmtInt(v)+'+'+WB.fmt2(PE[0][i]).replace('−','-'); }).join(', '),
-    s1: e1.map(function(v,i){ return WB.fmtInt(v)+'+'+WB.fmt2(PE[1][i]).replace('−','-'); }).join(', ')
+    w0: VOCAB[id0], w1: VOCAB[id1], ws: VOCAB[ids],
+    id0: String(id0), id1: String(id1)
   };
-  // điền bảng E
   for (var r=0;r<4;r++) for (var c=0;c<4;c++) map['e'+r+c] = WB.fmtInt(E[r][c]);
-  // hàng tra được
-  for (var c=0;c<4;c++){ map['r0_'+c]=WB.fmtInt(e0[c]); map['r1_'+c]=WB.fmtInt(e1[c]); }
-  // X
   for (var c=0;c<4;c++){
-    map['x0_'+c]=WB.fmt2(X0[c]); map['x0_'+c+'b']=WB.fmt2(X0[c]);
-    map['x1_'+c]=WB.fmt2(X1[c]); map['x1_'+c+'b']=WB.fmt2(X1[c]);
+    map['r0_'+c] = WB.fmtInt(e0[c]);
+    map['r1_'+c] = WB.fmtInt(e1[c]);
+    map['x0_'+c] = WB.fmt2(X0[c]);
+    map['x1_'+c] = WB.fmt2(X1[c]);
+    map['df'+c]  = WB.fmt2(DF[c]);
   }
   WB.setAll(map);
-  drawEmb(id0, id1);
+
+  // tô đậm 2 hàng được tra trong bảng E (chỉ dấu "đang chọn", không lộ đáp án —
+  // id đã cho sẵn trên đề nên hàng nào được chọn vốn đã biết)
+  var mx = document.getElementById('mxE');
+  if (mx) for (var r=0;r<4;r++) for (var c=0;c<4;c++){
+    var el = mx.children[r*4+c];
+    el.className = (r===id0 || r===id1) ? 'gv hot' : 'gv';
+  }
+
+  // thanh giá trị X: ĐỀ để TRỐNG (người học tự tô — vẽ sẵn là lộ đáp án), ĐÁP ÁN tô đầy
+  for (var c=0;c<4;c++){
+    drawBar('t0'+c, 0, 5, false); drawBar('t1'+c, 0, 5, false);
+    drawBar('a0'+c, X0[c], 5, true); drawBar('a1'+c, X1[c], 5, true);
+  }
+
+  drawFlow('figQ', false);
+  drawFlow('figA', true);
 }
 
-// Trái: bảng E (4×4) với 2 hàng được chọn tô đậm + mũi tên ra 2 vectơ. Phải: sóng sin & cos, chấm tại pos 0,1.
-function drawEmb(id0, id1){
-  var svg = document.getElementById('figEmb'); if (!svg) return;
-  var s = '<defs><marker id="aem" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker></defs>';
-  // --- bảng E ---
-  var x0=8, y0=14, cw=11, ch=13;
-  for (var r=0;r<4;r++){
-    var on = (r===id0 || r===id1);
-    s += '<rect x="'+x0+'" y="'+(y0+r*ch)+'" width="'+(cw*4)+'" height="'+ch+'" fill="'+(on?'#dff0f3':'#fff')+'" stroke="'+(on?'#0e7490':'#dbe3ec')+'" stroke-width="'+(on?1.3:0.8)+'"/>';
-    for (var c=1;c<4;c++) s += '<line x1="'+(x0+c*cw)+'" y1="'+(y0+r*ch)+'" x2="'+(x0+c*cw)+'" y2="'+(y0+(r+1)*ch)+'" stroke="#eef2f6" stroke-width="0.6"/>';
-    s += '<text x="'+(x0-3)+'" y="'+(y0+r*ch+9)+'" text-anchor="end" style="font-size:8px" fill="'+(on?'#0e7490':'#9fb0c0')+'" font-weight="'+(on?700:400)+'">'+r+'</text>';
+// Thanh hai chiều: gốc giữa (0), dương chạy phải (lam), âm chạy trái (cam).
+// fill=false → chỉ vạch 0 + mốc, chừa trống cho người học tô bút chì.
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(Math.abs(v)/max, 1) * 50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  s += '<text x="'+(x0+cw*2)+'" y="'+(y0-3)+'" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">bảng E</text>';
-  // mũi tên từ 2 hàng chọn ra 2 ô token
-  var tx=78, ty=[26,52];
-  [id0,id1].forEach(function(id,k){
-    var sy = y0 + id*ch + ch/2;
-    s += '<path d="M'+(x0+cw*4+1)+','+sy+' C '+(tx-14)+','+sy+' '+(tx-14)+','+ty[k]+' '+(tx-1)+','+ty[k]+'" fill="none" stroke="#0e7490" stroke-width="1.1" marker-end="url(#aem)"/>';
-    s += '<rect x="'+tx+'" y="'+(ty[k]-7)+'" width="34" height="14" rx="3" fill="#eaf4f6" stroke="#7fb4bf"/>';
-    s += '<text x="'+(tx+17)+'" y="'+(ty[k]+3.5)+'" text-anchor="middle" style="font-size:8px" fill="#0e7490" font-weight="700">'+VOCAB[id]+'</text>';
-    s += '<text x="'+(tx+17)+'" y="'+(ty[k]+13)+'" text-anchor="middle" style="font-size:7px" fill="#9fb0c0">vị trí '+k+'</text>';
-  });
-  // dấu cộng PE
-  s += '<text x="128" y="42" text-anchor="middle" style="font-size:13px" fill="#b45309" font-weight="700">+ PE</text>';
-  // --- sóng sin / cos ---
-  var ox=148, oy=52, w=110, amp=20;
-  s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+(ox+w)+'" y2="'+oy+'" stroke="#c2ccd8" stroke-width="0.8"/>';
-  function wave(fn, color){
-    var p='';
-    for (var i=0;i<=80;i++){ var t=i/80*9; var X=ox+i/80*w; var Y=oy-fn(t)*amp; p+=(i===0?'M':'L')+X.toFixed(1)+','+Y.toFixed(1)+' '; }
-    return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.4"/>';
-  }
-  s += wave(Math.sin, '#b45309');
-  s += wave(Math.cos, '#7c5cff');
-  // chấm lấy mẫu tại pos 0 & 1 — giãn cách để nhãn không chồng
-  [0,1].forEach(function(pos){
-    var X = ox + (0.06 + pos*0.20)*w;
-    s += '<line x1="'+X.toFixed(1)+'" y1="'+(oy-amp-2)+'" x2="'+X.toFixed(1)+'" y2="'+(oy+amp+2)+'" stroke="#dbe3ec" stroke-width="0.7" stroke-dasharray="2 2"/>';
-    s += '<circle cx="'+X.toFixed(1)+'" cy="'+(oy-Math.sin(pos)*amp).toFixed(1)+'" r="2.2" fill="#b45309"/>';
-    s += '<circle cx="'+X.toFixed(1)+'" cy="'+(oy-Math.cos(pos)*amp).toFixed(1)+'" r="2.2" fill="#7c5cff"/>';
-    s += '<text x="'+X.toFixed(1)+'" y="'+(oy+amp+10)+'" text-anchor="middle" style="font-size:7.5px" fill="#5b6776">vị trí '+pos+'</text>';
-  });
-  s += '<text x="'+(ox+w)+'" y="'+(oy-amp-3)+'" text-anchor="end" style="font-size:8px" fill="#b45309">sin</text>';
-  s += '<text x="'+(ox+w)+'" y="'+(oy+amp+0)+'" text-anchor="end" style="font-size:8px" fill="#7c5cff">cos</text>';
-  s += '<text x="'+(ox+w/2)+'" y="14" text-anchor="middle" style="font-size:8.5px" fill="#5b6776">dấu vị trí = lấy mẫu sin/cos</text>';
-  svg.innerHTML = s;
+  el.innerHTML=h;
 }
+
+// Sơ đồ: bảng E (2 hàng sáng) → vectơ e → + PE (lấy mẫu sóng sin/cos) → X.
+function drawFlow(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var fI=WB.fmtInt, f2=WB.fmt2, BLU='#0e7490', ORG='#b45309', PUR='#6d28d9', INK='#16202e', DIM='#6b7280';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  // --- bảng E mini, 2 hàng được tra thì sáng ---
+  var ex=8, ey=22, cw=9, ch=11;
+  s+='<text x="'+(ex+cw*2)+'" y="'+(ey-5)+'" text-anchor="middle" font-size="8" fill="'+DIM+'">bảng E</text>';
+  for(var r=0;r<4;r++){
+    var on=(r===S.id0||r===S.id1);
+    s+='<rect x="'+ex+'" y="'+(ey+r*ch)+'" width="'+(cw*4)+'" height="'+ch+'" fill="'+(on?'#dff0f3':'#fff')+'" stroke="'+(on?BLU:'#dbe3ec')+'" stroke-width="'+(on?1.3:.7)+'"/>';
+    for(var c=1;c<4;c++) s+='<line x1="'+(ex+c*cw)+'" y1="'+(ey+r*ch)+'" x2="'+(ex+c*cw)+'" y2="'+(ey+(r+1)*ch)+'" stroke="#eef2f6" stroke-width=".6"/>';
+    s+='<text x="'+(ex-3)+'" y="'+(ey+r*ch+8)+'" text-anchor="end" font-size="7.5" font-weight="'+(on?700:400)+'" fill="'+(on?BLU:'#9fb0c0')+'">'+r+'</text>';
+  }
+
+  // --- 2 nhánh token ---
+  var ty=[30,84];
+  [S.id0,S.id1].forEach(function(idv,k){
+    var sy = ey + idv*ch + ch/2;
+    // đường cong từ hàng E ra chip token
+    s+='<path d="M'+(ex+cw*4+1)+','+sy+' C 76,'+sy+' 76,'+ty[k]+' 92,'+ty[k]+'" fill="none" stroke="'+BLU+'" stroke-width="1.1" marker-end="url(#mk'+id+')"/>';
+    // chip token
+    s+='<rect x="94" y="'+(ty[k]-11)+'" width="60" height="22" rx="11" fill="#eaf4f6" stroke="'+BLU+'" stroke-width="1.2"/>'
+      +'<text x="124" y="'+(ty[k]-1)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+BLU+'">'+VOCAB[idv]+'</text>'
+      +'<text x="124" y="'+(ty[k]+8)+'" text-anchor="middle" font-size="6.8" fill="'+DIM+'">vị trí '+k+' · e'+(k===0?'₀':'₁')+'</text>';
+    // + PE
+    s+='<text x="176" y="'+(ty[k]+4)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+ORG+'">+ PE['+k+']</text>';
+    s+='<line x1="156" y1="'+ty[k]+'" x2="168" y2="'+ty[k]+'" stroke="'+DIM+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+    s+='<line x1="206" y1="'+ty[k]+'" x2="222" y2="'+ty[k]+'" stroke="'+DIM+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+    // ô X (4 chiều). bw≥21 & font 6.8: giá trị âm 5 ký tự ("−2.16") phải lọt, không thì
+    // dấu trừ bị cắt → in ra giấy đọc thành số dương (đã dính lỗi này một lần).
+    var bx=226, bw=21;
+    s+='<text x="'+(bx-4)+'" y="'+(ty[k]+4)+'" text-anchor="end" font-size="9" font-weight="700" fill="'+DIM+'">X'+(k===0?'₀':'₁')+'</text>';
+    for(var c=0;c<4;c++){
+      var v = (k===0?S.X0:S.X1)[c];
+      s+='<rect x="'+(bx+c*bw)+'" y="'+(ty[k]-9)+'" width="'+(bw-1)+'" height="18" rx="2.5" fill="'+(showAns?'#fff8f0':'#fff')+'" stroke="'+(showAns?ORG:INK)+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+      if(showAns) s+='<text x="'+(bx+c*bw+(bw-1)/2)+'" y="'+(ty[k]+3.5)+'" text-anchor="middle" font-size="6.8" font-weight="700" fill="#7a3d00">'+f2(v)+'</text>';
+    }
+    if(!showAns) s+='<text x="'+(bx+4*bw+5)+'" y="'+(ty[k]+3.5)+'" font-size="8" fill="#c3ccd6">✍</text>';
+  });
+
+  // --- sóng sin/cos: PE lấy mẫu ở vị trí 0 và 1 ---
+  var ox=330, oy=58, w=150, amp=26;
+  s+='<text x="'+(ox+w/2)+'" y="12" text-anchor="middle" font-size="8" fill="'+DIM+'">dấu vị trí = lấy mẫu sóng sin/cos</text>';
+  s+='<line x1="'+ox+'" y1="'+oy+'" x2="'+(ox+w)+'" y2="'+oy+'" stroke="#c2ccd8" stroke-width=".8"/>';
+  function wave(fn,color){
+    var p='';
+    for(var i=0;i<=90;i++){ var t=i/90*9, X=ox+i/90*w, Y=oy-fn(t)*amp; p+=(i===0?'M':'L')+X.toFixed(1)+','+Y.toFixed(1)+' '; }
+    return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="1.3"/>';
+  }
+  s+=wave(Math.sin,ORG)+wave(Math.cos,PUR);
+  [0,1].forEach(function(pos){
+    var X=ox+(0.06+pos*0.20)*w;
+    s+='<line x1="'+X.toFixed(1)+'" y1="'+(oy-amp-2)+'" x2="'+X.toFixed(1)+'" y2="'+(oy+amp+2)+'" stroke="#dbe3ec" stroke-width=".7" stroke-dasharray="2 2"/>';
+    s+='<circle cx="'+X.toFixed(1)+'" cy="'+(oy-Math.sin(pos)*amp).toFixed(1)+'" r="2.4" fill="'+ORG+'"/>';
+    s+='<circle cx="'+X.toFixed(1)+'" cy="'+(oy-Math.cos(pos)*amp).toFixed(1)+'" r="2.4" fill="'+PUR+'"/>';
+    s+='<text x="'+X.toFixed(1)+'" y="'+(oy+amp+10)+'" text-anchor="middle" font-size="7" fill="'+DIM+'">vị trí '+pos+'</text>';
+  });
+  s+='<text x="'+(ox+w)+'" y="'+(oy-amp-2)+'" text-anchor="end" font-size="7.6" fill="'+ORG+'">sin</text>';
+  s+='<text x="'+(ox+w)+'" y="'+(oy+amp+1)+'" text-anchor="end" font-size="7.6" fill="'+PUR+'">cos</text>';
+
+  svg.innerHTML=s;
+}
+
 WB.wire(generate);
-drawEmb(0, 1);
+generate();   // BUG bản cũ: chỉ gọi drawEmb(0,1), KHÔNG gọi generate() → lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

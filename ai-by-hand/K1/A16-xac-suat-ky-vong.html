@@ -3,19 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài A16 — Xác suất, kỳ vọng, phương sai (A4 in được)</title>
+<title>Làm toán AI · Bài A16 — Xác suất, kỳ vọng, phương sai (bản hiểu rõ, A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css; template HIỂU RÕ: hình-trên-đề + chùm câu hỏi -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:8px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin:4px 0 0;color:#475569;}
+.legend b{padding:0 5px;border-radius:4px;color:#fff;}
+.cp{background:#0e7490;}.cm{background:#7c5cff;}.cs{background:#b45309;}
+.figwrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;}
+.figcap{flex:1;min-width:150px;font-size:12px;color:#475569;line-height:1.45;}
+.figcap b{color:#0f172a;}
+.qset{margin:7px 0 0;padding-left:0;list-style:none;}
+.qset>li{position:relative;margin:6px 0;padding-left:70px;font-size:13px;line-height:1.55;color:#1e293b;}
+.qtag{position:absolute;left:0;top:1px;width:58px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.02em;padding:2px 0;border-radius:5px;color:#fff;}
+.qt-see{background:#0e7490;}.qt-calc{background:#b45309;}.qt-pred{background:#7c5cff;}.qt-why{background:#475569;}
+.qset .blk{min-width:46px;}
+.calc2{margin:7px 0 2px;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;font-family:var(--mono);font-size:13px;line-height:2.05;color:#1e293b;}
+.calc2 .ttl{font-weight:700;color:#b45309;font-size:11px;letter-spacing:.03em;}
+.calc2 .blk{min-width:38px;border-bottom:1px solid #94a3b8;}
+.keylist{margin:4px 0 0;padding-left:0;list-style:none;}
+.keylist>li{margin:5px 0;font-size:13px;line-height:1.5;color:#1e293b;}
+.keylist .lab{display:inline-block;min-width:96px;font-weight:700;color:#0f172a;}
+.keylist .mono{font-family:var(--mono);color:#b45309;font-weight:700;}
+.sub{color:#5b6776;font-size:.86em;}
+.ptab{border-collapse:collapse;font-family:var(--mono);font-size:14px;}
+.ptab td,.ptab th{border:1px solid var(--line);padding:3px 12px;text-align:center;}
+.ptab th{background:var(--given);font-weight:700;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -23,199 +40,284 @@
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 — ĐỀ (A) ============ -->
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A · <b>bản hiểu rõ</b></div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A16</span><h1>Xác suất, kỳ vọng, phương sai <small>— Probability</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A16</span>
+    <h1>Xác suất · kỳ vọng · phương sai <small>— cầm cân một phân phối</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mô hình AI nói bằng <b>xác suất</b> (softmax ra phân phối lớp). Để đo "trung bình mong đợi" và "độ
-    bất định", ta dùng kỳ vọng và phương sai. Mọi hàm mất mát đều là một <b>kỳ vọng</b> trên dữ liệu.
-    <div class="formula">
-      Σ pᵢ = 1 &nbsp;&nbsp; E[X] = Σ pᵢ·xᵢ = μ &nbsp;&nbsp; Var(X) = Σ pᵢ·(xᵢ − μ)² = E[X²] − μ²
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mô hình AI nói bằng <b>xác suất</b> (softmax ra một phân phối lớp). Bạn sẽ học cách <b>tóm cả một phân phối vào 2 con số</b>:
+    μ = <b>điểm đặt đòn cân cho thăng bằng</b>, và Var = <b>độ trải</b> quanh điểm đó.
+    Phần thưởng: tự tay tìm chỗ đặt trụ cân — rồi hiểu vì sao mọi hàm loss đều là một kỳ vọng.
+    <div class="legend">Mã màu: <b class="cp">p</b> xác suất (lam) · <b class="cm">μ</b> điểm cân bằng (tím) · <b class="cs">lệch</b> khoảng trải (cam)</div>
   </div>
 
   <div class="intuition">
     <span class="lead">💡 Trực giác</span>
-    Kỳ vọng = <b>điểm cân bằng</b> của bảng giá trị nếu mỗi giá trị nặng theo xác suất của nó (trung bình có trọng số). Phương
-    sai = các giá trị <b>trải rộng</b> quanh điểm cân bằng đó cỡ nào (0 = chụm một chỗ).
+    Đặt các <b>quả cân</b> lên một thanh gỗ: quả tại vị trí x nặng đúng p của nó. <b>μ là chỗ đặt trụ để thanh thăng bằng</b>.
+    Var hỏi tiếp: các quả cân nằm <b>sát trụ hay dang xa</b> hai bên?
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn bảng phân phối</h2><span class="tag">3 giá trị</span></div>
-    <table class="lntab" style="font-family:var(--mono);font-size:14px;border-collapse:collapse">
-      <tr><td style="padding:2px 12px 2px 0">x</td>
-        <td class="gv" data-q="x1">1</td><td class="gv" data-q="x2">2</td><td class="gv" data-q="x3">3</td></tr>
-      <tr><td style="padding:2px 12px 2px 0">p</td>
-        <td class="gv" data-q="p1">0.5</td><td class="gv" data-q="p2">0.3</td><td class="gv" data-q="p3">0.2</td></tr>
-    </table>
-    <div class="note">p là xác suất của từng giá trị x; chúng phải <b>không âm</b> và <b>tổng = 1</b>.</div>
-  </div>
-
-  <!-- BƯỚC 1 — tổng p -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Kiểm tổng xác suất</h2><span class="tag">hợp lệ?</span></div>
-    <div class="calc">
-      <span data-q="p1">0.5</span> + <span data-q="p2">0.3</span> + <span data-q="p3">0.2</span> = <span class="blk" style="min-width:34px"></span>
+    <div class="row" style="align-items:center">
+      <table class="ptab">
+        <tr><th>x</th><td class="gv" data-q="x1">1</td><td class="gv" data-q="x2">2</td><td class="gv" data-q="x3">3</td></tr>
+        <tr><th>p</th><td class="gv" data-q="p1">0.5</td><td class="gv" data-q="p2">0.3</td><td class="gv" data-q="p3">0.2</td></tr>
+      </table>
+      <div class="note" style="max-width:70mm">X nhận 3 giá trị; p là "độ nặng" của từng giá trị. Cả phiếu chỉ dùng bảng này.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> một phân phối hợp lệ <b>phải tổng = 1</b>; nếu không, mọi tính toán sau là vô nghĩa.</div>
   </div>
 
-  <!-- BƯỚC 2 — kỳ vọng -->
+  <!-- CỤM 1 — ĐỌC PHÂN PHỐI -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Kỳ vọng E[X] = μ</h2><span class="tag">trung bình trọng số</span></div>
-    <div class="calc">
-      μ = <span data-q="exExpr">0.5·1 + 0.3·2 + 0.2·3</span> = <span class="blk" style="min-width:44px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Đọc bản đồ xác suất — phân phối này hợp lệ chứ?</h2><span class="tag">Σp = 1</span></div>
+    <div class="figwrap">
+      <svg id="figBars" class="fig" viewBox="0 0 210 128" width="66mm" height="40mm" aria-label="biểu đồ cột xác suất theo x; ô tổng để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> mỗi cột cao đúng bằng p của giá trị đó. Một phân phối <b>hợp lệ</b> phải: mọi cột ≥ 0 và
+        cả ba cột <b>cộng lại = 1</b> (100% khả năng nằm trọn trong 3 cột này). Điền ô tổng ✍.</div>
     </div>
-    <div class="hint">Nhân từng cặp (p·x) rồi cộng — đúng là tích vô hướng p·x.</div>
-  </div>
-
-  <!-- BƯỚC 3 — phương sai -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Phương sai qua E[X²] − μ²</h2><span class="tag">mức trải</span></div>
-    <div class="calc">
-      E[X²] = <span data-q="ex2Expr">0.5·1 + 0.3·4 + 0.2·9</span> = <span class="blk" style="min-width:40px"></span><br>
-      Var = E[X²] − μ² = <span class="blk" style="min-width:40px"></span> − <span data-q="mu">1.7</span>² = <span class="blk" style="min-width:44px"></span>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — kiểm hợp lệ</span><br>
+      Σp = <span data-q="p1">0.5</span> + <span data-q="p2">0.3</span> + <span data-q="p3">0.2</span> = <span class="blk"></span> → hợp lệ? <span class="blk" style="min-width:30px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> bình phương khoảng cách tới μ phạt giá trị xa; công thức E[X²] − μ² cho cách tính nhanh.</div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Nếu tung X nhiều lần, giá trị nào sẽ gặp thường xuyên nhất? Vì sao nhìn hình biết ngay? → <span class="blk" style="min-width:110px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Nếu Σp = 0.9 (thiếu 0.1) thì "bản đồ khả năng" này hỏng ở chỗ nào? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Tổng các xác suất phải bằng? → <span class="blk" style="min-width:40px"></span></li>
-      <li>Var(X) = 0 nghĩa là gì? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
+  <div class="scratch" style="height:30mm"><span class="lb">✏️ Nháp — cộng thử Σp ở đây</span></div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A16 · Xác suất, kỳ vọng, phương sai</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A16 · Xác suất, kỳ vọng, phương sai (bản hiểu rõ)</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 2 — ĐỀ (B) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Tiếp theo · Phần A<br>Mức: nhập môn · <b>bản hiểu rõ</b></div>
+  </div>
+  <div class="wb-title"><span class="no">Bài A16</span><h1>Kỳ vọng &amp; phương sai <small>— đặt trụ cân rồi đo độ trải</small></h1></div>
+
+  <!-- CỤM 2 — KỲ VỌNG = ĐIỂM CÂN BẰNG -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Kỳ vọng μ — tìm chỗ đặt trụ cho thanh cân thăng bằng</h2><span class="tag">E[X] = Σ p·x</span></div>
+    <div class="figwrap">
+      <svg id="figSaw" class="fig" viewBox="0 0 210 118" width="66mm" height="37mm" aria-label="thanh cân với ba quả nặng tại các x, nặng theo p; trụ cân chưa đặt, ô muy để trống"></svg>
+      <div class="figcap"><b>Nhìn hình:</b> ba quả cân đặt tại x₁, x₂, x₃ — quả nào p lớn thì <b>to/nặng</b> hơn. Trụ cân ▲ <b>chưa được đặt</b>.
+        Tính μ rồi <b>tự vẽ ▲ vào đúng vị trí μ trên thanh</b> + điền ô ✍.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — trung bình có trọng số (mỗi quả góp p·x)</span><br>
+      μ = <span data-q="p1">0.5</span>·<span data-q="x1">1</span> + <span data-q="p2">0.3</span>·<span data-q="x2">2</span> + <span data-q="p3">0.2</span>·<span data-q="x3">3</span>
+      = <span class="blk"></span> + <span class="blk"></span> + <span class="blk"></span> = <span class="wcell"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> μ nằm gần quả cân nào nhất? Vì sao nó bị "hút" về phía đó? → <span class="blk" style="min-width:120px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Nếu dồn <b>toàn bộ</b> xác suất vào x₃ (p = 0, 0, 1) thì μ = ? Trụ cân đặt ở đâu? → <span class="blk" style="min-width:80px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao "trung bình có trọng số" chính là chỗ thanh cân thăng bằng? → <span class="blk" style="min-width:130px"></span></li>
+    </ul>
+  </div>
+
+  <!-- CỤM 3 — PHƯƠNG SAI = ĐỘ TRẢI -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Phương sai — các quả cân sát trụ hay dang xa?</h2><span class="tag">Var = E[X²] − μ²</span></div>
+    <div class="figwrap">
+      <svg id="figSpread" class="fig" viewBox="0 0 220 104" width="66mm" height="31mm" aria-label="hai phân phối cùng điểm cân bằng: một chụm sát, một dang xa hai bên"></svg>
+      <div class="figcap"><b>Nhìn hình (ví dụ tĩnh):</b> hai phân phối có <b>cùng μ</b> nhưng khác hẳn nhau: bên trái các quả cân <b>chụm sát trụ</b>,
+        bên phải <b>dang xa</b> hai bên. μ không phân biệt được chúng — cần thêm <b>Var</b>.</div>
+    </div>
+    <div class="calc2">
+      <span class="ttl">✍️ TỰ TÍNH — đường tắt Var = E[X²] − μ²</span> <span class="sub">(μ lấy từ Cụm 2)</span><br>
+      E[X²] = <span data-q="p1">0.5</span>·<span data-q="x1sq">1</span> + <span data-q="p2">0.3</span>·<span data-q="x2sq">4</span> + <span data-q="p3">0.2</span>·<span data-q="x3sq">9</span> = <span class="blk"></span><br>
+      Var = E[X²] − μ² = <span class="blk"></span> − ( <span class="blk"></span> )² = <span class="wcell"></span>
+      &nbsp;·&nbsp; σ = √Var ≈ <span class="blk"></span>
+    </div>
+    <ul class="qset">
+      <li><span class="qtag qt-see">Quan sát</span> Trong hình ví dụ, phân phối nào có Var lớn hơn? → <span class="blk" style="min-width:70px"></span></li>
+      <li><span class="qtag qt-why">Vì sao</span> Vì sao phải <b>bình phương</b> độ lệch (x − μ) thay vì cộng thẳng các độ lệch? (gợi ý: hai bên trụ cân lệch trái dấu) → <span class="blk" style="min-width:140px"></span></li>
+      <li><span class="qtag qt-pred">Dự đoán</span> Dịch cả ba giá trị x thêm +1 (giữ nguyên p): μ mới = ? Var có đổi không? → <span class="blk" style="min-width:110px"></span></li>
+    </ul>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Kiểm Σp = 1</span>
+    <span><span class="ck"></span>Đặt trụ cân μ</span>
+    <span><span class="ck"></span>Đo độ trải Var, σ</span>
+    <span class="win">🎉 Bạn vừa tóm cả một phân phối vào 2 con số!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A16 · Xác suất, kỳ vọng, phương sai (bản hiểu rõ)</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 — ĐÁP ÁN (gọn) ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài A16</span><h1>Xác suất, kỳ vọng, phương sai <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài A16</span><h1>Xác suất, kỳ vọng, phương sai <small>— đáp số gọn + cốt lõi</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tổng xác suất</h2></div>
-    <div class="calc ans">
-      <span data-q="p1">0.5</span> + <span data-q="p2">0.3</span> + <span data-q="p3">0.2</span> = <span class="blk" data-q="psum">1</span> ✓
-    </div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 1 — Đọc phân phối</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tự tính</span> Σp = <span class="mono" data-q="psum">1</span> → hợp lệ ✓.</li>
+      <li><span class="lab">Quan sát</span> Gặp nhiều nhất: x = <span class="mono" data-q="xmode">1</span> (cột cao nhất, p = <span class="mono" data-q="pmode">0.5</span>).</li>
+      <li><span class="lab">Vì sao</span> Σp = 0.9 → còn 10% khả năng "rơi ra ngoài bản đồ" — không mô tả trọn thế giới.</li>
+    </ul>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Kỳ vọng</h2></div>
-    <div class="calc ans">
-      μ = <span data-q="exExpr">0.5·1 + 0.3·2 + 0.2·3</span> = <span class="blk" data-q="mu">1.7</span>
-    </div>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 2 — Điểm cân bằng μ</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tự tính</span> μ = <span class="mono" data-q="t1">0.5</span> + <span class="mono" data-q="t2">0.6</span> + <span class="mono" data-q="t3">0.6</span> = <span class="wcell ans" data-q="mu">1.7</span> <span class="sub">(▲ đặt tại đây)</span></li>
+      <li><span class="lab">Quan sát</span> μ bị hút về quả cân <b>nặng nhất</b> (p lớn kéo mạnh hơn).</li>
+      <li><span class="lab">Dự đoán</span> Dồn hết vào x₃ → μ = x₃ = <span class="mono" data-q="x3">3</span>; trụ đặt ngay dưới quả duy nhất.</li>
+      <li><span class="lab">Vì sao</span> Mô men hai bên trụ (p × khoảng cách) triệt tiêu nhau đúng tại trung bình trọng số.</li>
+    </ul>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Phương sai</h2></div>
-    <div class="calc ans">
-      E[X²] = <span data-q="ex2Expr">0.5·1 + 0.3·4 + 0.2·9</span> = <span class="blk" data-q="ex2">3.5</span><br>
-      Var = <span data-q="ex2">3.5</span> − <span data-q="mu">1.7</span>² = <span class="blk" data-q="varX">0.61</span>
-      &nbsp;(σ = √Var ≈ <span data-q="sigma">0.78</span>)
-    </div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Biểu đồ cột xác suất &amp; vạch μ</h2><span class="tag">phân phối</span></div>
-    <div class="figrow">
-      <svg id="figB" class="fig" viewBox="0 0 210 150" width="66mm" height="44mm" aria-label="biểu đồ cột xác suất theo giá trị x, vạch đứng tại kỳ vọng"></svg>
-      <div style="flex:1">
-        <div class="note">Cột cao = xác suất lớn; <b>vạch tím đứt</b> = μ = <span data-q="mu">1.7</span> (điểm cân bằng).
-          σ = √Var ≈ <span data-q="sigma">0.78</span> là "bán kính trải" theo đơn vị x.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Tổng xác suất? → <span class="qa">1.</span></li>
-      <li>Var = 0? → <span class="qa">X luôn nhận đúng một giá trị (không trải).</span></li>
-    </ol>
+    <div class="step-h"><div class="b" style="background:var(--accent2)">✓</div><h2>Cụm 3 — Độ trải Var</h2></div>
+    <ul class="keylist">
+      <li><span class="lab">Tự tính</span> E[X²] = <span class="mono" data-q="ex2">3.5</span> · Var = <span class="mono" data-q="ex2">3.5</span> − <span class="mono" data-q="mu">1.7</span>² = <span class="wcell ans" data-q="varX">0.61</span> · σ ≈ <span class="mono" data-q="sigma">0.78</span></li>
+      <li><span class="lab">Quan sát</span> Phân phối <b>dang xa</b> (bên phải) có Var lớn hơn — dù cùng μ.</li>
+      <li><span class="lab">Vì sao</span> Lệch trái (−) và phải (+) cộng thẳng sẽ triệt tiêu → bình phương làm mọi lệch dương &amp; phạt lệch xa mạnh hơn.</li>
+      <li><span class="lab">Dự đoán</span> Dịch +1: μ mới = <span class="mono" data-q="mup1">2.7</span> (trượt theo); <b>Var giữ nguyên</b> (hình dạng trải không đổi).</li>
+    </ul>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> E[X] = trung bình có trọng số; Var = mức trải. Hai số này tóm tắt một phân phối. Bài tiếp (A17): hai phân phối
-    rời rạc cốt lõi của AI — <b>Bernoulli</b> (2 lớp) và <b>Categorical</b> (K lớp).
+    <b style="color:var(--accent2)">Rút ra.</b> μ = chỗ đặt trụ cân (trung bình trọng số); Var = quả cân dang xa cỡ nào. Mọi hàm loss là một <b>kỳ vọng trên dữ liệu</b>
+    — nên "giảm loss trung bình" nghĩa đen là dời điểm cân bằng. Bài tiếp (A17): hai phân phối rời rạc cốt lõi — <b>Bernoulli</b> &amp; <b>Categorical</b>.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A16 · Xác suất, kỳ vọng, phương sai</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A16 · Xác suất, kỳ vọng, phương sai (bản hiểu rõ)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var CP='#0e7490', CM='#7c5cff', CS='#b45309', GRY='#9aa3ad';
+function el(id){return document.getElementById(id);}
+var STATE = {xs:[1,2,3], P:[5,3,2]};
+
 function generate(){
   var f2 = WB.fmt2, ft = WB.fmtTrim;
-  // xác suất bội 0.1 tổng = 1 (làm việc bằng phần mười nguyên)
-  var TRIPLES = [[5,3,2],[4,4,2],[6,2,2],[5,4,1],[4,3,3],[2,3,5],[3,5,2],[2,2,6]];
+  // bội 0.1, tổng = 1, max DUY NHẤT (để câu "cột cao nhất" có một đáp án)
+  var TRIPLES = [[5,3,2],[6,2,2],[5,4,1],[2,3,5],[3,5,2],[2,2,6],[1,7,2],[4,1,5]];
   var P = WB.pick(TRIPLES).slice();
-  // giá trị x: 3 số nguyên nhỏ phân biệt, tăng dần
   var xs = WB.pickDistinct([0,1,2,3,4,5], 3).sort(function(a,b){ return a-b; });
+  STATE = {xs:xs, P:P};
 
-  // tính bằng phần mười để tránh sai số nổi
   var exNum = 0, ex2Num = 0, i;
   for (i = 0; i < 3; i++){ exNum += P[i]*xs[i]; ex2Num += P[i]*xs[i]*xs[i]; }
   var mu = exNum/10, ex2 = ex2Num/10;
   var varX = ex2 - mu*mu;
   var sigma = Math.sqrt(varX);
+  var mi = 0; for (i = 1; i < 3; i++) if (P[i] > P[mi]) mi = i;
 
-  function pf(t){ return (t/10).toFixed(1); }      // "0.5"
-  function expr(pow){
-    return P.map(function(t, k){ return pf(t) + '·' + (pow ? xs[k]*xs[k] : xs[k]); }).join(' + ');
-  }
+  function pf(t){ return (t/10).toFixed(1); }
 
   WB.setAll({
     x1: String(xs[0]), x2: String(xs[1]), x3: String(xs[2]),
+    x1sq: String(xs[0]*xs[0]), x2sq: String(xs[1]*xs[1]), x3sq: String(xs[2]*xs[2]),
     p1: pf(P[0]), p2: pf(P[1]), p3: pf(P[2]),
     psum: '1',
-    exExpr: expr(false), ex2Expr: expr(true),
-    mu: ft(mu), ex2: ft(ex2), varX: f2(varX), sigma: f2(sigma)
+    t1: ft(P[0]*xs[0]/10), t2: ft(P[1]*xs[1]/10), t3: ft(P[2]*xs[2]/10),
+    mu: ft(mu), mup1: ft(mu + 1),
+    ex2: ft(ex2), varX: f2(varX), sigma: f2(sigma),
+    xmode: String(xs[mi]), pmode: pf(P[mi])
   });
-  drawBars('figB', xs, P, mu);
+  drawBars('figBars', xs, P);
+  drawSaw('figSaw', xs, P);
 }
 
-// biểu đồ cột p theo x + vạch đứng tại μ
-function drawBars(id, xs, P, mu){
-  var svg = document.getElementById(id);
-  if (!svg) return;
-  var x0 = 26, y0 = 122, W = 168, H = 104;
+/* Cụm 1: biểu đồ cột p theo x + ô tổng ✍ (trống) */
+function drawBars(id, xs, P){
+  var svg = el(id); if (!svg) return;
+  var x0 = 24, y0 = 104, W = 128, H = 78;
   var xmin = Math.min.apply(null, xs) - 0.8, xmax = Math.max.apply(null, xs) + 0.8;
   function SX(v){ return (x0 + (v - xmin)/(xmax - xmin)*W).toFixed(1); }
   var pmax = Math.max.apply(null, P);
-  function BH(t){ return (t/pmax)*H; }
-  var s = '';
-  // trục
-  s += '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
-  // cột
-  for (var i = 0; i < xs.length; i++){
-    var cx = parseFloat(SX(xs[i])), h = BH(P[i]), bw = 22;
-    s += '<rect x="'+(cx-bw/2)+'" y="'+(y0-h)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="#0e749033" stroke="#0e7490" stroke-width="1.6"/>';
-    s += '<text x="'+cx+'" y="'+(y0+12)+'" text-anchor="middle" style="font-size:9px" fill="#5b6776">x='+xs[i]+'</text>';
-    s += '<text x="'+cx+'" y="'+(y0-h-3)+'" text-anchor="middle" style="font-size:9px" fill="#0e7490" font-weight="700">'+(P[i]/10).toFixed(1)+'</text>';
+  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="'+GRY+'" stroke-width="1"/>';
+  for (var i = 0; i < 3; i++){
+    var cx = parseFloat(SX(xs[i])), h = (P[i]/pmax)*H, bw = 20;
+    s += '<rect x="'+(cx-bw/2)+'" y="'+(y0-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="#0e749033" stroke="'+CP+'" stroke-width="1.6"/>';
+    s += '<text x="'+cx+'" y="'+(y0-h-3).toFixed(1)+'" text-anchor="middle" font-size="9" fill="'+CP+'" font-weight="700">'+(P[i]/10).toFixed(1)+'</text>';
+    s += '<text x="'+cx+'" y="'+(y0+12)+'" text-anchor="middle" font-size="9" fill="#5b6776">x='+xs[i]+'</text>';
   }
-  // vạch μ
-  var mx = parseFloat(SX(mu));
-  s += '<line x1="'+mx+'" y1="'+(y0-H-4)+'" x2="'+mx+'" y2="'+(y0+2)+'" stroke="#7c5cff" stroke-width="1.8" stroke-dasharray="4 3"/>';
-  s += '<text x="'+mx+'" y="'+(y0-H-7)+'" text-anchor="middle" style="font-size:9px" fill="#7c5cff" font-weight="700">μ='+WB.fmtTrim(mu)+'</text>';
+  // ô tổng ✍ (trống trên ĐỀ)
+  s += '<rect x="160" y="34" width="44" height="30" rx="7" fill="#fff" stroke="'+CP+'" stroke-width="1.8"/>';
+  s += '<text x="182" y="30" text-anchor="middle" font-size="8.5" fill="'+CP+'" font-weight="700">Σp = ✍</text>';
+  s += '<text x="182" y="54" text-anchor="middle" font-size="11" fill="#c3ccd6">?</text>';
   svg.innerHTML = s;
 }
+
+/* Cụm 2: thanh cân + 3 quả nặng (bán kính ∝ p); TRỤ CHƯA ĐẶT — ô μ ✍ trống */
+function drawSaw(id, xs, P){
+  var svg = el(id); if (!svg) return;
+  var x0 = 20, W = 150, yBeam = 74;
+  var xmin = Math.min.apply(null, xs) - 0.8, xmax = Math.max.apply(null, xs) + 0.8;
+  function SX(v){ return (x0 + (v - xmin)/(xmax - xmin)*W).toFixed(1); }
+  var s = '';
+  // thanh gỗ
+  s += '<rect x="'+x0+'" y="'+(yBeam-3)+'" width="'+W+'" height="6" rx="3" fill="#e5d5bd" stroke="#c9b391" stroke-width="1"/>';
+  // quả cân: tròn, bán kính theo p
+  for (var i = 0; i < 3; i++){
+    var cx = parseFloat(SX(xs[i])), r = 5 + P[i]*1.35;
+    s += '<circle cx="'+cx+'" cy="'+(yBeam-3-r).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="#0e749033" stroke="'+CP+'" stroke-width="1.8"/>';
+    s += '<text x="'+cx+'" y="'+(yBeam-r-7).toFixed(1)+'" text-anchor="middle" font-size="8.5" fill="'+CP+'" font-weight="700">'+(P[i]/10).toFixed(1)+'</text>';
+    s += '<text x="'+cx+'" y="'+(yBeam+15)+'" text-anchor="middle" font-size="9" fill="#5b6776">x='+xs[i]+'</text>';
+    // vạch chia trên thanh
+    s += '<line x1="'+cx+'" y1="'+(yBeam-3)+'" x2="'+cx+'" y2="'+(yBeam+3)+'" stroke="#c9b391" stroke-width="1.2"/>';
+  }
+  // gợi ý trụ: dấu ▲ mờ ngoài thanh + chỗ trống để vẽ
+  s += '<text x="'+(x0+W/2)+'" y="102" text-anchor="middle" font-size="8.5" fill="'+CM+'">▲ tự vẽ trụ cân tại μ</text>';
+  // ô μ ✍ (trống trên ĐỀ)
+  s += '<rect x="176" y="18" width="30" height="42" rx="7" fill="#fff" stroke="'+CM+'" stroke-width="1.8"/>';
+  s += '<text x="191" y="13" text-anchor="middle" font-size="8.5" fill="'+CM+'" font-weight="700">μ ✍</text>';
+  s += '<text x="191" y="42" text-anchor="middle" font-size="11" fill="#c3ccd6">?</text>';
+  svg.innerHTML = s;
+}
+
+/* Cụm 3 (TĨNH): hai phân phối cùng μ — chụm vs dang xa */
+function drawSpread(id){
+  var svg = el(id); if (!svg) return;
+  var s = '';
+  function mini(ox, ps, label){
+    var y0 = 74, W = 84, xs = [1,2,3];
+    function SX(v){ return ox + (v - 0.4)/(3.6 - 0.4)*W; }
+    var out = '<line x1="'+ox+'" y1="'+y0+'" x2="'+(ox+W)+'" y2="'+y0+'" stroke="'+GRY+'" stroke-width="1"/>';
+    for (var i = 0; i < 3; i++){
+      var cx = SX(xs[i]), h = ps[i]*58;
+      out += '<rect x="'+(cx-8)+'" y="'+(y0-h).toFixed(1)+'" width="16" height="'+h.toFixed(1)+'" fill="#0e749033" stroke="'+CP+'" stroke-width="1.4"/>';
+    }
+    // vạch μ = 2 (giữa)
+    var mx = SX(2);
+    out += '<line x1="'+mx+'" y1="'+(y0-64)+'" x2="'+mx+'" y2="'+(y0+3)+'" stroke="'+CM+'" stroke-width="1.6" stroke-dasharray="4 3"/>';
+    out += '<text x="'+(ox+W/2)+'" y="'+(y0+15)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">'+label+'</text>';
+    return out;
+  }
+  s += mini(14, [0.1, 0.8, 0.1], 'chụm — Var nhỏ');
+  s += mini(122, [0.45, 0.1, 0.45], 'dang xa — Var lớn');
+  s += '<text x="110" y="16" text-anchor="middle" font-size="8.5" fill="'+CM+'" font-weight="700">cả hai cùng μ (vạch tím)</text>';
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
 generate();
+drawSpread('figSpread');
 </script>
 </body>
 </html>

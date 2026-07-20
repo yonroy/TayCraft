@@ -4,197 +4,391 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài H5 — Cross-Attention (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
-</style>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H5</span>
+    <h1>Cross-Attention <small>— decoder hỏi bộ nhớ của encoder</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>q (decoder)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>K (encoder) &amp; đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V (encoder)</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H5</span><h1>Cross-Attention <small>— decoder nhìn lại câu nguồn</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Dịch/tóm tắt cần decoder <b>tra cứu câu gốc</b> ở mỗi bước sinh. Cross-attention thay nút thắt cổ chai của
-    seq2seq (một vectơ c, Bài G7) bằng "nhìn mọi token nguồn" → bước nhảy chất lượng dẫn tới Transformer. Cũng nối <b>đa phương thức</b> (ảnh↔chữ).
-    <div class="formula">Q = decoder, &nbsp; K = V = encoder &nbsp;·&nbsp; out = softmax(Q·Kᵀ/√dₖ)·V</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Toán giống Self-Attention (H2) hệt: q·kᵢ → ÷√dₖ → tra bảng eˣ → α → O=Σαᵢvᵢ.
+    Điểm <b>khác duy nhất</b>: truy vấn <b>q đến từ decoder</b>, còn <b>K, V đến từ encoder</b> — hai chuỗi khác nhau, decoder "hỏi" bộ nhớ đã đóng băng của encoder.
+    Cuối phiếu bạn tự chứng minh: vì mọi αᵢ ≥ 0 và Σαᵢ = 1, <b>O luôn bị kẹp</b> giữa min và max của v₁,v₂ từng chiều — decoder <b>không thể</b> lấy ra thứ mà encoder không có.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Decoder đang viết từ kế <b>hỏi</b> (Q) toàn bộ câu nguồn (K) xem chỗ nào liên quan, rồi lấy <b>nội dung</b> (V) ở đó. Như dịch giả
-    vừa viết vừa <b>liếc lại</b> câu gốc, tập trung vào từ đang cần dịch.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 query (decoder) · 2 nguồn (encoder) · dₖ=4</span></div>
-    <div class="calc" style="font-size:14px">
-      Điểm thô q·K: q·k₁ = <span class="gv" data-q="s1">2</span> , q·k₂ = <span class="gv" data-q="s2">0</span> &nbsp;·&nbsp;
-      nội dung nguồn v₁ = ( <span class="gv" data-q="v11">1</span>,<span class="gv" data-q="v12">0</span> ), v₂ = ( <span class="gv" data-q="v21">0</span>,<span class="gv" data-q="v22">1</span> )
-    </div>
-    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
-      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Điểm q với K nguồn (chia √dₖ)</h2><span class="tag">√4 = 2</span></div>
-    <div class="calc">
-      ( <span data-q="s1">2</span>/2 , <span data-q="s2">0</span>/2 ) = ( <span class="blk" style="min-width:32px"></span>, <span class="blk" style="min-width:32px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> Q (đang dịch) so với mọi token nguồn → "nên nhìn token nguồn nào".</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax → trọng số căn chỉnh</h2><span class="tag">alignment</span></div>
-    <div class="calc">
-      e<sup><span data-q="sc1">1</span></sup>=<span data-q="e1">2.72</span>, e<sup><span data-q="sc2">0</span></sup>=<span data-q="e2">1.00</span>, Σ=<span data-q="Z">3.72</span> →
-      α = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
-    </div>
-    <div class="hint">α là trọng số "căn chỉnh" (alignment) giữa từ đích và từ nguồn.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Trộn V nguồn → out</h2><span class="tag">α·V</span></div>
-    <div class="calc">
-      out = <span data-q="a1">0.73</span>·(<span data-q="v11">1</span>,<span data-q="v12">0</span>) + <span data-q="a2">0.27</span>·(<span data-q="v21">0</span>,<span data-q="v22">1</span>) = ( <span class="blk" style="min-width:46px"></span>, <span class="blk" style="min-width:46px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> thông tin câu nguồn được rót vào decoder đúng chỗ đang cần.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>So với self-attention</h2><span class="tag">2 chuỗi</span></div>
-    <div class="note">Self-attention: Q, K, V cùng chuỗi (H2). Cross: Q khác nguồn của K, V. Decoder Transformer có <b>cả hai</b>: self (đã sinh) + cross (nguồn).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Trong cross-attention, Q và K/V đến từ đâu? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Cross-attention khắc phục điểm yếu nào của seq2seq? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H5</span><h1>Cross-Attention <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Điểm /√dₖ</h2></div>
-    <div class="calc ans">( <span class="blk" data-q="sc1">1</span>, <span class="blk" data-q="sc2">0</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax → α</h2></div>
-    <div class="calc ans">α = ( <span class="blk" data-q="a1">0.73</span>, <span class="blk" data-q="a2">0.27</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Trộn V</h2></div>
-    <div class="calc ans">out = ( <span class="blk" data-q="o1">0.73</span>, <span class="blk" data-q="o2">0.27</span> )</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Token đích (Q) chú ý chuỗi nguồn (K,V)</h2><span class="tag">2 chuỗi</span></div>
-    <div class="figrow">
-      <svg id="figC" class="fig" viewBox="0 0 240 150" width="78mm" height="48mm" aria-label="token đích truy vấn nhìn vào hai token nguồn với độ đậm theo trọng số"></svg>
-      <div style="flex:1">
-        <div class="note">Token đích <b>lam</b> (Q, decoder) hỏi hai token nguồn <b>cam</b> (K,V, encoder); cạnh đậm = α lớn → rót nội dung nguồn đó vào đầu ra.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">q: d=2 · 2 token nguồn · dₖ=4 → √dₖ=2</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:7mm"><span>q</span></div>
+          <div class="mx c2" style="--cw:11mm;--ch:7mm">
+            <div class="gv" data-q="q1">2</div><div class="gv" data-q="q2">0</div>
+          </div>
+        </div>
+        <div class="cap"><b>q</b> — truy vấn từ <b>decoder</b> (từ đang cần dịch), d=2.</div>
+        <table style="margin-top:2.2mm">
+          <tr><th class="l">x</th><th>0</th><th>1</th><th>2</th></tr>
+          <tr><td class="l">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr>
+        </table>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm"><span>nguồn&nbsp;1</span><span>nguồn&nbsp;2</span></div>
+          <div class="mx c4" style="--cw:9.5mm;--ch:6.4mm">
+            <div class="pe">1</div><div class="pe">0</div><div class="pv" data-q="v11">1</div><div class="pv" data-q="v12">−2</div>
+            <div class="pe">0</div><div class="pe">1</div><div class="pv" data-q="v21">2</div><div class="pv" data-q="v22">1</div>
+          </div>
+        </div>
+        <div class="cap"><b>K, V — encoder</b> (2 token nguồn, cột 1–2 = k, cột 3–4 = v). k là "nhãn" để so khớp; v là "nội dung" được lấy ra — <b>cả hai cố định</b>, decoder không sửa được.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Q và K/V? → <span class="qa">Q từ decoder; K, V từ encoder (hai chuỗi).</span></li>
-      <li>Khắc phục? → <span class="qa">Nút thắt một vectơ c — cho decoder nhìn mọi token nguồn.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">q (decoder) → α theo K → trộn V (encoder) → O</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 520 128" width="100%" height="34mm"
+           aria-label="q của decoder hỏi hai token nguồn của encoder mang k và v, trộn ra vectơ ngữ cảnh O"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Cross-attention = Q(decoder) hỏi K,V(encoder) → rót thông tin nguồn vào đích; nền dịch máy & đa phương thức.
-    Bài tiếp (H4): nhiều đầu chú ý song song.
+  <!-- ① ĐIỂM CĂN CHỈNH & SOFTMAX -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Điểm căn chỉnh &amp; softmax</span><span class="f">q·kᵢ → ÷√dₖ → eˣ → α</span></div>
+    <div class="pb">
+      <div class="eq">
+        q·k₁ = q₁·1 + q₂·0 = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot sm"></span> &nbsp;→&nbsp; điểm₁ = <span class="slot sm"></span> ÷ 2 = <span class="slot sm"></span><br>
+        q·k₂ = q₁·0 + q₂·1 = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot sm"></span> &nbsp;→&nbsp; điểm₂ = <span class="slot sm"></span> ÷ 2 = <span class="slot sm"></span><br>
+        e<sup>điểm₁</sup> = <span class="slot sm"></span> &nbsp;,&nbsp; e<sup>điểm₂</sup> = <span class="slot sm"></span> &nbsp;→&nbsp; Σ = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot sm"></span><br>
+        α₁ = e<sup>điểm₁</sup> ÷ Σ = <span class="slot sm"></span> ÷ <span class="slot sm"></span> = <span class="slot sm"></span> &nbsp;·&nbsp; α₂ = 1 − α₁ = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:1mm">
+        <tr><th class="l">α</th><th>Giá trị</th><th>Tô thanh (0…1)</th></tr>
+        <tr><td class="l">α₁</td><td><span class="cellb"></span></td><td><div class="track uni" id="ta1"></div></td></tr>
+        <tr><td class="l">α₂</td><td><span class="cellb"></span></td><td><div class="track uni" id="ta2"></div></td></tr>
+      </table>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② TRỘN V -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Trộn V nguồn → vectơ ngữ cảnh O</span><span class="f">O = α₁v₁ + α₂v₂</span></div>
+    <div class="pb">
+      <div class="eq">
+        O₁ = α₁·v₁ₓ + α₂·v₂ₓ = <span class="slot sm"></span>·<span style="color:var(--purple);font-weight:800" data-q="v11">1</span> + <span class="slot sm"></span>·<span style="color:var(--purple);font-weight:800" data-q="v21">2</span> = <span class="slot sm"></span><br>
+        O₂ = α₁·v₁ᵧ + α₂·v₂ᵧ = <span class="slot sm"></span>·<span style="color:var(--purple);font-weight:800" data-q="v12">−2</span> + <span class="slot sm"></span>·<span style="color:var(--purple);font-weight:800" data-q="v22">1</span> = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:1mm">
+        <tr><th class="l">O</th><th>Giá trị</th><th>Tô thanh O</th></tr>
+        <tr><td class="l">O₁</td><td><span class="cellb"></span></td><td><div class="track" id="to1"></div></td></tr>
+        <tr><td class="l">O₂</td><td><span class="cellb"></span></td><td><div class="track" id="to2"></div></td></tr>
+      </table>
+    </div>
+    <div class="cap" style="padding:0 2.6mm 1.6mm">Thang thanh O: <b>−5 … 0 … +5</b>.</div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — nội suy, không ngoại suy</span><span class="f">O có nằm giữa v₁, v₂ không?</span></div>
+    <div class="pb">
+      <div class="eq">
+        Vì mọi αᵢ ≥ 0 và Σαᵢ = 1 nên O là <b>trung bình có trọng số</b> của v₁, v₂ — không thể vượt ra ngoài.<br>
+        min(v₁ₓ, v₂ₓ) = <span class="slot sm"></span> &nbsp;,&nbsp; max(v₁ₓ, v₂ₓ) = <span class="slot sm"></span> &nbsp;→&nbsp; O₁ có nằm trong khoảng đó? <span class="slot" style="min-width:18mm"></span><br>
+        min(v₁ᵧ, v₂ᵧ) = <span class="slot sm"></span> &nbsp;,&nbsp; max(v₁ᵧ, v₂ᵧ) = <span class="slot sm"></span> &nbsp;→&nbsp; O₂ có nằm trong khoảng đó? <span class="slot" style="min-width:18mm"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:14mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Ra điểm căn chỉnh + α (Σ=1)</span>
+    <span><span class="ck"></span>Ra O + tô thanh</span>
+    <span><span class="ck"></span>Xác nhận O bị kẹp trong [min,max]</span>
+    <span class="win">🎉 Bạn vừa nối được decoder với trí nhớ của encoder!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H5</span>
+    <h1>Cross-Attention <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>q</span>
+      <span><span class="sw" style="background:var(--orange)"></span>K · đáp án</span>
+      <span><span class="sw" style="background:var(--purple)"></span>V</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">q → α theo K → trộn V → O</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 520 128" width="100%" height="34mm" aria-label="sơ đồ với alpha và O đã điền"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Điểm căn chỉnh &amp; softmax</span></div>
+    <div class="pb">
+      <div class="eq">
+        q·k₁ = <span class="slot ans sm" data-q="t11">2</span> + <span class="slot ans sm" data-q="t12">0</span> = <span class="slot ans sm" data-q="s1">2</span> &nbsp;→&nbsp; điểm₁ = <span class="slot ans sm" data-q="s1b">2</span> ÷ 2 = <span class="slot ans sm" data-q="sc1">1</span><br>
+        q·k₂ = <span class="slot ans sm" data-q="t21">0</span> + <span class="slot ans sm" data-q="t22">0</span> = <span class="slot ans sm" data-q="s2">0</span> &nbsp;→&nbsp; điểm₂ = <span class="slot ans sm" data-q="s2b">0</span> ÷ 2 = <span class="slot ans sm" data-q="sc2">0</span><br>
+        e<sup>điểm₁</sup> = <span class="slot ans sm" data-q="e1">2.72</span> &nbsp;,&nbsp; e<sup>điểm₂</sup> = <span class="slot ans sm" data-q="e2">1.00</span> &nbsp;→&nbsp; Σ = <span class="slot ans sm" data-q="e1b">2.72</span> + <span class="slot ans sm" data-q="e2b">1.00</span> = <span class="slot ans sm" data-q="Z">3.72</span><br>
+        α₁ = <span class="slot ans sm" data-q="e1c">2.72</span> ÷ <span class="slot ans sm" data-q="Zb">3.72</span> = <span class="slot ans sm" data-q="al1">0.73</span> &nbsp;·&nbsp; α₂ = 1 − α₁ = <span class="slot ans sm" data-q="al2">0.27</span>
+      </div>
+      <table style="margin-top:1mm">
+        <tr><th class="l">α</th><th>Giá trị</th><th>Tô thanh (0…1)</th></tr>
+        <tr><td class="l">α₁</td><td class="evt" data-q="al1">0.73</td><td><div class="track uni" id="aa1"></div></td></tr>
+        <tr><td class="l">α₂</td><td class="evt" data-q="al2">0.27</td><td><div class="track uni" id="aa2"></div></td></tr>
+      </table>
+    </div>
+    <div class="why" style="margin:0 2.6mm 2mm"><b>Vì sao √dₖ:</b> khi d lớn, q·k phồng to → softmax bão hòa (một token gần như hết trọng số).
+    Chia √dₖ giữ điểm ở khoảng vừa phải, để α còn "mềm", chưa lệch hẳn về một token nguồn.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Trộn V nguồn → O</span></div>
+    <div class="pb">
+      <div class="eq">
+        O₁ = <span class="slot ans sm" data-q="u11">0.73</span>·<span style="color:var(--purple);font-weight:800" data-q="v11">1</span> + <span class="slot ans sm" data-q="u12">0.27</span>·<span style="color:var(--purple);font-weight:800" data-q="v21">2</span> = <span class="slot ans" data-q="ox">1.27</span><br>
+        O₂ = <span class="slot ans sm" data-q="u21">0.73</span>·<span style="color:var(--purple);font-weight:800" data-q="v12">−2</span> + <span class="slot ans sm" data-q="u22">0.27</span>·<span style="color:var(--purple);font-weight:800" data-q="v22">1</span> = <span class="slot ans" data-q="oy">−1.19</span>
+      </div>
+      <table style="margin-top:1mm">
+        <tr><th class="l">O</th><th>Giá trị</th><th>Tô thanh O</th></tr>
+        <tr><td class="l">O₁</td><td class="evt" data-q="ox">1.27</td><td><div class="track" id="ao1"></div></td></tr>
+        <tr><td class="l">O₂</td><td class="evt" data-q="oy">−1.19</td><td><div class="track" id="ao2"></div></td></tr>
+      </table>
+    </div>
+    <div class="why" style="margin:1.6mm 2.6mm 2mm"><b>Vì sao là tổng, không phải chọn một:</b> attention không "chọn cứng" một token nguồn — nó pha trộn
+    <b>tất cả</b> theo tỉ lệ α, nên gradient chảy được qua mọi token nguồn khi huấn luyện, không riêng token "thắng".</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — nội suy, không ngoại suy</span><span class="f">dải teal trên thanh O = [min,max] của v₁,v₂</span></div>
+    <div class="pb">
+      <div class="eq">
+        min(v₁ₓ,v₂ₓ) = <span class="slot ans sm" data-q="mnx">1</span> &nbsp;,&nbsp; max(v₁ₓ,v₂ₓ) = <span class="slot ans sm" data-q="mxx">2</span> &nbsp;→&nbsp; O₁ nằm trong khoảng đó? <span class="qa">Có — luôn đúng.</span><br>
+        min(v₁ᵧ,v₂ᵧ) = <span class="slot ans sm" data-q="mny">−2</span> &nbsp;,&nbsp; max(v₁ᵧ,v₂ᵧ) = <span class="slot ans sm" data-q="mxy">1</span> &nbsp;→&nbsp; O₂ nằm trong khoảng đó? <span class="qa">Có — luôn đúng.</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> vì αᵢ ≥ 0 và Σαᵢ = 1, O = Σαᵢvᵢ là <b>tổ hợp lồi</b> của v₁,v₂ — về hình học, O luôn nằm
+    <b>trên đoạn thẳng nối v₁,v₂</b>, không bao giờ lệch ra ngoài. <b>Minh họa cực đoan:</b> nếu v₁ = v₂ = v (hai token nguồn mang <i>cùng</i> nội dung) thì
+    O = α₁v + α₂v = (α₁+α₂)v = v <b>với MỌI α</b> — bấm 🎲 đổi q bao nhiêu lần, O vẫn đứng yên = v. <b>Encoder là trần thông tin:</b> decoder chỉ
+    <b>pha trộn lại</b> những gì encoder đã có, không thể "chế ra" giá trị mới nằm ngoài đó.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở cross-attention</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Cross-attention và self-attention là hai công thức khác nhau."</b><br>
+          <span style="color:var(--dim)">Sai — <b>cùng một công thức</b> softmax(QKᵀ/√dₖ)V. Khác duy nhất là <b>nguồn</b>: self lấy Q,K,V từ một chuỗi; cross lấy Q từ chuỗi này, K,V từ chuỗi khác.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Q và K,V phải cùng độ dài."</b><br>
+          <span style="color:var(--dim)">Không bắt buộc — Q (m token đích) và K,V (n token nguồn) có thể <b>khác độ dài</b>, miễn cùng chiều dₖ để chấm được. Ma trận điểm khi đó là m×n, không vuông.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "K, V cũng được cập nhật theo từng bước decoder."</b><br>
+          <span style="color:var(--dim)">Sai — K, V là <b>bộ nhớ đã đóng băng</b> của encoder (tính một lần), <b>giống nhau</b> ở mọi bước sinh của decoder. Chỉ Q thay đổi theo từng bước.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "O có thể vượt ra ngoài mọi v nếu α âm."</b><br>
+          <span style="color:var(--dim)">Không thể — softmax luôn cho αᵢ ∈ [0,1] và Σαᵢ=1 (xem bước ③), nên O luôn bị <b>kẹp</b> trong đoạn [min,max] của các v. Đó là tính chất toán học, không phải trùng hợp số liệu.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Cross-attention dùng đúng công thức attention của H1/H2, chỉ đổi nguồn: Q từ decoder, K/V từ encoder — nhờ vậy
+    decoder "đọc" được câu nguồn ở mỗi bước dịch, thay vì nén cả câu vào một vectơ (Bài G7). Vì O luôn là tổ hợp lồi của các v, decoder
+    <b>không bao giờ bịa</b> ra thông tin ngoài những gì encoder cung cấp — nó chỉ pha trộn lại. Bài tiếp theo (<b>H6</b>): ghép self-attention +
+    cross-attention + FFN + chuẩn hóa thành một <b>khối Transformer</b> hoàn chỉnh.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H5 · Cross-Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 var EXP = {0:1, 1:2.72, 2:7.39};
+
 function generate(){
-  var f2 = WB.fmt2;
-  var a = WB.pick([1,2]);
-  var dom = WB.pick([0,1]);
-  var s1 = dom===0 ? 2*a : 0, s2 = dom===0 ? 0 : 2*a;
-  var sc1=s1/2, sc2=s2/2;
-  var e1=EXP[sc1], e2=EXP[sc2];
-  var Z=Math.round((e1+e2)*100)/100;
-  var al1=Math.round(e1/(e1+e2)*100)/100, al2=Math.round((1-al1)*100)/100;
-  var v1=[WB.randInt(0,3),WB.randInt(0,3)], v2=[WB.randInt(0,3),WB.randInt(0,3)];
-  var o1=Math.round((al1*v1[0]+al2*v2[0])*100)/100, o2=Math.round((al1*v1[1]+al2*v2[1])*100)/100;
+  var fI = WB.fmtInt, f2 = WB.fmt2;
+
+  // q (decoder): chọn để điểm sau ÷√dk rơi ĐÚNG mốc bảng eˣ {0,1,2} — tra bảng, không tính sin/mũ tay.
+  var dom = WB.pick([0,1]);          // q nghiêng về nguồn 1 hay nguồn 2
+  var a = WB.pick([1,2]);            // mốc điểm trội
+  var q1 = dom===0 ? 2*a : 0;
+  var q2 = dom===0 ? 0 : 2*a;
+  // k1,k2: vectơ đơn vị trực chuẩn CỐ ĐỊNH (không phải số biến thiên) — giữ phép chấm gọn để dạy đúng ý bài.
+  var k1x=1,k1y=0,k2x=0,k2y=1;
+  var t11=q1*k1x, t12=q2*k1y, s1=t11+t12;
+  var t21=q1*k2x, t22=q2*k2y, s2=t21+t22;
+  var sc1 = s1/2, sc2 = s2/2;   // ÷ √dk (dk=4 → √dk=2)
+  var e1 = EXP[sc1], e2 = EXP[sc2];
+  var Z = Math.round((e1+e2)*100)/100;
+  var al1 = Math.round(e1/Z*100)/100;
+  var al2 = Math.round((1-al1)*100)/100;
+
+  // V (encoder), GUARD v1 ≠ v2 (vectơ) — nếu trùng, phép trộn suy biến, mất ý nghĩa minh họa.
+  var v1, v2;
+  do {
+    v1 = [WB.randIntNZ(-3,3), WB.randIntNZ(-3,3)];
+    v2 = [WB.randIntNZ(-3,3), WB.randIntNZ(-3,3)];
+  } while (v1[0]===v2[0] && v1[1]===v2[1]);
+
+  var ox = Math.round((al1*v1[0] + al2*v2[0])*100)/100;
+  var oy = Math.round((al1*v1[1] + al2*v2[1])*100)/100;
+  var u11 = al1, u12 = al2, u21 = al1, u22 = al2; // hệ số hiển thị lại trong dòng ②
+
+  var mnx = Math.min(v1[0],v2[0]), mxx = Math.max(v1[0],v2[0]);
+  var mny = Math.min(v1[1],v2[1]), mxy = Math.max(v1[1],v2[1]);
+
+  window.S = {q1:q1,q2:q2, v1:v1,v2:v2, al1:al1,al2:al2, ox:ox,oy:oy, dom:dom};
+
   WB.setAll({
-    s1:String(s1), s2:String(s2), sc1:String(sc1), sc2:String(sc2),
-    v11:String(v1[0]), v12:String(v1[1]), v21:String(v2[0]), v22:String(v2[1]),
-    e1:f2(e1), e2:f2(e2), Z:f2(Z), a1:f2(al1), a2:f2(al2), o1:f2(o1), o2:f2(o2)
+    q1:fI(q1), q2:fI(q2),
+    v11:fI(v1[0]), v12:fI(v1[1]), v21:fI(v2[0]), v22:fI(v2[1]),
+    t11:fI(t11), t12:fI(t12), s1:fI(s1), s1b:fI(s1), sc1:fI(sc1),
+    t21:fI(t21), t22:fI(t22), s2:fI(s2), s2b:fI(s2), sc2:fI(sc2),
+    e1:f2(e1), e1b:f2(e1), e1c:f2(e1), e2:f2(e2), e2b:f2(e2), Z:f2(Z), Zb:f2(Z),
+    al1:f2(al1), al2:f2(al2),
+    u11:f2(u11), u12:f2(u12), u21:f2(u21), u22:f2(u22),
+    ox:f2(ox), oy:f2(oy),
+    mnx:fI(mnx), mxx:fI(mxx), mny:fI(mny), mxy:fI(mxy)
   });
-  drawCross('figC', al1, al2);
+
+  // thanh α: một chiều (0…1), gốc trái. ĐỀ trống, ĐÁP ÁN tô đầy.
+  drawUni('ta1', 0, 1, false); drawUni('ta2', 0, 1, false);
+  drawUni('aa1', al1, 1, true); drawUni('aa2', al2, 1, true);
+
+  // thanh O: hai chiều, thang −5…0…+5. ĐỀ trống; ĐÁP ÁN tô + dải teal [min,max] của v (kiểm nội suy).
+  drawBar('to1', 0, 5, false); drawBar('to2', 0, 5, false);
+  drawBar('ao1', ox, 5, true, mnx, mxx); drawBar('ao2', oy, 5, true, mny, mxy);
+
+  drawFlow('figQ', false);
+  drawFlow('figA', true);
 }
-function drawCross(id, a1, a2){
-  var svg = document.getElementById(id); if(!svg) return;
-  var qx=42, qy=80, kx=196, ky1=40, ky2=120;
-  function node(x,y,txt,col){
-    return '<circle cx="'+x+'" cy="'+y+'" r="18" fill="'+col+'22" stroke="'+col+'" stroke-width="1.6"/>'+
-      '<text x="'+x+'" y="'+(y+3.5)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+col+'">'+txt+'</text>';
+
+// Thanh MỘT chiều (xác suất/α, gốc trái, thang 0…max). fill=false → chỉ vạch mốc, chừa trống.
+function drawUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:50%"></div>';
+  if(fill){
+    var pct = Math.min(Math.max(v/max,0),1)*100;
+    h += '<div class="fill pos" style="left:0;width:'+pct+'%"></div>';
   }
-  var s='';
-  s+='<line x1="'+(qx+18)+'" y1="'+(qy-6)+'" x2="'+(kx-18)+'" y2="'+ky1+'" stroke="#b45309" stroke-width="'+(1+a1*8)+'" opacity="0.75"/>';
-  s+='<text x="120" y="'+(ky1-4)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">α='+WB.fmt2(a1)+'</text>';
-  s+='<line x1="'+(qx+18)+'" y1="'+(qy+6)+'" x2="'+(kx-18)+'" y2="'+ky2+'" stroke="#b45309" stroke-width="'+(1+a2*8)+'" opacity="0.75"/>';
-  s+='<text x="120" y="'+(ky2+14)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">α='+WB.fmt2(a2)+'</text>';
-  s+=node(qx,qy,'Q đích','#0e7490');
-  s+=node(kx,ky1,'nguồn 1','#b45309');
-  s+=node(kx,ky2,'nguồn 2','#b45309');
-  s+='<text x="'+qx+'" y="'+(qy+32)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">decoder</text>';
-  s+='<text x="'+kx+'" y="14" text-anchor="middle" font-size="8.5" fill="#5b6776">encoder (K, V)</text>';
+  el.innerHTML=h;
+}
+
+// Thanh HAI chiều: gốc giữa (0), dương chạy phải (lam), âm chạy trái (cam).
+// fill=false → chỉ vạch 0 + mốc, chừa TRỐNG cho người học tô bút chì (trang ĐỀ).
+// mn,mx (chỉ dùng khi fill=true) → dải teal mờ đánh dấu [min,max] của v1,v2 (dữ liệu ĐÃ CHO SẴN,
+// không phải đáp án O — an toàn hiển thị cùng lúc với fill trên trang ĐÁP ÁN để người học đối chiếu).
+function drawBar(id, v, max, fill, mn, mx){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill){
+    if (mn!==undefined && mx!==undefined){
+      var pmn = 50 + Math.max(Math.min(mn/max,1),-1)*50;
+      var pmx = 50 + Math.max(Math.min(mx/max,1),-1)*50;
+      h += '<div style="position:absolute;left:'+pmn+'%;width:'+(pmx-pmn)+'%;top:.6mm;bottom:.6mm;background:rgba(15,118,110,.22);border-radius:2px;pointer-events:none"></div>';
+    }
+    if (v!==0){
+      var pct = Math.min(Math.abs(v)/max, 1) * 50;
+      h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+               : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
+    }
+  }
+  el.innerHTML=h;
+}
+
+// Sơ đồ: q (lam, decoder) → 2 nguồn encoder (k cam + v tím), mũi tên mang α → trộn thành O (cam).
+function drawFlow(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var S = window.S;
+  var fI=WB.fmtInt, f2=WB.fmt2, BLU='#0e7490', ORG='#b45309', PUR='#6d28d9', INK='#16202e', DIM='#6b7280';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  // q chip (decoder), trái, giữa dọc
+  s+='<rect x="6" y="49" width="58" height="30" rx="6" fill="#eaf4f6" stroke="'+BLU+'" stroke-width="1.3"/>';
+  s+='<text x="35" y="63" text-anchor="middle" font-size="9.5" font-weight="800" fill="'+BLU+'">q = ('+fI(S.q1)+', '+fI(S.q2)+')</text>';
+  s+='<text x="35" y="74" text-anchor="middle" font-size="6.8" fill="'+DIM+'">decoder</text>';
+
+  var ty=[26,102];
+  [1,2].forEach(function(n,k){
+    var y=ty[k];
+    // đường cong q → nguồn, nhãn α
+    s+='<path d="M64,64 C 96,64 96,'+y+' 128,'+y+'" fill="none" stroke="'+BLU+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+    var alTxt = showAns ? (k===0?f2(S.al1):f2(S.al2)) : '?';
+    s+='<text x="94" y="'+(y<64?(y+10):(y-6))+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+BLU+'">α'+(k+1)+'='+alTxt+'</text>';
+    // chip nguồn: k (cam) + v (tím), nhãn "encoder"
+    s+='<rect x="130" y="'+(y-19)+'" width="112" height="38" rx="6" fill="#fff" stroke="#cbd5e1" stroke-width="1.1"/>';
+    s+='<text x="186" y="'+(y-22)+'" text-anchor="middle" font-size="7" fill="'+DIM+'">nguồn '+(k+1)+' · encoder</text>';
+    s+='<rect x="136" y="'+(y-13)+'" width="40" height="26" rx="4" fill="#fff5e9" stroke="'+ORG+'" stroke-width="1.2"/>';
+    s+='<text x="156" y="'+(y-3)+'" text-anchor="middle" font-size="6.6" font-weight="700" fill="'+ORG+'">k'+(k+1)+'</text>';
+    s+='<text x="156" y="'+(y+7)+'" text-anchor="middle" font-size="6.6" fill="'+ORG+'">('+(k===0?'1,0':'0,1')+')</text>';
+    var vv = k===0?S.v1:S.v2;
+    s+='<rect x="182" y="'+(y-13)+'" width="54" height="26" rx="4" fill="#f5f1fe" stroke="'+PUR+'" stroke-width="1.2"/>';
+    s+='<text x="209" y="'+(y-3)+'" text-anchor="middle" font-size="6.6" font-weight="700" fill="'+PUR+'">v'+(k+1)+'</text>';
+    s+='<text x="209" y="'+(y+7)+'" text-anchor="middle" font-size="6.6" fill="'+PUR+'">('+fI(vv[0])+','+fI(vv[1])+')</text>';
+    // đường cong nguồn → O
+    s+='<path d="M242,'+y+' C 290,'+y+' 290,64 336,64" fill="none" stroke="'+PUR+'" stroke-width="1.2" marker-end="url(#mk'+id+')"/>';
+  });
+
+  // O chip (cam), phải. ô SVG số âm rộng ≥21px, font ≤6.8px để không nuốt dấu trừ.
+  s+='<text x="410" y="30" text-anchor="middle" font-size="8.5" font-weight="800" fill="'+ORG+'">O = Σαᵢvᵢ</text>';
+  var bx=372, bw=32;
+  var oVal1 = showAns ? f2(S.ox) : null, oVal2 = showAns ? f2(S.oy) : null;
+  s+='<text x="'+(bx-4)+'" y="55" text-anchor="end" font-size="7.5" font-weight="700" fill="'+DIM+'">O₁</text>';
+  s+='<rect x="'+bx+'" y="46" width="'+bw+'" height="18" rx="3" fill="'+(showAns?'#fff8f0':'#fff')+'" stroke="'+(showAns?ORG:INK)+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+  if(showAns) s+='<text x="'+(bx+bw/2)+'" y="58.5" text-anchor="middle" font-size="6.8" font-weight="700" fill="#7a3d00">'+oVal1+'</text>';
+  s+='<text x="'+(bx-4)+'" y="79" text-anchor="end" font-size="7.5" font-weight="700" fill="'+DIM+'">O₂</text>';
+  s+='<rect x="'+bx+'" y="70" width="'+bw+'" height="18" rx="3" fill="'+(showAns?'#fff8f0':'#fff')+'" stroke="'+(showAns?ORG:INK)+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+  if(showAns) s+='<text x="'+(bx+bw/2)+'" y="82.5" text-anchor="middle" font-size="6.8" font-weight="700" fill="#7a3d00">'+oVal2+'</text>';
+  if(!showAns){ s+='<text x="'+(bx+bw+8)+'" y="58.5" font-size="8" fill="#c3ccd6">✍</text>'; s+='<text x="'+(bx+bw+8)+'" y="82.5" font-size="8" fill="#c3ccd6">✍</text>'; }
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // ⚠️ BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

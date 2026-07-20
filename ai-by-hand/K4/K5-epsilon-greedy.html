@@ -1,180 +1,339 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài K5 — Chính sách ε-greedy (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài K5 — Chính sách ε-greedy (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.8mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--orange);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
+.decomp{display:grid;grid-template-columns:auto 1fr;gap:.6mm 3mm;font-size:9px;margin-top:.6mm}
+.decomp .k{font-weight:800;color:var(--dim)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Chính sách ε-greedy <small>— cân bằng khám phá &amp; khai thác · <i>ε-greedy</i></small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~12 phút · Bài K5</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>khai thác (best)</span>
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>khám phá (khác)</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>ε</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài K5</span><h1>Chính sách ε-greedy <small>— khám phá &amp; khai thác</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nếu luôn chọn "tốt nhất hiện biết", agent <b>không bao giờ khám phá</b> hành động có thể tốt hơn → kẹt.
-    ε-greedy buộc thử ngẫu nhiên một chút → thu thập dữ liệu mới. Đây là cách giải tiến thoái khám phá–khai thác đơn giản nhất.
-    <div class="formula">P(best) = 1 − ε + ε/n &nbsp;&nbsp;&nbsp; P(mỗi hành động khác) = ε/n &nbsp;(n = số hành động)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Từ bảng Q, tính <b>xác suất agent chọn mỗi hành động</b> theo luật ε-greedy: P(tốt nhất) = 1−ε+ε/n và P(khác) = ε/n. Kiểm <b>tổng = 1</b>, <b>khám phá</b> ε chạy từ 0→1 đổi hành vi ra sao, và giải thích vì sao thiếu khám phá thì agent <b>bị kẹt</b>.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hầu hết lần đi <b>đường quen tốt nhất</b> (khai thác), nhưng thỉnh thoảng (ε) <b>thử đường lạ</b> xem có ngon hơn không (khám phá). ε lớn
-    → liều, khám phá nhiều; ε nhỏ → bảo thủ. Thường <b>giảm ε dần</b> khi đã học đủ.
-  </div>
+  <div class="why2 p"><b>💡 Trực giác.</b> Hầu hết thời gian đi <i>đường quen tốt nhất</i> (khai thác — dùng cái đã biết), nhưng thỉnh thoảng (xác suất ε) <b>thử đường lạ</b> xem có ngon hơn không (khám phá — thu dữ liệu mới). ε lớn → liều, khám phá nhiều; ε nhỏ → bảo thủ. Thực tế thường <b>giảm ε dần</b> khi đã học đủ. <i>Nối K3/K4:</i> chính "hành động thật a'" trong SARSA là do chính sách này chọn ra.</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ε = <span data-q="eps">0.1</span>, n = <span data-q="n">3</span></span></div>
-    <div class="calc" style="font-size:14px">
-      <span data-q="n">3</span> hành động, Q = ( <span class="gv" data-q="q1">5</span>, <span class="gv" data-q="q2">2</span>, <span class="gv" data-q="q3">1</span> )
-      → hành động tốt nhất = <b>a<span data-q="best">1</span></b>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Xác suất hành động tốt nhất</h2><span class="tag">1 − ε + ε/n</span></div>
-    <div class="calc">
-      P(best) = 1 − <span data-q="eps">0.1</span> + <span data-q="eps">0.1</span>/<span data-q="n">3</span> = <span data-q="oneMinus">0.9</span> + <span data-q="epsOverN">0.033</span> = <span class="blk" style="min-width:48px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> phần 1−ε chắc chắn khai thác, cộng phần nhỏ ε/n vì khám phá cũng có thể trúng a<span data-q="best">1</span>.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Xác suất hành động khác</h2><span class="tag">ε/n</span></div>
-    <div class="calc">
-      P(khác) = <span data-q="eps">0.1</span> / <span data-q="n">3</span> = <span class="blk" style="min-width:48px"></span> &nbsp;(mỗi hành động không-tốt-nhất)
-    </div>
-    <div class="hint">Kiểm tổng: P(best) + (n−1)·P(khác) = <span data-q="pBest">0.933</span> + <span data-q="nm1">2</span>·<span data-q="pOther">0.033</span> = 1 ✓</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vai trò của ε</h2><span class="tag">ε=0 ↔ ε=1</span></div>
-    <div class="why"><b>Vì sao:</b> ε=0 → tham lam thuần (không khám phá, dễ kẹt); ε=1 → ngẫu nhiên thuần (không khai thác). ε điều tiết đánh đổi; giá trị vừa phải + giảm dần là tốt.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao cần khám phá</h2><span class="tag">tránh kẹt</span></div>
-    <div class="note">Ước lượng Q ban đầu sai; không thử thì không sửa được. Khám phá thu dữ liệu để Q hội tụ đúng.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>ε = 0 gây vấn đề gì? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Tổng xác suất các hành động? → <span class="blk" style="min-width:60px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K5 · ε-greedy</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài K5</span><h1>Chính sách ε-greedy <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>P(best)</h2></div>
-    <div class="calc ans">P(best) = 1 − <span data-q="eps">0.1</span> + <span data-q="eps">0.1</span>/<span data-q="n">3</span> = <span class="blk" data-q="pBest">0.933</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>P(khác)</h2></div>
-    <div class="calc ans">P(khác) = <span data-q="eps">0.1</span>/<span data-q="n">3</span> = <span class="blk" data-q="pOther">0.033</span> &nbsp;<span class="note" style="display:inline">(tổng = 1)</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Phân bố xác suất chọn hành động</h2><span class="tag">ε-greedy</span></div>
-    <div class="figrow">
-      <svg id="figE" class="fig" viewBox="0 0 250 120" width="82mm" height="39mm" aria-label="cột xác suất: a1 cao, các hành động khác thấp đều"></svg>
-      <div style="flex:1">
-        <div class="note">Cột a<span data-q="best">1</span> (cam) cao = P(best); các cột khác (lam) thấp đều = ε/n. ε lớn → cột best thấp đi, cột khác cao lên (khám phá nhiều hơn).</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — bảng Q &amp; mức khám phá</span><span class="f">ε = <span data-q="eps">0.1</span> · n = <span data-q="n">3</span> hành động</span></div>
+    <div class="pb">
+      <div class="storybox">
+        Ở một trạng thái có <b>n = <span data-q="n">3</span></b> hành động với giá trị ước lượng:
+        <b class="rw">Q(a₁) = <span data-q="q1">5</span></b>, <b class="gk">Q(a₂) = <span data-q="q2">2</span></b>, <b class="gk">Q(a₃) = <span data-q="q3">1</span></b>
+        → hành động <b>tốt nhất = a₁</b> (Q lớn nhất). Mức khám phá <b>ε = <span data-q="eps">0.1</span></b>.
+        <div class="cap" style="margin-top:1.2mm">Luật ε-greedy: <b>P(tốt nhất) = 1 − ε + ε/n</b> · <b>P(mỗi hành động khác) = ε/n</b>. (ε/n vì khi "khám phá ngẫu nhiên" cũng có thể rơi trúng a₁.)</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>ε = 0? → <span class="qa">Không khám phá → dễ kẹt ở hành động "tốt nhất hiện biết" (có thể sai).</span></li>
-      <li>Tổng xác suất? → <span class="qa">1.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">① P(chọn a₁ — tốt nhất)</span><span class="f">1 − ε + ε/n</span></div>
+    <div class="pb">
+      <div class="eq">P(a₁) = (1 − <span data-q="eps">0.1</span>) + <span data-q="eps">0.1</span>/<span data-q="n">3</span> = <span data-q="oneMinus">0.9</span> + <span data-q="epsOverN">0.033</span> = <span class="slot ans"></span></div>
+      <div class="why2 o"><b>Chọn a₁ theo HAI đường.</b> (i) <b>Khai thác</b> — cứ chắc chắn chọn tốt nhất, xác suất 1−ε. (ii) <b>Khám phá may mắn</b> — trong ε phần khám phá ngẫu nhiên đều n hành động, a₁ vẫn được chọn với ε/n. Cộng lại = P(a₁).</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> ε-greedy: 1−ε khai thác + ε khám phá; ε điều tiết &amp; nên giảm dần. Bài tiếp (K6): học <b>chính sách trực
-    tiếp</b> — <b style="color:var(--accent2)">policy gradient</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">② P(chọn a₂ hoặc a₃ — hành động khác)</span><span class="f">ε/n</span></div>
+    <div class="pb">
+      <div class="eq">P(a₂) = P(a₃) = <span data-q="eps">0.1</span> / <span data-q="n">3</span> = <span class="slot ans"></span></div>
+      <div class="why2"><b>Chỉ đến từ khám phá.</b> a₂, a₃ không phải "tốt nhất" nên phần khai thác (1−ε) không chọn chúng; chúng chỉ được chọn khi <i>khám phá ngẫu nhiên</i> rơi trúng → mỗi cái ε/n. Q(a₂) &gt; Q(a₃) nhưng xác suất <b>bằng nhau</b>: ε-greedy khám phá <i>mù</i>, không ưu tiên hành động khác "gần tốt".</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K5 · ε-greedy</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">③ Quy ra số lần trong 100 lượt</span><span class="f">xác suất × 100 (trung bình)</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th>trong 100 lượt</th><th>khai thác<br>(1−ε)·100</th><th>khám phá<br>ε·100</th><th>rơi mỗi a khác<br>(ε/n)·100</th><th>chọn a₁ tổng<br>P(a₁)·100</th></tr></thead>
+        <tbody><tr><td class="l">số lần ≈</td>
+          <td><span class="cellb" style="width:15mm"></span></td>
+          <td><span class="cellb" style="width:15mm"></span></td>
+          <td><span class="cellb" style="width:15mm"></span></td>
+          <td><span class="cellb" style="width:15mm"></span></td></tr></tbody>
+      </table>
+      <div class="why2"><b>Xác suất thành số đếm được.</b> Đi 100 lượt thì khoảng <b>(1−ε)·100</b> lần "chắc chắn chọn a₁" và <b>ε·100</b> lần "nhắm mắt chọn đại" (chia đều n hành động). a₁ được chọn tổng ≈ khai thác + phần khám phá may mắn rơi trúng nó.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Kiểm tổng xác suất</span><span class="f">phải bằng 1</span></div>
+    <div class="pb">
+      <div class="eq">P(a₁) + P(a₂) + P(a₃) = <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot ans sm"></span></div>
+      <div class="why2 p"><b>Vì sao luôn = 1?</b> P(a₁)+(n−1)·(ε/n) = (1−ε+ε/n) + (n−1)ε/n = 1−ε + n·(ε/n) = 1−ε + ε = <b>1</b>. Đây là một <b>phân phối xác suất</b> hợp lệ với mọi ε.</div>
+    </div>
+  </div>
+
+  <div class="why2"><b>🔮 Dự đoán trước khi tính.</b> Nếu tăng ε (khám phá nhiều hơn), P(a₁) sẽ <b>tăng hay giảm</b>? P(a₂) thì sao? Ghi phỏng đoán rồi tính để kiểm ở trang sau.</div>
+  <div class="scratch" style="height:24mm"><span class="lb">Nháp — P(a₁), P(khác), kiểm tổng &amp; ghi phỏng đoán</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K5 · ε-greedy</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>ε-greedy <small>— phổ xác suất · ε từ 0→1 · vì sao cần khám phá</small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cột xác suất — điền chiều cao 3 cột</span><span class="f">a₁ cao (cam) · a₂,a₃ thấp đều (lam)</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figProb" viewBox="0 0 250 128" width="80mm" height="41mm" aria-label="cột xác suất ba hành động"></svg>
+      <div class="cap" style="margin:0">Tô mỗi cột đến đúng xác suất vừa tính (đường đứt = 1.0). a₁ <b>vượt trội</b>, a₂ và a₃ <b>bằng nhau &amp; thấp</b>. Tổng ba cột = 1.0.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — ε chạy từ 0 (tham lam) đến 1 (ngẫu nhiên)</div>
+    <div style="font-size:9px;line-height:1.45">Giữ n = 3. Tính P(a₁) = 1 − ε + ε/3 cho ba mức ε. Điền:</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th>ε</th><th>0 (tham lam thuần)</th><th>0.5</th><th>1 (ngẫu nhiên thuần)</th></tr></thead>
+      <tbody>
+        <tr><td class="l">P(a₁)</td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:16mm"></span></td></tr>
+        <tr><td class="l">P(a₂)=P(a₃)</td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:16mm"></span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ ε=0: P(a₁)=1 (<b>chỉ khai thác</b>, không bao giờ thử a₂,a₃). ε=1: cả ba = 1/3 (<b>ngẫu nhiên đều</b>, bỏ hết khai thác). ε giữa: nghiêng về a₁ nhưng vẫn thử hành động khác.</div>
+  </div>
+
+  <div class="panel" style="margin-top:1.9mm">
+    <div class="ph"><span class="t">Thanh ε — vị trí mức khám phá đang dùng</span><span class="f">0 = tham lam · 1 = ngẫu nhiên</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figEps" viewBox="0 0 280 74" width="92mm" height="24mm" aria-label="thanh epsilon từ 0 đến 1"></svg>
+      <div class="storybox">ε = <b class="gk" data-q="eps">0.1</b> nằm <b>gần đầu 0</b> → agent chủ yếu khai thác, chỉ thi thoảng khám phá.
+      <div class="why2 p" style="margin-top:1.2mm"><b>🔮 Dự đoán.</b> Lúc mới học (Q còn sai nhiều) nên đặt ε to hay nhỏ? Về sau (Q đã tốt) thì sao?</div></div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Vì sao BẮT BUỘC phải khám phá?</span><span class="f">tránh kẹt ở "tốt nhất giả"</span></div>
+    <div class="pb">
+      <div class="storybox">Ước lượng Q ban đầu có thể <b>sai</b>: một hành động thật ra tốt nhưng lần đầu thử bị xui → Q thấp → không bao giờ chọn lại → <b>không bao giờ sửa được</b>. Khám phá (ε &gt; 0) buộc thử lại đủ nhiều để Q hội tụ về đúng. Đây là <b>tiến thoái khám phá–khai thác</b>, và ε-greedy là cách giải đơn giản nhất.</div>
+    </div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — vì sao tổng luôn = 1 (phân rã khai thác + khám phá)</div>
+    <div class="decomp">
+      <span class="k">khai thác (chắc chắn chọn best):</span><span>1 − ε</span>
+      <span class="k">khám phá (rải đều n hành động):</span><span>ε = n·(ε/n)</span>
+      <span class="k">tổng:</span><span>(1 − ε) + ε = <span class="slot ans sm"></span></span>
+    </div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Toàn bộ xác suất chia làm đúng hai khối: <b>1−ε</b> dành cho khai thác + <b>ε</b> chia đều cho khám phá. Cộng lại luôn = 1, không phụ thuộc ε hay n. Best nhận thêm ε/n <i>từ khối khám phá</i> → P(best) = (1−ε) + ε/n.</div>
+  </div>
+
+  <div class="scratch" style="height:18mm"><span class="lb">Nháp — bảng phổ ε · phân rã tổng</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Tính P(a₁)</span>
+    <span><span class="ck"></span>Tính P(khác)</span>
+    <span><span class="ck"></span>Điền phổ ε</span>
+    <span><span class="ck"></span>Kiểm tổng = 1</span>
+    <span class="win">🎉 Xong Bài K5!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K5 · ε-greedy</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>ε-greedy <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② — xác suất chọn hành động (đáp án)</span><span class="f">với ε = <span data-q="eps">0.1</span>, n = <span data-q="n">3</span></span></div>
+    <div class="pb">
+      <div class="eq">P(a₁) = (1−<span data-q="eps">0.1</span>) + <span data-q="eps">0.1</span>/<span data-q="n">3</span> = <span data-q="oneMinus">0.9</span> + <span data-q="epsOverN">0.033</span> = <span class="qa" data-q="pBest">0.933</span></div>
+      <div class="eq">P(a₂) = P(a₃) = <span data-q="eps">0.1</span>/<span data-q="n">3</span> = <span class="qa" data-q="pOther">0.033</span>
+        &nbsp;·&nbsp; tổng = <span data-q="pBest">0.933</span> + 2·<span data-q="pOther">0.033</span> = <span class="qa">1</span></div>
+      <div class="eq" style="margin-top:.4mm">100 lượt: khai thác <span class="qa" data-q="cExploit">90</span> · khám phá <span class="qa" data-q="cExplore">10</span> · mỗi a khác <span class="qa" data-q="cOther">3.3</span> · chọn a₁ <span class="qa" data-q="cBest">93.3</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cột xác suất đã điền</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figProbA" viewBox="0 0 250 128" width="80mm" height="41mm" aria-label="cột xác suất đã điền"></svg>
+      <div class="cap" style="margin:0">a₁ = <b data-q="pBest">0.933</b> (cam, gần chạm 1.0), a₂ = a₃ = <b data-q="pOther">0.033</b> (lam, thấp bằng nhau). Ba cột cộng lại đúng 1.0.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Phổ ε — đáp án (n=3)</div>
+    <table class="tbl-disc">
+      <thead><tr><th>ε</th><th>0</th><th>0.5</th><th>1</th></tr></thead>
+      <tbody>
+        <tr><td class="l">P(a₁) = 1−ε+ε/3</td><td class="an">1</td><td class="an">0.667</td><td class="an">0.333</td></tr>
+        <tr><td class="l">P(a₂)=P(a₃) = ε/3</td><td class="pt">0</td><td class="pt">0.167</td><td class="pt">0.333</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> ε=0 → <b>tham lam thuần</b> (P(a₁)=1, không khám phá → dễ kẹt). ε=1 → <b>ngẫu nhiên thuần</b> (cả ba = 1/3, bỏ hết khai thác). Thực tế: ε vừa phải &amp; <b>giảm dần</b> theo thời gian (đầu khám phá nhiều, sau khai thác nhiều).</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Phân rã tổng = 1 — đáp án</div>
+    <div style="font-size:9px;line-height:1.45">(1 − ε) [khai thác] + ε [khám phá, = n·ε/n] = <b>1</b> với mọi ε, n. Hành động tốt nhất nhận <b>1−ε</b> (khai thác) cộng thêm <b>ε/n</b> (may mắn khi khám phá) ⇒ P(best) = 1−ε+ε/n; các hành động khác chỉ có ε/n.</div>
+  </div>
+
+  <div class="explorebox" style="border-color:var(--blue);background:#f2f8fa">
+    <div class="h" style="color:var(--blue)">🔬 Giảm ε dần (ε-decay) — khám phá mạnh lúc đầu, khai thác về sau</div>
+    <table class="tbl-disc">
+      <thead><tr><th>giai đoạn học</th><th>ε</th><th>khám phá / 100 lượt</th><th>P(a₁) = 1−ε+ε/3</th></tr></thead>
+      <tbody>
+        <tr><td class="l">đầu — Q còn sai nhiều</td><td>1.0</td><td class="pt">100</td><td class="an">0.333</td></tr>
+        <tr><td class="l">giữa</td><td>0.3</td><td class="pt">30</td><td class="an">0.8</td></tr>
+        <tr><td class="l">cuối — Q đã tốt</td><td>0.05</td><td class="pt">5</td><td class="an">0.967</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Vì sao giảm dần?</b> Lúc mới học, ước lượng Q chưa đáng tin → cần <b>khám phá mạnh</b> để sửa. Càng về sau Q càng chuẩn → giảm khám phá, <b>khai thác</b> để gặt điểm. Đây là lịch ε-decay điển hình: nối liền với bảng "100 lượt" ở trang 1.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên ε/n cho best:</b> viết P(best) = 1−ε là thiếu — khám phá vẫn có thể rơi trúng best (thêm ε/n).</li>
+        <li><b>Chia ε cho (n−1):</b> phần khám phá rải đều <b>tất cả n</b> hành động (kể cả best), không phải n−1.</li>
+        <li><b>Tưởng a₂ &gt; a₃ nên P(a₂) &gt; P(a₃):</b> ε-greedy khám phá <i>mù</i> → mọi hành động-khác xác suất bằng nhau (ε/n).</li>
+        <li><b>Đặt ε=0 cho "chắc ăn":</b> mất khám phá → kẹt ở tốt-nhất-giả, Q sai không sửa được.</li>
+        <li><b>Tổng ≠ 1:</b> quên một hành động, hoặc nhân/chia sai — luôn kiểm P(a₁)+(n−1)ε/n = 1.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> ε-greedy: <b>P(best) = 1−ε+ε/n</b>, <b>P(khác) = ε/n</b> — 1−ε khai thác + ε khám phá (rải đều), tổng luôn = 1; ε điều tiết đánh đổi &amp; nên <b>giảm dần</b>. Đây là cách <i>chọn</i> hành động đứng sau mọi thuật toán K3–K4. Bài tiếp <b>K6 · Policy gradient</b>: thay vì suy chính sách từ bảng Q, <b>học thẳng xác suất hành động</b> bằng gradient.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K5 · ε-greedy</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var eps = WB.pick([0.1, 0.2, 0.3]);
-  var n = 3;
-  // Q values: a1 largest
-  var q1 = WB.randInt(4,6), q2 = WB.randInt(1,3), q3 = WB.randInt(0,2);
-  var epsOverN = Math.round(eps/n*1000)/1000;
-  var oneMinus = Math.round((1-eps)*100)/100;
-  var pBest = Math.round((1-eps+eps/n)*1000)/1000;
-  var pOther = epsOverN;
-  WB.setAll({
-    eps:f(eps), n:String(n), q1:String(q1), q2:String(q2), q3:String(q3), best:'1',
-    oneMinus:f(oneMinus), epsOverN:f(epsOverN), nm1:String(n-1),
-    pBest:f(pBest), pOther:f(pOther)
-  });
-  drawProb('figE', pBest, pOther, n);
-}
-function drawProb(id, pBest, pOther, n){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=30, base=100, H=84, gap=58, bw=30, maxv=1;
-  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+n*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  for(var k=0;k<n;k++){
-    var bx=x0+k*gap;
-    var v = k===0 ? pBest : pOther;
-    var h = v/maxv*H;
-    var col = k===0 ? '#b45309' : '#0e7490';
-    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+col+'33" stroke="'+col+'" stroke-width="1.3"/>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-4).toFixed(1)+'" text-anchor="middle" font-size="8.5" fill="'+col+'">'+WB.fmtTrim(v)+'</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base+12)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">a'+(k+1)+'</text>';
+function fmt3(x){let s=(Math.round(x*1000)/1000).toString();return s.replace('-','−');}
+
+function drawProb(id, pBest, pOther, filled){
+  const svg=document.getElementById(id); if(!svg) return;
+  const y0=12, yB=104, H=yB-y0;                  // y0 = mức 1.0, yB = đáy
+  const xs=[52,125,198], bw=42; const labs=['a₁','a₂','a₃']; const cols=['#b45309','#0e7490','#0e7490'];
+  const vals=[pBest,pOther,pOther];
+  let s='';
+  // đường 1.0 (đứt) + trục đáy
+  s+='<line x1="20" y1="'+y0+'" x2="234" y2="'+y0+'" stroke="#c9d2dc" stroke-width="1" stroke-dasharray="4 3"/>';
+  s+='<text x="14" y="'+(y0+3)+'" text-anchor="end" font-size="7.5" fill="#8a95a1" font-family="Consolas,monospace">1.0</text>';
+  s+='<line x1="20" y1="'+yB+'" x2="234" y2="'+yB+'" stroke="#9aa5b1" stroke-width="1.4"/>';
+  s+='<text x="14" y="'+(yB+3)+'" text-anchor="end" font-size="7.5" fill="#8a95a1" font-family="Consolas,monospace">0</text>';
+  for(let i=0;i<3;i++){
+    const x=xs[i]-bw/2;
+    if(filled){
+      const h=Math.max(1,vals[i]*H), yt=yB-h;
+      const fillc = i===0?'#fde3c4':'#d5e9ee';
+      s+='<rect x="'+x+'" y="'+yt+'" width="'+bw+'" height="'+h+'" fill="'+fillc+'" stroke="'+cols[i]+'" stroke-width="1.6"/>';
+      s+='<text x="'+xs[i]+'" y="'+(yt-3)+'" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+cols[i]+'">'+fmt3(vals[i])+'</text>';
+    }else{
+      s+='<rect x="'+x+'" y="'+y0+'" width="'+bw+'" height="'+H+'" fill="none" stroke="#d7dee6" stroke-width="1.2" stroke-dasharray="3 3"/>';
+      s+='<text x="'+xs[i]+'" y="'+(y0-3)+'" text-anchor="middle" font-size="9" font-weight="800" fill="'+cols[i]+'">?</text>';
+    }
+    s+='<text x="'+xs[i]+'" y="'+(yB+14)+'" text-anchor="middle" font-size="9" font-weight="800" fill="#16202e">'+labs[i]+'</text>';
   }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+
+function drawEps(id, eps){
+  const svg=document.getElementById(id); if(!svg) return;
+  const x0=24, x1=256, y=34;
+  let s='';
+  s+='<rect x="'+x0+'" y="'+(y-5)+'" width="'+(x1-x0)+'" height="10" rx="3" fill="#f5f1fe" stroke="#c9d2dc" stroke-width="1"/>';
+  s+='<text x="'+x0+'" y="'+(y+22)+'" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">0 · tham lam</text>';
+  s+='<text x="'+x1+'" y="'+(y+22)+'" text-anchor="middle" font-size="8" font-weight="700" fill="#0e7490">1 · ngẫu nhiên</text>';
+  const xe=x0+eps*(x1-x0);
+  s+='<line x1="'+xe+'" y1="'+(y-13)+'" x2="'+xe+'" y2="'+(y+9)+'" stroke="#7c5cff" stroke-width="2"/>';
+  s+='<circle cx="'+xe+'" cy="'+(y-13)+'" r="4.5" fill="#f5f1fe" stroke="#7c5cff" stroke-width="1.8"/>';
+  s+='<text x="'+xe+'" y="'+(y-19)+'" text-anchor="middle" font-size="8.4" font-weight="800" fill="#7c5cff">ε='+eps+'</text>';
+  svg.innerHTML=s;
+}
+
+function gen(){
+  const n=3;
+  let eps,q1,q2,q3;
+  const opts=[0.1,0.2,0.3];
+  eps=opts[WB.randInt(0,2)];
+  q1=WB.randInt(4,6); q2=WB.randInt(2,3); q3=WB.randInt(0,1);   // q1>q2>q3 → best=a1
+  const epsOverN=Math.round((eps/n)*1000)/1000;
+  const oneMinus=Math.round((1-eps)*1000)/1000;
+  const pBest=Math.round((1-eps+eps/n)*1000)/1000;
+  const pOther=epsOverN;
+  const cExploit=Math.round((1-eps)*100), cExplore=Math.round(eps*100);
+  const cOther=Math.round((eps/n)*1000)/10, cBest=Math.round(pBest*1000)/10;
+  WB.setAll({
+    eps:WB.fmtTrim(eps), n:WB.fmtInt(n),
+    q1:WB.fmtInt(q1), q2:WB.fmtInt(q2), q3:WB.fmtInt(q3),
+    oneMinus:fmt3(oneMinus), epsOverN:fmt3(epsOverN),
+    pBest:fmt3(pBest), pOther:fmt3(pOther),
+    cExploit:WB.fmtInt(cExploit), cExplore:WB.fmtInt(cExplore),
+    cOther:fmt3(cOther), cBest:fmt3(cBest)
+  });
+  drawProb('figProb',pBest,pOther,false);
+  drawProb('figProbA',pBest,pOther,true);
+  drawEps('figEps',eps);
+  const pages=[...document.querySelectorAll('.page')];
+  const meas=pages.map((p,i)=>'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight)).join(' ');
+  const md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

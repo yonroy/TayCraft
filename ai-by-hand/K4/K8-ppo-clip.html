@@ -1,199 +1,323 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài K8 — PPO clip (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài K8 — PPO clip (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.8mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--orange);font-weight:800}
+.pk{color:var(--blue);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần K</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>PPO — ý tưởng cắt (clip) <small>— cập nhật an toàn, gần chính sách cũ · <i>PPO clip</i></small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~13 phút · Bài K8</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>r·A chưa cắt</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>đã cắt · L</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>vùng an toàn [1±ε]</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài K8</span><h1>PPO — ý tưởng cắt (clip) <small>— proximal policy optimization</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Policy gradient bước quá mạnh → chính sách "nhảy" hỏng, sụp đổ. PPO <b>chặn</b> mức thay đổi mỗi bước (không đi
-    xa chính sách cũ) → huấn luyện ổn định. Là thuật toán RL phổ biến nhất hiện nay (kể cả RLHF cho LLM).
-    <div class="formula">rₜ = π_mới(a|s) / π_cũ(a|s) &nbsp;&nbsp; L = min( rₜ·A, &nbsp;clip(rₜ, 1−ε, 1+ε)·A )</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Chặn mỗi bước cập nhật chính sách trong "vùng an toàn": tính tỉ lệ thay đổi r·A, <b>cắt (clip)</b> tỉ lệ về [1−ε, 1+ε], rồi lấy <b>min</b> hai bản. Thấy khi r vượt trần thì <b>không thưởng thêm</b> → hết động lực nhảy xa; hiểu vì sao PPO <b>ổn định</b> và là thuật toán RL phổ biến nhất (kể cả RLHF cho LLM).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Tỉ lệ r = "chính sách mới ưu ái hành động này gấp mấy lần cũ". PPO cho phép cải thiện nhưng <b>không quá ε</b>: nếu r vượt 1+ε (với A&gt;0),
-    phần thưởng bị <b>cắt trần</b> → mất động lực đi xa. Như "thắt dây an toàn" cho mỗi bước cập nhật.
-  </div>
+  <div class="why2 p"><b>💡 Trực giác.</b> Tỉ lệ r = π_mới(a)/π_cũ(a) = "chính sách mới ưu ái hành động này <b>gấp mấy lần</b> cũ". Với hành động tốt (A&gt;0) ta muốn tăng r, nhưng PPO <b>không cho đi quá ε</b>: nếu r vượt 1+ε, phần thưởng bị <b>cắt trần</b> → mất động lực đi xa. Như "thắt dây an toàn" cho mỗi bước. <i>Nối K6/K7:</i> vẫn dùng advantage A, nhưng thay bước gradient tự do bằng bước <b>bị chặn</b>.</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ε = <span data-q="eps">0.2</span></span></div>
-    <div class="calc" style="font-size:14px">
-      tỉ lệ r = <span class="gv" data-q="ratio">1.3</span> (chính sách mới ưa hành động này hơn) ;
-      advantage A = <span class="gv" data-q="A">2</span> (&gt; 0, hành động tốt)
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Mục tiêu chưa cắt</h2><span class="tag">r·A</span></div>
-    <div class="calc">
-      r·A = <span data-q="ratio">1.3</span> · <span data-q="A">2</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> nếu không chặn, mô hình muốn đẩy r còn lớn hơn nữa (đi xa chính sách cũ).</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cắt tỉ lệ</h2><span class="tag">clip(r, 1−ε, 1+ε)</span></div>
-    <div class="calc">
-      clip(<span data-q="ratio">1.3</span>, <span data-q="lo">0.8</span>, <span data-q="hi">1.2</span>) = <span data-q="clipped">1.2</span> ;
-      clip·A = <span data-q="clipped">1.2</span>·<span data-q="A">2</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="hint"><span data-q="ratio">1.3</span> vượt trần 1+ε = <span data-q="hi">1.2</span> → bị cắt về <span data-q="hi">1.2</span>.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Lấy min</h2><span class="tag">min(r·A, clip·A)</span></div>
-    <div class="calc">
-      L = min( <span data-q="unclipped">2.6</span>, <span data-q="clippedA">2.4</span> ) = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> lấy min → khi r vượt vùng an toàn, <b>không thưởng thêm</b> → triệt động lực bước quá xa.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao "proximal"</h2><span class="tag">gần chính sách cũ</span></div>
-    <div class="note">Clip giữ chính sách mới <b>gần</b> cũ (trong [1−ε, 1+ε]) → mỗi bước cải thiện nhỏ, an toàn, không sụp. Với A&lt;0 cơ chế đối xứng (chặn dưới).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Tỉ lệ rₜ trong PPO là gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao lấy min và clip? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K8 · PPO clip</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài K8</span><h1>PPO clip <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Chưa cắt</h2></div>
-    <div class="calc ans">r·A = <span data-q="ratio">1.3</span>·<span data-q="A">2</span> = <span class="blk" data-q="unclipped">2.6</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Đã cắt</h2></div>
-    <div class="calc ans">clip(<span data-q="ratio">1.3</span>,<span data-q="lo">0.8</span>,<span data-q="hi">1.2</span>)·A = <span data-q="clipped">1.2</span>·<span data-q="A">2</span> = <span class="blk" data-q="clippedA">2.4</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>L = min</h2></div>
-    <div class="calc ans">L = min(<span data-q="unclipped">2.6</span>, <span data-q="clippedA">2.4</span>) = <span class="blk" data-q="L">2.4</span> &nbsp;<span class="note" style="display:inline">(chọn bản đã cắt → triệt bước xa)</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>L theo r — phẳng ngoài [1−ε, 1+ε]</h2><span class="tag">cắt trần</span></div>
-    <div class="figrow">
-      <svg id="figL" class="fig" viewBox="0 0 250 120" width="82mm" height="39mm" aria-label="đồ thị L theo r: tăng tuyến tính trong vùng an toàn rồi phẳng ra ngoài"></svg>
-      <div style="flex:1">
-        <div class="note">L(r) tăng theo r trong vùng an toàn [1−ε, 1+ε], rồi <b>phẳng</b> khi r vượt 1+ε (A&gt;0) → không còn động lực đẩy r đi xa nữa.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — một bước cập nhật</span><span class="f">ε = <span data-q="eps">0.2</span> · vùng [<span data-q="lo">0.8</span>, <span data-q="hi">1.2</span>]</span></div>
+    <div class="pb">
+      <div class="storybox">
+        Sau khi tối ưu, chính sách mới ưa hành động này hơn cũ: tỉ lệ <b class="rw">r = π_mới/π_cũ = <span data-q="ratio">1.3</span></b> (tăng <span data-q="ratioPct">30</span>%).
+        Hành động này <b>tốt</b>: advantage <b class="rw">A = <span data-q="A">2</span></b> (&gt; 0).
+        <div class="cap" style="margin-top:1.2mm">Mục tiêu PPO cho một mẫu: <b>L = min( r·A , clip(r, 1−ε, 1+ε)·A )</b>. clip = kẹp r vào đoạn [1−ε, 1+ε] = [<span data-q="lo">0.8</span>, <span data-q="hi">1.2</span>].</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Tỉ lệ rₜ? → <span class="qa">π_mới(a|s) / π_cũ(a|s) — mức thay đổi ưu ái hành động.</span></li>
-      <li>Min &amp; clip? → <span class="qa">Chặn bước đi quá xa chính sách cũ → huấn luyện ổn định.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">Tỉ lệ r đến từ đâu? — so hai chính sách</span><span class="f">r = π_mới(a) / π_cũ(a)</span></div>
+    <div class="pb">
+      <div class="eq">π_cũ(a) = <span data-q="piOld">0.5</span> · π_mới(a) = <span data-q="piNew">0.65</span> &nbsp;→&nbsp; r = <span data-q="piNew">0.65</span> / <span data-q="piOld">0.5</span> = <span class="slot ans sm"></span></div>
+      <div class="why2 p"><b>Vì sao đo bằng TỈ LỆ (không phải hiệu)?</b> r cho biết chính sách mới ưu ái hành động này <b>gấp mấy lần</b> cũ. Dùng tỉ lệ để <b>tái sử dụng dữ liệu cũ</b> (importance sampling): điều chỉnh phần thưởng theo mức chính sách đã đổi. r = 1 → không đổi; r &gt; 1 → chuộng hơn; r &lt; 1 → ghẻ lạnh hơn.</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> PPO clip: L = min(r·A, clip(r,1±ε)·A) → cập nhật nhỏ &amp; an toàn, gần chính sách cũ. <b>Hết Phần K (RL).</b>
-    Tiếp Phần L — Bài tiếp (L1): <b style="color:var(--accent2)">ma trận nhầm lẫn</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">① Mục tiêu CHƯA cắt</span><span class="f">r·A</span></div>
+    <div class="pb">
+      <div class="eq">r·A = <span data-q="ratio">1.3</span> · <span data-q="A">2</span> = <span class="slot ans"></span></div>
+      <div class="why2"><b>Nếu không chặn?</b> Mô hình thấy A&gt;0 nên muốn đẩy r càng lớn càng tốt (r·A tăng mãi) → chính sách mới đi <b>rất xa</b> cũ chỉ dựa trên ước lượng advantage một mẫu (có thể sai) → dễ "nhảy" hỏng, sụp đổ.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài K8 · PPO clip</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">② Cắt tỉ lệ về vùng an toàn</span><span class="f">clip(r, 1−ε, 1+ε) · A</span></div>
+    <div class="pb">
+      <div class="eq">clip(<span data-q="ratio">1.3</span>, <span data-q="lo">0.8</span>, <span data-q="hi">1.2</span>) = <span class="slot sm"></span>
+        &nbsp;→&nbsp; clip·A = <span class="slot sm"></span> · <span data-q="A">2</span> = <span class="slot ans"></span></div>
+      <div class="why2 o"><b>r = <span data-q="ratio">1.3</span> vượt trần 1+ε = <span data-q="hi">1.2</span></b> → bị kẹp về <b><span data-q="hi">1.2</span></b>. Nhân advantage: đây là phần thưởng "đã chặn" — không cho tính công cho phần vượt quá vùng an toàn.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Đối chiếu — nếu r nằm TRONG vùng an toàn?</span><span class="f">r = 1.1 ∈ [0.8, 1.2]</span></div>
+    <div class="pb">
+      <div class="eq">clip(1.1, <span data-q="lo">0.8</span>, <span data-q="hi">1.2</span>) = 1.1 (không đổi) → L = min(1.1·<span data-q="A">2</span>, 1.1·<span data-q="A">2</span>) = <span class="slot ans sm"></span> = r·A</div>
+      <div class="why2"><b>clip chỉ "cắn" khi r ra NGOÀI [1−ε, 1+ε].</b> Bước cập nhật nhỏ (r gần 1) → PPO hành xử <b>y như policy gradient thường</b> (K6), thưởng đủ. Chỉ khi bước <i>quá mạnh</i> (r vượt vùng) thì cơ chế cắt mới kích hoạt để ghìm lại. Vậy PPO không cản trở học bình thường — chỉ chặn cú nhảy nguy hiểm.</div>
+    </div>
+  </div>
+
+  <div class="why2"><b>🔮 Dự đoán trước khi tính.</b> Giữa r·A (chưa cắt) và clip·A (đã cắt), cái nào nhỏ hơn khi A&gt;0 và r vượt trần? PPO lấy min → sẽ chọn cái nào? Ghi phỏng đoán rồi kiểm ở trang sau.</div>
+  <div class="scratch" style="height:38mm"><span class="lb">Nháp — r·A, clip, clip·A, ca r trong vùng &amp; ghi phỏng đoán</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K8 · PPO clip</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>PPO clip <small>— lấy min · đồ thị phẳng · vì sao "proximal"</small></h1>
+    <span class="chip">PHẦN K · HỌC TĂNG CƯỜNG</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Lấy min — mục tiêu cuối</span><span class="f">L = min(r·A, clip·A)</span></div>
+    <div class="pb">
+      <div class="eq">L = min( <span class="slot sm"></span> , <span class="slot sm"></span> ) = <span class="slot ans"></span></div>
+      <div class="why2 o"><b>Vì sao lấy min?</b> Khi r vượt vùng an toàn (A&gt;0), min chọn bản <b>đã cắt</b> (nhỏ hơn) → <b>không thưởng thêm</b> cho việc đi xa. Mất phần thưởng biên → gradient tại đó = 0 → mô hình <b>không có động lực</b> đẩy r quá 1+ε. Đó là "thắt dây an toàn".</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Đồ thị L theo r — dốc trong vùng, phẳng ngoài trần</span><span class="f">A &gt; 0 · điểm r nằm trên phần phẳng</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figClip" viewBox="0 0 250 128" width="82mm" height="42mm" aria-label="đồ thị L theo tỉ lệ r"></svg>
+      <div class="cap" style="margin:0">Trong <b>vùng tím</b> [1−ε, 1+ε], L tăng theo r (còn thưởng). Vượt trần 1+ε: đường <b>cam phẳng</b> ra (L đứng yên = <span data-q="L">2.4</span>), trong khi bản <b>chưa cắt (lam đứt)</b> vẫn leo — phần leo đó bị min bỏ đi.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — L đóng trần khi r vượt 1+ε (A = <span data-q="A">2</span>)</div>
+    <div style="font-size:9px;line-height:1.45">Tính L = A·min(r, 1+ε) cho các tỉ lệ r (ε=0.2 nên trần 1+ε = <span data-q="hi">1.2</span>). Điền:</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th>r</th><th>0.9</th><th>1.1</th><th>1.3 (đề)</th><th>1.5</th></tr></thead>
+      <tbody><tr><td class="l">L</td><td><span class="cellb" style="width:13mm"></span></td><td><span class="cellb" style="width:13mm"></span></td><td><span class="cellb" style="width:13mm"></span></td><td><span class="cellb" style="width:13mm"></span></td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Trong vùng (r ≤ 1.2): L tăng theo r. Vượt 1.2: L <b>đứng yên</b> ở A·1.2 (r=1.3 và r=1.5 <b>cùng</b> giá trị) → đi xa thêm <b>vô ích</b>. Đó là "cái trần".</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — A &lt; 0 thì cắt SÀN (đối xứng)</div>
+    <div style="font-size:9px;line-height:1.45">Hành động <b>tệ</b> (A = −2), chính sách mới giảm mạnh xác suất nó: r = 0.7 (&lt; 1−ε = 0.8). Tính rồi lấy min:</div>
+    <div class="eq" style="margin-top:.4mm">r·A = 0.7·(−2) = <span class="slot ans sm"></span> &nbsp;·&nbsp; clip(0.7,0.8,1.2)·A = 0.8·(−2) = <span class="slot ans sm"></span> &nbsp;·&nbsp; L = min = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Với A&lt;0, min chọn bản <b>đã cắt sàn</b> (−1.6) → cũng chặn việc <i>giảm</i> quá mạnh xác suất. Cả hai chiều (tăng khi A&gt;0, giảm khi A&lt;0) đều bị giữ <b>gần chính sách cũ</b>.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Vì sao gọi là "proximal" (gần)?</span><span class="f">mỗi bước cải thiện nhỏ, không sụp</span></div>
+    <div class="pb">
+      <div class="storybox">clip giữ tỉ lệ π_mới/π_cũ trong [1−ε, 1+ε] → chính sách mới luôn <b>gần</b> (proximal) cũ. Mỗi bước chỉ cải thiện <b>một chút</b> nhưng <b>an toàn</b>, không nhảy hỏng → chạy được nhiều epoch trên cùng dữ liệu. Đơn giản, ổn định, ít siêu tham số → PPO thành chuẩn công nghiệp (game, robot, và <b>RLHF</b> canh chỉnh LLM theo phản hồi người).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">So kè — không clip (K6) vs có clip (PPO)</span><span class="f">cùng advantage A &gt; 0</span></div>
+    <div class="pb">
+      <div class="storybox"><b>Không clip (policy gradient K6):</b> mục tiêu = r·A tăng <b>không giới hạn</b> theo r → một mẫu advantage lớn có thể đẩy chính sách <b>nhảy rất xa</b> cũ → sụp đổ. &nbsp; <b>Có clip (PPO):</b> khi r vượt 1+ε, mục tiêu <b>chững lại</b> ở trần → không thưởng cho bước xa → chính sách chỉ nhích một đoạn an toàn mỗi lần. Cùng dữ liệu, PPO chạy được nhiều epoch mà không hỏng.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:14mm"><span class="lb">Nháp — min · bảng r · trường hợp A âm</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Tính r·A</span>
+    <span><span class="ck"></span>Cắt &amp; clip·A</span>
+    <span><span class="ck"></span>Lấy min = L</span>
+    <span><span class="ck"></span>Điền bảng r</span>
+    <span class="win">🎉 Xong Bài K8 · hết Phần K!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K8 · PPO clip</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>PPO clip <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — mục tiêu PPO (đáp án)</span><span class="f">ε=<span data-q="eps">0.2</span>, r=<span data-q="ratio">1.3</span>, A=<span data-q="A">2</span></span></div>
+    <div class="pb">
+      <div class="eq">① r·A = <span data-q="ratio">1.3</span>·<span data-q="A">2</span> = <span class="qa" data-q="unclipped">2.6</span> <b class="pk">(chưa cắt)</b></div>
+      <div class="eq">② clip(<span data-q="ratio">1.3</span>,<span data-q="lo">0.8</span>,<span data-q="hi">1.2</span>) = <span class="qa" data-q="hi">1.2</span> → clip·A = <span data-q="hi">1.2</span>·<span data-q="A">2</span> = <span class="qa" data-q="clippedA">2.4</span></div>
+      <div class="eq">③ L = min(<span data-q="unclipped">2.6</span>, <span data-q="clippedA">2.4</span>) = <span class="qa" data-q="L">2.4</span> <b class="rw">(lấy bản đã cắt)</b></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Đồ thị L(r) — đã điền</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figClipA" viewBox="0 0 250 128" width="82mm" height="42mm" aria-label="đồ thị L đã điền"></svg>
+      <div class="cap" style="margin:0">L dốc trong [<span data-q="lo">0.8</span>,<span data-q="hi">1.2</span>] rồi <b>phẳng</b> ở <b data-q="L">2.4</b>. Điểm r=<b data-q="ratio">1.3</b> (cam) nằm trên phần phẳng — thưởng bằng đúng tại trần, không hơn.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 L đóng trần — đáp án (A = <span data-q="A">2</span>, trần 1.2)</div>
+    <table class="tbl-disc">
+      <thead><tr><th>r</th><th>0.9</th><th>1.1</th><th>1.3</th><th>1.5</th></tr></thead>
+      <tbody><tr><td class="l">L = A·min(r,1.2)</td><td class="an" data-q="Lr09">1.8</td><td class="an" data-q="Lr11">2.2</td><td class="an" data-q="Lr13">2.4</td><td class="an" data-q="Lr15">2.4</td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> r=1.3 và r=1.5 cho <b>cùng</b> L (=A·1.2): vượt trần thì đi xa thêm chẳng được thưởng → gradient tắt → chính sách dừng lại gần vùng an toàn.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 A &lt; 0 cắt sàn — đáp án</div>
+    <div class="eq">r·A = 0.7·(−2) = <b>−1.4</b> · clip·A = 0.8·(−2) = <b>−1.6</b> · L = min(−1.4, −1.6) = <b>−1.6</b></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">Với A&lt;0, min chọn <b>−1.6</b> (bản đã cắt sàn ở 1−ε=0.8) → cũng chặn việc kéo xác suất hành động xuống quá mạnh. PPO đối xứng: giữ π_mới gần π_cũ <b>cả hai chiều</b>.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Lấy max thay min:</b> max sẽ thưởng bản chưa cắt → mất tác dụng chặn; phải lấy <b>min</b> (bản thận trọng).</li>
+        <li><b>Clip cả A:</b> chỉ kẹp <b>tỉ lệ r</b>, không kẹp advantage A.</li>
+        <li><b>Quên nhân A sau clip:</b> mục tiêu là clip(r)·<b>A</b>, không phải chỉ clip(r).</li>
+        <li><b>Tưởng clip chặn mọi hướng như nhau:</b> A&gt;0 chặn trần (1+ε), A&lt;0 chặn sàn (1−ε) — theo dấu advantage.</li>
+        <li><b>ε quá lớn:</b> vùng an toàn rộng → bước lớn → mất tính "proximal", dễ mất ổn định.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">🏁 Toàn cảnh Phần K — Học tăng cường</span><span class="f">8 viên gạch</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.6px">
+        <tbody>
+          <tr><td class="l" style="width:22mm">K1 Return</td><td style="text-align:left">gộp thưởng tương lai có chiết khấu γ → G</td></tr>
+          <tr><td class="l">K2 Bellman</td><td style="text-align:left">V(s) = kỳ vọng r + γ·V(s') — giá trị tự nhất quán</td></tr>
+          <tr><td class="l">K3 Q-learning</td><td style="text-align:left">học bảng Q từ kinh nghiệm (off-policy, dùng max)</td></tr>
+          <tr><td class="l">K4 SARSA</td><td style="text-align:left">bản on-policy — dùng a' thật thay max</td></tr>
+          <tr><td class="l">K5 ε-greedy</td><td style="text-align:left">cân bằng khám phá &amp; khai thác khi chọn hành động</td></tr>
+          <tr><td class="l">K6 Policy grad.</td><td style="text-align:left">học thẳng π: θ ← θ + α·G·∇log π</td></tr>
+          <tr><td class="l">K7 Advantage</td><td style="text-align:left">thay G bằng A=Q−V → bớt phương sai, không lệch</td></tr>
+          <tr><td class="l">K8 PPO clip</td><td style="text-align:left">chặn bước (min + clip) → gần chính sách cũ, ổn định</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> PPO clip: <b>L = min(r·A, clip(r,1−ε,1+ε)·A)</b> — khi r vượt vùng [1±ε] thì cắt &amp; lấy min → không thưởng cho bước đi xa → chính sách mới luôn <b>gần</b> cũ, huấn luyện ổn định (nền RLHF cho LLM). <b>🎉 Hết Phần K (Học tăng cường): K1 return → K2 Bellman → K3 Q-learning → K4 SARSA → K5 ε-greedy → K6 policy gradient → K7 advantage → K8 PPO.</b> Phần tiếp <b>L · Đánh giá mô hình</b>, Bài <b>L1 · Ma trận nhầm lẫn</b>.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài K8 · PPO clip</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var eps = 0.2;
-  var ratio = WB.pick([1.3, 1.4]);
-  var A = WB.randInt(2,3);
-  var lo = Math.round((1-eps)*100)/100, hi = Math.round((1+eps)*100)/100;
-  var clipped = hi; // ratio > hi
-  var unclipped = Math.round(ratio*A*100)/100;
-  var clippedA = Math.round(clipped*A*100)/100;
-  var L = Math.min(unclipped, clippedA);
-  WB.setAll({
-    eps:f(eps), ratio:f(ratio), A:String(A), lo:f(lo), hi:f(hi), clipped:f(clipped),
-    unclipped:f(unclipped), clippedA:f(clippedA), L:f(L)
-  });
-  drawClip('figL', eps, ratio, A);
-}
-function drawClip(id, eps, ratio, A){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=24, x1=210, base=104, top=20;
-  var rMin=0.6, rMax=1.6;
-  function px(r){ return x0 + (r-rMin)/(rMax-rMin)*(x1-x0); }
-  var hi=1+eps, lo=1-eps;
-  // L value (A>0): rises with r until hi, then flat at hi*A
-  var maxL = hi*A;
-  function py(L){ return base - L/maxL*(base-top); }
-  var s='<line x1="'+x0+'" y1="'+base+'" x2="'+x1+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  // curve: from lo*A at rMin? we draw L = min(r*A, hi*A) for r>=lo, clipped below lo too. Simplify: line up to hi then flat
-  var p1=px(rMin), p1y=py(rMin*A);
-  var pH=px(hi), pHy=py(hi*A);
-  var pE=px(rMax), pEy=py(hi*A);
-  s+='<polyline points="'+p1.toFixed(1)+','+p1y.toFixed(1)+' '+pH.toFixed(1)+','+pHy.toFixed(1)+' '+pE.toFixed(1)+','+pEy.toFixed(1)+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
-  // vertical guides at lo,hi
-  s+='<line x1="'+px(hi).toFixed(1)+'" y1="'+top+'" x2="'+px(hi).toFixed(1)+'" y2="'+base+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>';
-  s+='<text x="'+px(hi).toFixed(1)+'" y="'+(base+12)+'" text-anchor="middle" font-size="8" fill="#b45309">1+ε</text>';
-  // current ratio dot
-  var rx=px(ratio), ry=py(hi*A);
-  s+='<circle cx="'+rx.toFixed(1)+'" cy="'+ry.toFixed(1)+'" r="4" fill="#b45309"/>';
-  s+='<text x="'+rx.toFixed(1)+'" y="'+(ry-6).toFixed(1)+'" text-anchor="middle" font-size="8" fill="#b45309">r='+WB.fmtTrim(ratio)+'</text>';
-  s+='<text x="'+(x0+4)+'" y="'+(top+2)+'" font-size="8.5" fill="#0e7490">L</text>';
-  s+='<text x="'+(x1-2)+'" y="'+(base+12)+'" text-anchor="end" font-size="8.5" fill="#5b6776">r →</text>';
+function drawClip(id, ratio, A, eps, filled){
+  const svg=document.getElementById(id); if(!svg) return;
+  const rMin=0.6, rMax=1.6, x0=30, x1=232, yB=104, yTop=16;
+  const lo=1-eps, hi=1+eps;
+  const xr=r=>x0+(r-rMin)/(rMax-rMin)*(x1-x0);
+  const Lcap=A*hi, Lmax=A*rMax;                 // để scale
+  const yL=v=>yB-(v/(Lmax*1.05))*(yB-yTop);
+  let s='';
+  // trục
+  s+='<line x1="'+x0+'" y1="'+yB+'" x2="'+x1+'" y2="'+yB+'" stroke="#9aa5b1" stroke-width="1.4"/>';
+  s+='<text x="'+x1+'" y="'+(yB+12)+'" text-anchor="end" font-size="7.5" fill="#8a95a1" font-family="Consolas,monospace">r →</text>';
+  // vùng an toàn tím
+  s+='<rect x="'+xr(lo)+'" y="'+yTop+'" width="'+(xr(hi)-xr(lo))+'" height="'+(yB-yTop)+'" fill="#f5f1fe" opacity="0.8"/>';
+  s+='<line x1="'+xr(lo)+'" y1="'+yTop+'" x2="'+xr(lo)+'" y2="'+yB+'" stroke="#7c5cff" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<line x1="'+xr(hi)+'" y1="'+yTop+'" x2="'+xr(hi)+'" y2="'+yB+'" stroke="#7c5cff" stroke-width="1" stroke-dasharray="3 2"/>';
+  s+='<text x="'+xr(lo)+'" y="'+(yB+12)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#7c5cff">1−ε</text>';
+  s+='<text x="'+xr(hi)+'" y="'+(yB+12)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#7c5cff">1+ε</text>';
+  s+='<text x="'+xr(1)+'" y="'+(yB+12)+'" text-anchor="middle" font-size="7.4" fill="#8a95a1">1</text>';
+  // bản CHƯA cắt (lam đứt): L=A·r toàn dải
+  s+='<line x1="'+xr(rMin)+'" y1="'+yL(A*rMin)+'" x2="'+xr(rMax)+'" y2="'+yL(A*rMax)+'" stroke="#0e7490" stroke-width="1.4" stroke-dasharray="4 3"/>';
+  s+='<text x="'+(xr(rMax)-2)+'" y="'+(yL(A*rMax)+2)+'" text-anchor="end" font-size="7.4" font-weight="700" fill="#0e7490">r·A</text>';
+  // bản ĐÃ cắt (cam đậm): dốc tới hi rồi phẳng
+  s+='<polyline points="'+xr(rMin)+','+yL(A*rMin)+' '+xr(hi)+','+yL(A*hi)+' '+xr(rMax)+','+yL(A*hi)+'" fill="none" stroke="#b45309" stroke-width="2.2"/>';
+  s+='<text x="'+(xr(rMax)-2)+'" y="'+(yL(A*hi)-3)+'" text-anchor="end" font-size="7.6" font-weight="800" fill="#b45309">L (đã cắt)</text>';
+  if(filled){
+    const xr0=xr(ratio), yr=yL(A*hi);
+    s+='<line x1="'+xr0+'" y1="'+yr+'" x2="'+xr0+'" y2="'+yB+'" stroke="#b45309" stroke-width="1" stroke-dasharray="2 2"/>';
+    s+='<circle cx="'+xr0+'" cy="'+yr+'" r="4" fill="#fde3c4" stroke="#b45309" stroke-width="1.8"/>';
+    s+='<text x="'+xr0+'" y="'+(yr-6)+'" text-anchor="middle" font-size="8" font-weight="800" fill="#b45309">L='+(A*hi).toFixed(1).replace(/\.0$/,'')+'</text>';
+    s+='<text x="'+xr0+'" y="'+(yB+22)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#b45309">r='+ratio+'</text>';
+  }else{
+    const xr0=xr(ratio);
+    s+='<line x1="'+xr0+'" y1="'+yTop+'" x2="'+xr0+'" y2="'+yB+'" stroke="#d7dee6" stroke-width="1" stroke-dasharray="2 2"/>';
+    s+='<text x="'+xr0+'" y="'+(yB+22)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#b45309">r='+ratio+' → L=?</text>';
+  }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function gen(){
+  const eps=0.2, lo=Math.round((1-eps)*100)/100, hi=Math.round((1+eps)*100)/100;
+  const ratio=[1.3,1.4][WB.randInt(0,1)];
+  const A=WB.randInt(2,3);
+  const unclipped=Math.round((ratio*A)*100)/100;
+  const clippedA=Math.round((hi*A)*100)/100;
+  const L=Math.min(unclipped,clippedA);
+  const ratioPct=Math.round((ratio-1)*100);
+  const piOld=0.5, piNew=Math.round((ratio*piOld)*100)/100;
+  const Lr09=Math.round((A*0.9)*100)/100, Lr11=Math.round((A*1.1)*100)/100, Lr13=Math.round((A*hi)*100)/100, Lr15=Math.round((A*hi)*100)/100;
+  WB.setAll({
+    eps:WB.fmtTrim(eps), lo:WB.fmtTrim(lo), hi:WB.fmtTrim(hi),
+    ratio:WB.fmtTrim(ratio), A:WB.fmtInt(A), ratioPct:WB.fmtInt(ratioPct),
+    unclipped:WB.fmtTrim(unclipped), clippedA:WB.fmtTrim(clippedA), L:WB.fmtTrim(L),
+    piOld:WB.fmtTrim(piOld), piNew:WB.fmtTrim(piNew),
+    Lr09:WB.fmtTrim(Lr09), Lr11:WB.fmtTrim(Lr11), Lr13:WB.fmtTrim(Lr13), Lr15:WB.fmtTrim(Lr15)
+  });
+  drawClip('figClip',ratio,A,eps,false);
+  drawClip('figClipA',ratio,A,eps,true);
+  const pages=[...document.querySelectorAll('.page')];
+  const meas=pages.map((p,i)=>'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight)).join(' ');
+  const md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

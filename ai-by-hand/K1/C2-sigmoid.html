@@ -5,20 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài C2 — Sigmoid &amp; đạo hàm (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 .ltab{border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-top:2px;}
 .ltab td,.ltab th{border:1px solid var(--line);padding:2px 9px;text-align:center;}
 .ltab th{background:var(--given);font-weight:700;}
 </style>
 </head>
-<body>
+<body class="part pC">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -33,21 +28,17 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài C2</span><h1>Sigmoid &amp; đạo hàm <small>— Sigmoid</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Sigmoid biến điểm thô thành xác suất (đầu ra nhị phân) và từng là kích hoạt phổ biến. Hiểu đạo hàm
-    của nó giải thích vì sao mạng sâu dùng sigmoid bị <b>tắt gradient</b> ở hai đầu bão hòa.
-    <div class="formula">
-      σ(z) = 1 / (1 + e<sup>−z</sup>) &nbsp;&nbsp; σ'(z) = σ(z)·(1 − σ(z)) &nbsp;&nbsp; σ'(z) ≤ 0.25
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài C2</span>
+    <h1>Sigmoid &amp; đạo hàm <small>— công tắc mờ biến điểm thô thành xác suất</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Sigmoid như <b>công tắc mờ</b>: z rất âm → gần 0 (tắt), rất dương → gần 1 (bật), quanh 0 → dốc nhất (nhạy). Ở hai đầu nó
-    <b>phẳng lì</b> → đạo hàm ≈ 0 → tín hiệu học gần như không qua được.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Dùng bảng tra, hãy <b>tự tay</b> đọc σ(z), tính đạo hàm σ'(z) = σ(1−σ),
+    xem đỉnh đạo hàm ≤ 0.25 vì sao gây <b>tắt gradient</b>. Phần thưởng: kiểm hệ thức đối xứng
+    <b>σ(−z) = 1 − σ(z)</b> — sigmoid quay quanh điểm (0, ½).
   </div>
 
   <!-- GIVEN -->
@@ -57,43 +48,46 @@
       <tr><th>z</th><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td></tr>
       <tr><th>σ(z)</th><td>0.12</td><td>0.27</td><td>0.5</td><td>0.73</td><td>0.88</td></tr>
     </table>
-    <div class="note">Bảng cho sẵn để khỏi tính e<sup>−z</sup> bằng tay; mọi câu hỏi rơi đúng mốc trong bảng.</div>
+    <div class="why"><b>Vì sao:</b> σ(z) = 1/(1+e<sup>−z</sup>) luôn nằm trong (0, 1) → đọc như "độ bật" / xác suất. Bảng cho sẵn để khỏi tính e<sup>−z</sup>.</div>
   </div>
 
+  <div class="grid2">
   <!-- BƯỚC 1 — σ(z) -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Giá trị σ(z)</h2><span class="tag">tra bảng</span></div>
-    <div class="calc">
-      σ(<span data-q="z">1</span>) = <span class="blk" style="min-width:44px"></span>
+    <div class="calc big">
+      σ(<span data-q="z">1</span>) = <span class="wcell" style="min-width:50px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> luôn nằm trong (0, 1) → đọc được như "độ bật" / xác suất.</div>
+    <div class="why"><b>Vì sao:</b> z âm → gần 0 (tắt), z dương → gần 1 (bật).</div>
   </div>
 
   <!-- BƯỚC 2 — đạo hàm -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Đạo hàm σ'(z) = σ(1 − σ)</h2><span class="tag">dùng lại σ</span></div>
-    <div class="calc">
-      σ'(<span data-q="z">1</span>) = <span data-q="sig">0.73</span>·(1 − <span data-q="sig">0.73</span>) = <span data-q="sig">0.73</span>·<span data-q="comp">0.27</span> = <span class="blk" style="min-width:48px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Đạo hàm σ' = σ(1−σ)</h2><span class="tag">dùng lại σ</span></div>
+    <div class="calc big">
+      σ'(<span data-q="z">1</span>) = <span data-q="sig">0.73</span>·<span data-q="comp">0.27</span> = <span class="wcell" style="min-width:52px"></span>
     </div>
-    <div class="hint">Không cần đạo hàm lại từ đầu — dùng chính giá trị σ vừa tra.</div>
+    <div class="hint">Không cần đạo hàm lại — dùng chính σ vừa tra.</div>
   </div>
+  </div><!-- /grid2 -->
 
   <!-- BƯỚC 3 — đỉnh đạo hàm -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Đỉnh đạo hàm &amp; bão hòa</h2><span class="tag">≤ 0.25</span></div>
-    <div class="calc">
-      tại z = 0: σ' = 0.5·0.5 = <span class="blk" style="min-width:40px"></span> (lớn nhất)<br>
-      tại z = 2: σ' = 0.88·0.12 = <span class="blk" style="min-width:44px"></span> (đã nhỏ)
+    <div class="calc big">
+      tại z = 0: σ' = 0.5·0.5 = <span class="wcell" style="min-width:44px"></span> (lớn nhất) &nbsp;·&nbsp;
+      tại z = 2: σ' = 0.88·0.12 = <span class="wcell" style="min-width:44px"></span> (đã nhỏ)
     </div>
     <div class="why"><b>Vì sao:</b> đạo hàm cực đại chỉ 0.25; càng ra biên càng nhỏ → nhân dồn qua nhiều lớp ⇒ <b>vanishing gradient</b>.</div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Đạo hàm sigmoid lớn nhất bằng bao nhiêu, ở đâu? → <span class="blk" style="min-width:120px"></span></li>
-      <li>Vì sao sigmoid gây vanishing gradient? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
+  <!-- BƯỚC 4 — TỰ KIỂM: đối xứng -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — σ(−z) = 1 − σ(z)</h2><span class="tag">đối xứng</span></div>
+    <div class="calc big">
+      σ(−<span data-q="z">1</span>) &nbsp;so với&nbsp; 1 − σ(<span data-q="z">1</span>) = 1 − <span data-q="sig">0.73</span> = <span class="wcell" style="min-width:50px"></span> &nbsp;<small style="color:#7a8794">— tra bảng σ(−z) để đối chiếu</small>
+    </div>
+    <div class="note">Hai vế bằng nhau → sigmoid <b>đối xứng tâm</b> quanh điểm (0, ½): đẩy z sang âm bao nhiêu thì σ tụt dưới ½ đúng bấy nhiêu. Hệ quả: σ' cũng đối xứng — σ'(z) = σ'(−z).</div>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C2 · Sigmoid &amp; đạo hàm</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -105,36 +99,44 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài C2</span><h1>Sigmoid &amp; đạo hàm <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài C2</span><h1>Sigmoid &amp; đạo hàm <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>σ(z)</h2></div>
-    <div class="calc ans">
-      σ(<span data-q="z">1</span>) = <span class="blk" data-q="sig">0.73</span>
+    <div class="calc ans big">
+      σ(<span data-q="z">1</span>) = <span class="wcell ans" data-q="sig">0.73</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Đạo hàm</h2></div>
-    <div class="calc ans">
-      σ'(<span data-q="z">1</span>) = <span data-q="sig">0.73</span>·<span data-q="comp">0.27</span> = <span class="blk" data-q="dsig">0.20</span>
+    <div class="calc ans big">
+      σ'(<span data-q="z">1</span>) = <span data-q="sig">0.73</span>·<span data-q="comp">0.27</span> = <span class="wcell ans" data-q="dsig">0.20</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Đỉnh &amp; bão hòa</h2></div>
-    <div class="calc ans">
-      z = 0: 0.5·0.5 = <span class="blk" data-q="dsig0">0.25</span> (lớn nhất) ;
-      z = 2: 0.88·0.12 = <span class="blk" data-q="dsig2">0.11</span> (đã nhỏ)
+    <div class="calc ans big">
+      z = 0: 0.5·0.5 = <span class="wcell ans" data-q="dsig0">0.25</span> (lớn nhất) &nbsp;·&nbsp;
+      z = 2: 0.88·0.12 = <span class="wcell ans" data-q="dsig2">0.11</span> (đã nhỏ)
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — đối xứng</h2><span class="tag">σ(−z)=1−σ(z)</span></div>
+    <div class="calc ans big">
+      σ(−<span data-q="z">1</span>) = <span class="wcell ans" data-q="sigNeg">0.27</span> &nbsp;·&nbsp; 1 − σ(<span data-q="z">1</span>) = 1 − <span data-q="sig">0.73</span> = <span class="wcell ans" data-q="oneMinus">0.27</span> ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> σ(−z) = 1/(1+e<sup>z</sup>) = e<sup>−z</sup>/(e<sup>−z</sup>+1) = 1 − σ(z). Đối xứng tâm quanh (0, ½).</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
     <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Đường chữ S &amp; tiếp tuyến tại z</h2><span class="tag">độ dốc = σ'</span></div>
     <div class="figrow">
-      <svg id="figS" class="fig" viewBox="0 0 210 150" width="66mm" height="44mm" aria-label="đường sigmoid và tiếp tuyến tại z với độ dốc bằng đạo hàm"></svg>
-      <div style="flex:1">
+      <svg id="figS" class="fig" viewBox="0 0 210 150" width="64mm" height="45.7mm" aria-label="đường sigmoid và tiếp tuyến tại z với độ dốc bằng đạo hàm"></svg>
+      <div style="flex:1;min-width:44mm">
         <div class="note">Đường lam = σ(z); <b>đường cam</b> = tiếp tuyến tại z = <span data-q="z">1</span>, độ dốc = σ'(z) = <span data-q="dsig">0.20</span>.
           Vì σ' ≤ 0.25, gradient teo nhanh ở mạng sâu — lý do ReLU (Bài C4) lên ngôi.</div>
       </div>
@@ -150,7 +152,8 @@
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> σ' = σ(1 − σ) ≤ 0.25; bão hòa hai đầu làm tắt gradient. Bài tiếp (C3): <b>tanh</b> — họ hàng đối xứng quanh 0.
+    <b style="color:var(--accent2)">Rút ra.</b> σ' = σ(1 − σ) ≤ 0.25; σ(−z) = 1 − σ(z) (đối xứng tâm ½); bão hòa hai đầu làm tắt gradient.
+    Bài tiếp (C3): <b>tanh</b> — họ hàng đối xứng quanh 0.
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C2 · Sigmoid &amp; đạo hàm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
@@ -160,7 +163,9 @@
 <script>
 function generate(){
   var f2 = WB.fmt2;
-  var SIG = { '-1':0.27, '1':0.73, '2':0.88 };   // mốc cho z hỏi (bỏ 0 vì đã dùng ở bước 3)
+  // z hỏi + σ(−z) tra bảng (đối xứng)
+  var SIG = { '-1':0.27, '1':0.73, '2':0.88 };
+  var NEG = { '-1':0.73, '1':0.27, '2':0.12 };   // σ(−z)
   var zk = WB.pick(['-1', '1', '2']);
   var sig = SIG[zk];
   var comp = Math.round((1 - sig)*100)/100;
@@ -169,7 +174,8 @@ function generate(){
   WB.setAll({
     z: zk.replace('-', '−'),
     sig: f2(sig), comp: f2(comp), dsig: f2(dsig),
-    dsig0: '0.25', dsig2: f2(0.88*0.12)
+    dsig0: '0.25', dsig2: f2(0.88*0.12),
+    sigNeg: f2(NEG[zk]), oneMinus: f2(comp)
   });
   drawSig('figS', parseFloat(zk), sig, dsig);
 }
@@ -180,17 +186,14 @@ function drawSig(id, z, sig, dsig){
   if (!svg) return;
   var X0 = 22, X1 = 196, Y0 = 14, Y1 = 132, zmin = -4, zmax = 4;
   function SX(v){ return (X0 + (v - zmin)/(zmax - zmin)*(X1 - X0)).toFixed(1); }
-  function SY(p){ return (Y1 - p*(Y1 - Y0)).toFixed(1); }       // p∈[0,1]
+  function SY(p){ return (Y1 - p*(Y1 - Y0)).toFixed(1); }
   function S(v){ return 1/(1 + Math.exp(-v)); }
   var s = '<rect x="'+X0+'" y="'+Y0+'" width="'+(X1-X0)+'" height="'+(Y1-Y0)+'" fill="#fafbfc" stroke="#e5e7eb" stroke-width="1"/>';
-  // mốc 0.5 và trục z=0
   s += '<line x1="'+X0+'" y1="'+SY(0.5)+'" x2="'+X1+'" y2="'+SY(0.5)+'" stroke="#eef0f2" stroke-width="1"/>';
   s += '<line x1="'+SX(0)+'" y1="'+Y0+'" x2="'+SX(0)+'" y2="'+Y1+'" stroke="#eef0f2" stroke-width="1"/>';
-  // đường σ
   var p = '', v;
   for (v = zmin; v <= zmax + 0.01; v += 0.2) p += SX(v)+','+SY(S(v))+' ';
   s += '<polyline points="'+p.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.4"/>';
-  // tiếp tuyến tại z (độ dốc dsig theo đơn vị p/z)
   var tw = 1.6;
   s += '<line x1="'+SX(z-tw)+'" y1="'+SY(sig - dsig*tw)+'" x2="'+SX(z+tw)+'" y2="'+SY(sig + dsig*tw)+'" stroke="#b45309" stroke-width="2.4"/>';
   s += '<circle cx="'+SX(z)+'" cy="'+SY(sig)+'" r="3.4" fill="#7c5cff" stroke="#fff" stroke-width="1"/>';

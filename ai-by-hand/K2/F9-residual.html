@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F9 — Kết nối tắt residual (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,100 +25,136 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F9</span><h1>Kết nối tắt residual <small>— y = F(x) + x (ResNet)</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mạng càng sâu càng khó học (vanishing). Residual cho mỗi khối chỉ cần học <b>phần dư</b> F(x) thay vì cả ánh xạ;
-    và đường +x giúp gradient chảy thẳng về lớp đầu <b>không bị nhân teo</b>. Nhờ nó mới có mạng 100+ lớp.
-    <div class="formula">
-      y = F(x) + x &nbsp;&nbsp;→&nbsp;&nbsp; ∂y/∂x = ∂F/∂x + 1 &nbsp;&nbsp;(số hạng "+1" giữ gradient sống)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài F9</span>
+    <h1>Kết nối tắt residual <small>— y = F(x) + x (ResNet)</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Cho khối một <b>đường tắt</b>: nếu lớp đó "không cần làm gì", nó chỉ việc để F(x)=0 và <b>truyền nguyên x</b> (học hàm đồng nhất rất dễ).
-    Khi backprop, "+1" bảo đảm gradient <b>luôn có một lối về</b> dù các lớp giữa làm teo.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mạng càng sâu càng khó học (Bài E2: vanishing). Residual cho mỗi khối một <b>đường tắt</b>: khối chỉ cần học
+    <b>phần dư</b> F(x) thay vì cả ánh xạ, còn đường +x giúp gradient <b>chảy thẳng</b> về lớp đầu. Hãy tự tay tính y, rồi kiểm tra vì sao
+    "+1" trong đạo hàm chính là thứ cứu mạng rất sâu khỏi vanishing.
+    <div class="formula" style="margin-top:5px">
+      y = F(x) + x &nbsp;&nbsp;→&nbsp;&nbsp; ∂y/∂x = 1 + ∂F/∂x &nbsp;&nbsp;(số hạng "+1" từ đường tắt, giữ gradient sống)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">khối F</span></div>
-    <div class="calc" style="font-size:15px">
-      Đầu vào x = (<span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">−1</span>) &nbsp;·&nbsp; khối tính F(x) = (<span class="gv" data-q="f1">1</span>, <span class="gv" data-q="f2">3</span>).
+    <div class="calc big">
+      Đầu vào x = (<span class="gv" data-q="x1">2</span>, <span class="gv" data-q="x2">−1</span>) &nbsp;·&nbsp;
+      khối tính F(x) = (<span class="gv" data-q="f1">1</span>, <span class="gv" data-q="f2">3</span>)
     </div>
+    <div class="note">x và F(x) luôn <b>cùng kích thước</b> để cộng được trực tiếp (khác kênh/không gian → dùng conv 1×1 ở nhánh tắt, Bài F7).</div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Đầu ra residual</h2><span class="tag">y = F(x) + x</span></div>
-    <div class="calc">
-      y = ( <span data-q="f1">1</span> + <span data-q="x1w">2</span>, <span data-q="f2">3</span> + <span data-q="x2w">(−1)</span> ) = ( <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:40px"></span> )
+    <div class="calc big">
+      y = ( <span data-q="f1">1</span> + <span data-q="x1w">2</span>, <span data-q="f2">3</span> + <span data-q="x2w">(−1)</span> )
+      = ( <span class="wcell" style="min-width:15mm"></span>, <span class="wcell" style="min-width:15mm"></span> )
     </div>
-    <div class="why"><b>Vì sao:</b> cộng thẳng x → khối chỉ cần học phần "thêm vào" so với x (phần dư), dễ hơn học cả ánh xạ.</div>
+    <div class="why"><b>Vì sao:</b> cộng thẳng x → khối chỉ cần học phần "thêm vào" so với x (phần dư F), dễ hơn học cả ánh xạ H(x)=y từ đầu.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Gradient qua khối</h2><span class="tag">∂y/∂x = ∂F/∂x + 1</span></div>
-    <div class="calc">
-      Giả sử lớp giữa teo: ∂F/∂x ≈ 0 → ∂y/∂x = 0 + 1 ≈ <span class="blk" style="min-width:40px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Gradient qua MỘT khối</h2><span class="tag">∂y/∂x = 1 + ∂F/∂x</span></div>
+    <div class="calc big">
+      Cho ∂F/∂x = <span class="gv" data-q="d">0.1</span> (nhánh F đang teo, gần 0) &nbsp;→&nbsp;
+      ∂y/∂x = 1 + <span data-q="d2">0.1</span> = <span class="wcell" style="min-width:17mm"></span>
     </div>
-    <div class="hint">số hạng "+1" đến từ đường tắt (đạo hàm của +x là 1).</div>
+    <div class="hint">Số hạng "+1" đến từ đạo hàm của đường tắt (+x); nó KHÔNG phụ thuộc nhánh F.</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F9 · Kết nối tắt residual</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Tự-kiểm: vì sao đường tắt chống vanishing</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F9</span>
+    <h1>Kết nối tắt residual <small>— tự kiểm chống vanishing</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM LÕI -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vì sao chống vanishing</h2><span class="tag">qua L khối</span></div>
-    <div class="calc">
-      gradient ≈ ∏(∂F<sub>l</sub> + 1) ≈ giữ ~ <span class="blk" style="min-width:40px"></span> &nbsp;(dù mỗi ∂F<sub>l</sub> nhỏ)
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — xếp chồng qua <span data-q="L">3</span> khối</h2><span class="tag">có vs không skip</span></div>
+    <div class="note" style="margin-top:0">
+      Mỗi khối trong chuỗi <span data-q="L2">3</span> khối đều có nhánh F đang teo như Bước 2 (∂F/∂x = <span data-q="d3">0.1</span> mỗi khối).
+      So sánh gradient dồn về khối đầu tiên (nhân dồn qua backprop, Bài D8) giữa hai kiểu mạng:
     </div>
-    <div class="why"><b>Vì sao:</b> khác mạng thường (∏ các số &lt;1 → 0), đường tắt giữ mỗi thừa số ≈1 → tích không teo về 0.</div>
+    <div class="calc big">
+      <b>KHÔNG</b> có đường tắt (mạng thường): gradient dồn = (∂F/∂x)<sup>L</sup> = <span data-q="d4">0.1</span><sup><span data-q="L3">3</span></sup>
+      = <span class="wcell" style="min-width:20mm"></span> &nbsp;<small style="color:#7a8794">(gần 0!)</small><br>
+      <b>CÓ</b> đường tắt (residual): mỗi khối góp thừa số 1+∂F/∂x ≈ <span class="wcell" style="min-width:15mm"></span>
+      &nbsp;<small style="color:#7a8794">(luôn quanh 1, không teo)</small>
+    </div>
+    <div class="why"><b>Vì sao:</b> tích nhiều số &lt;1 (không skip) → về 0 rất nhanh theo L; tích nhiều số ≈1 (có skip, nhờ "+1")
+      → vẫn giữ bậc ~1 → gradient "chảy thẳng" tới khối đầu, không tắt dần theo độ sâu. Đây là lý do ResNet train được 100+ lớp.</div>
+    <div class="note">Trường hợp đặc biệt: nếu một khối không cần học gì, chỉ cần F(x)=0 → y=x, tức học <b>hàm đồng nhất</b> — cực dễ so với phải học cả H(x)=x từ đầu.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Số hạng "+1" trong ∂y/∂x đến từ đâu? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao residual giúp mạng rất sâu? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao residual giúp mạng rất sâu không bị vanishing? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F9 · Kết nối tắt residual</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — tính (∂F/∂x)^L và so với 1+∂F/∂x ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính y = F(x)+x</span>
+    <span><span class="ck"></span>Kiểm gradient có/không skip</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao ResNet sâu 100+ lớp vẫn học được!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F9 · Kết nối tắt residual</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F9</span><h1>Kết nối tắt residual <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F9</span><h1>Kết nối tắt residual <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Đầu ra residual</h2></div>
-    <div class="calc ans">y = ( <span data-q="f1">1</span>+<span data-q="x1w">2</span>, <span data-q="f2">3</span>+<span data-q="x2w">(−1)</span> ) = ( <span class="blk" data-q="y1">3</span>, <span class="blk" data-q="y2">2</span> )</div>
+    <div class="calc ans">
+      y = ( <span data-q="f1">1</span>+<span data-q="x1w">2</span>, <span data-q="f2">3</span>+<span data-q="x2w">(−1)</span> )
+      = ( <span class="wcell ans" data-q="y1">3</span>, <span class="wcell ans" data-q="y2">2</span> )
+    </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Gradient</h2></div>
-    <div class="calc ans">∂y/∂x = ∂F/∂x + 1 = 0 + 1 ≈ <span class="blk" data-q="g">1</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Gradient qua một khối</h2></div>
+    <div class="calc ans">∂y/∂x = 1 + <span data-q="d2">0.1</span> = <span class="wcell ans" data-q="g1">1.1</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chống vanishing</h2></div>
-    <div class="calc ans">∏(∂F<sub>l</sub> + 1) ≈ giữ ~ <span class="blk" data-q="gp">1</span> → gradient có lối về thẳng qua L khối</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Đường tắt: x → [F] → ⊕ ← x</h2><span class="tag">skip connection</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — có vs không skip qua <span data-q="L">3</span> khối</h2><span class="tag">skip connection</span></div>
     <div class="figrow">
-      <svg id="figRes" class="fig" viewBox="0 0 240 110" width="76mm" height="35mm" aria-label="sơ đồ khối residual với đường tắt cộng x"></svg>
+      <svg id="figRes" class="fig" viewBox="0 0 240 110" width="72mm" height="33mm" aria-label="sơ đồ khối residual với đường tắt cộng x"></svg>
       <div style="flex:1">
-        <div class="note">x và F(x) phải <b>cùng kích thước</b>; nếu đổi kênh/space thì dùng 1×1 conv (F7) ở nhánh tắt. Mũi tên cam = gradient
-          chảy thẳng qua đường +x. (Transformer cũng dùng residual quanh attention &amp; FFN — Bài H6.)</div>
+        <div class="calc ans">
+          Không skip: <span data-q="d4">0.1</span><sup><span data-q="L3">3</span></sup> = <span class="wcell ans" data-q="dL">0.001</span> (gần 0 → vanishing)<br>
+          Có skip: mỗi khối ≈ <span class="wcell ans" data-q="g2">1.1</span> (quanh 1, không teo)
+        </div>
+        <div class="note">Mũi tên cam nét đứt = đường tắt cộng x, gradient của nó luôn là <b>1</b> — dù nhánh F (tím) teo tới đâu,
+          tổng vẫn ≈1. Transformer cũng dùng residual quanh attention &amp; FFN (Bài H6).</div>
       </div>
     </div>
   </div>
@@ -130,30 +162,51 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>"+1" đến từ đâu? → <span class="qa">Đường tắt cộng x (identity) → đạo hàm của +x là 1.</span></li>
-      <li>Vì sao mạng rất sâu? → <span class="qa">Gradient có lối về thẳng, không bị nhân teo → chống vanishing.</span></li>
+      <li>"+1" đến từ đâu? → <span class="qa">Đường tắt cộng x (identity) → đạo hàm của +x luôn là 1, không phụ thuộc nhánh F.</span></li>
+      <li>Vì sao mạng rất sâu không vanishing? → <span class="qa">Không skip: tích L số &lt;1 → về 0 nhanh. Có skip: mỗi khối góp thừa số ≈1+∂F/∂x ≈1 → gradient chảy thẳng, không teo theo độ sâu.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Residual y=F(x)+x cho gradient đường cao tốc & khối học phần dư → mạng cực sâu train được.
+    <b style="color:var(--accent2)">Rút ra.</b> Residual y=F(x)+x biến "học ánh xạ H(x)" thành "học phần dư F(x)=H(x)−x"; đường "+1" là đường cao tốc
+    gradient giúp mạng cực sâu (ResNet) train được, không bị vanishing như Bài E2.
     Bài tiếp <b style="color:var(--accent2)">F10</b>: đếm tham số một lớp conv.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F9 · Kết nối tắt residual</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F9 · Kết nối tắt residual</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+// biểu diễn n/10^expo thành chuỗi thập phân CHÍNH XÁC (tránh sai số float khi expo>2,
+// vượt quá khả năng của WB.fmtTrim vốn chỉ giữ tối đa 2 chữ số thập phân)
+function decStr(numer, expo){
+  var s = String(numer);
+  while (s.length <= expo) s = '0' + s;
+  var intPart = s.slice(0, s.length - expo) || '0';
+  var fracPart = s.slice(s.length - expo);
+  return intPart + '.' + fracPart;
+}
+
 function generate(){
-  var fI=WB.fmtInt;
-  var x1=WB.randIntNZ(-2,3), x2=WB.randIntNZ(-2,3);
-  var f1=WB.randIntNZ(-2,3), f2=WB.randIntNZ(-2,3);
-  var y1=f1+x1, y2=f2+x2;
+  var fI = WB.fmtInt;
+  var x1 = WB.randIntNZ(-3,4), x2 = WB.randIntNZ(-3,4);
+  var f1 = WB.randIntNZ(-3,4), f2 = WB.randIntNZ(-3,4);
+  var y1 = f1+x1, y2 = f2+x2;
+
+  var n = WB.randInt(1,3);           // ∂F/∂x = n/10  (0.1 · 0.2 · 0.3 — nhỏ, gần 0)
+  var d = n/10;
+  var g1 = decStr(10+n, 1);          // 1 + n/10, vd n=1 → "1.1"
+  var L = WB.randInt(2,4);           // số khối xếp chồng
+  var dL = decStr(Math.pow(n,L), L); // (n/10)^L viết đúng dạng thập phân, không lệ thuộc float
+
   WB.setAll({
-    x1:fI(x1), x2:fI(x2), x1w:WB.wrap(x1), x2w:WB.wrap(x2),
-    f1:fI(f1), f2:fI(f2), y1:fI(y1), y2:fI(y2),
-    g:'1', gp:'1'
+    x1: fI(x1), x2: fI(x2), x1w: WB.wrap(fI(x1)), x2w: WB.wrap(fI(x2)),
+    f1: fI(f1), f2: fI(f2), y1: fI(y1), y2: fI(y2),
+    d: decStr(n,1), d2: decStr(n,1), d3: decStr(n,1), d4: decStr(n,1),
+    g1: g1, g2: g1,
+    L: String(L), L2: String(L), L3: String(L),
+    dL: dL
   });
   drawRes('figRes');
 }
@@ -170,7 +223,7 @@ function drawRes(id){
   s += '<circle cx="216" cy="58" r="11" fill="#d6ecf6" stroke="#0e7490"/><text x="216" y="62" text-anchor="middle" font-size="11" fill="#0a5b70">y</text>';
   s += '<line x1="172" y1="58" x2="204" y2="58" stroke="#0e7490" stroke-width="1.6" marker-end="url(#arF9)"/>';
   s += '<path d="M22 47 Q22 18 160 18 L160 45" fill="none" stroke="#b45309" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#arF9)"/>';
-  s += '<text x="92" y="13" text-anchor="middle" style="font-size:8px" fill="#b45309">đường tắt + x (gradient chảy thẳng)</text>';
+  s += '<text x="92" y="13" text-anchor="middle" style="font-size:8px" fill="#b45309">đường tắt + x (gradient của đường này luôn = 1)</text>';
   svg.innerHTML=defs+s;
 }
 WB.wire(generate);

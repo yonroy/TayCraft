@@ -5,20 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài C3 — Tanh &amp; đạo hàm (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 .ltab{border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-top:2px;}
 .ltab td,.ltab th{border:1px solid var(--line);padding:2px 9px;text-align:center;}
 .ltab th{background:var(--given);font-weight:700;}
 </style>
 </head>
-<body>
+<body class="part pC">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -33,21 +28,17 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài C3</span><h1>Tanh &amp; đạo hàm <small>— Tanh</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Khác sigmoid (tâm 0.5), tanh <b>canh quanh 0</b> nên trung bình kích hoạt gần 0 → tín hiệu cân bằng hơn,
-    hội tụ nhanh hơn. Là kích hoạt chủ lực trong cổng/trạng thái của LSTM, GRU.
-    <div class="formula">
-      tanh(z) = (e<sup>z</sup> − e<sup>−z</sup>)/(e<sup>z</sup> + e<sup>−z</sup>) &nbsp;&nbsp; tanh'(z) = 1 − tanh²(z) &nbsp;&nbsp; tanh ∈ (−1, 1)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài C3</span>
+    <h1>Tanh &amp; đạo hàm <small>— chữ S canh quanh 0, có "hướng"</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Giống sigmoid nhưng <b>đặt giữa ở 0</b>: âm → kéo về −1, dương → kéo về +1. Nhờ đối xứng, đầu ra "có hướng" (âm/dương) chứ không
-    chỉ "mạnh/yếu" như sigmoid.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Dùng bảng tra, hãy <b>tự tay</b> đọc tanh(z), tính đạo hàm tanh'(z) = 1 − tanh²,
+    xem đỉnh đạo hàm = 1 (gấp 4 sigmoid). Phần thưởng: kiểm hệ thức <b>tanh(z) = 2σ(2z) − 1</b> —
+    tanh chỉ là sigmoid được kéo giãn &amp; dời tâm về 0.
   </div>
 
   <!-- GIVEN -->
@@ -57,43 +48,47 @@
       <tr><th>z</th><td>−1</td><td>0</td><td>0.5</td><td>1</td><td>2</td></tr>
       <tr><th>tanh(z)</th><td>−0.76</td><td>0</td><td>0.46</td><td>0.76</td><td>0.96</td></tr>
     </table>
-    <div class="note">Bảng cho sẵn; mọi câu hỏi rơi đúng mốc. Để ý tanh là hàm <b>lẻ</b>: tanh(−z) = −tanh(z).</div>
+    <div class="why"><b>Vì sao:</b> tanh ∈ (−1, 1), dấu giữ nguyên dấu z → giữ "hướng" tín hiệu. tanh là hàm <b>lẻ</b>: tanh(−z) = −tanh(z).</div>
   </div>
 
+  <div class="grid2">
   <!-- BƯỚC 1 — tanh(z) -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Giá trị tanh(z)</h2><span class="tag">tra bảng</span></div>
-    <div class="calc">
-      tanh(<span data-q="z">1</span>) = <span class="blk" style="min-width:48px"></span>
+    <div class="calc big">
+      tanh(<span data-q="z">1</span>) = <span class="wcell" style="min-width:54px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> ra trong (−1, 1); dấu giữ nguyên dấu z → giữ "hướng" tín hiệu.</div>
+    <div class="why"><b>Vì sao:</b> âm → kéo về −1, dương → kéo về +1.</div>
   </div>
 
   <!-- BƯỚC 2 — đạo hàm -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Đạo hàm tanh'(z) = 1 − tanh²</h2><span class="tag">dùng lại tanh</span></div>
-    <div class="calc">
-      tanh'(<span data-q="z">1</span>) = 1 − <span data-q="th">0.76</span>² = 1 − <span data-q="sq">0.58</span> = <span class="blk" style="min-width:46px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Đạo hàm 1 − tanh²</h2><span class="tag">dùng lại tanh</span></div>
+    <div class="calc big">
+      tanh'(<span data-q="z">1</span>) = 1 − <span data-q="th">0.76</span>² = 1 − <span data-q="sq">0.58</span> = <span class="wcell" style="min-width:50px"></span>
     </div>
-    <div class="hint">Dùng chính giá trị tanh vừa tra, không cần đạo hàm lại từ đầu.</div>
+    <div class="hint">Dùng chính tanh vừa tra, không đạo hàm lại.</div>
   </div>
+  </div><!-- /grid2 -->
 
   <!-- BƯỚC 3 — đỉnh đạo hàm -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Đỉnh đạo hàm &amp; bão hòa</h2><span class="tag">≤ 1</span></div>
-    <div class="calc">
-      tại z = 0: 1 − 0² = <span class="blk" style="min-width:34px"></span> (lớn nhất)<br>
-      tại z = 2: 1 − 0.96² = <span class="blk" style="min-width:44px"></span> (đã teo)
+    <div class="calc big">
+      tại z = 0: 1 − 0² = <span class="wcell" style="min-width:38px"></span> (lớn nhất) &nbsp;·&nbsp;
+      tại z = 2: 1 − 0.96² = <span class="wcell" style="min-width:46px"></span> (đã teo)
     </div>
-    <div class="why"><b>Vì sao:</b> đỉnh đạo hàm tanh = 1 (gấp 4 lần sigmoid) → gradient mạnh hơn quanh 0, nhưng vẫn <b>bão hòa</b> ở hai biên.</div>
+    <div class="why"><b>Vì sao:</b> đỉnh đạo hàm tanh = 1 (gấp 4 sigmoid) → gradient mạnh hơn quanh 0, nhưng vẫn <b>bão hòa</b> ở hai biên.</div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Miền giá trị của tanh? → <span class="blk" style="min-width:80px"></span></li>
-      <li>Đạo hàm tanh lớn nhất bằng? → <span class="blk" style="min-width:90px"></span></li>
-    </ol>
+  <!-- BƯỚC 4 — TỰ KIỂM: tanh = 2σ(2z)−1 -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — tanh(z) = 2σ(2z) − 1</h2><span class="tag">= sigmoid dời tâm</span></div>
+    <div class="calc big">
+      Cho σ(2·<span data-q="z">1</span>) = σ(<span data-q="z2">2</span>) = <span class="gv" data-q="sig2z">0.88</span>. &nbsp;
+      2·<span data-q="sig2z">0.88</span> − 1 = <span class="wcell" style="min-width:52px"></span> &nbsp;<small style="color:#7a8794">— so với tanh(z) Bước 1</small>
+    </div>
+    <div class="note">Bằng nhau → tanh chỉ là <b>sigmoid</b> (Bài C2) kéo giãn gấp đôi theo z rồi dời tâm 0.5 → 0. Vì thế tanh <b>canh quanh 0</b> (kích hoạt trung bình ≈ 0) — cân bằng hơn, hội tụ nhanh hơn sigmoid.</div>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C3 · Tanh &amp; đạo hàm</span><span>Trang 1/2 · ĐỀ</span></div>
@@ -105,36 +100,44 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài C3</span><h1>Tanh &amp; đạo hàm <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài C3</span><h1>Tanh &amp; đạo hàm <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>tanh(z)</h2></div>
-    <div class="calc ans">
-      tanh(<span data-q="z">1</span>) = <span class="blk" data-q="th">0.76</span>
+    <div class="calc ans big">
+      tanh(<span data-q="z">1</span>) = <span class="wcell ans" data-q="th">0.76</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Đạo hàm</h2></div>
-    <div class="calc ans">
-      tanh'(<span data-q="z">1</span>) = 1 − <span data-q="th">0.76</span>² = 1 − <span data-q="sq">0.58</span> = <span class="blk" data-q="dth">0.42</span>
+    <div class="calc ans big">
+      tanh'(<span data-q="z">1</span>) = 1 − <span data-q="th">0.76</span>² = 1 − <span data-q="sq">0.58</span> = <span class="wcell ans" data-q="dth">0.42</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Đỉnh &amp; bão hòa</h2></div>
-    <div class="calc ans">
-      z = 0: 1 − 0² = <span class="blk" data-q="dth0">1</span> (lớn nhất) ;
-      z = 2: 1 − 0.96² = <span class="blk" data-q="dth2">0.08</span> (đã teo)
+    <div class="calc ans big">
+      z = 0: 1 − 0² = <span class="wcell ans" data-q="dth0">1</span> (lớn nhất) &nbsp;·&nbsp;
+      z = 2: 1 − 0.96² = <span class="wcell ans" data-q="dth2">0.08</span> (đã teo)
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — tanh = 2σ(2z) − 1</h2><span class="tag">= sigmoid dời tâm</span></div>
+    <div class="calc ans big">
+      2·σ(<span data-q="z2">2</span>) − 1 = 2·<span data-q="sig2z">0.88</span> − 1 = <span class="wcell ans" data-q="fromSig">0.76</span> = tanh(<span data-q="z">1</span>) ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> tanh(z) = (e<sup>z</sup>−e<sup>−z</sup>)/(e<sup>z</sup>+e<sup>−z</sup>) = 2·σ(2z) − 1. Cùng một đường chữ S, chỉ đổi thang &amp; tâm.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
     <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Tanh so với Sigmoid</h2><span class="tag">vs sigmoid</span></div>
     <div class="figrow">
-      <svg id="figT" class="fig" viewBox="0 0 210 150" width="66mm" height="44mm" aria-label="đường tanh và sigmoid chồng nhau, tanh đối xứng quanh 0"></svg>
-      <div style="flex:1">
+      <svg id="figT" class="fig" viewBox="0 0 210 150" width="64mm" height="45.7mm" aria-label="đường tanh và sigmoid chồng nhau, tanh đối xứng quanh 0"></svg>
+      <div style="flex:1;min-width:44mm">
         <div class="note">Đường <b>cam</b> = tanh (qua gốc, đối xứng quanh 0); đường <b>lam</b> = σ (qua 0.5). Hệ thức: tanh(z) = 2σ(2z) − 1.
           Cả hai vẫn bão hòa → mạng sâu chuộng ReLU (Bài C4).</div>
       </div>
@@ -144,14 +147,14 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Miền tanh? → <span class="qa">(−1, 1).</span></li>
-      <li>Đạo hàm lớn nhất? → <span class="qa">1 (tại z = 0).</span></li>
+      <li>Miền tanh? → <span class="qa">(−1, 1); đạo hàm lớn nhất = 1 tại z = 0.</span></li>
+      <li>Quan hệ với σ? → <span class="qa">tanh(z) = 2σ(2z) − 1 — sigmoid dời tâm về 0.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> tanh = S đối xứng quanh 0, đạo hàm 1 − tanh², đỉnh 1. Mạnh hơn sigmoid quanh 0 nhưng vẫn bão hòa.
-    Bài tiếp (C9): đếm tổng tham số của một mạng.
+    <b style="color:var(--accent2)">Rút ra.</b> tanh = S đối xứng quanh 0, đạo hàm 1 − tanh² (đỉnh 1), = 2σ(2z) − 1. Mạnh hơn sigmoid quanh 0 nhưng vẫn bão hòa.
+    Bài tiếp (C4): <b>ReLU</b> — cắt phần âm, hết bão hòa một phía.
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C3 · Tanh &amp; đạo hàm</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
@@ -161,16 +164,21 @@
 <script>
 function generate(){
   var f2 = WB.fmt2;
-  var TANH = { '-1':-0.76, '0.5':0.46, '1':0.76 };   // mốc hỏi (bỏ 0,2 vì ở bước 3)
+  var TANH = { '-1':-0.76, '0.5':0.46, '1':0.76 };
+  var SIG2 = { '-1':0.12, '0.5':0.73, '1':0.88 };   // σ(2z)
+  var Z2   = { '-1':'−2', '0.5':'1', '1':'2' };      // 2z hiển thị
   var zk = WB.pick(['-1', '0.5', '1']);
   var th = TANH[zk];
   var sq = Math.round(th*th*100)/100;
   var dth = Math.round((1 - sq)*100)/100;
+  var sig2 = SIG2[zk];
+  var fromSig = Math.round((2*sig2 - 1)*100)/100;
 
   WB.setAll({
     z: zk.replace('-', '−'),
     th: f2(th), sq: f2(sq), dth: f2(dth),
-    dth0: '1', dth2: f2(1 - 0.96*0.96)
+    dth0: '1', dth2: f2(1 - 0.96*0.96),
+    z2: Z2[zk], sig2z: f2(sig2), fromSig: f2(fromSig)
   });
   drawTanh('figT', parseFloat(zk));
 }
@@ -181,19 +189,16 @@ function drawTanh(id){
   if (!svg) return;
   var X0 = 22, X1 = 196, Y0 = 14, Y1 = 132, zmin = -4, zmax = 4;
   function SX(v){ return (X0 + (v - zmin)/(zmax - zmin)*(X1 - X0)).toFixed(1); }
-  function SY(y){ return (Y1 - (y + 1)/2*(Y1 - Y0)).toFixed(1); }   // y∈[−1,1]
+  function SY(y){ return (Y1 - (y + 1)/2*(Y1 - Y0)).toFixed(1); }
   function TH(v){ return Math.tanh(v); }
   function SG(v){ return 1/(1 + Math.exp(-v)); }
   var s = '<rect x="'+X0+'" y="'+Y0+'" width="'+(X1-X0)+'" height="'+(Y1-Y0)+'" fill="#fafbfc" stroke="#e5e7eb" stroke-width="1"/>';
-  // trục 0 (y=0) và z=0
   s += '<line x1="'+X0+'" y1="'+SY(0)+'" x2="'+X1+'" y2="'+SY(0)+'" stroke="#cdd3d9" stroke-width="1"/>';
   s += '<line x1="'+SX(0)+'" y1="'+Y0+'" x2="'+SX(0)+'" y2="'+Y1+'" stroke="#eef0f2" stroke-width="1"/>';
   var p, v;
-  // sigmoid (lam)
   p = ''; for (v = zmin; v <= zmax + 0.01; v += 0.2) p += SX(v)+','+SY(SG(v))+' ';
   s += '<polyline points="'+p.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.2"/>';
   s += '<text x="'+SX(2.6)+'" y="'+SY(0.86)+'" style="font-size:9px" fill="#0e7490" font-weight="700">σ</text>';
-  // tanh (cam)
   p = ''; for (v = zmin; v <= zmax + 0.01; v += 0.2) p += SX(v)+','+SY(TH(v))+' ';
   s += '<polyline points="'+p.trim()+'" fill="none" stroke="#b45309" stroke-width="2.4"/>';
   s += '<text x="'+SX(2.4)+'" y="'+SY(0.99)+'" style="font-size:9px" fill="#b45309" font-weight="700">tanh</text>';

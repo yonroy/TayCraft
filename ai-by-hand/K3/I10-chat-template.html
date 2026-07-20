@@ -3,183 +3,337 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài I10 — Chat template (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài I10 — Chat template + mặt nạ loss (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.tk{font-family:var(--mono);font-size:11px;background:#eef4f7;border:1px solid #cfe0e7;border-radius:4px;padding:0 4px;color:#0e7490;white-space:nowrap;}
+  .eq{line-height:1.7}
+  .why{line-height:1.5}
+  .tk{font-family:var(--mono);font-size:9px;background:#f3eefe;border:1px solid #ddd0fb;border-radius:3px;padding:0 3px;color:var(--purple);white-space:nowrap}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần I</div>
+  <div class="top">
+    <span class="no">I10</span>
+    <h1>Chat template <small>— gói hội thoại + mặt nạ loss</small></h1>
+    <span class="chip">PHẦN I · LLM</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~14 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>prompt · mặt nạ 0</span>
+      <span><span class="sw" style="background:var(--orange)"></span>đếm mốc · loss</span>
+      <span><span class="sw" style="background:var(--teal)"></span>trả lời · mặt nạ 1</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài I10</span><h1>Chat Template <small>— gói hội thoại bằng token đặc biệt</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mô hình chỉ thấy một chuỗi token phẳng. Chat template thêm dấu mốc (vai + ranh giới lượt) để mô hình biết
-    "ai đang nói" và "đến lượt mình trả lời". Sai template → mô hình trả lời lạc / loạn vai.
-    <div class="formula">&lt;|im_start|&gt;role …nội dung… &lt;|im_end|&gt; (lặp mỗi tin nhắn) → kết bằng &lt;|im_start|&gt;assistant</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Chat template gói hội thoại bằng <b>token đặc biệt</b> (mốc mở/đóng + nhãn vai) để mô hình biết "ai nói, đến lượt ai".
+    Bạn sẽ <b>đếm số mốc</b> (m tin nhắn → 2m+1) rồi tính <b>loss huấn luyện có mặt nạ</b>: chỉ token phần <b>trả lời</b> (assistant) được tính loss,
+    token phần <b>prompt</b> bị <b>che (mặt nạ = 0)</b>. Cuối phiếu bạn tự chứng minh: <b>đổi loss ở token prompt thì loss tổng ĐỨNG YÊN</b>
+    → gradient trên prompt = 0 → mô hình <b>chỉ học cách trả lời</b>, không học vẹt câu hỏi.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>kịch bản sân khấu</b>: mỗi lượt thoại ghi rõ "[VAI]: lời" và dấu hết lượt. Mô hình đọc kịch bản, thấy "[assistant]:" ở cuối
-    còn trống → nó <b>diễn tiếp</b> vai assistant. Token đặc biệt là các dấu mốc đó.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ví dụ 2 tin nhắn</span></div>
-    <div class="calc" style="font-size:13px">
-      system = "Bạn là trợ lý." &nbsp;·&nbsp; user = "Chào". &nbsp; Token đặc biệt: <span class="tk">&lt;|im_start|&gt;</span>, <span class="tk">&lt;|im_end|&gt;</span> (mỗi cái = 1 token).
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Gói tin nhắn system</h2><span class="tag">đánh dấu vai</span></div>
-    <div class="calc" style="font-size:12.5px">
-      <span class="tk">&lt;|im_start|&gt;</span>system Bạn là trợ lý. <span class="tk">&lt;|im_end|&gt;</span>
-    </div>
-    <div class="why"><b>Vì sao:</b> dấu mốc cho mô hình biết đây là <b>chỉ dẫn hệ thống</b>, không phải lời người dùng.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Gói user + mở lượt assistant</h2><span class="tag">kết mở</span></div>
-    <div class="calc" style="font-size:12.5px">
-      <span class="tk">&lt;|im_start|&gt;</span>user Chào <span class="tk">&lt;|im_end|&gt;</span> <span class="tk">&lt;|im_start|&gt;</span>assistant
-    </div>
-    <div class="hint">Kết bằng <span class="tk">&lt;|im_start|&gt;</span>assistant (chưa có <span class="tk">&lt;|im_end|&gt;</span>) → mô hình hiểu "tới lượt mình".</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đếm token đặc biệt</h2><span class="tag">hội thoại m tin nhắn</span></div>
-    <div class="calc">
-      Hội thoại có <span class="gv" data-q="m">2</span> tin nhắn hoàn chỉnh + mở lượt assistant:<br>
-      <span class="tk">&lt;|im_start|&gt;</span> dùng <span class="blk" style="min-width:30px"></span> lần ;
-      <span class="tk">&lt;|im_end|&gt;</span> dùng <span class="blk" style="min-width:30px"></span> lần →
-      tổng token đặc biệt = <span class="blk" style="min-width:34px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> token đặc biệt cũng <b>tốn chỗ</b> trong cửa sổ ngữ cảnh; template dài ăn vào ngân sách token.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao đúng template quan trọng</h2><span class="tag">khớp huấn luyện</span></div>
-    <div class="note">Phải dùng <b>đúng</b> định dạng mô hình được huấn luyện (mỗi model một kiểu: ChatML, Llama, …) → sai là lệch phân phối, trả lời kém.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Vì sao cần token đặc biệt trong chat? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Chuỗi thường kết bằng gì để mô hình trả lời? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I10 · Chat Template</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài I10</span><h1>Chat Template <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đếm token đặc biệt</h2></div>
-    <div class="calc ans">
-      <span class="tk">&lt;|im_start|&gt;</span> = <span class="blk" data-q="nStart">3</span> lần (m+1) ;
-      <span class="tk">&lt;|im_end|&gt;</span> = <span class="blk" data-q="nEnd">2</span> lần (m) →
-      tổng = <span class="blk" data-q="nSpecial">5</span> (2m+1)
-    </div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>2 khung tin nhắn → chuỗi token có mốc</h2><span class="tag">phẳng hóa</span></div>
-    <div class="figrow">
-      <svg id="figC" class="fig" viewBox="0 0 250 130" width="82mm" height="42mm" aria-label="hai khung tin nhắn system và user được nối thành một chuỗi token có mốc bắt đầu và kết thúc"></svg>
-      <div style="flex:1">
-        <div class="note">Mỗi tin nhắn = 1 <span class="tk">start</span> + nội dung + 1 <span class="tk">end</span>. Cuối chuỗi mở thêm 1 <span class="tk">start</span>assistant (không end) → mô hình "nối lời".</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">chuỗi token phẳng · mặt nạ &amp; loss mỗi token</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="font-size:9px;line-height:1.5">
+          Hội thoại <b><span data-q="m">2</span> tin nhắn</b> (system, user) rồi <b>mở lượt assistant</b>.<br>
+          Mỗi tin nhắn = <span class="tk">‹start›</span> + vai + nội dung + <span class="tk">‹end›</span>.<br>
+          Cuối chuỗi thêm <span class="tk">‹start›</span>assistant (<b>không</b> ‹end›) → mô hình viết tiếp.
+        </div>
+        <div class="cap">Mặt nạ loss: token thuộc <b style="color:var(--blue)">prompt</b> (system+user) → nhãn <b>0</b> (không tính loss);
+          token <b style="color:var(--teal)">assistant sinh ra</b> → nhãn <b>1</b> (có tính loss).</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table>
+          <tr><th class="l">Token trả lời</th><th>loss ℓ</th><th>mặt nạ</th></tr>
+          <tr><td class="l" style="color:var(--teal)">r₁</td><td style="color:var(--orange);font-weight:800" data-q="r1">1.0</td><td style="color:var(--teal);font-weight:800">1</td></tr>
+          <tr><td class="l" style="color:var(--teal)">r₂</td><td style="color:var(--orange);font-weight:800" data-q="r2">1.5</td><td style="color:var(--teal);font-weight:800">1</td></tr>
+          <tr><td class="l" style="color:var(--teal)">r₃</td><td style="color:var(--orange);font-weight:800" data-q="r3">0.5</td><td style="color:var(--teal);font-weight:800">1</td></tr>
+        </table>
+        <table style="margin-top:1.2mm">
+          <tr><th class="l">Token prompt</th><th>loss ℓ</th><th>mặt nạ</th></tr>
+          <tr><td class="l" style="color:var(--blue)">p₁</td><td style="color:var(--dim);font-weight:800" data-q="q1">2.0</td><td style="color:var(--dim);font-weight:800">0</td></tr>
+          <tr><td class="l" style="color:var(--blue)">p₂</td><td style="color:var(--dim);font-weight:800" data-q="q2">2.5</td><td style="color:var(--dim);font-weight:800">0</td></tr>
+        </table>
+        <div class="cap">ℓ = độ bất ngờ (−ln p) tại token đó. Prompt vẫn có ℓ, nhưng mặt nạ 0 <b>nhân triệt</b> nó khỏi loss.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Vì sao cần token đặc biệt? → <span class="qa">Đánh dấu vai & ranh giới lượt để mô hình biết ai nói / khi nào tới lượt.</span></li>
-      <li>Kết bằng gì? → <span class="qa">&lt;|im_start|&gt;assistant (mở lượt assistant đang trống).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">chuỗi token → mặt nạ → loss trung bình (chỉ phần trả lời)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 118" width="100%" height="34mm"
+           aria-label="chuỗi token phẳng, mỗi token có nhãn mặt nạ 0 hoặc 1 và giá trị loss, gộp về loss trung bình chỉ trên token mặt nạ 1, các ô số để trống"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Chat template gói tin nhắn bằng token đặc biệt đánh dấu vai / lượt; phải khớp định dạng huấn luyện. <b>Hết Phần
-    I.</b> Tiếp Phần J (sinh) — Bài J2: VAE reparam + KL.
+  <!-- ① ĐẾM MỐC -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Đếm token đặc biệt (mốc)</span><span class="f">m tin nhắn: start = m+1 · end = m</span></div>
+    <div class="pb">
+      <div class="eq">
+        số <span class="tk">‹start›</span> = m + 1 = <span data-q="m">2</span> + 1 = <span class="slot sm"></span> &nbsp;·&nbsp;
+        số <span class="tk">‹end›</span> = m = <span class="slot sm"></span> &nbsp;·&nbsp;
+        tổng mốc = (m+1) + m = 2m+1 = <span class="slot"></span>
+      </div>
+      <div class="cap">Lượt assistant cuối <b>mở</b> (có ‹start›, chưa ‹end›) → start nhiều hơn end đúng 1. Mốc cũng <b>ăn ngân sách</b> cửa sổ ngữ cảnh.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài I10 · Chat Template</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② LOSS CÓ MẶT NẠ -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Loss huấn luyện có mặt nạ</span><span class="f">L = Σ(mặt nạ · ℓ) ÷ Σ(mặt nạ)</span></div>
+    <div class="pb">
+      <div class="eq">
+        Tử số = 1·<span class="slot sm"></span> + 1·<span class="slot sm"></span> + 1·<span class="slot sm"></span> + 0·<span data-q="q1">2.0</span> + 0·<span data-q="q2">2.5</span> = <span class="slot"></span><br>
+        Mẫu số = Σ mặt nạ = 1+1+1+0+0 = <span class="slot sm"></span> &nbsp;→&nbsp; <b>L = tử ÷ mẫu = <span class="slot"></span></b>
+      </div>
+      <table style="margin-top:1.6mm">
+        <tr><th class="l">Tô thanh</th><th>L (có mặt nạ)</th><th>L̄ (nhầm: trung bình CẢ chuỗi)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_L"></div></td><td><div class="track uni" id="t_Lall"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: 0…3. Cột phải là giá trị SAI nếu quên mặt nạ (chia cả 5 token). So 2 thanh: chúng có bằng nhau không? → <span class="slot" style="min-width:26mm"></span></div>
+    </div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — token prompt có gradient = 0</span><span class="f">đổi loss prompt → L đứng yên?</span></div>
+    <div class="pb">
+      <div class="eq">
+        Giả sử mô hình đổi dự đoán ở token prompt p₁, làm loss của nó <b>nhân đôi</b>: ℓ(p₁) = <span data-q="q1">2.0</span> → <span class="slot sm" data-q="q1x2">4.0</span>.<br>
+        Tử số mới = 1·r₁ + 1·r₂ + 1·r₃ + <b>0·</b><span class="slot sm" data-q="q1x2">4.0</span> + 0·p₂ = <span class="slot"></span> &nbsp;<span class="cap" style="display:inline">(y hệt cũ — số nhân 0 biến mất)</span><br>
+        <b>L mới = <span class="slot"></span></b> &nbsp;→ có đổi so với Bước② không? → <span class="slot" style="min-width:20mm"></span>
+      </div>
+      <div class="cap">∂L/∂ℓ(prompt) = mặt nạ = 0 với mọi token prompt → <b>đạo hàm loss theo dự đoán prompt = 0</b>. Đây là bằng chứng bằng tay: đổi prompt bao nhiêu cũng vô ích với loss.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:13mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Đếm mốc 2m+1</span>
+    <span><span class="ck"></span>Tính L có mặt nạ</span>
+    <span><span class="ck"></span>Chứng minh grad prompt = 0</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao model chỉ học phần trả lời!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I10 · Chat template</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">I10</span>
+    <h1>Chat template <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>prompt · mặt nạ 0</span>
+      <span><span class="sw" style="background:var(--orange)"></span>đếm mốc · loss</span>
+      <span><span class="sw" style="background:var(--teal)"></span>trả lời · mặt nạ 1</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">chuỗi token → mặt nạ → loss trung bình (chỉ phần trả lời)</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 118" width="100%" height="34mm" aria-label="sơ đồ token có mặt nạ và loss đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Ví dụ template thật — ChatML</span><span class="f">một tin nhắn đóng kín + lượt assistant mở</span></div>
+    <div class="pb">
+      <div class="eq" style="font-family:var(--mono);font-size:9px;line-height:1.9;word-break:break-word">
+        <span class="tk">‹im_start›</span><b style="color:var(--orange)">system</b> <span style="color:var(--blue)">Bạn là trợ lý.</span> <span class="tk">‹im_end›</span><br>
+        <span class="tk">‹im_start›</span><b style="color:var(--orange)">user</b> <span style="color:var(--blue)">Chào bạn</span> <span class="tk">‹im_end›</span><br>
+        <span class="tk">‹im_start›</span><b style="color:var(--orange)">assistant</b> <span style="color:var(--dim)">▮ ← đây là chỗ mô hình viết tiếp (chưa có ‹im_end›)</span>
+      </div>
+      <div class="cap">2 tin nhắn đóng kín (mỗi cái 1 ‹im_start› + 1 ‹im_end›) + 1 ‹im_start›assistant <b>mở</b> cuối chuỗi.
+        Mỗi model một kiểu mốc (ChatML dùng ‹im_start›/‹im_end›; Llama, Gemma dùng ký hiệu khác).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Đếm token đặc biệt (mốc)</span></div>
+    <div class="pb">
+      <div class="eq">
+        ‹start› = m+1 = <span data-q="m">2</span>+1 = <span class="slot ans sm" data-q="nStart">3</span> &nbsp;·&nbsp;
+        ‹end› = m = <span class="slot ans sm" data-q="nEnd">2</span> &nbsp;·&nbsp;
+        tổng = 2m+1 = <span class="slot ans" data-q="nSpecial">5</span>
+      </div>
+      <div class="why"><b>Vì sao start nhiều hơn end 1:</b> mỗi tin nhắn đóng kín góp 1 start + 1 end; riêng lượt assistant cuối <b>mở</b> (thêm 1 start, chưa end) để mô hình biết tới lượt mình viết tiếp.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Loss huấn luyện có mặt nạ</span></div>
+    <div class="pb">
+      <div class="eq">
+        Tử = 1·<span data-q="r1">1.0</span> + 1·<span data-q="r2">1.5</span> + 1·<span data-q="r3">0.5</span> + 0·<span data-q="q1">2.0</span> + 0·<span data-q="q2">2.5</span> = <span class="slot ans" data-q="num">3.0</span><br>
+        Mẫu = Σ mặt nạ = 1+1+1+0+0 = <span class="slot ans sm" data-q="den">3</span> &nbsp;→&nbsp; <b>L = tử ÷ mẫu = <span class="slot ans" data-q="L">1.0</span></b><br>
+        L̄ nhầm (chia cả 5 token) = ( <span data-q="num">3.0</span> + <span data-q="q1">2.0</span> + <span data-q="q2">2.5</span> ) ÷ 5 = <span class="slot ans sm" data-q="Lall">1.4</span>
+      </div>
+      <table style="margin-top:1.4mm">
+        <tr><th class="l">Tô thanh</th><th>L (có mặt nạ)</th><th>L̄ (nhầm)</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_L"></div></td><td><div class="track uni" id="a_Lall"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao che prompt:</b> ta muốn mô hình học <b>cách trả lời</b>, không học vẹt câu hỏi của người dùng. Tính loss trên prompt sẽ ép mô hình "sinh ra" cả câu hỏi — vô nghĩa và làm loãng tín hiệu học. Hai thanh khác nhau → quên mặt nạ là tính SAI loss.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — token prompt có gradient = 0</span></div>
+    <div class="pb">
+      <div class="eq">
+        Nhân đôi loss p₁: <span data-q="q1">2.0</span> → <span class="slot ans sm" data-q="q1x2">4.0</span>.
+        Tử mới = r₁+r₂+r₃ + 0·<span data-q="q1x2">4.0</span> = <span class="slot ans" data-q="num">3.0</span> &nbsp;→&nbsp; <b>L mới = <span class="slot ans" data-q="L">1.0</span></b> = L cũ. <b style="color:var(--purple)">KHÔNG đổi.</b>
+      </div>
+      <div class="why p" style="margin:0 0 0"><b>Đây là điểm cốt lõi:</b> mặt nạ 0 nhân với loss prompt cho <b>đúng 0</b> — nên token prompt <b>không đóng góp gì</b> vào L.
+        Do đó đạo hàm <b>∂L/∂(dự đoán tại token prompt) = mặt nạ = 0</b>: dù mô hình đoán token prompt đúng hay sai, gradient bằng 0, tham số <b>không bị cập nhật</b> vì phần prompt.
+        Bấm 🎲 đổi loss prompt cỡ nào, L vẫn <b>chỉ phụ thuộc các token trả lời</b> — chính sự "đứng yên" đó là bằng chứng mô hình <b>chỉ học phần trả lời</b>.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy khi gói template &amp; tính loss</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Tính loss trên cả prompt cho nhiều dữ liệu hơn."</b><br>
+          <span style="color:var(--dim)">Sai — ép mô hình học sinh ra <b>câu hỏi của người dùng</b>, làm loãng tín hiệu. Chỉ token trả lời mới là thứ ta muốn mô hình học cách sinh.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Chia tử cho tổng số token cả chuỗi."</b><br>
+          <span style="color:var(--dim)">Mẫu số phải là <b>Σ mặt nạ</b> (số token trả lời), không phải N. Chia sai mẫu → loss bé giả tạo.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Dùng template model A cho model B cũng được."</b><br>
+          <span style="color:var(--dim)">Mỗi model một kiểu (ChatML, Llama, Gemma…). Sai mốc/vai → <b>lệch phân phối</b> so với lúc train → trả lời kém, loạn vai.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Quên ‹start›assistant ở cuối vẫn ổn."</b><br>
+          <span style="color:var(--dim)">Thiếu mốc mở lượt → mô hình không biết tới lượt mình, dễ im lặng hoặc nối nhầm vai.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Chat template gói tin nhắn bằng token đặc biệt đánh dấu vai/lượt (m tin nhắn → <b>2m+1</b> mốc); khi huấn luyện,
+    <b>mặt nạ loss</b> che phần prompt (mặt nạ 0 → gradient 0) nên mô hình <b>chỉ học cách trả lời</b>. <b>Hết Phần I.</b>
+    Tiếp <b>Phần J</b> (sinh dữ liệu) — Bài <b>J1</b>: Autoencoder &amp; VAE — nén dữ liệu về không gian ẩn rồi dựng lại.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài I10 · Chat template</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var S = {};
+
 function generate(){
-  var m = WB.pick([2,3,4]);          // số tin nhắn hoàn chỉnh
-  var nStart = m+1, nEnd = m, nSpecial = 2*m+1;
+  var f2 = WB.fmt2;
+  // loss token trả lời (mặt nạ 1) và token prompt (mặt nạ 0) — số nhỏ tra được, thang 0..3
+  var r1 = WB.pick([0.5,1.0,1.5,2.0]);
+  var r2 = WB.pick([0.5,1.0,1.5,2.0]);
+  var r3 = WB.pick([0.5,1.0,1.5,2.0]);
+  var num = r1 + r2 + r3;           // tử số (chỉ token trả lời)
+  var den = 3;                      // Σ mặt nạ = 3 token trả lời
+  var L   = num / den;             // loss có mặt nạ
+  var q1, q2, Lall;
+  do {                              // prompt loss cao hơn để L̄ (trung bình cả chuỗi) ≠ L
+    q1 = WB.pick([1.5,2.0,2.5,3.0]); q2 = WB.pick([1.5,2.0,2.5,3.0]);
+    Lall = (num + q1 + q2) / 5;
+  } while ( Math.abs(Lall - L) < 0.16 );   // tách rõ 2 thanh (≥ ~0.15 trên thang 0..3)
+  var m  = WB.pick([2,3,4]);
+  var q1x2= q1 * 2;
+
+  S = {r:[r1,r2,r3], q:[q1,q2], m:m, num:num, den:den, L:L, Lall:Lall, q1x2:q1x2};
+
   WB.setAll({
-    m:String(m), nStart:String(nStart), nEnd:String(nEnd), nSpecial:String(nSpecial)
+    r1:f2(r1), r2:f2(r2), r3:f2(r3),
+    q1:f2(q1), q2:f2(q2), q1x2:f2(q1x2),
+    m:String(m), nStart:String(m+1), nEnd:String(m), nSpecial:String(2*m+1),
+    num:f2(num), den:String(den), L:f2(L), Lall:f2(Lall)
   });
-  drawTemplate('figC');
+
+  drawBarUni('t_L', 0, 3, false); drawBarUni('t_Lall', 0, 3, false);
+  drawBarUni('a_L', L, 3, true);  drawBarUni('a_Lall', Lall, 3, true);
+
+  drawStrip('figQ', false);
+  drawStrip('figA', true);
 }
-function drawTemplate(id){
-  var svg = document.getElementById(id); if(!svg) return;
-  var s='';
-  function frame(x,role,col){
-    s+='<rect x="'+x+'" y="18" width="66" height="34" rx="6" fill="'+col+'18" stroke="'+col+'" stroke-width="1.4"/>';
-    s+='<text x="'+(x+33)+'" y="33" text-anchor="middle" font-size="9" font-weight="700" fill="'+col+'">'+role+'</text>';
-    s+='<text x="'+(x+33)+'" y="46" text-anchor="middle" font-size="8" fill="#5b6776">tin nhắn</text>';
-  }
-  frame(14,'system','#0e7490');
-  frame(92,'user','#b45309');
-  s+='<text x="180" y="38" font-size="9" fill="#5b6776">→ phẳng hóa</text>';
-  // chuỗi token có mốc
-  var y=86, x=10;
-  var toks=['‹start›','system','…','‹end›','‹start›','user','…','‹end›','‹start›','assist'];
+
+// Thanh MỘT CHIỀU (0…max, gốc trái). fill=false → chỉ vạch mốc (ĐỀ).
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:33%"></div><div class="tick" style="left:67%"></div>';
+  if(fill && v>0){ var pct=Math.min(v/max,1)*100; h+='<div class="fill pos" style="left:0%;width:'+pct+'%"></div>'; }
+  el.innerHTML=h;
+}
+
+// Sơ đồ: dải token (prompt lam nhạt / trả lời teal), nhãn mặt nạ + loss, gộp về L.
+function drawStrip(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f2=WB.fmt2, DIM='#6b7280', INK='#16202e', BLU='#0e7490', TEAL='#0f766e', ORG='#b45309';
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+  // 5 token: 2 prompt (mặt nạ 0) + 3 trả lời (mặt nạ 1)
+  var toks=[
+    {lab:'p₁', mask:0, val:S.q[0], role:BLU},
+    {lab:'p₂', mask:0, val:S.q[1], role:BLU},
+    {lab:'r₁', mask:1, val:S.r[0], role:TEAL},
+    {lab:'r₂', mask:1, val:S.r[1], role:TEAL},
+    {lab:'r₃', mask:1, val:S.r[2], role:TEAL}
+  ];
+  var x=6, w=64, gap=6, y=26;
+  s+='<text x="6" y="12" font-size="8.4" font-weight="800" fill="'+INK+'">Chuỗi token phẳng — loss ℓ (trên) · mặt nạ (dưới)</text>';
   for(var i=0;i<toks.length;i++){
-    var sp = (toks[i].indexOf('‹')>=0);
-    var w = sp?30:26;
-    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="18" rx="3" fill="'+(sp?'#7c5cff22':'#eef1f4')+'" stroke="'+(sp?'#7c5cff':'#cfd6dd')+'" stroke-width="1"/>';
-    s+='<text x="'+(x+w/2)+'" y="'+(y+12)+'" text-anchor="middle" font-size="6.5" fill="'+(sp?'#7c5cff':'#5b6776')+'" font-weight="'+(sp?'700':'400')+'">'+toks[i]+'</text>';
-    x+=w+2;
+    var t=toks[i], fillc = t.mask? '#e9f6f4':'#eef7f9';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="34" rx="4" fill="'+fillc+'" stroke="'+t.role+'" stroke-width="1.2"/>';
+    s+='<text x="'+(x+w/2)+'" y="'+(y+15)+'" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+t.role+'">'+t.lab+'</text>';
+    // loss ở trên (ẩn ở ĐỀ)
+    if(showAns) s+='<text x="'+(x+w/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+ORG+'">ℓ='+f2(t.val)+'</text>';
+    else s+='<text x="'+(x+w/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="8" fill="'+DIM+'">ℓ=?</text>';
+    // mặt nạ ở dưới (luôn hiện — là dữ liệu cho sẵn)
+    s+='<text x="'+(x+w/2)+'" y="'+(y+30)+'" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+(t.mask?TEAL:DIM)+'">mặt nạ '+t.mask+'</text>';
+    x += w + gap;
   }
-  s+='<text x="10" y="'+(y+30)+'" font-size="8" fill="#7c5cff" font-weight="700">tím = token đặc biệt (mốc)</text>';
+  // gộp về L
+  var by=88;
+  s+='<line x1="180" y1="'+by+'" x2="230" y2="'+by+'" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="205" y="'+(by-4)+'" text-anchor="middle" font-size="7.4" fill="'+DIM+'">t.bình có mặt nạ</text>';
+  s+='<rect x="236" y="'+(by-15)+'" width="150" height="30" rx="4" fill="'+(showAns?'#fff8f0':'#fff')+'" stroke="'+(showAns?ORG:INK)+'" stroke-width="'+(showAns?1.2:1.4)+'"'+(showAns?'':' stroke-dasharray="3 2"')+'/>';
+  s+='<text x="311" y="'+(by-2)+'" text-anchor="middle" font-size="7.6" fill="'+DIM+'">L (chỉ token mặt nạ 1)</text>';
+  if(showAns) s+='<text x="311" y="'+(by+11)+'" text-anchor="middle" font-size="9.4" font-weight="800" fill="#7a3d00">L = '+f2(S.L)+'</text>';
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

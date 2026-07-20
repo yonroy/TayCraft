@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A19 — Chuẩn hóa dữ liệu (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
 .page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,77 +25,112 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A19</span><h1>Chuẩn hóa dữ liệu <small>— min-max &amp; z-score</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A19</span>
+    <h1>Chuẩn hóa dữ liệu <small>— đưa mọi đặc trưng về cùng thước</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nếu một đặc trưng đo bằng nghìn còn đặc trưng khác bằng phần trăm, gradient sẽ <b>méo</b> theo cái lớn.
-    Chuẩn hóa đặt mọi đặc trưng lên cùng thước → mạng học cân bằng, hội tụ nhanh (cũng là ý của BatchNorm/LayerNorm sau này).
-    <div class="formula">
-      min-max: x' = (x − min) / (max − min) ∈ [0, 1]<br>
-      z-score: x̂ = (x − μ) / σ &nbsp;(μ = trung bình, σ = độ lệch chuẩn)
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Đặc trưng đo bằng nghìn lấn át đặc trưng đo bằng phần trăm → gradient méo. Chuẩn hóa đặt mọi đặc trưng lên <b>cùng thước</b>.
+    Hãy tính <b>min-max</b> [0,1] và <b>z-score</b> (μ, σ), <b>điền z(max) vào ô ✍ trong hình</b>, rồi (Trang 2) <b>tự kiểm z-score
+    có đúng μ=0, σ=1</b> không.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    <b>Min-max</b> giống "chấm điểm thang 0→1": nhỏ nhất = 0, lớn nhất = 1, còn lại nằm giữa. <b>Z-score</b> giống "lệch bao nhiêu
-    <b>độ lệch chuẩn</b> so với trung bình": 0 = đúng trung bình, +1 = trên một σ, −1 = dưới một σ.
-  </div>
-
-  <!-- GIVEN -->
+  <!-- BƯỚC 0 — GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn dữ liệu</h2><span class="tag">4 số</span></div>
     <div class="calc" style="font-size:15px">
       dữ liệu = { <span class="gv" data-q="d1">2</span>, <span class="gv" data-q="d2">4</span>, <span class="gv" data-q="d3">6</span>, <span class="gv" data-q="d4">8</span> }
     </div>
-    <div class="note">Một đặc trưng với 4 quan sát. Ta sẽ đưa nó về thang [0,1] (min-max) và quanh 0 (z-score).</div>
+    <div class="note">Một đặc trưng với 4 quan sát. min-max: x' = (x − min)/(max − min); z-score: x̂ = (x − μ)/σ.</div>
   </div>
 
   <!-- BƯỚC 1 — min-max -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Min-max về [0, 1]</h2><span class="tag">bám hai đầu</span></div>
-    <div class="calc">
-      min = <span class="blk" style="min-width:30px"></span> , max = <span class="blk" style="min-width:30px"></span> ,
-      range = max − min = <span class="blk" style="min-width:34px"></span><br>
-      với x = <span data-q="d2">4</span>: (<span data-q="d2">4</span> − min)/range = <span class="blk" style="min-width:40px"></span>
-      &nbsp;(min→0, max→1)
+    <div class="calc big">
+      min = <span class="blk" style="min-width:26px"></span> , max = <span class="blk" style="min-width:26px"></span> , range = <span class="blk" style="min-width:26px"></span> &nbsp;·&nbsp;
+      x = <span data-q="d2">4</span>: (<span data-q="d2">4</span> − min)/range = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> trừ min để gốc về 0, chia range để trần về 1 → mọi giá trị gói gọn trong [0, 1].</div>
+    <div class="why"><b>Vì sao:</b> trừ min để gốc về 0, chia range để trần về 1 → mọi giá trị gói gọn trong [0, 1] (min→0, max→1).</div>
   </div>
 
-  <!-- BƯỚC 2 — μ & σ -->
+  <!-- BƯỚC 2 — HERO: z-score + hình -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trung bình &amp; độ lệch chuẩn</h2><span class="tag">μ, σ</span></div>
-    <div class="calc">
-      μ = (<span data-q="sumExpr">2 + 4 + 6 + 8</span>)/4 = <span class="blk" style="min-width:34px"></span><br>
-      σ = √( Σ(x − μ)²/4 ) = √<span class="blk" style="min-width:40px"></span> ≈ <span class="blk" style="min-width:44px"></span>
+    <div class="step-h"><div class="b">2</div><h2>μ, σ → z-score → điền z(max) vào hình</h2><span class="tag">hero · quanh 0</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 230 150" width="74mm" height="48.3mm" aria-label="ba thước: gốc, min-max, z-score; ô để điền z(max)"></svg>
+      <div style="flex:1;min-width:46mm">
+        <div class="calc big" style="margin:0">
+          μ = (<span data-q="sumExpr">2 + 4 + 6 + 8</span>)/4 = <span class="wcell"></span><br>
+          σ = √<span data-q="varD">5</span> ≈ <span class="wcell"></span><br>
+          z(max) = (max − μ)/σ ≈ <span class="wcell"></span>
+        </div>
+        <div class="note" style="margin-top:6px">z <b>không thứ nguyên</b>, dấu cho biết trên/dưới μ. <b>Điền z(max) vào ô ✍ trong hình.</b></div>
+      </div>
     </div>
-    <div class="hint">Tính phương sai trước (như A16), rồi lấy căn ra σ.</div>
   </div>
 
-  <!-- BƯỚC 3 — z-score -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Z-score</h2><span class="tag">quanh 0</span></div>
-    <div class="calc">
-      z(giá trị lớn nhất) = (max − μ)/σ ≈ <span class="blk" style="min-width:46px"></span><br>
-      z(giá trị nhỏ nhất) = (min − μ)/σ ≈ <span class="blk" style="min-width:46px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> z <b>không thứ nguyên</b> → so được giữa các đặc trưng khác đơn vị; dấu cho biết trên/dưới trung bình.</div>
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — tính min-max, μ, σ ở đây</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A19 · Chuẩn hóa dữ liệu</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
+  <div class="wb-title">
+    <span class="no">Bài A19</span>
+    <h1>Chuẩn hóa dữ liệu <small>— z-score luôn có μ = 0, σ = 1</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+
+  <div class="mission">
+    🎯 <b>Tiếp.</b> "Chuẩn hóa" nghĩa là sau khi biến đổi, dữ liệu <b>luôn có trung bình 0 và độ lệch chuẩn 1</b> — bất kể thang gốc.
+    Hãy chuẩn hóa cả 4 điểm rồi tự kiểm hai tính chất đó. Đây là lý do mọi đặc trưng sau z-score <b>so sánh công bằng</b> được.
+  </div>
+
+  <!-- BƯỚC 3 — kiểm z-score chuẩn -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Chuẩn hóa cả 4 điểm &amp; kiểm μ(z) = 0, σ(z) = 1</h2><span class="tag">tự-kiểm lõi</span></div>
+    <div class="calc big">
+      z₁ = (<span data-q="d1">2</span>−μ)/σ = <span class="wcell"></span> &nbsp; z₂ = <span class="wcell"></span> &nbsp;
+      z₃ = <span class="wcell"></span> &nbsp; z₄ = <span class="wcell"></span><br>
+      <span class="lead">trung bình</span> (z₁+z₂+z₃+z₄)/4 = <span class="wcell"></span> <small style="color:#7a8794">← phải = 0</small><br>
+      <span class="lead">độ trải</span> (z₁²+z₂²+z₃²+z₄²)/4 = <span class="wcell"></span> <small style="color:#7a8794">← phải = 1 (chính là σ² của z)</small><br>
+      <span class="lead">min-max hai đầu</span>: x=min → <span class="wcell"></span> , x=max → <span class="wcell"></span> <small style="color:#7a8794">(=0 và =1)</small>
+    </div>
+    <div class="note">Trừ μ kéo trung bình về 0; chia σ ép độ lệch chuẩn về 1. Nhờ vậy hai đặc trưng khác đơn vị (kg vs cm) sau chuẩn hóa
+      <b>cùng một thang</b>, gradient không bị đặc trưng "to số" lấn át.</div>
+  </div>
+
+  <div class="scratch" style="height:26mm"><span class="lb">✏️ Nháp — chuẩn hóa 4 điểm rồi cộng/bình phương ở đây</span></div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Sau min-max, giá trị nhỏ nhất &amp; lớn nhất thành? → <span class="blk" style="min-width:80px"></span></li>
-      <li>Z-score = 0 nghĩa là gì? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Min-max cho giá trị nhỏ nhất &amp; lớn nhất là? → <span class="blk" style="min-width:80px"></span></li>
+      <li>z-score = 0 nghĩa là? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Sau z-score, trung bình &amp; σ của dữ liệu là? → <span class="blk" style="min-width:80px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A19 · Chuẩn hóa dữ liệu</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Min-max về [0,1]</span>
+    <span><span class="ck"></span>z-score + điền z(max)</span>
+    <span><span class="ck"></span>Kiểm μ(z)=0, σ(z)=1</span>
+    <span class="win">🎉 Bạn vừa đưa dữ liệu về thang chuẩn!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A19 · Chuẩn hóa dữ liệu</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -110,39 +140,37 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Min-max</h2></div>
-    <div class="calc ans">
-      min = <span class="blk" data-q="mn">2</span> , max = <span class="blk" data-q="mx">8</span> ,
-      range = <span class="blk" data-q="range">6</span><br>
-      x = <span data-q="d2">4</span>: (<span data-q="d2">4</span> − <span data-q="mn">2</span>)/<span data-q="range">6</span> = <span class="blk" data-q="mm">0.33</span>
-      &nbsp;(min→0, max→1)
+    <div class="calc ans big">
+      min = <span class="blk" data-q="mn">2</span> , max = <span class="blk" data-q="mx">8</span> , range = <span class="blk" data-q="range">6</span> &nbsp;·&nbsp;
+      x = <span data-q="d2">4</span>: (<span data-q="d2">4</span> − <span data-q="mn">2</span>)/<span data-q="range">6</span> = <span class="wcell ans" data-q="mm">0.33</span>
     </div>
+    <div class="why"><b>Vì sao:</b> trừ min → gốc 0, chia range → trần 1; min-max bám hai đầu mút (nhạy ngoại lệ).</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>μ &amp; σ</h2></div>
-    <div class="calc ans">
-      μ = (<span data-q="sumExpr">2 + 4 + 6 + 8</span>)/4 = <span class="blk" data-q="mu">5</span><br>
-      σ = √( <span data-q="sqExpr">9 + 1 + 1 + 9</span> /4 ) = √<span class="blk" data-q="varD">5</span> ≈ <span class="blk" data-q="sigma">2.24</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Z-score</h2></div>
-    <div class="calc ans">
-      z(max=<span data-q="mx">8</span>) = (<span data-q="mx">8</span> − <span data-q="mu">5</span>)/<span data-q="sigma">2.24</span> ≈ <span class="blk" data-q="zmax">+1.34</span><br>
-      z(min=<span data-q="mn">2</span>) ≈ <span class="blk" data-q="zmin">−1.34</span>
-    </div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>So sánh: gốc → min-max → z-score</h2><span class="tag">[0,1] vs quanh 0</span></div>
+    <div class="step-h"><div class="b">2</div><h2>μ, σ &amp; z-score</h2></div>
     <div class="figrow">
-      <svg id="figN" class="fig" viewBox="0 0 230 140" width="74mm" height="40mm" aria-label="ba thước: dữ liệu gốc, thang min-max 0-1, và thang z-score quanh 0"></svg>
-      <div style="flex:1">
-        <div class="note">Min-max bám <b>hai đầu mút</b> (nhạy ngoại lệ); z-score bám <b>trung bình &amp; độ trải</b> (giữ phân phối). Chọn theo bài toán.</div>
+      <svg id="figA" class="fig" viewBox="0 0 230 150" width="66mm" height="43mm"></svg>
+      <div style="flex:1;min-width:46mm">
+        <div class="calc ans big" style="margin:0">
+          μ = (<span data-q="sumExpr">2 + 4 + 6 + 8</span>)/4 = <span class="wcell ans" data-q="mu">5</span><br>
+          σ = √( <span data-q="sqExpr">9 + 1 + 1 + 9</span> /4 ) = √<span data-q="varD">5</span> ≈ <span class="wcell ans" data-q="sigma">2.24</span><br>
+          z(max=<span data-q="mx">8</span>) ≈ <span class="wcell ans" data-q="zmax">+1.34</span> · z(min) ≈ <span class="blk" data-q="zmin">−1.34</span>
+        </div>
+        <div class="why"><b>Vì sao:</b> z-score bám μ &amp; σ (giữ phân phối), so được đặc trưng khác đơn vị; z = 0 ⇒ đúng bằng μ.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Kiểm z-score chuẩn</h2></div>
+    <div class="calc ans big">
+      z = ( <span class="wcell ans" data-q="z1">−1.34</span>, <span class="wcell ans" data-q="z2">−0.45</span>, <span class="wcell ans" data-q="z3">0.45</span>, <span class="wcell ans" data-q="z4">1.34</span> )<br>
+      trung bình = <span class="wcell ans" data-q="meanZ">0</span> ✓ &nbsp;·&nbsp; (Σz²)/4 = <span class="wcell ans" data-q="z2bar">1</span> ✓ &nbsp;·&nbsp;
+      min-max: min → <span class="wcell ans" data-q="mmMin">0</span>, max → <span class="wcell ans" data-q="mmMax">1</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> trừ μ → trung bình mới = 0; chia σ → phương sai mới = 1 (nên σ = 1). Đó chính là định nghĩa "chuẩn hóa" —
+      mọi đặc trưng về cùng gốc &amp; cùng độ trải.</div>
   </div>
 
   <div class="quiz">
@@ -150,22 +178,24 @@
     <ol>
       <li>Min-max nhỏ nhất &amp; lớn nhất? → <span class="qa">0 và 1.</span></li>
       <li>Z-score = 0? → <span class="qa">Giá trị đúng bằng trung bình μ.</span></li>
+      <li>Sau z-score? → <span class="qa">Trung bình 0, độ lệch chuẩn 1.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Chuẩn hóa đưa đặc trưng về cùng thang để mạng học công bằng; min-max gói vào [0,1], z-score canh quanh 0/σ.
+    <b style="color:var(--accent2)">Rút ra.</b> Chuẩn hóa đưa đặc trưng về cùng thang để mạng học công bằng; min-max gói vào [0,1], z-score canh về μ=0, σ=1.
     Bài tiếp (A20): <b>one-hot</b> — biến nhãn rời rạc thành vectơ 0/1 để đưa vào mô hình.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A19 · Chuẩn hóa dữ liệu</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A19 · Chuẩn hóa dữ liệu</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var STATE = {D:[2,4,6,8],mn:2,mx:8,mu:5,sigma:2.24,zmax:1.34};
+
 function generate(){
   var f = WB.fmtInt, ft = WB.fmtTrim, f2 = WB.fmt2;
-  // cấp số cộng 4 số: { a, a+d, a+2d, a+3d } → z hai đầu luôn ≈ ±1.34, min-max(d2)=1/3
   var a = WB.randInt(1, 5);
   var d = WB.pick([2, 3, 4]);
   var D = [a, a+d, a+2*d, a+3*d];
@@ -177,9 +207,14 @@ function generate(){
   var sigma = Math.sqrt(varD);
   var mm = (D[1] - mn)/range;
   var zmax = (mx - mu)/sigma, zmin = (mn - mu)/sigma;
+  // chuẩn hóa cả 4 điểm + kiểm μ=0, σ=1
+  var z = D.map(function(x){ return (x-mu)/sigma; });
+  var meanZ = (z[0]+z[1]+z[2]+z[3])/4;
+  var z2bar = (z[0]*z[0]+z[1]*z[1]+z[2]*z[2]+z[3]*z[3])/4;
+  STATE = {D:D, mn:mn, mx:mx, mu:mu, sigma:sigma, zmax:zmax};
 
   function sgn(v){ var s = f2(v); return /^−/.test(s) ? s : '+' + s; }
-  // chuỗi tổng & bình phương lệch (số nguyên/đẹp khi d chẵn; ft xử lý .5)
+  function r2(v){ return ft(Math.round(v*100)/100); }
   var sumExpr = D.join(' + ');
   var sqExpr = devsq.map(function(v){ return ft(v); }).join(' + ');
 
@@ -189,36 +224,45 @@ function generate(){
     mm: f2(mm),
     sumExpr: sumExpr, mu: ft(mu),
     sqExpr: sqExpr, varD: ft(varD), sigma: f2(sigma),
-    zmax: sgn(zmax), zmin: sgn(zmin)
+    zmax: sgn(zmax), zmin: sgn(zmin),
+    z1: f2(z[0]), z2: f2(z[1]), z3: f2(z[2]), z4: f2(z[3]),
+    meanZ: r2(meanZ), z2bar: r2(z2bar),
+    mmMin: '0', mmMax: '1'
   });
-  drawScales('figN', D, mn, mx, mu, sigma);
+  drawScales('figQ', D, mn, mx, mu, sigma, false);
+  drawScales('figA', D, mn, mx, mu, sigma, true);
 }
 
-// ba thước nằm ngang: gốc, min-max [0,1], z-score quanh 0
-function drawScales(id, D, mn, mx, mu, sigma){
+// ba thước nằm ngang; ô điền z(max). Nhãn thang phái sinh chỉ hiện ở ĐÁP ÁN.
+function drawScales(id, D, mn, mx, mu, sigma, showAns){
   var svg = document.getElementById(id);
   if (!svg) return;
   var x0 = 20, W = 190;
-  function row(y, label, color, posFn, tickFn){
+  function row(y, label, color, posFn, tickFn, showTick){
     var s = '<line x1="'+x0+'" y1="'+y+'" x2="'+(x0+W)+'" y2="'+y+'" stroke="#9aa3ad" stroke-width="1"/>';
     s += '<text x="'+x0+'" y="'+(y-8)+'" style="font-size:8px" fill="#5b6776" font-weight="700">'+label+'</text>';
     for (var i = 0; i < D.length; i++){
       var px = x0 + posFn(D[i])*W;
       s += '<circle cx="'+px.toFixed(1)+'" cy="'+y+'" r="3" fill="'+color+'"/>';
-      s += '<text x="'+px.toFixed(1)+'" y="'+(y+12)+'" text-anchor="middle" style="font-size:7.5px" fill="'+color+'">'+tickFn(D[i])+'</text>';
+      if (showTick) s += '<text x="'+px.toFixed(1)+'" y="'+(y+12)+'" text-anchor="middle" style="font-size:7.5px" fill="'+color+'">'+tickFn(D[i])+'</text>';
     }
     return s;
   }
   var s = '';
-  // gốc: tỉ lệ theo min..max
-  s += row(28, 'gốc', '#111', function(x){ return (x-mn)/(mx-mn); }, function(x){ return WB.fmtInt(x); });
-  // min-max: same position but label 0..1
-  s += row(74, 'min-max [0,1]', '#0e7490', function(x){ return (x-mn)/(mx-mn); }, function(x){ return ((x-mn)/(mx-mn)).toFixed(2); });
-  // z-score: map z∈[−1.5,1.5] → [0,1]
-  s += row(120, 'z-score', '#b45309', function(x){ var z=(x-mu)/sigma; return (z+1.6)/3.2; }, function(x){ var z=(x-mu)/sigma; return (z>=0?'+':'')+z.toFixed(1); });
+  s += row(28, 'gốc', '#111', function(x){ return (x-mn)/(mx-mn); }, function(x){ return WB.fmtInt(x); }, true);
+  s += row(74, 'min-max [0,1]', '#0e7490', function(x){ return (x-mn)/(mx-mn); }, function(x){ return ((x-mn)/(mx-mn)).toFixed(2); }, showAns);
+  s += row(120, 'z-score', '#b45309', function(x){ var z=(x-mu)/sigma; return (z+1.6)/3.2; }, function(x){ var z=(x-mu)/sigma; return (z>=0?'+':'')+z.toFixed(1); }, showAns);
+  // ô điền z(max), góc trên-phải
+  var bx = 150, by = 4;
+  s += '<rect x="'+bx+'" y="'+by+'" width="72" height="22" rx="6" fill="'+(showAns?'#fff3e6':'#fff')+'" stroke="'+(showAns?'#e0aa66':'#b45309')+'" stroke-width="1.6"/>';
+  s += '<text x="'+bx+'" y="'+(by-3)+'" style="font-size:8px" fill="#b45309" font-weight="700">z(max) = ✍</text>';
+  var zmax = (mx - mu)/sigma;
+  if (showAns) s += '<text x="'+(bx+36)+'" y="'+(by+16)+'" text-anchor="middle" style="font-size:12px" fill="#8a3d00" font-weight="700">'+(zmax>=0?'+':'')+zmax.toFixed(2)+'</text>';
+  else s += '<text x="'+(bx+36)+'" y="'+(by+15)+'" text-anchor="middle" style="font-size:11px" fill="#c3ccd6">?</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);
+drawScales('figQ', STATE.D, STATE.mn, STATE.mx, STATE.mu, STATE.sigma, false);
 generate();
 </script>
 </body>

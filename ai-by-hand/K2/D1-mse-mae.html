@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D1 — MSE / MAE (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,115 +25,153 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D1</span><h1>MSE / MAE <small>— hàm mất mát hồi quy</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài D1</span>
+    <h1>MSE / MAE <small>— hàm mất mát hồi quy: phạt bình phương vs tuyến tính</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mạng học bằng cách <b>giảm loss</b>. Chọn loss = chọn cách phạt sai. MSE phạt mạnh sai lớn (nhạy ngoại lệ),
-    MAE phạt đều (bền với ngoại lệ). Hiểu khác biệt để chọn đúng cho bài toán.
-    <div class="formula">
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mạng học bằng cách <b>giảm loss</b> — chọn loss = chọn cách phạt sai. Hãy <b>tự tay</b> tính MSE (phạt bình phương)
+    và MAE (phạt tuyệt đối) cho 3 mẫu. Phần thưởng: khám phá vì sao MSE <b>chạy theo ngoại lệ</b> còn MAE <b>bền</b> — qua "hằng số đoán tốt nhất".
+    <div class="formula" style="margin-top:5px">
       MSE = (1/m) Σ (ŷ − y)² &nbsp;&nbsp; MAE = (1/m) Σ |ŷ − y|
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    MSE như <b>phạt theo bình phương khoảng cách</b>: lệch gấp đôi thì phạt gấp bốn → rất ghét sai lớn. MAE phạt <b>tuyến tính</b>: lệch
-    gấp đôi phạt gấp đôi → công bằng với ngoại lệ hơn.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn nhãn &amp; dự đoán</h2><span class="tag">3 mẫu</span></div>
-    <div class="calc" style="font-size:15px">
+    <div class="calc big">
       y (thật) = ( <span class="gv" data-q="y1">2</span>, <span class="gv" data-q="y2">4</span>, <span class="gv" data-q="y3">6</span> ) &nbsp;;&nbsp;
       ŷ (dự đoán) = ( <span class="gv" data-q="p1">3</span>, <span class="gv" data-q="p2">4</span>, <span class="gv" data-q="p3">4</span> )
     </div>
-    <div class="note">Loss đo "dự đoán lệch nhãn bao nhiêu", gộp 3 mẫu thành một con số.</div>
+    <div class="why"><b>Vì sao:</b> loss gộp 3 mẫu thành <b>một</b> con số đo "dự đoán lệch nhãn bao nhiêu" — càng nhỏ càng tốt.</div>
   </div>
 
-  <!-- BƯỚC 1 — sai số -->
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Sai số từng mẫu (ŷ − y)</h2><span class="tag">phần dư</span></div>
-    <div class="calc">
-      ŷ − y = ( <span class="blk" style="min-width:28px"></span>, <span class="blk" style="min-width:28px"></span>, <span class="blk" style="min-width:28px"></span> )
+    <div class="calc big">
+      ŷ − y = ( <span class="wcell" style="min-width:38px"></span>, <span class="wcell" style="min-width:38px"></span>, <span class="wcell" style="min-width:38px"></span> )
     </div>
-    <div class="why"><b>Vì sao:</b> mọi loss đều bắt đầu từ phần dư (sai số) của mỗi mẫu.</div>
+    <div class="hint">Mọi loss đều bắt đầu từ phần dư (sai số) của mỗi mẫu.</div>
   </div>
 
-  <!-- BƯỚC 2 — MSE -->
+  <div class="grid2">
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>MSE — bình phương, trung bình</h2><span class="tag">phạt bình phương</span></div>
+    <div class="step-h"><div class="b">2</div><h2>MSE — bình phương</h2><span class="tag">phạt sai lớn mạnh</span></div>
     <div class="calc">
-      MSE = ( <span data-q="sqExpr">1² + 0² + (−2)²</span> )/3 = ( <span data-q="ssq">1 + 0 + 4</span> )/3 = <span class="blk" style="min-width:46px"></span>
+      MSE = ( <span data-q="sqExpr">1² + 0² + (−2)²</span> )/3<br>= ( <span data-q="ssq">1 + 0 + 4</span> )/3 = <span class="wcell" style="min-width:46px"></span>
     </div>
-    <div class="hint">Bình phương bỏ dấu &amp; phóng đại sai lớn (mẫu lệch nhiều đóng góp phần lớn loss).</div>
   </div>
 
-  <!-- BƯỚC 3 — MAE -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>MAE — trị tuyệt đối, trung bình</h2><span class="tag">phạt tuyến tính</span></div>
+    <div class="step-h"><div class="b">3</div><h2>MAE — trị tuyệt đối</h2><span class="tag">phạt đều</span></div>
     <div class="calc">
-      MAE = ( <span data-q="absExpr">|1| + |0| + |−2|</span> )/3 = ( <span data-q="sabs">3</span> )/3 = <span class="blk" style="min-width:40px"></span>
+      MAE = ( <span data-q="absExpr">|1| + |0| + |−2|</span> )/3<br>= ( <span data-q="sabs">3</span> )/3 = <span class="wcell" style="min-width:46px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> MAE coi sai 2 chỉ "gấp đôi" sai 1 → ngoại lệ ít lấn át kết quả.</div>
+  </div>
+  </div><!-- /grid2 -->
+
+  <div class="note"><b>Đối chiếu:</b> bình phương phóng đại sai lớn (mẫu lệch nhiều đóng góp phần lớn MSE); trị tuyệt đối coi sai gấp đôi chỉ "gấp đôi".</div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>MSE / MAE — hằng số đoán tốt nhất</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D1</span>
+    <h1>MSE / MAE <small>— MSE kéo về trung bình, MAE về trung vị</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
 
-  <!-- BƯỚC 4 — đạo hàm -->
+  <!-- STEP 4 — TỰ KIỂM -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vì sao thường chọn MSE để học</h2><span class="tag">gradient</span></div>
-    <div class="note">∂MSE/∂ŷᵢ = (2/m)(ŷᵢ − y) → <b>trơn</b>, tỉ lệ với sai số (sai nhiều sửa nhiều). ∂MAE/∂ŷᵢ = ±1/m → hằng, <b>gãy</b> tại 0.
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — MSE nhạy ngoại lệ, MAE bền</h2><span class="tag">trung bình vs trung vị</span></div>
+    <div class="note" style="margin-top:0">
+      Nếu chỉ được đoán <b>MỘT hằng số</b> c cho cả bộ nhãn thì c tốt nhất là: <b>trung bình</b> (nếu tối thiểu MSE) hay <b>trung vị</b> (nếu tối thiểu MAE).
+      Với y = ( <span data-q="y1">2</span>, <span data-q="y2">4</span>, <span data-q="y3">6</span> ):
+    </div>
+    <div class="calc big">
+      trung bình = (<span data-q="ySumExpr">2+4+6</span>)/3 = <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp;
+      trung vị (số giữa khi xếp) = <span class="wcell" style="min-width:44px"></span>
+    </div>
+    <div class="calc big">
+      Thêm 1 <b>ngoại lệ</b> y₄ = <span class="gv" data-q="outlier">20</span>: &nbsp; trung bình mới = <span class="wcell" style="min-width:52px"></span> &nbsp;·&nbsp; trung vị mới = <span class="wcell" style="min-width:52px"></span>
+    </div>
+    <div class="note">Trung bình <b>nhảy theo</b> ngoại lệ (nên MSE nhạy ngoại lệ), trung vị <b>gần như đứng yên</b> (nên MAE bền). Đó chính là khác biệt cốt lõi giữa hai loss.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vì sao thường chọn MSE để học</h2><span class="tag">gradient</span></div>
+    <div class="note" style="margin-top:2px">∂MSE/∂ŷᵢ = (2/m)(ŷᵢ − y) → <b>trơn</b>, tỉ lệ với sai số (sai nhiều sửa nhiều). ∂MAE/∂ŷᵢ = ±1/m → hằng, <b>gãy</b> tại 0.
       MSE cho gradient mượt dễ tối ưu; MAE bền ngoại lệ nhưng độ lớn gradient không đổi.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Loss nào nhạy ngoại lệ hơn? → <span class="blk" style="min-width:90px"></span></li>
-      <li>Vì sao MSE tiện cho gradient descent? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Loss nào nhạy ngoại lệ hơn? Vì sao? → <span class="blk" style="min-width:150px"></span></li>
+      <li>MSE kéo dự đoán về __, MAE về __ → <span class="blk" style="min-width:130px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — bình phương &amp; cộng ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính MSE &amp; MAE</span>
+    <span><span class="ck"></span>So trung bình/trung vị</span>
+    <span class="win">🎉 Bạn vừa "cân" hai hàm mất mát!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D1</span><h1>MSE / MAE <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D1</span><h1>MSE / MAE <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Sai số</h2></div>
-    <div class="calc ans">
-      ŷ − y = ( <span class="blk" data-q="e1">1</span>, <span class="blk" data-q="e2">0</span>, <span class="blk" data-q="e3">−2</span> )
+    <div class="calc ans big">
+      ŷ − y = ( <span class="wcell ans" data-q="e1">1</span>, <span class="wcell ans" data-q="e2">0</span>, <span class="wcell ans" data-q="e3">−2</span> )
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>MSE</h2></div>
-    <div class="calc ans">
-      MSE = ( <span data-q="ssq">1 + 0 + 4</span> )/3 = <span class="blk" data-q="mse">1.67</span>
-    </div>
+    <div class="calc ans">MSE = ( <span data-q="ssq">1 + 0 + 4</span> )/3 = <span class="wcell ans" data-q="mse">1.67</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>MAE</h2></div>
-    <div class="calc ans">
-      MAE = ( <span data-q="sabs">3</span> )/3 = <span class="blk" data-q="mae">1</span>
-    </div>
+    <div class="calc ans">MAE = ( <span data-q="sabs">3</span> )/3 = <span class="wcell ans" data-q="mae">1</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hình: loss theo sai số</h2><span class="tag">bình phương vs |·|</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Trung bình vs trung vị</h2><span class="tag">ngoại lệ</span></div>
     <div class="figrow">
-      <svg id="figL" class="fig" viewBox="0 0 210 150" width="66mm" height="44mm" aria-label="hai đường loss: bình phương (MSE) và trị tuyệt đối (MAE) theo sai số"></svg>
+      <svg id="figL" class="fig" viewBox="0 0 210 150" width="60mm" height="40mm" aria-label="hai đường loss: bình phương (MSE) và trị tuyệt đối (MAE) theo sai số"></svg>
       <div style="flex:1">
-        <div class="note">Đường <b>lam</b> = (sai số)² (MSE): cong, dốc mạnh khi lệch lớn. Đường <b>cam</b> = |sai số| (MAE): chữ V, dốc đều.
-          MSE phạt sai lớn nặng hơn hẳn.</div>
+        <div class="calc ans">
+          trung bình = <span class="wcell ans" data-q="meanY">4</span> · trung vị = <span class="wcell ans" data-q="medY">4</span><br>
+          +ngoại lệ <span data-q="outlier">20</span>: TB mới = <span class="wcell ans" data-q="meanOut">8</span> · TV mới = <span class="wcell ans" data-q="medOut">5</span>
+        </div>
+        <div class="note">TB nhảy theo ngoại lệ (đường <b>lam</b> = sai số², dốc mạnh khi lệch lớn ⇒ MSE nhạy); TV gần đứng yên (đường <b>cam</b> = |sai số|, dốc đều ⇒ MAE bền).</div>
       </div>
     </div>
   </div>
@@ -146,17 +179,17 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Nhạy ngoại lệ hơn? → <span class="qa">MSE (bình phương phạt mạnh sai lớn).</span></li>
-      <li>MSE tiện gradient? → <span class="qa">Gradient trơn, tỉ lệ với sai số (không gãy như MAE).</span></li>
+      <li>Nhạy ngoại lệ? → <span class="qa">MSE — bình phương phạt mạnh sai lớn, kéo dự đoán về trung bình (bị ngoại lệ lôi).</span></li>
+      <li>MSE→__ MAE→__ → <span class="qa">MSE kéo về trung bình; MAE kéo về trung vị (bền hơn).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> MSE phạt bình phương (nhạy ngoại lệ, gradient mượt); MAE phạt tuyến tính (bền hơn). Bài tiếp (D2): loss cho
-    <b>phân loại nhị phân</b> — Binary Cross-Entropy.
+    <b style="color:var(--accent2)">Rút ra.</b> MSE = <span data-q="mse">1.67</span> (phạt bình phương, nhạy ngoại lệ, kéo về trung bình, gradient mượt);
+    MAE = <span data-q="mae">1</span> (phạt tuyến tính, bền, kéo về trung vị). Bài D2: loss cho <b>phân loại nhị phân</b> — Binary Cross-Entropy.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D1 · MSE / MAE</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -171,6 +204,13 @@ function generate(){
   var ssq = sq[0]+sq[1]+sq[2], sabs = ab[0]+ab[1]+ab[2];
   var mse = ssq/3, mae = sabs/3;
 
+  // tự kiểm: hằng số đoán tốt nhất
+  var sorted = y.slice().sort(function(a,b){ return a-b; });
+  var meanY = (y[0]+y[1]+y[2])/3, medY = sorted[1];
+  var outlier = 20;
+  var s4 = y.slice().concat([outlier]).sort(function(a,b){ return a-b; });
+  var meanOut = (y[0]+y[1]+y[2]+outlier)/4, medOut = (s4[1]+s4[2])/2;
+
   WB.setAll({
     y1: f(y[0]), y2: f(y[1]), y3: f(y[2]),
     p1: f(p[0]), p2: f(p[1]), p3: f(p[2]),
@@ -179,7 +219,10 @@ function generate(){
     ssq: WB.sumExpr(sq, f),
     absExpr: e.map(function(v){ return '|' + f(v) + '|'; }).join(' + '),
     sabs: f(sabs),
-    mse: ft(mse), mae: ft(mae)
+    mse: ft(mse), mae: ft(mae),
+    ySumExpr: f(y[0]) + '+' + f(y[1]) + '+' + f(y[2]),
+    meanY: ft(meanY), medY: ft(medY),
+    outlier: String(outlier), meanOut: ft(meanOut), medOut: ft(medOut)
   });
   drawLoss('figL');
 }

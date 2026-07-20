@@ -3,20 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài E8 — Learning rate schedule (A4 in được)</title>
+<title>Làm toán AI · Bài E8 — Lịch học suất (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.lut{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#475569;background:#f1f5f9;border-radius:6px;padding:3px 8px;display:inline-block;margin-top:3px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -31,103 +25,153 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E8</span><h1>Lịch học suất <small>— step / cosine</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> η cố định: lớn thì cuối train dao động quanh đáy, nhỏ thì đầu train ì. Lịch học suất cho <b>cả hai cái
-    lợi</b>: khám phá nhanh lúc đầu, hội tụ mịn lúc cuối. Gần như mọi mô hình lớn đều dùng warmup + cosine decay.
-    <div class="formula">
-      Step: ηₜ = η₀·γ<sup>⌊t/k⌋</sup> &nbsp;&nbsp; Cosine: ηₜ = η₀·½(1 + cos(π·t/T))
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E8</span>
+    <h1>Lịch học suất <small>— step-decay co dần theo thời gian</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>hạ cánh máy bay</b>: ban đầu bay nhanh (η lớn) tới gần sân bay, rồi <b>giảm tốc dần</b> để đáp êm (η nhỏ). Đáp tốc độ cao
-    → nảy (dao động); bò chậm từ đầu → tốn thời gian.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> η <b>cố định</b>: lớn thì cuối train nảy quanh đáy mãi không lắng; nhỏ thì đầu train ì.
+    Lịch giảm suất học (step-decay) cho η <b>to lúc đầu</b> (đi nhanh), <b>nhỏ dần về sau</b> (bước co lại) → tự nhiên lắng vào đáy.
+    Hãy tự tay tính ηₜ, áp vào một bước GD, rồi tự kiểm: <b>tổng đường đi có bị CHẶN không?</b>
+    <div class="formula" style="margin-top:5px">
+      ηₜ = η₀·(½)ᵗ &nbsp;&nbsp;·&nbsp;&nbsp; bướcₜ = ηₜ·|g|
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng cos</h2><span class="tag">η₀ = <span data-q="eta0">0.1</span></span></div>
-    <div class="calc" style="font-size:15px">
-      Step: γ = <span class="gv" data-q="gamma">0.5</span>, k = <span class="gv" data-q="k">10</span> epoch · Cosine: T = <span class="gv" data-q="T">10</span>.
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">η₀ = <span data-q="eta0">0.8</span></span></div>
+    <div class="calc big">
+      Loss lồi 1 chiều L(w), tại điểm hiện tại: |gradient| = |g| = <span class="gv" data-q="g">5</span>
     </div>
-    <div class="lut">cos 0 = 1 · cos(π/2) = 0 · cos π = −1</div>
+    <div class="note">η₀ và |g| giữ nguyên suốt 4 bước; chỉ hệ số (½)ᵗ đổi theo bước t = 0,1,2,3.</div>
   </div>
 
-  <!-- BƯỚC 1 — step -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Step decay tại epoch k & 2k</h2><span class="tag">bậc thang</span></div>
-    <div class="calc">
-      η<sub>k</sub> = <span data-q="eta0">0.1</span>·<span data-q="gamma">0.5</span><sup>1</sup> = <span class="blk" style="min-width:44px"></span>;
-      η<sub>2k</sub> = <span data-q="eta0">0.1</span>·<span data-q="gamma">0.5</span><sup>2</sup> = <span class="blk" style="min-width:48px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Step-decay ηₜ (t = 0,1,2,3)</h2><span class="tag">ηₜ = η₀·(½)ᵗ</span></div>
+    <div class="calc big">
+      η₀ = <span data-q="eta0">0.8</span> &nbsp;·&nbsp;
+      η₁ = η₀·½ = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      η₂ = η₀·¼ = <span class="wcell" style="min-width:34px"></span> &nbsp;·&nbsp;
+      η₃ = η₀·⅛ = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> cứ k epoch, cắt η theo hệ số γ → bước nhỏ dần theo bậc thang.</div>
+    <div class="why"><b>Vì sao:</b> mỗi bước t tăng thêm 1, nhân thêm ½ → suất học co lại theo cấp số nhân.</div>
   </div>
 
-  <!-- BƯỚC 2 — cosine -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cosine tại t = 0, T/2, T</h2><span class="tag">mượt về 0</span></div>
-    <div class="calc">
-      t=0: η₀·½(1+1) = <span class="blk" style="min-width:40px"></span>;
-      t=T/2: η₀·½(1+0) = <span class="blk" style="min-width:44px"></span>;
-      t=T: η₀·½(1−1) = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">2</div><h2>Áp ηₜ vào 1 bước GD</h2><span class="tag">bướcₜ = ηₜ·|g|</span></div>
+    <div class="calc big">
+      bước₀ = <span class="wcell" style="min-width:36px"></span> &nbsp;
+      bước₁ = <span class="wcell" style="min-width:36px"></span> &nbsp;
+      bước₂ = <span class="wcell" style="min-width:36px"></span> &nbsp;
+      bước₃ = <span class="wcell" style="min-width:36px"></span>
     </div>
-    <div class="hint">cos đi từ 1 (t=0) → 0 (t=T/2) → −1 (t=T) → η giảm <b>mượt</b> từ η₀ về 0.</div>
+    <div class="hint">So 4 số vừa điền theo thứ tự — bước có co dần không?</div>
   </div>
 
-  <!-- BƯỚC 3 — so sánh -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>So sánh hai lịch</h2><span class="tag">giật vs trượt</span></div>
-    <div class="calc" style="font-size:14px">Step "giật bậc thang" mỗi k epoch; cosine "trượt êm" liên tục.</div>
-    <div class="why"><b>Vì sao:</b> cosine không có cú sốc đổi η → thường mượt hơn; step đơn giản, dễ hiểu.</div>
+    <div class="step-h"><div class="b">3</div><h2>So sánh: η hằng chạy 4 bước</h2><span class="tag">không giảm</span></div>
+    <div class="calc big">
+      Nếu giữ nguyên η₀ suốt 4 bước: tổng quãng đường = 4·η₀·|g| = <span class="wcell" style="min-width:44px"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> không co lại → nếu η₀ đủ lớn, bước có thể <b>nhảy qua đáy rồi quay lại</b> — nảy mãi quanh đáy, không lắng.</div>
   </div>
 
-  <!-- BƯỚC 4 — warmup -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E8 · Lịch học suất</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Tổng bước hữu hạn ⇒ hội tụ về điểm</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E8</span>
+    <h1>Lịch học suất <small>— vì sao giảm η đảm bảo hội tụ</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: tổng bước hình học hữu hạn ⇒ hội tụ -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Warmup</h2><span class="tag">tăng rồi giảm</span></div>
-    <div class="note">Nhiều mô hình lớn <b>tăng η từ 0</b> vài bước đầu (warmup) rồi mới cosine decay → tránh sốc lúc trọng số còn ngẫu nhiên.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — tổng quãng đường có hữu hạn không?</h2><span class="tag">Σ(½)ᵗ</span></div>
+    <div class="note" style="margin-top:0">
+      Cộng dồn hệ số (½)ᵗ: S₀ = <span class="gv" data-q="s0">1</span> (cho sẵn) → S₁ = S₀+½ = ? → S₂ = S₁+¼ = ? → S₃ = S₂+⅛ = ? Có tiến mãi hay dừng lại?
+    </div>
+    <div class="calc big">
+      S₁ = <span class="wcell" style="min-width:36px"></span> &nbsp;
+      S₂ = <span class="wcell" style="min-width:36px"></span> &nbsp;
+      S₃ = <span class="wcell" style="min-width:36px"></span> &nbsp;&nbsp;·&nbsp;&nbsp;
+      cộng mãi (t→∞): S<sub>∞</sub> = <span class="wcell" style="min-width:36px"></span>
+    </div>
+    <div class="calc big">
+      Vậy quãng đường TỐI ĐA một tham số có thể đi (mọi t) = η₀·|g|·S<sub>∞</sub> = <span class="wcell" style="min-width:48px"></span>
+    </div>
+    <div class="note">Hữu hạn ⇒ trọng số bị <b>nhốt trong một quả cầu</b> quanh điểm khởi đầu → buộc phải lắng lại. Ngược lại η <b>hằng</b>: Σ η = ∞ (phân kỳ) → không gì buộc dừng, có thể nảy mãi.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Warmup</h2><span class="tag">tăng rồi giảm</span></div>
+    <div class="note" style="margin-top:2px">Nhiều mô hình lớn <b>tăng η từ 0</b> vài bước đầu (warmup) rồi mới bắt đầu decay — tránh sốc khi trọng số còn ngẫu nhiên lúc mới khởi tạo.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vì sao giảm η về cuối train? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Cosine khác step ở điểm nào? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao Σ(½)ᵗ hữu hạn lại đảm bảo hội tụ? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao η hằng có thể không bao giờ lắng ở đáy? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E8 · Lịch học suất</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — cộng dồn (½)ᵗ, nhân η₀·|g| ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính ηₜ và bướcₜ</span>
+    <span><span class="ck"></span>Kiểm tổng bước hữu hạn</span>
+    <span class="win">🎉 Bạn vừa chứng minh vì sao lịch giảm η hội tụ!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E8 · Lịch học suất</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E8</span><h1>Lịch học suất <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E8</span><h1>Lịch học suất <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Step</h2></div>
-    <div class="calc ans">η<sub>k</sub> = <span class="blk" data-q="stepK">0.05</span>; η<sub>2k</sub> = <span class="blk" data-q="step2K">0.025</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Step-decay ηₜ</h2></div>
+    <div class="calc ans">η₁ = <span class="wcell ans" data-q="eta1">0.4</span> · η₂ = <span class="wcell ans" data-q="eta2">0.2</span> · η₃ = <span class="wcell ans" data-q="eta3">0.1</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cosine</h2></div>
-    <div class="calc ans">t=0: <span class="blk" data-q="cos0">0.1</span>; t=T/2: <span class="blk" data-q="cosHalf">0.05</span>; t=T: <span class="blk" data-q="cosEnd">0</span></div>
+    <div class="step-h"><div class="b">2</div><h2>bướcₜ = ηₜ·|g|</h2></div>
+    <div class="calc ans">bước₀ = <span class="wcell ans" data-q="step0">4</span> · bước₁ = <span class="wcell ans" data-q="step1">2</span> · bước₂ = <span class="wcell ans" data-q="step2">1</span> · bước₃ = <span class="wcell ans" data-q="step3">0.5</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent2)">∿</div><h2>η(t): bậc thang vs cosine</h2><span class="tag">giảm theo thời gian</span></div>
+    <div class="step-h"><div class="b">3</div><h2>η hằng: tổng 4 bước</h2></div>
+    <div class="calc ans">4·η₀·|g| = <span class="wcell ans" data-q="constSum4">16</span> &nbsp;<small style="color:#7a8794">(xa hơn nhiều so với lịch giảm)</small></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tổng bước hữu hạn ⇒ hội tụ</h2><span class="tag">quả cầu chặn</span></div>
     <div class="figrow">
-      <svg id="figL" class="fig" viewBox="0 0 240 150" width="76mm" height="48mm" aria-label="hai đường học suất theo epoch: step giật bậc thang, cosine trượt êm"></svg>
+      <svg id="figLR" class="fig" viewBox="0 0 250 150" width="78mm" height="45mm" aria-label="lịch giảm hội tụ về đáy parabol; η hằng nảy quanh đáy không lắng"></svg>
       <div style="flex:1">
-        <div class="note"><b>Cam (bậc thang)</b> = step decay: giữ nguyên rồi cắt đột ngột mỗi k epoch. <b>Lam (cong)</b> = cosine: giảm mượt
-          liên tục về 0. Cả hai cùng to lúc đầu, nhỏ về sau.</div>
+        <div class="calc ans">S₁=<span class="wcell ans" data-q="s1">1.5</span> S₂=<span class="wcell ans" data-q="s2">1.75</span> S₃=<span class="wcell ans" data-q="s3">1.875</span> S<sub>∞</sub>=<span class="wcell ans" data-q="sinf">2</span></div>
+        <div class="calc ans">η₀·|g|·S<sub>∞</sub> = <span class="wcell ans" data-q="totalInf">8</span></div>
+        <div class="note"><b>Cam</b> = lịch giảm: mỗi bước co lại, tiến sát đáy nhưng tổng đường đi bị chặn ≤ η₀·|g|·2. <b>Xám nét đứt</b> = η hằng: bước không co, nảy qua-lại quanh đáy mãi không lắng.</div>
       </div>
     </div>
   </div>
@@ -135,54 +179,64 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Giảm η cuối train? → <span class="qa">Để tinh chỉnh quanh đáy, tránh dao động.</span></li>
-      <li>Cosine khác step? → <span class="qa">Giảm mượt liên tục, không nhảy bậc.</span></li>
+      <li>Vì sao Σ(½)ᵗ hữu hạn đảm bảo hội tụ? → <span class="qa">Tổng quãng đường tối đa là số hữu hạn (η₀|g|·2) → trọng số bị nhốt trong một vùng bán kính đó, buộc phải dừng lại (lắng).</span></li>
+      <li>Vì sao η hằng có thể không lắng? → <span class="qa">Σ η qua vô hạn bước = ∞ (phân kỳ) → không có giới hạn nào buộc bước phải nhỏ dần, có thể nảy qua đáy mãi.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Lịch η = to lúc đầu, nhỏ về sau (step / cosine, + warmup). Bài tiếp (E9): chặn gradient quá
-    lớn — <b style="color:var(--accent2)">gradient clipping</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> Step-decay ηₜ=η₀·(½)ᵗ có tổng quãng đường hữu hạn (Σ(½)ᵗ → 2) ⇒ trọng số buộc phải lắng tại đáy; η hằng có tổng vô hạn ⇒ có thể nảy mãi.
+    Bài tiếp (E9): chặn gradient quá lớn — <b style="color:var(--accent2)">gradient clipping</b>.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E8 · Lịch học suất</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E8 · Lịch học suất</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  function f(v){ return WB.fmtTrim(Math.round(v*1000)/1000); }
-  var eta0 = WB.pick([0.1, 0.2]);
-  var gamma = 0.5, k = 10, T = 10;
+  var eta0 = WB.pick([0.8, 1.6]);
+  var g = WB.randInt(3, 9);
+  var eta1 = eta0/2, eta2 = eta0/4, eta3 = eta0/8;
+  var step0 = eta0*g, step1 = eta1*g, step2 = eta2*g, step3 = eta3*g;
+  var constSum4 = 4*eta0*g;
+  var s0 = 1, s1 = 1.5, s2 = 1.75, s3 = 1.875, sinf = 2;
+  var totalInf = eta0*g*sinf;
   WB.setAll({
-    eta0: String(eta0), gamma: String(gamma), k: String(k), T: String(T),
-    stepK: f(eta0*gamma), step2K: f(eta0*gamma*gamma),
-    cos0: f(eta0), cosHalf: f(eta0*0.5), cosEnd: '0'
+    eta0: WB.fmtTrim(eta0), g: String(g),
+    eta1: WB.fmtTrim(eta1), eta2: WB.fmtTrim(eta2), eta3: WB.fmtTrim(eta3),
+    step0: WB.fmtTrim(step0), step1: WB.fmtTrim(step1), step2: WB.fmtTrim(step2), step3: WB.fmtTrim(step3),
+    constSum4: WB.fmtTrim(constSum4),
+    s0: String(s0), s1: String(s1), s2: String(s2), s3: String(s3), sinf: String(sinf),
+    totalInf: WB.fmtTrim(totalInf)
   });
-  drawLR('figL', eta0);
+  drawLR('figLR');
 }
 
-// η(t): step (bậc thang, cam) vs cosine (cong, lam)
-function drawLR(id, eta0){
+// Bowl (parabol lồi) + đường lịch giảm (cam, co dần vào đáy) vs η hằng (xám, nảy quanh đáy)
+function drawLR(id){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var x0 = 26, y0 = 120, W = 196, H = 96, T = 20;   // vẽ tới 2k = 20 epoch
-  function X(t){ return (x0 + t/T*W).toFixed(1); }
-  function Y(v){ return (y0 - (v/eta0)*H).toFixed(1); }  // chuẩn hóa theo η0
-  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s += '<line x1="'+x0+'" y1="'+(y0-H)+'" x2="'+x0+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s += '<text x="'+(x0-2)+'" y="'+(y0-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">η</text>';
-  s += '<text x="'+(x0+W)+'" y="'+(y0+11)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">epoch</text>';
-  // step: η0 [0,10), η0/2 [10,20)
-  var stepPts = X(0)+','+Y(eta0)+' '+X(10)+','+Y(eta0)+' '+X(10)+','+Y(eta0*0.5)+' '+X(20)+','+Y(eta0*0.5);
-  s += '<polyline points="'+stepPts+'" fill="none" stroke="#b45309" stroke-width="2.2"/>';
-  // cosine trên [0,10] về 0 (vẽ tới t=10 rồi giữ 0)
-  var cp = '';
-  for (var t=0;t<=10;t+=1){ cp += X(t)+','+Y(eta0*0.5*(1+Math.cos(Math.PI*t/10)))+' '; }
-  cp += X(20)+','+Y(0);
-  s += '<polyline points="'+cp.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.2"/>';
-  s += '<text x="'+X(14)+'" y="'+Y(eta0*0.45)+'" style="font-size:8px" fill="#b45309" font-weight="700">step</text>';
-  s += '<text x="'+X(5.2)+'" y="'+Y(eta0*0.62)+'" style="font-size:8px" fill="#0e7490" font-weight="700">cosine</text>';
+  function y(x){ var dx = x-125; return 136 - 0.013*dx*dx; }
+  var bowl = 'M 30 '+y(30).toFixed(1)+' Q 125 148 220 '+y(220).toFixed(1);
+  var s = '<path d="'+bowl+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
+  s += '<text x="125" y="16" text-anchor="middle" style="font-size:9px" fill="#475569" font-weight="700">L(w) — lồi 1 chiều</text>';
+
+  // lịch giảm: hội tụ dần vào đáy (x=125), co theo tỉ lệ bất biến (½)ᵗ
+  var decX = [45, 85, 105, 115, 120];
+  var pts = decX.map(function(x){ return x.toFixed(1)+','+y(x).toFixed(1); }).join(' ');
+  s += '<polyline points="'+pts+'" fill="none" stroke="#b45309" stroke-width="2"/>';
+  decX.forEach(function(x,i){ s += '<circle cx="'+x+'" cy="'+y(x).toFixed(1)+'" r="'+(4.5-i*0.5)+'" fill="#b45309"/>'; });
+  s += '<text x="60" y="'+(y(60)-8).toFixed(1)+'" style="font-size:8px" fill="#b45309" font-weight="700">lịch giảm → lắng ở đáy</text>';
+
+  // η hằng: nảy qua lại quanh đáy, biên độ không co
+  var bx = [95, 155, 95, 155];
+  var by = [98, 98, 98, 98];
+  var bp = bx.map(function(x,i){ return x+','+by[i]; }).join(' ');
+  s += '<polyline points="'+bp+'" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3"/>';
+  bx.forEach(function(x,i){ s += '<circle cx="'+x+'" cy="'+by[i]+'" r="4" fill="#fff" stroke="#94a3b8" stroke-width="1.6"/>'; });
+  s += '<text x="125" y="86" text-anchor="middle" style="font-size:8px" fill="#7a8794" font-weight="700">η hằng → nảy mãi, không lắng</text>';
+
   svg.innerHTML = s;
 }
 WB.wire(generate);

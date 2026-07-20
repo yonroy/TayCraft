@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B6 — PCA 2D (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,39 +22,35 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B6</span><h1>PCA 2D <small>— Principal Component Analysis</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Dữ liệu nhiều chiều khó nhìn và tốn tính. PCA giữ lại <b>vài hướng mang nhiều thông tin nhất</b>
-    (phương sai lớn) và bỏ phần "phẳng" — nén dữ liệu, khử nhiễu, trực quan hóa.
-    <div class="formula">
-      x' = x − x̄ &nbsp;|&nbsp; C = (1/m)·Σ x'·x'ᵀ &nbsp;|&nbsp; trục chính = vectơ riêng (λ lớn nhất) &nbsp;|&nbsp; tọa độ mới = x'·v
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài B6</span>
+    <h1>PCA 2D <small>— tìm chiều dữ liệu trải dài nhất</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Đám điểm như một <b>vệt khói nghiêng</b>. PCA xoay trục để <b>trục thứ nhất nằm dọc theo chiều vệt dài nhất</b> (trải nhiều
-    nhất). Chiếu lên trục đó giữ được phần lớn "hình dạng" dữ liệu chỉ bằng một chiều.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho <b>3 điểm 2D</b>. Hãy <b>tự tay</b> trung tâm hóa, dựng ma trận hiệp phương sai C,
+    tìm <b>trục chính</b> (vectơ riêng λ lớn nhất) rồi chiếu dữ liệu xuống 1 chiều.
+    Phần thưởng: kiểm hai trục PCA <b>trực chuẩn</b> (đơn vị &amp; vuông góc) — vì sao bỏ trục phụ không mất gì.
   </div>
 
   <!-- BƯỚC 0 -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Dữ liệu cho sẵn</h2><span class="tag">3 điểm 2D</span></div>
+    <div class="step-h"><div class="b">0</div><h2>Dữ liệu &amp; trung bình</h2><span class="tag">3 điểm</span></div>
     <div class="row">
       <div class="mwrap"><div class="mlabel">(x, y)</div>
-        <div class="mtx c2" style="--cell:16mm">
+        <div class="mtx c2" style="--cell:15mm">
           <div class="cell given" data-q="x1">1</div><div class="cell given" data-q="y1">1</div>
           <div class="cell given" data-q="x2">2</div><div class="cell given" data-q="y2">2</div>
           <div class="cell given" data-q="x3">3</div><div class="cell given" data-q="y3">3</div>
         </div></div>
-      <div class="calc" style="flex:1">
-        Trung bình x̄ = (<span class="blk"></span>, <span class="blk"></span>)
-        <div class="why" style="margin-top:5px"><b>Vì sao:</b> PCA đo <b>độ trải quanh trung bình</b>, nên phải dời gốc về x̄ trước.</div>
+      <div class="calc big" style="flex:1">
+        x̄ = ( (<span data-q="x1">1</span>+<span data-q="x2">2</span>+<span data-q="x3">3</span>)/3 , (<span data-q="y1">1</span>+<span data-q="y2">2</span>+<span data-q="y3">3</span>)/3 ) = ( <span class="wcell"></span> , <span class="wcell"></span> )
+        <div class="why" style="margin-top:5px"><b>Vì sao:</b> PCA đo <b>độ trải quanh trung bình</b>, nên phải dời gốc về x̄ trước khi tính.</div>
       </div>
     </div>
   </div>
@@ -59,34 +59,28 @@
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Trung tâm hóa</h2><span class="tag">x − x̄</span></div>
-    <div class="calc">
-      x'₁ = (<span class="blk"></span>, <span class="blk"></span>)<br>
-      x'₂ = (<span class="blk"></span>, <span class="blk"></span>)<br>
-      x'₃ = (<span class="blk"></span>, <span class="blk"></span>)
+    <div class="calc big">
+      x'₁ = ( <span class="wcell"></span> , <span class="wcell"></span> )<br>
+      x'₂ = ( <span class="wcell"></span> , <span class="wcell"></span> )<br>
+      x'₃ = ( <span class="wcell"></span> , <span class="wcell"></span> )
     </div>
-    <div class="hint"><b>Mẹo:</b> trừ x̄ khỏi từng điểm → đám điểm "dồn quanh gốc".</div>
+    <div class="hint"><b>Mẹo:</b> trừ x̄ khỏi từng điểm → đám điểm dồn quanh gốc.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Hiệp phương sai C</h2><span class="tag">2×2</span></div>
-    <div class="calc">
+    <div class="calc big">
       C = (1/3)·Σ x'x'ᵀ<br>
-      C₁₁ = <span class="blk"></span> &nbsp; C₁₂ = <span class="blk"></span> &nbsp; C₂₂ = <span class="blk"></span>
+      C₁₁ = (1/3)Σx'² = <span class="wcell"></span><br>
+      C₂₂ = (1/3)Σy'² = <span class="wcell"></span><br>
+      C₁₂ = (1/3)Σx'y' = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> C đối xứng; phần tử ngoài đường chéo = mức <b>đồng biến</b> giữa hai trục.</div>
+    <div class="note">C đối xứng; C₁₂ = mức <b>đồng biến</b> hai trục.</div>
   </div>
   </div><!-- /grid2 -->
 
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Trục chính = vectơ riêng (λ lớn nhất)</h2><span class="tag">hướng phương sai max</span></div>
-    <div class="calc">
-      C tỉ lệ [[1, <span data-q="sgn">1</span>],[<span data-q="sgn">1</span>, 1]] → λ lớn = <span class="blk" style="min-width:30px"></span>,
-      v = (<span class="blk" style="min-width:24px"></span>, <span class="blk" style="min-width:24px"></span>)/√2
-    </div>
-    <div class="why"><b>Vì sao:</b> hướng v là nơi dữ liệu trải dài nhất (mọi điểm gần như nằm trên đường này) → giữ gần 100% phương sai.</div>
-  </div>
+  <div class="scratch" style="height:18mm"><span class="lb">✏️ Nháp — bình phương &amp; nhân chéo từng x' ở đây</span></div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B6 · PCA 2D</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
@@ -95,35 +89,65 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>PCA 2D — tiếp theo</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
-  <div class="wb-title"><span class="no">Bài B6</span><h1>PCA 2D <small>— vẽ trục chính</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài B6</span>
+    <h1>PCA 2D <small>— trục chính, chiếu &amp; kiểm trực chuẩn</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
 
-  <!-- BƯỚC 4 -->
+  <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vẽ trục chính qua đám điểm</h2><span class="tag">hướng v</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Trục chính &amp; chiếu xuống 1 chiều</h2><span class="tag">λ lớn nhất</span></div>
+    <div class="calc big">
+      C ∝ [[1, <span class="gv" data-q="sgn">1</span>],[<span class="gv" data-q="sgn">1</span>, 1]] → λ lớn = <span class="wcell" style="min-width:30px"></span>,
+      trục chính v = (1, <span class="gv" data-q="sgn">1</span>)/√2<br>
+      Tọa độ mới sᵢ = x'ᵢ·v: &nbsp; s₁ = <span class="wcell"></span> · s₂ = <span class="wcell"></span> · s₃ = <span class="wcell"></span>
+    </div>
+    <div class="why"><b>Vì sao:</b> v là hướng dữ liệu trải dài nhất (giữ gần 100% phương sai); mỗi điểm nén thành <b>một số</b> sᵢ mà vẫn tách nhau.</div>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM: trực chuẩn -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — hai trục trực chuẩn</h2><span class="tag">đơn vị · vuông góc</span></div>
+    <div class="calc big">
+      ‖v‖² = (1² + (<span class="gv" data-q="sgn">1</span>)²)/2 = <span class="wcell" style="min-width:30px"></span> → ‖v‖ = <span class="wcell" style="min-width:30px"></span> <small style="color:#7a8794">(phải = 1)</small><br>
+      Trục phụ v₂ = (<span class="gv" data-q="nsgn">−1</span>, 1)/√2 &nbsp; ⟹ &nbsp; v·v₂ = (1·(<span class="gv" data-q="nsgn">−1</span>) + <span class="gv" data-q="sgn">1</span>·1)/2 = <span class="wcell" style="min-width:30px"></span> <small style="color:#7a8794">(phải = 0)</small><br>
+      Phương sai theo v₂ = <span class="wcell" style="min-width:30px"></span> <small style="color:#7a8794">(mọi điểm nằm trên trục chính)</small>
+    </div>
+    <div class="note">Vectơ riêng của ma trận đối xứng luôn <b>trực chuẩn</b>: dài 1, vuông góc nhau. Trục phụ ở đây có phương sai <b>0</b> → bỏ đi <b>không mất thông tin</b> — chính là sức mạnh giảm chiều của PCA.</div>
+  </div>
+
+  <!-- BƯỚC 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Kiểm bằng hình — kẻ trục chính</h2><span class="tag">hướng v</span></div>
     <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="68mm" height="51mm" aria-label="ba điểm cho sẵn, khung trống để tự kẻ trục chính"></svg>
-      <div style="flex:1">
-        <div class="why"><b>Vì sao:</b> trục chính (vectơ riêng λ lớn) chạy <b>dọc theo chiều dữ liệu trải dài nhất</b> — gần như xuyên qua cả 3 điểm.</div>
-        <div class="note">Tự kẻ đường thẳng qua trung bình x̄ theo hướng v = (1, <span class="gv" data-q="sgn">1</span>)/√2; nhận xét cả 3 điểm gần như nằm trên đường.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="60mm" height="45mm" aria-label="ba điểm cho sẵn, khung trống để tự kẻ trục chính"></svg>
+      <div style="flex:1;min-width:46mm">
+        <div class="note">Tự kẻ đường qua x̄ theo hướng v = (1, <span class="gv" data-q="sgn">1</span>)/√2; nhận xét cả 3 điểm gần như nằm trên đường.</div>
       </div>
     </div>
   </div>
 
-  <!-- TỰ KIỂM TRA -->
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Trục chính PCA là vectơ riêng ứng trị riêng nào? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Vì sao phải trung tâm hóa trước? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Trục chính ứng trị riêng nào của C? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao phải trung tâm hóa trước? → <span class="blk" style="min-width:180px"></span></li>
     </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Dựng xong C</span>
+    <span><span class="ck"></span>Chiếu &amp; kiểm trực chuẩn</span>
+    <span class="win">🎉 Bạn vừa giảm 2 chiều → 1 chiều!</span>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B6 · PCA 2D</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -133,38 +157,46 @@
 
   <div class="step">
     <div class="step-h"><div class="b">0–1</div><h2>Trung bình &amp; trung tâm hóa</h2></div>
-    <div class="calc ans">
-      x̄ = (<span class="blk" data-q="xb">2</span>, <span class="blk" data-q="yb">2</span>) &nbsp;→&nbsp;
-      x' = (<span class="blk" data-q="cx1">−1</span>,<span class="blk" data-q="cy1">−1</span>),
-      (<span class="blk" data-q="cx2">0</span>,<span class="blk" data-q="cy2">0</span>),
-      (<span class="blk" data-q="cx3">1</span>,<span class="blk" data-q="cy3">1</span>)
+    <div class="calc ans big">
+      x̄ = (<span class="wcell ans" data-q="xb">2</span>, <span class="wcell ans" data-q="yb">2</span>) &nbsp;→&nbsp;
+      x'₁=(<span class="wcell ans" data-q="cx1">−1</span>,<span class="wcell ans" data-q="cy1">−1</span>),
+      x'₂=(<span class="wcell ans" data-q="cx2">0</span>,<span class="wcell ans" data-q="cy2">0</span>),
+      x'₃=(<span class="wcell ans" data-q="cx3">1</span>,<span class="wcell ans" data-q="cy3">1</span>)
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Hiệp phương sai</h2></div>
-    <div class="calc ans">
-      C = (2/3)·[[1, <span data-q="sgn">1</span>],[<span data-q="sgn">1</span>, 1]] &nbsp; → &nbsp;
-      C₁₁ = <span class="blk" data-q="C11">2/3</span>, C₁₂ = <span class="blk" data-q="C12">2/3</span>, C₂₂ = <span class="blk" data-q="C22">2/3</span>
+    <div class="calc ans big">
+      C₁₁ = <span class="wcell ans" data-q="C11">2/3</span> &nbsp; C₂₂ = <span class="wcell ans" data-q="C22">2/3</span> &nbsp; C₁₂ = <span class="wcell ans" data-q="C12">2/3</span>
+      &nbsp;→&nbsp; C = (2/3)·[[1, <span class="gv" data-q="sgn">1</span>],[<span class="gv" data-q="sgn">1</span>, 1]]
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Trục chính &amp; chiếu</h2></div>
-    <div class="calc ans">
-      λ lớn = <span class="blk" data-q="lam">2</span>, v = (<span class="blk" data-q="vx">1</span>, <span class="blk" data-q="vy">1</span>)/√2 &nbsp;|&nbsp;
-      chiếu x'₃ = x'₃·v = 2/√2 = √2 ≈ <span class="blk" data-q="proj3">1.41</span>
+    <div class="calc ans big">
+      λ lớn = <span class="wcell ans" data-q="lam">2</span>, v = (1, <span class="wcell ans" data-q="vy">1</span>)/√2 &nbsp;|&nbsp;
+      s₁ = <span class="wcell ans" data-q="s1">−1.41</span> · s₂ = <span class="wcell ans" data-q="s2">0</span> · s₃ = <span class="wcell ans" data-q="s3">1.41</span> &nbsp;<small style="color:#7a8794">(±√2)</small>
     </div>
-    <div class="note">Trục phụ (vuông góc v) có phương sai <b>0</b> → bỏ đi không mất gì; đó là sức mạnh giảm chiều của PCA.</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Hình minh họa</h2><span class="tag">trục chính</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — trực chuẩn</h2></div>
+    <div class="calc ans big">
+      ‖v‖² = <span class="wcell ans" data-q="vn2">1</span> → ‖v‖ = <span class="wcell ans" data-q="vn">1</span> ✓ &nbsp;·&nbsp;
+      v·v₂ = <span class="wcell ans" data-q="vdot">0</span> ✓ &nbsp;·&nbsp;
+      phương sai v₂ = <span class="wcell ans" data-q="var2">0</span> ✓
+    </div>
+    <div class="why"><b>Vì sao khớp:</b> ‖v‖²=(1+1)/2=1 nên v là vectơ đơn vị; v·v₂=0 nên hai trục vuông góc (đúng cho mọi C đối xứng). Trục phụ phương sai 0 ⇒ bỏ đi lossless.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Hình minh họa</h2></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 200 150" width="68mm" height="51mm" aria-label="ba điểm nằm trên một đường, trục chính PCA dọc theo đường đó"></svg>
-      <div style="flex:1">
-        <div class="note">Ba điểm gần như nằm trên một đường; <b style="color:var(--accent2)">trục chính (cam)</b> chạy dọc theo đường đó —
-        chiều dữ liệu trải dài nhất.</div>
+      <svg id="figK" class="fig" viewBox="0 0 200 150" width="60mm" height="45mm" aria-label="ba điểm nằm trên một đường, trục chính PCA dọc theo đường đó"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="note">Ba điểm gần như nằm trên một đường; <b style="color:var(--accent2)">trục chính (cam)</b> chạy dọc theo đường đó — chiều dữ liệu trải dài nhất.</div>
       </div>
     </div>
   </div>
@@ -172,14 +204,14 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Trục chính ứng trị riêng nào? → <span class="qa">Lớn nhất (phương sai lớn nhất).</span></li>
-      <li>Vì sao trung tâm hóa? → <span class="qa">Để đo phương sai quanh trung bình, không bị lệch bởi vị trí gốc.</span></li>
+      <li>Ứng trị riêng nào? → <span class="qa">Lớn nhất (phương sai giữ được lớn nhất).</span></li>
+      <li>Vì sao trung tâm hóa? → <span class="qa">Để đo phương sai quanh trung bình, không lệch bởi vị trí gốc.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> PCA = trung tâm hóa → hiệp phương sai → vectơ riêng lớn nhất → chiếu; giữ thông tin
-    bằng ít chiều hơn. Hết mạch ML "thuần đại số"; Bài tiếp (B7): phân loại bằng xác suất — <b>Naive Bayes</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> PCA = trung tâm hóa → hiệp phương sai → vectơ riêng lớn nhất → chiếu; hai trục trực chuẩn nên
+    bỏ trục phương sai nhỏ là lossy có kiểm soát. Hết mạch ML "thuần đại số"; Bài tiếp (B7): phân loại bằng xác suất — <b>Naive Bayes</b>.
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B6 · PCA 2D</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
@@ -194,10 +226,10 @@ function generate(){
   var xb = cx, yb = cy;
   var c = p.map(function(q){ return [q[0]-xb, q[1]-yb]; });   // (−1,−sgn),(0,0),(1,sgn)
   // C = (2/3)[[1,sgn],[sgn,1]]
-  var f23 = '2/3';
   var C12 = sgn > 0 ? '2/3' : '−2/3';
-  // chiếu x'3 = (1,sgn)·(1,sgn)/√2 = 2/√2 = √2
-  var proj3 = (2/Math.sqrt(2)).toFixed(2);
+  // chiếu sᵢ = x'ᵢ·v, v=(1,sgn)/√2
+  var s1 = ((-1)*1 + (-sgn)*sgn) / Math.sqrt(2);   // = −2/√2 = −√2
+  var s3 = ((1)*1 + (sgn)*sgn) / Math.sqrt(2);     // = √2
 
   WB.setAll({
     x1: WB.fmtInt(p[0][0]), y1: WB.fmtInt(p[0][1]),
@@ -207,9 +239,11 @@ function generate(){
     cx1: WB.fmtInt(c[0][0]), cy1: WB.fmtInt(c[0][1]),
     cx2: WB.fmtInt(c[1][0]), cy2: WB.fmtInt(c[1][1]),
     cx3: WB.fmtInt(c[2][0]), cy3: WB.fmtInt(c[2][1]),
-    sgn: WB.fmtInt(sgn),
-    C11: f23, C12: C12, C22: f23,
-    lam: '2', vx: '1', vy: WB.fmtInt(sgn), proj3: WB.fmt2(proj3)
+    sgn: WB.fmtInt(sgn), nsgn: WB.fmtInt(-sgn),
+    C11: '2/3', C12: C12, C22: '2/3',
+    lam: '2', vy: WB.fmtInt(sgn),
+    s1: WB.fmt2(s1.toFixed(2)), s2: '0', s3: WB.fmt2(s3.toFixed(2)),
+    vn2: '1', vn: '1', vdot: '0', var2: '0'
   });
 
   drawPCA('figK', p, [xb,yb], [1,sgn]);

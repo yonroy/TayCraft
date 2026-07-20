@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E4 — L1 regularization (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,112 +25,143 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E4</span><h1>L1 regularization <small>— phạt |w| → thưa</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> L1 phạt <b>Σ|w|</b> thay vì Σw². Khác biệt then chốt: L1 không chỉ làm w nhỏ mà <b>tắt hẳn</b> đặc
-    trưng ít quan trọng (w = 0) → mô hình <b>thưa</b>, gọn, dễ giải thích, tự loại đặc trưng nhiễu.
-    <div class="formula">
-      L_tổng = L_data + λ·Σ|wᵢ| &nbsp;&nbsp; ∂(phạt)/∂wᵢ = λ·sign(wᵢ)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E4</span>
+    <h1>L1 regularization <small>— phạt |w| → trọng số thưa (về đúng 0)</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    L1 kéo trọng số về 0 bằng <b>một lực không đổi</b> λ (theo dấu), bất kể w lớn hay nhỏ. Lực hằng đó đủ sức "ghim" các w nhỏ về
-    đúng 0. L2 thì lực giảm dần khi w nhỏ nên chỉ làm w bé chứ hiếm khi = 0.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> L1 phạt <b>Σ|w|</b> thay vì Σw². Khác biệt then chốt: L1 kéo w về 0 bằng một <b>lực không đổi</b> λ (theo dấu) → "ghim" các w nhỏ về <b>đúng 0</b> → mô hình <b>thưa</b>, tự loại đặc trưng nhiễu.
+    Hãy <b>tự tay</b> chạy một bước L1. Phần thưởng: thấy L1 có "vùng chết" ép về 0 hẳn — còn L2 (E3) chỉ co gần 0.
+    <div class="formula" style="margin-top:5px">
+      L_tổng = L_data + λ·Σ|wᵢ| &nbsp;·&nbsp; ∂(phạt)/∂wᵢ = λ·sign(wᵢ) &nbsp;→&nbsp; w ← w − η(g + λ·sign w)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">λ = <span data-q="lam">0.1</span> · η = <span data-q="eta">0.1</span></span></div>
-    <div class="calc" style="font-size:15px">
-      w = (<span class="gv" data-q="w1">2</span>, <span class="gv" data-q="w2">−1</span>, <span class="gv" data-q="w3">3</span>) ·
-      gradient dữ liệu g = (<span class="gv" data-q="g1">0.5</span>, <span class="gv" data-q="g2">0.5</span>, <span class="gv" data-q="g3">−0.5</span>)
+    <div class="calc big">
+      w = (<span class="gv" data-q="w1">2</span>, <span class="gv" data-q="w2">−1</span>, <span class="gv" data-q="w3">3</span>) &nbsp;·&nbsp;
+      g<sub>data</sub> = (<span class="gv" data-q="g1">0.5</span>, <span class="gv" data-q="g2">0.5</span>, <span class="gv" data-q="g3">−0.5</span>)
     </div>
-    <div class="note">Mục tiêu: thêm phạt L1 vào loss rồi cập nhật một bước trọng số.</div>
   </div>
 
-  <!-- BƯỚC 1 — phạt L1 -->
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Phạt L1</h2><span class="tag">λ·Σ|w|</span></div>
-    <div class="calc">
-      λ·Σ|w| = <span data-q="lam">0.1</span>·(|<span data-q="w1">2</span>| + |<span data-q="w2">−1</span>| + |<span data-q="w3">3</span>|)
-      = <span data-q="lam">0.1</span>·<span data-q="sumabs">6</span> = <span class="blk" style="min-width:50px"></span>
+    <div class="calc big">
+      λ·Σ|w| = <span data-q="lam">0.1</span>·(|<span data-q="w1">2</span>| + |<span data-q="w2">−1</span>| + |<span data-q="w3">3</span>|) = <span data-q="lam">0.1</span>·<span data-q="sumabs">6</span> = <span class="wcell" style="min-width:48px"></span>
     </div>
     <div class="why"><b>Vì sao:</b> phạt tổng độ lớn tuyệt đối — không bình phương nên không "tha" w lớn.</div>
   </div>
 
-  <!-- BƯỚC 2 — gradient phạt -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Gradient phạt = λ·sign(w)</h2><span class="tag">chỉ phụ thuộc dấu</span></div>
-    <div class="calc">
-      <span data-q="lam">0.1</span>·(sign <span data-q="w1">2</span>, sign <span data-q="w2">−1</span>, sign <span data-q="w3">3</span>)
-      = (<span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>)
+    <div class="step-h"><div class="b">2</div><h2>Gradient phạt = λ·sign(w)</h2><span class="tag">chỉ theo dấu</span></div>
+    <div class="calc big">
+      <span data-q="lam">0.1</span>·(sign <span data-q="w1">2</span>, sign <span data-q="w2">−1</span>, sign <span data-q="w3">3</span>) = (<span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:40px"></span>)
     </div>
     <div class="hint">sign(w) = +1 nếu w&gt;0, −1 nếu w&lt;0 — không phụ thuộc độ lớn w.</div>
   </div>
 
-  <!-- BƯỚC 3 — cập nhật -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Cập nhật trọng số</h2><span class="tag">w ← w − η·(g + λ·sign w)</span></div>
-    <div class="calc">
-      w − <span data-q="eta">0.1</span>·(g + λ·sign w) =
-      (<span class="blk" style="min-width:48px"></span>, <span class="blk" style="min-width:48px"></span>, <span class="blk" style="min-width:48px"></span>)
+    <div class="step-h"><div class="b">3</div><h2>Cập nhật trọng số</h2><span class="tag">w − η(g + λ·sign w)</span></div>
+    <div class="calc big">
+      w − <span data-q="eta">0.1</span>·(g + λ·sign w) = (<span class="wcell" style="min-width:46px"></span>, <span class="wcell" style="min-width:46px"></span>, <span class="wcell" style="min-width:46px"></span>)
     </div>
-    <div class="why"><b>Vì sao:</b> lực hằng λ·sign tiếp tục đẩy về 0; lặp nhiều bước, w nhỏ sẽ chạm 0 và <b>dừng</b> ở đó.</div>
+    <div class="why"><b>Vì sao:</b> lực hằng λ·sign tiếp tục đẩy về 0; lặp nhiều bước, w nhỏ sẽ chạm 0 và <b>dừng</b>.</div>
   </div>
 
-  <!-- BƯỚC 4 — thưa vs mượt -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E4 · L1 regularization</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>L1 có "vùng chết" ép về đúng 0</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E4</span>
+    <h1>L1 regularization <small>— vì sao L1 tạo số 0 mà L2 thì không</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: soft-threshold ép về 0 -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Thưa vs mượt</h2><span class="tag">L1 ⟂ L2</span></div>
-    <div class="note">L1 → nhiều w = 0 (thưa, chọn đặc trưng); L2 → mọi w nhỏ đều nhau (mượt, không = 0). Ghép cả hai = <b>Elastic Net</b>.
-      Hình học: vùng phạt L1 là <b>hình thoi</b> có đỉnh nhọn trên trục → nghiệm dễ rơi vào trục (w = 0).</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — w nhỏ đi đâu?</h2><span class="tag">vùng chết</span></div>
+    <div class="note" style="margin-top:0">
+      L1 trừ một lực <b>hằng</b> c = η·λ mỗi bước (theo dấu); L2 trừ lực <b>tỉ lệ</b> 2ηλ·w (nhỏ dần khi w→0). Xét một w rất nhỏ = <b>0.04</b>, lấy η = 0.1, λ = 0.5:
+    </div>
+    <div class="calc big">
+      lực hằng L1: c = η·λ = 0.1·0.5 = <span class="wcell" style="min-width:40px"></span><br>
+      |w| = 0.04 &lt; c → L1 vượt qua 0 → ghim về <span class="wcell" style="min-width:36px"></span><br>
+      cùng w dưới L2: 0.04·(1 − 2ηλ) = 0.04·0.9 = <span class="wcell" style="min-width:44px"></span>
+      &nbsp;<small style="color:#7a8794">— cái nào về 0 hẳn?</small>
+    </div>
+    <div class="note">L1 có <b>vùng chết</b> |w| ≤ c: lực hằng ghim về <b>đúng 0</b> (soft-threshold). L2 co theo tỉ lệ nên còn 0.036 &gt; 0 — không bao giờ chạm 0. Đó là vì sao chỉ L1 tạo mô hình thưa.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Thưa vs mượt — nhìn hình học</h2><span class="tag">L1 ⟂ L2</span></div>
+    <div class="note" style="margin-top:2px">Vùng phạt L1 là <b>hình thoi</b> có đỉnh nhọn trên trục → nghiệm dễ rơi vào trục (w = 0, thưa). L2 là <b>hình tròn</b> trơn → nghiệm hiếm khi nằm đúng trục.
+      Ghép cả hai = <b>Elastic Net</b>. L1 hợp khi cần chọn đặc trưng tự động.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vì sao L1 tạo trọng số bằng 0? → <span class="blk" style="min-width:170px"></span></li>
-      <li>Khi nào nên dùng L1? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Vì sao L1 tạo trọng số bằng 0? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Khi nào nên dùng L1? → <span class="blk" style="min-width:140px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E4 · L1 regularization</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — cộng |w|, lấy dấu, trừ lực hằng ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Một bước L1</span>
+    <span><span class="ck"></span>Kiểm ép về 0</span>
+    <span class="win">🎉 Bạn vừa làm mô hình thưa gọn!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E4 · L1 regularization</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E4</span><h1>L1 regularization <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E4</span><h1>L1 regularization <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Phạt L1</h2></div>
-    <div class="calc ans"><span data-q="lam">0.1</span>·<span data-q="sumabs">6</span> = <span class="blk" data-q="pen">0.6</span></div>
+    <div class="calc ans"><span data-q="lam">0.1</span>·<span data-q="sumabs">6</span> = <span class="wcell ans" data-q="pen">0.6</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>λ·sign(w)</h2></div>
-    <div class="calc ans">(<span class="blk" data-q="s1">0.1</span>, <span class="blk" data-q="s2">−0.1</span>, <span class="blk" data-q="s3">0.1</span>)</div>
+    <div class="calc ans">(<span class="wcell ans" data-q="s1">0.1</span>, <span class="wcell ans" data-q="s2">−0.1</span>, <span class="wcell ans" data-q="s3">0.1</span>)</div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>w mới</h2></div>
-    <div class="calc ans">(<span class="blk" data-q="wn1">1.94</span>, <span class="blk" data-q="wn2">−1.04</span>, <span class="blk" data-q="wn3">3.04</span>)</div>
+    <div class="calc ans">(<span class="wcell ans" data-q="wn1">1.94</span>, <span class="wcell ans" data-q="wn2">−1.04</span>, <span class="wcell ans" data-q="wn3">3.04</span>)</div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent2)">◆</div><h2>Vùng phạt: L1 (thoi) vs L2 (tròn)</h2><span class="tag">đỉnh nhọn → w=0</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Vùng chết: L1 (thoi) ép về 0 · L2 (tròn) không</h2><span class="tag">soft-threshold</span></div>
     <div class="figrow">
-      <svg id="figR" class="fig" viewBox="0 0 230 160" width="70mm" height="49mm" aria-label="vùng phạt L1 hình thoi có đỉnh trên trục, L2 hình tròn không"></svg>
+      <svg id="figR" class="fig" viewBox="0 0 230 160" width="66mm" height="46mm" aria-label="vùng phạt L1 hình thoi có đỉnh trên trục, L2 hình tròn không"></svg>
       <div style="flex:1">
-        <div class="note">Đường đồng mức loss (xám) chạm vùng phạt L1 (<b>cam, hình thoi</b>) tại <b>đỉnh nhọn trên trục</b> → một tọa độ
-          = 0 (thưa). Vùng L2 (<b>lam, tròn</b>) trơn → nghiệm hiếm khi nằm đúng trên trục.</div>
+        <div class="calc ans">c = η·λ = <span class="wcell ans" data-q="thr">0.05</span> · L1: 0.04&lt;c → <span class="wcell ans" data-q="l1res">0</span> · L2: 0.04·0.9 = <span class="wcell ans" data-q="l2res">0.036</span></div>
+        <div class="note">Đường đồng mức loss (xám) chạm vùng phạt L1 (<b>cam, thoi</b>) tại <b>đỉnh nhọn trên trục</b> → một tọa độ = 0. Vùng L2 (<b>lam, tròn</b>) trơn → hiếm khi trên trục.</div>
       </div>
     </div>
   </div>
@@ -143,29 +169,27 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>L1 tạo w = 0? → <span class="qa">Lực phạt hằng λ·sign(w) ghim được w nhỏ về đúng 0.</span></li>
+      <li>L1 tạo w = 0? → <span class="qa">Lực phạt hằng λ·sign(w) ghim w nhỏ (|w|≤ηλ) về đúng 0.</span></li>
       <li>Khi nào dùng L1? → <span class="qa">Cần mô hình thưa / chọn đặc trưng tự động.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> L1 = phạt |w|, gradient λ·sign(w) → trọng số thưa (nhiều 0). Bài tiếp (E5): chống overfit
-    bằng cách "tắt ngẫu nhiên" nơ-ron — <b style="color:var(--accent2)">Dropout</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> L1 = phạt |w|, gradient hằng λ·sign(w) → vùng chết |w|≤ηλ ép về đúng 0 (thưa); khác L2 chỉ co ×1/(1+λ).
+    Bài E5: chống overfit bằng "tắt ngẫu nhiên" nơ-ron — <b>Dropout</b>.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E4 · L1 regularization</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E4 · L1 regularization</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  function f(v){ return WB.fmtTrim(Math.round(v*100)/100); }   // số có dấu "−"
+  function f(v){ return WB.fmtTrim(Math.round(v*100)/100); }
   var lam = 0.1, eta = 0.1;
-  // w nguyên khác 0, dấu trộn
-  var w1 = WB.randIntNZ(1,4);            // dương cho đẹp
-  var w2 = -WB.randIntNZ(1,4);           // âm
-  var w3 = WB.randIntNZ(1,4);            // dương
-  // gradient dữ liệu: bội của 0.5
+  var w1 = WB.randIntNZ(1,4);
+  var w2 = -WB.randIntNZ(1,4);
+  var w3 = WB.randIntNZ(1,4);
   var g1 = WB.pick([0.5, 1.0]);
   var g2 = WB.pick([0.5, 1.0]);
   var g3 = WB.pick([-0.5, -1.0]);
@@ -179,11 +203,12 @@ function generate(){
     lam: String(lam), eta: String(eta),
     w1: WB.fmtInt(w1), w2: WB.fmtInt(w2), w3: WB.fmtInt(w3),
     g1: f(g1), g2: f(g2), g3: f(g3),
-    sumabs: String(sumabs),
-    pen: f(lam*sumabs),
+    sumabs: String(sumabs), pen: f(lam*sumabs),
     s1: f(s1), s2: f(s2), s3: f(s3),
-    wn1: f(wn1), wn2: f(wn2), wn3: f(wn3)
+    wn1: f(wn1), wn2: f(wn2), wn3: f(wn3),
+    thr: '0.05', l1res: '0', l2res: '0.036'      // soft-threshold cố định (η=0.1, λ=0.5)
   });
+  drawReg('figR');
 }
 
 // vùng phạt L1 (thoi) vs L2 (tròn) + đường đồng mức loss chạm đỉnh thoi
@@ -192,16 +217,12 @@ function drawReg(id){
   if (!svg) return;
   var cx = 95, cy = 80, R = 52;
   var s = '';
-  // trục
   s += '<line x1="'+(cx-72)+'" y1="'+cy+'" x2="'+(cx+72)+'" y2="'+cy+'" stroke="#cbd2da" stroke-width="1"/>';
   s += '<line x1="'+cx+'" y1="'+(cy-66)+'" x2="'+cx+'" y2="'+(cy+66)+'" stroke="#cbd2da" stroke-width="1"/>';
   s += '<text x="'+(cx+74)+'" y="'+(cy+11)+'" style="font-size:8px" fill="#9aa3ad">w₁</text>';
   s += '<text x="'+(cx+3)+'" y="'+(cy-60)+'" style="font-size:8px" fill="#9aa3ad">w₂</text>';
-  // L2 tròn
   s += '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="rgba(14,116,144,0.08)" stroke="#0e7490" stroke-width="2"/>';
-  // L1 thoi
   s += '<polygon points="'+cx+','+(cy-R)+' '+(cx+R)+','+cy+' '+cx+','+(cy+R)+' '+(cx-R)+','+cy+'" fill="rgba(180,83,9,0.10)" stroke="#b45309" stroke-width="2"/>';
-  // đường đồng mức loss chạm đỉnh trên (w1=0)
   s += '<ellipse cx="'+(cx+30)+'" cy="'+(cy-R-2)+'" rx="40" ry="26" fill="none" stroke="#9aa3ad" stroke-width="1.4" stroke-dasharray="4 3"/>';
   s += '<circle cx="'+cx+'" cy="'+(cy-R)+'" r="3.2" fill="#b45309"/>';
   s += '<text x="'+(cx+6)+'" y="'+(cy-R-4)+'" style="font-size:8px" fill="#b45309" font-weight="700">w₁=0 (thưa)</text>';
@@ -211,7 +232,6 @@ function drawReg(id){
 }
 WB.wire(generate);
 generate();
-drawReg('figR');
 </script>
 </body>
 </html>

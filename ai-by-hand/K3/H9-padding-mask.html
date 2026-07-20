@@ -3,191 +3,444 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài H9 — Padding mask (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
-</style>
+<title>Làm toán AI · Bài H9 — Padding Mask (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ (A) ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H9</span>
+    <h1>Padding Mask <small>— che ô đệm khỏi phép chú ý</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>token thật (cho sẵn)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>PAD / kịch bản sai &amp; đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H9</span><h1>Padding Mask <small>— chặn ô đệm trong attention</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Gom câu khác độ dài vào một batch → ta <b>đệm (pad)</b> cho bằng nhau. Không mask thì token thật sẽ trộn
-    thông tin từ ô đệm vô nghĩa → hỏng kết quả. Mask đặt điểm ô pad về <b>−∞</b> để softmax cho <b>0</b>.
-    <div class="formula">điểm_masked = điểm + (mask ? −∞ : 0) &nbsp;→&nbsp; softmax(−∞) = 0</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Gom nhiều câu <b>dài ngắn khác nhau</b> vào một batch hình chữ nhật thì câu ngắn phải được <b>đệm (pad)</b>
+    cho bằng câu dài nhất. Nếu không chặn, ô đệm vô nghĩa vẫn lọt vào softmax và "ăn" mất một phần chú ý của token thật. Bạn sẽ
+    tự tính <b>CẢ HAI kịch bản</b> bằng số: <b>A — không che</b> (PAD dự phần softmax, SAI) và <b>B — có che</b> (đặt điểm PAD = −∞, ĐÚNG),
+    rồi tự chứng minh: chỉ có che mới giữ token thật nhận <b>ĐỦ</b> chú ý (Σα = 1.00), không che thì PAD luôn "ăn trộm" một phần.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Đặt điểm của ô pad xuống <b>âm vô cùng</b> trước softmax → eˣ của nó = 0 → <b>không nhận chú ý</b>. Như "bịt tai" với những vị
-    trí không có nội dung thật.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 vị trí · 1 PAD</span></div>
-    <div class="calc" style="font-size:14px">
-      điểm thô = ( <span class="gv" data-q="s1">2</span>, <span class="gv" data-q="s2">0</span>, <span class="gv" data-q="s3">1</span>, <span class="gv">·</span> ) cho [ t₁, t₂, t₃, <b>PAD</b> ]
-    </div>
-    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
-      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Áp mask lên ô PAD</h2><span class="tag">đặt −∞</span></div>
-    <div class="calc">
-      điểm sau mask = ( <span data-q="s1">2</span>, <span data-q="s2">0</span>, <span data-q="s3">1</span>, <span class="blk" style="min-width:36px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> chỉ ô PAD bị đặt −∞; các ô thật giữ nguyên điểm.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Mũ hóa</h2><span class="tag">eˣ</span></div>
-    <div class="calc">
-      e<sup><span data-q="s1">2</span></sup>=<span data-q="e1">7.39</span> , e<sup><span data-q="s2">0</span></sup>=<span data-q="e2">1.00</span> , e<sup><span data-q="s3">1</span></sup>=<span data-q="e3">2.72</span> , e<sup>−∞</sup> = <span class="blk" style="min-width:34px"></span>
-    </div>
-    <div class="hint">e mũ của −∞ là 0 → ô pad biến mất khỏi tổng.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Softmax (chỉ 3 ô thật)</h2><span class="tag">eˣ / Σ</span></div>
-    <div class="calc">
-      Σ = <span data-q="e1">7.39</span>+<span data-q="e2">1.00</span>+<span data-q="e3">2.72</span> = <span data-q="Z">11.11</span> →
-      α = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:34px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> trọng số dồn hết cho token thật; PAD = 0; tổng vẫn = 1.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Causal mask (che tương lai)</h2><span class="tag">cùng cơ chế</span></div>
-    <div class="note">GPT dùng <b>mặt nạ tam giác</b> đặt −∞ cho mọi vị trí <b>sau</b> token hiện tại → khi sinh, token chỉ thấy quá khứ (Bài 14).
-      Cùng kỹ thuật mask, khác chỗ che.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Mask đặt điểm thành gì trước softmax? → <span class="blk" style="min-width:130px"></span></li>
-      <li>Causal mask che gì? → <span class="blk" style="min-width:130px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H9</span><h1>Padding Mask <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Sau mask</h2></div>
-    <div class="calc ans">( <span data-q="s1">2</span>, <span data-q="s2">0</span>, <span data-q="s3">1</span>, <span class="blk" data-q="pad">−∞</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Mũ hóa</h2></div>
-    <div class="calc ans">e<sup>−∞</sup> = <span class="blk" data-q="epad">0</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Softmax</h2></div>
-    <div class="calc ans">α = ( <span class="blk" data-q="a1">0.67</span>, <span class="blk" data-q="a2">0.09</span>, <span class="blk" data-q="a3">0.24</span>, <span class="blk" data-q="a4">0</span> )</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trọng số chú ý: PAD = 0</h2><span class="tag">cột xám = bị che</span></div>
-    <div class="figrow">
-      <svg id="figM" class="fig" viewBox="0 0 240 150" width="78mm" height="46mm" aria-label="bốn cột trọng số chú ý, ba token thật màu lam, ô PAD màu xám bằng không"></svg>
-      <div style="flex:1">
-        <div class="note">Ba cột <b>lam</b> = token thật (tổng = 1), cột <b>xám</b> = PAD bị mask về 0. Token thật không "nghe" ô rác.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">4 vị trí: 3 token thật + 1 PAD · bảng tra eˣ</span></div>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th class="l">Vị trí</th><th>t₁</th><th>t₂</th><th>t₃</th><th>PAD</th></tr>
+          <tr><td class="l">điểm thô</td><td class="gvt" data-q="s1">2</td><td class="gvt" data-q="s2">0</td><td class="gvt" data-q="s3">1</td><td class="gvt" data-q="spad">1</td></tr>
+        </table>
+        <div class="cap">t₁,t₂,t₃ là token <b>thật</b> trong câu. PAD là ô <b>đệm</b> (chèn thêm cho đủ độ dài batch, không mang nội dung).
+        Điểm PAD ở đây là điểm nó <b>sẽ có</b> nếu ta <b>không</b> che nó — dùng cho Kịch bản A bên dưới.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table>
+          <tr><th class="l">x</th><th>0</th><th>1</th><th>2</th></tr>
+          <tr><td class="l">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr>
+        </table>
+        <div class="cap"><b>Bảng tra eˣ</b> — dùng để khỏi bấm máy tính. Nhớ mẹo: <b>e<sup>−∞</sup> = 0</b> (không có trong bảng vì
+        luôn bằng 0 — đây chính là "công tắc" của padding mask).</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Mask đặt điểm thành? → <span class="qa">−∞ (→ softmax cho 0).</span></li>
-      <li>Causal mask che? → <span class="qa">Các vị trí tương lai (sau token hiện tại).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng — hai kịch bản song song</span><span class="f">A: PAD lọt softmax · B: PAD bị chặn</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 470 112" width="100%" height="32mm"
+           aria-label="hai làn song song: kịch bản A không che PAD lọt vào mẫu số, kịch bản B đặt PAD về âm vô cùng nên biến mất khỏi mẫu số"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Padding mask = đặt điểm ô đệm −∞ → softmax 0 → token thật không nghe ô rác; causal mask cùng cơ chế che
-    tương lai. Bài tiếp (H10): tăng tốc sinh token bằng <b>KV cache</b>.
+  <!-- ① KỊCH BẢN A -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Kịch bản A — KHÔNG che (SAI): PAD coi như token thật</span><span class="f">PAD dự phần cả tử số lẫn mẫu số</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Vị trí</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ ZA</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁ (thật)</td><td class="gvt" data-q="s1">2</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trA1"></div></td></tr>
+        <tr><td class="l">t₂ (thật)</td><td class="gvt" data-q="s2">0</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trA2"></div></td></tr>
+        <tr><td class="l">t₃ (thật)</td><td class="gvt" data-q="s3">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trA3"></div></td></tr>
+        <tr><td class="l">PAD (ăn ké!)</td><td class="gvt" data-q="spad">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trApad"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        ZA = eˣ_t1 + eˣ_t2 + eˣ_t3 + eˣ_PAD = <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span><br>
+        Σα (3 token thật) = α₁+α₂+α₃ = <span class="slot" style="min-width:20mm"></span>
+        <span style="font-size:9.2px;color:var(--dim)">(cộng thêm α_PAD mới đủ 1 — riêng token thật KHÔNG còn giữ đủ 1)</span>
+      </div>
+      <div class="cap">Thang thanh: <b>0 … 1</b>.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="scratch" style="height:26mm"><span class="lb">✏️ Nháp — tính tay Kịch bản A ở đây</span></div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐỀ (B) ================= -->
+<section class="page">
+  <div class="top">
+    <span class="no">H9</span>
+    <h1>Padding Mask <small>— kịch bản đúng &amp; tự kiểm</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>tiếp theo trang 1</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>token thật (cho sẵn)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>PAD / kịch bản sai &amp; đáp án</span>
+    </span>
+  </div>
+
+  <div class="why" style="margin-top:1.8mm">
+    <b>Nhắc lại từ trang 1:</b> Kịch bản A vừa cho thấy PAD "ăn ké" mẫu số ZA — token thật bị hụt chú ý. Bây giờ hãy làm lại
+    <b>đúng cách</b>: đặt điểm PAD = −∞ <b>trước</b> softmax, rồi so sánh trực tiếp với kết quả sai ở trên.
+  </div>
+
+  <!-- ② KỊCH BẢN B -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Kịch bản B — CÓ che (ĐÚNG): đặt điểm PAD = −∞</span><span class="f">PAD biến mất khỏi cả tử số lẫn mẫu số</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Vị trí</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ ZB</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁ (thật)</td><td class="gvt" data-q="s1">2</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trB1"></div></td></tr>
+        <tr><td class="l">t₂ (thật)</td><td class="gvt" data-q="s2">0</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trB2"></div></td></tr>
+        <tr><td class="l">t₃ (thật)</td><td class="gvt" data-q="s3">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trB3"></div></td></tr>
+        <tr><td class="l">PAD (bị che)</td><td class="gvt">−∞</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="trBpad"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        ZB = eˣ_t1 + eˣ_t2 + eˣ_t3 = <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span>
+        <span style="font-size:9.2px;color:var(--dim)">(PAD KHÔNG được cộng vào — nó đã biến mất)</span><br>
+        Σα (3 token thật) = α₁+α₂+α₃ = <span class="slot" style="min-width:20mm"></span>
+      </div>
+      <div class="cap">Thang thanh: <b>0 … 1</b>.</div>
+    </div>
+  </div>
+
+  <!-- ③ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — che giúp token thật nhận ĐỦ chú ý</span><span class="f">so hai kịch bản A và B</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Token thật</th><th>αA (không che)</th><th>αB (có che)</th></tr>
+        <tr><td class="l">t₁</td><td><span class="slot sm"></span></td><td><span class="slot sm"></span></td></tr>
+        <tr><td class="l">t₂</td><td><span class="slot sm"></span></td><td><span class="slot sm"></span></td></tr>
+        <tr><td class="l">t₃</td><td><span class="slot sm"></span></td><td><span class="slot sm"></span></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        Σα (3 token thật) — kịch bản A = <span class="slot sm"></span> &nbsp;·&nbsp; kịch bản B = <span class="slot sm"></span><br>
+        α_PAD — kịch bản A = <span class="slot sm"></span> (khác 0!) &nbsp;·&nbsp; kịch bản B = <span class="slot sm"></span> (luôn 0)<br>
+        <span style="font-size:9.2px;color:var(--dim)">🎲 Bấm Đổi số vài lần — Σα (3 token thật) ở kịch bản B có đổi không? Vì sao?</span>
+        <span class="slot" style="min-width:80mm"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="why">
+    <b>Gợi ý phân biệt hai loại "tổng = 1":</b> Ở Kịch bản A, cả <b>4</b> α (gồm cả α_PAD) cộng lại vẫn = 1.00 — đó là tính chất
+    <b>phổ quát</b> của softmax, luôn đúng dù có mask hay không. Điều mask (Kịch bản B) tạo ra khác hẳn: nó khiến <b>chỉ riêng 3</b>
+    α của token thật (bỏ PAD ra khỏi phép đếm) đã tự cộng đủ 1.00 — token thật không cần "nhường" phần nào cho ô rác nữa.
+  </div>
+
+  <div class="scratch" style="height:30mm"><span class="lb">✏️ Nháp — so sánh hai kịch bản ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Tính xong Kịch bản A (không che)</span>
+    <span><span class="ck"></span>Tính xong Kịch bản B (có che)</span>
+    <span><span class="ck"></span>Chứng minh Σα thật = 1.00 (kịch bản B)</span>
+    <span class="win">🎉 Bạn vừa hiểu vì sao mask không để "rò" xác suất!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 3 — ĐÁP ÁN (A) ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H9</span>
+    <h1>Padding Mask <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>token thật</span>
+      <span><span class="sw" style="background:var(--orange)"></span>PAD / kịch bản sai · đáp án</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền — hai kịch bản song song</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 470 112" width="100%" height="34mm" aria-label="sơ đồ với Σα thật của cả hai kịch bản đã điền số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Kịch bản A — KHÔNG che (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Vị trí</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ ZA</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁ (thật)</td><td class="evt" data-q="s1">2</td><td class="gvt" data-q="e1">7.39</td><td><span class="cellb ans" data-q="aa1">0.53</span></td><td><div class="track uni" id="taA1"></div></td></tr>
+        <tr><td class="l">t₂ (thật)</td><td class="evt" data-q="s2">0</td><td class="gvt" data-q="e2">1.00</td><td><span class="cellb ans" data-q="aa2">0.07</span></td><td><div class="track uni" id="taA2"></div></td></tr>
+        <tr><td class="l">t₃ (thật)</td><td class="evt" data-q="s3">1</td><td class="gvt" data-q="e3">2.72</td><td><span class="cellb ans" data-q="aa3">0.20</span></td><td><div class="track uni" id="taA3"></div></td></tr>
+        <tr><td class="l">PAD (ăn ké!)</td><td class="evt" data-q="spad">1</td><td class="gvt" data-q="epad">2.72</td><td><span class="cellb ans" data-q="aapad">0.20</span></td><td><div class="track uni" id="taApad"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        ZA = <span class="slot ans" data-q="e1">7.39</span> + <span class="slot ans" data-q="e2">1.00</span> + <span class="slot ans" data-q="e3">2.72</span> + <span class="slot ans" data-q="epad">2.72</span> = <span class="slot ans" data-q="za">13.83</span><br>
+        Σα (3 token thật) = <span class="slot ans" style="min-width:20mm" data-q="sumareal">0.80</span>
+        <span style="font-size:9.2px;color:var(--dim)">— PAD giữ luôn <span data-q="aapad">0.20</span> phần, token thật KHÔNG còn đủ 1</span>
+      </div>
+    </div>
+    <div class="why" style="margin:0 2.6mm 2mm"><b>Vì sao sai:</b> khi PAD được coi như token thật, điểm của nó (dù vô nghĩa) vẫn góp mặt trong mẫu số ZA →
+    softmax <b>chia sẻ</b> một phần xác suất cho ô rác, khiến token thật bị "hụt" đi đúng phần đó.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Kịch bản B — CÓ che (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Vị trí</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ ZB</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁ (thật)</td><td class="evt" data-q="s1">2</td><td class="gvt" data-q="e1">7.39</td><td><span class="cellb ans" data-q="ab1">0.67</span></td><td><div class="track uni" id="taB1"></div></td></tr>
+        <tr><td class="l">t₂ (thật)</td><td class="evt" data-q="s2">0</td><td class="gvt" data-q="e2">1.00</td><td><span class="cellb ans" data-q="ab2">0.09</span></td><td><div class="track uni" id="taB2"></div></td></tr>
+        <tr><td class="l">t₃ (thật)</td><td class="evt" data-q="s3">1</td><td class="gvt" data-q="e3">2.72</td><td><span class="cellb ans" data-q="ab3">0.24</span></td><td><div class="track uni" id="taB3"></div></td></tr>
+        <tr><td class="l">PAD (bị che)</td><td class="evt">−∞</td><td class="gvt">0.00</td><td><span class="cellb ans">0.00</span></td><td><div class="track uni" id="taBpad"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        ZB = <span class="slot ans" data-q="e1">7.39</span> + <span class="slot ans" data-q="e2">1.00</span> + <span class="slot ans" data-q="e3">2.72</span> = <span class="slot ans" data-q="zb">11.11</span>
+        <span style="font-size:9.2px;color:var(--dim)">(PAD không được cộng vào)</span><br>
+        Σα (3 token thật) = <span class="slot ans" style="min-width:20mm" data-q="sumbreal">1.00</span>
+      </div>
+    </div>
+    <div class="why" style="margin:0 2.6mm 2mm"><b>Vì sao đúng:</b> −∞ khiến e<sup>−∞</sup>=0 <b>trước khi</b> vào mẫu số → PAD không góp một chút nào vào ZB. Softmax
+    chỉ còn <b>chia đúng 3 phần</b> cho 3 token thật, nên tổng luôn tràn đầy = 1.00.</div>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 3/4 · ĐÁP ÁN</span></div>
+</section>
+
+<!-- ================= TRANG 4 — ĐÁP ÁN (B) ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H9</span>
+    <h1>Padding Mask <small>— lời giải (tiếp)</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>tiếp theo trang 3</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>token thật</span>
+      <span><span class="sw" style="background:var(--orange)"></span>PAD / kịch bản sai · đáp án</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tự kiểm — che giúp token thật nhận ĐỦ chú ý (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Token thật</th><th>αA (không che)</th><th>αB (có che)</th></tr>
+        <tr><td class="l">t₁</td><td class="evt" data-q="aa1">0.53</td><td class="cellb ans" data-q="ab1">0.67</td></tr>
+        <tr><td class="l">t₂</td><td class="evt" data-q="aa2">0.07</td><td class="cellb ans" data-q="ab2">0.09</td></tr>
+        <tr><td class="l">t₃</td><td class="evt" data-q="aa3">0.20</td><td class="cellb ans" data-q="ab3">0.24</td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        Σα (3 token thật) — kịch bản A = <span class="slot ans" data-q="sumareal">0.80</span> &nbsp;·&nbsp; kịch bản B = <span class="slot ans" data-q="sumbreal">1.00</span><br>
+        α_PAD — kịch bản A = <span class="slot ans" data-q="aapad">0.20</span> (khác 0!) &nbsp;·&nbsp; kịch bản B = <span class="slot ans">0.00</span> (luôn 0)<br>
+        <span class="qa">Không đổi — Σα (3 token thật) ở kịch bản B LUÔN = 1.00, bất kể 🎲: PAD biến mất khỏi mẫu số nên softmax
+        tự CHUẨN HÓA LẠI toàn bộ khối lượng xác suất cho 3 token thật.</span>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> không che (A) → PAD nghiễm nhiên có mặt trong mẫu số Z → mỗi token thật
+    bị "chia" bớt phần chú ý cho một ô <b>vô nghĩa</b> (Σ thật tụt xuống <span data-q="sumareal">0.80</span>, chưa bao giờ chạm 1). Có che (B) → PAD biến mất
+    khỏi Z <b>trước khi</b> chia → softmax chỉ còn chia cho 3 "miệng ăn" thật → Σ luôn tràn đầy = 1.00. Mask không để lại lỗ hổng —
+    nó chỉ dồn toàn bộ xác suất về đúng chỗ có nội dung.</div>
+  </div>
+
+  <div class="why p">
+    <b>Mở rộng — nếu có NHIỀU ô PAD cùng lúc?</b> Câu thật thường ngắn hơn nhiều so với câu dài nhất trong batch, nên có thể có
+    2, 3, thậm chí chục ô PAD chứ không chỉ 1. Cơ chế <b>y hệt</b>: mỗi ô PAD đều bị đặt điểm = −∞ → mỗi eˣ_PAD = 0 → <b>tất cả</b>
+    biến mất khỏi mẫu số Z cùng lúc, Z chỉ còn tổng eˣ của các token thật. Vì vậy Σα (token thật) vẫn <b>luôn = 1.00</b>, bất kể
+    batch có bao nhiêu ô đệm — softmax luôn chuẩn hóa lại đúng trên đúng số token thật đang có, không hề "rò" phần nào ra ô trống.
+    Đây là lý do một hàm mask duy nhất dùng được cho <b>mọi độ dài câu</b> trong cùng một batch.
+  </div>
+
+  <div class="why">
+    <b>Kết nối thực tế — <span style="font-family:var(--mono)">attention_mask</span>.</b> Các thư viện như HuggingFace Transformers
+    không bắt bạn tự viết −∞: bạn chỉ cần đưa vào một mảng nhị phân <span style="font-family:var(--mono)">attention_mask</span>
+    (1 = token thật, 0 = PAD) song song với chuỗi input. Bên trong, mô hình tự đổi những vị trí 0 thành −∞ trước softmax —
+    đúng <b>hai bước tay bạn vừa làm</b> ở Kịch bản B, chỉ là được tự động hóa. Hiểu rõ cơ chế tay này giúp bạn đọc lỗi
+    (vd quên truyền mask → kết quả lệch âm thầm như Kịch bản A) nhanh hơn nhiều so với chỉ nhớ tên tham số.
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở padding mask</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Đặt điểm PAD về 0 là được, đằng nào ô đó cũng không quan trọng."</b><br>
+          <span style="color:var(--dim)">Sai — e⁰=1 ≠ 0, PAD vẫn nhận α &gt; 0, vẫn "ăn" một phần chú ý. Phải dùng <b>−∞</b> để eˣ thật sự triệt tiêu về 0.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Che PAD sau khi tính xong softmax, gán α_PAD=0 là được."</b><br>
+          <span style="color:var(--dim)">Sai — mẫu số Z đã lỡ cộng nhầm eˣ_PAD vào rồi, α token thật vẫn bị pha loãng y hệt Kịch bản A. Phải che ở
+          <b>tầng điểm</b>, trước softmax, không phải sửa tay kết quả sau đó.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Không che PAD cũng không sao, miễn vector V của PAD bằng 0."</b><br>
+          <span style="color:var(--dim)">Sai — dù V_PAD=0 thì attention vẫn "phung phí" một phần α cho chỗ không mang gì; mất mát xảy ra ngay ở
+          <b>tầng α</b> (xem bảng trên), trước cả khi nhân với V.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Padding mask và causal mask (Bài H3) là một, chỉ khác tên gọi."</b><br>
+          <span style="color:var(--dim)">Khác mục đích: causal che <b>tương lai</b> trong MỘT câu để không "nhìn trộm" khi sinh tự hồi quy; padding
+          che <b>ô đệm</b> để gộp NHIỀU câu khác độ dài vào một batch. Cùng kỹ thuật −∞→0, khác chỗ áp dụng.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Padding mask = đặt điểm ô đệm <b>−∞</b> → eˣ=0 → PAD biến mất khỏi mẫu số → softmax tự <b>chuẩn hóa lại</b>, dồn
+    toàn bộ xác suất (Σ=1.00) về đúng token thật — không rò rỉ, không thiếu hụt. Đây chính là thứ cho phép xử lý <b>cả một batch</b>
+    câu dài-ngắn khác nhau cùng lúc mà kết quả <b>giống hệt</b> như xử lý từng câu riêng lẻ (không pad). Khác <b>causal mask (Bài H3)</b>:
+    H3 che <b>tương lai</b> trong một câu để mô hình sinh tự hồi quy không "nhìn trộm" đáp án; H9 che <b>ô đệm</b> để nhiều câu khác
+    độ dài gộp được vào một ma trận chữ nhật. Nếu còn phân vân, hãy quay lại bảng ① và ② một lần nữa và tự hỏi: "α_PAD có thật
+    sự bằng 0 chưa, và ba token thật có thật sự cộng lại đúng 1.00 chưa?" — hai câu hỏi đó chính là cách chấm bài nhanh nhất
+    cho bất kỳ implementation padding mask nào. Bài tiếp theo (<b>H10</b>): <b>KV-cache</b> — lưu K, V cũ để sinh token nhanh hơn.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H9 · Padding Mask</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 var EXP = {0:1, 1:2.72, 2:7.39};
+var BLU='#0e7490', ORG='#b45309', DIM='#6b7280', INK='#16202e';
+
+function round2(x){ return Math.round(x*100)/100; }
+
 function generate(){
-  var f2 = WB.fmt2;
-  var perm = WB.pick([[2,0,1],[2,1,0],[1,2,0],[0,2,1],[1,0,2],[0,1,2]]);
-  var s1=perm[0], s2=perm[1], s3=perm[2];
-  var e1=EXP[s1], e2=EXP[s2], e3=EXP[s3];
-  var Z = Math.round((e1+e2+e3)*100)/100;
-  var a1 = Math.round(e1/(e1+e2+e3)*100)/100;
-  var a2 = Math.round(e2/(e1+e2+e3)*100)/100;
-  var a3 = Math.round((1-a1-a2)*100)/100;
+  var fI = WB.fmtInt, f2 = WB.fmt2;
+
+  // 3 token thật: điểm độc lập trong {0,1,2} — KHÔNG ép hoán vị, để ZB thật sự biến thiên theo 🎲
+  // (nếu luôn dùng đủ cả 3 giá trị 0,1,2 thì eˣ_t1+eˣ_t2+eˣ_t3 = hằng số 11.11 mọi lần — false invariant).
+  var s1 = WB.randInt(0, 2), s2 = WB.randInt(0, 2), s3 = WB.randInt(0, 2);
+  // PAD: điểm "gốc" nó SẼ có nếu không bị che — dùng cho Kịch bản A. Có thể trùng s1/s2/s3, không sao (vẫn là ô vô nghĩa).
+  var spad = WB.randInt(0, 2);
+
+  var e1 = EXP[s1], e2 = EXP[s2], e3 = EXP[s3], epad = EXP[spad];
+
+  // ---- Kịch bản A — KHÔNG che (SAI): PAD dự phần vào mẫu số ----
+  var za = round2(e1 + e2 + e3 + epad);
+  var aa1 = round2(e1 / za), aa2 = round2(e2 / za), aa3 = round2(e3 / za);
+  var aapad = round2(1 - aa1 - aa2 - aa3);      // phần còn lại — ép tổng 4 ô = 1.00 đúng dù làm tròn
+  var sumareal = round2(aa1 + aa2 + aa3);       // = 1 − aapad, LUÔN < 1 (vì epad ≥ 1 > 0)
+
+  // ---- Kịch bản B — CÓ che (ĐÚNG): PAD → −∞ → eˣ=0 → biến mất khỏi mẫu số ----
+  var zb = round2(e1 + e2 + e3);
+  var ab1 = round2(e1 / zb), ab2 = round2(e2 / zb);
+  var ab3 = round2(1 - ab1 - ab2);              // ép tổng 3 ô thật = 1.00 đúng dù làm tròn
+  var sumbreal = round2(ab1 + ab2 + ab3);       // LUÔN = 1.00, bất kể 🎲
+
+  window.S = {
+    s1: s1, s2: s2, s3: s3, spad: spad, e1: e1, e2: e2, e3: e3, epad: epad,
+    za: za, aa1: aa1, aa2: aa2, aa3: aa3, aapad: aapad, sumareal: sumareal,
+    zb: zb, ab1: ab1, ab2: ab2, ab3: ab3, sumbreal: sumbreal
+  };
+
   WB.setAll({
-    s1:String(s1), s2:String(s2), s3:String(s3),
-    e1:f2(e1), e2:f2(e2), e3:f2(e3), Z:f2(Z),
-    a1:f2(a1), a2:f2(a2), a3:f2(a3), a4:'0',
-    pad:'−∞', epad:'0'
+    s1: fI(s1), s2: fI(s2), s3: fI(s3), spad: fI(spad),
+    e1: f2(e1), e2: f2(e2), e3: f2(e3), epad: f2(epad),
+    za: f2(za), aa1: f2(aa1), aa2: f2(aa2), aa3: f2(aa3), aapad: f2(aapad), sumareal: f2(sumareal),
+    zb: f2(zb), ab1: f2(ab1), ab2: f2(ab2), ab3: f2(ab3), sumbreal: f2(sumbreal)
   });
-  drawMask('figM', [a1,a2,a3,0]);
+
+  // tô thanh α: ĐỀ trống (chỉ vạch), ĐÁP ÁN tô đầy — thang 0..1 (.track.uni)
+  drawBarUni('trA1', 0, 1, false); drawBarUni('trA2', 0, 1, false); drawBarUni('trA3', 0, 1, false); drawBarUni('trApad', 0, 1, false);
+  drawBarUni('trB1', 0, 1, false); drawBarUni('trB2', 0, 1, false); drawBarUni('trB3', 0, 1, false); drawBarUni('trBpad', 0, 1, false);
+  drawBarUni('taA1', aa1, 1, true); drawBarUni('taA2', aa2, 1, true); drawBarUni('taA3', aa3, 1, true); drawBarUni('taApad', aapad, 1, true);
+  drawBarUni('taB1', ab1, 1, true); drawBarUni('taB2', ab2, 1, true); drawBarUni('taB3', ab3, 1, true); drawBarUni('taBpad', 0, 1, true);
+
+  drawFlow('figQ', false);
+  drawFlow('figA', true);
 }
-function drawMask(id, a){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=26, base=120, H=92, gap=52, bw=30;
-  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+4*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  var labs=['t₁','t₂','t₃','PAD'];
-  for(var i=0;i<4;i++){
-    var bx=x0+i*gap, h=a[i]*H, col=i<3?'#0e7490':'#9aa3ad';
-    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+col+'33" stroke="'+col+'" stroke-width="1.4"/>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-4).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+col+'">'+WB.fmt2(a[i])+'</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base+13)+'" text-anchor="middle" font-size="9" fill="#5b6776">'+labs[i]+'</text>';
+
+// thanh 1 chiều (0..max, gốc TRÁI) — α luôn ≥0. fill=false → chỉ vạch 0+mốc (ĐỀ để trống).
+function drawBarUni(id, v, max, fill) {
+  var el = document.getElementById(id); if (!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:33%"></div><div class="tick" style="left:66%"></div>';
+  if (fill && v > 0) {
+    var pct = Math.min(v / max, 1) * 100;
+    h += '<div class="fill pos" style="left:0;width:' + pct + '%"></div>';
   }
-  svg.innerHTML=s;
+  el.innerHTML = h;
 }
+
+// Sơ đồ: hai làn song song A (cam, không che) / B (lam, có che), mỗi làn 4 khối:
+// điểm PAD → eˣ_PAD → ÷Z → Σ thật. showAns=false ẩn các số PHẢI TÍNH (giữ lại số/luật cho sẵn).
+function drawFlow(id, showAns) {
+  var svg = document.getElementById(id); if (!svg) return;
+  var S = window.S, f2 = WB.fmt2;
+  var s = '<defs><marker id="mk' + id + '" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+        + '<path d="M0 0 L6 3 L0 6 z" fill="' + DIM + '"/></marker></defs>';
+
+  function box(x, y, w, h, lines, col, bg) {
+    var o = '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="3" fill="' + bg + '" stroke="' + col + '" stroke-width="1.3"/>';
+    var n = lines.length;
+    lines.forEach(function (t, i) {
+      if (!t) return;
+      o += '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + (i - (n - 1) / 2) * 10 + 3) + '" text-anchor="middle" font-size="7.6" font-weight="700" fill="' + col + '">' + t + '</text>';
+    });
+    return o;
+  }
+  function arrow(x1, y1, x2, y2, c) {
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="1.1" marker-end="url(#mk' + id + ')"/>';
+  }
+
+  var c = [8, 124, 240, 356], w = 104, h = 30, yA = 14, yB = 72;
+
+  s += '<text x="8" y="7" font-size="8" font-weight="800" fill="' + ORG + '">KỊCH BẢN A — không che (SAI)</text>';
+  s += '<text x="8" y="65" font-size="8" font-weight="800" fill="' + BLU + '">KỊCH BẢN B — có che (ĐÚNG)</text>';
+
+  // Row A — PAD lọt vào mẫu số
+  s += box(c[0], yA, w, h, ['PAD điểm = ' + S.spad], ORG, '#fff8f0');
+  s += arrow(c[0] + w, yA + h / 2, c[1], yA + h / 2, ORG);
+  s += box(c[1], yA, w, h, ['eˣ_PAD = ' + (showAns ? f2(S.epad) : '?')], ORG, '#fff8f0');
+  s += arrow(c[1] + w, yA + h / 2, c[2], yA + h / 2, ORG);
+  s += box(c[2], yA, w, h, ['÷ ZA', '(gồm cả PAD)'], ORG, '#fff8f0');
+  s += arrow(c[2] + w, yA + h / 2, c[3], yA + h / 2, ORG);
+  s += box(c[3], yA, w, h, ['Σ thật = ' + (showAns ? f2(S.sumareal) : '?'), showAns ? '< 1  ✗' : ''], ORG, '#fff3ea');
+
+  // Row B — PAD bị chặn trước softmax
+  s += box(c[0], yB, w, h, ['PAD → −∞'], BLU, '#eaf4f6');
+  s += arrow(c[0] + w, yB + h / 2, c[1], yB + h / 2, BLU);
+  s += box(c[1], yB, w, h, ['eˣ_PAD = 0'], BLU, '#eaf4f6');
+  s += arrow(c[1] + w, yB + h / 2, c[2], yB + h / 2, BLU);
+  s += box(c[2], yB, w, h, ['÷ ZB', '(PAD biến mất)'], BLU, '#eaf4f6');
+  s += arrow(c[2] + w, yB + h / 2, c[3], yB + h / 2, BLU);
+  s += box(c[3], yB, w, h, ['Σ thật = ' + (showAns ? f2(S.sumbreal) : '?'), showAns ? '= 1  ✓' : ''], BLU, '#eaf4f6');
+
+  svg.innerHTML = s;
+}
+
 WB.wire(generate);
-generate();
+generate();   // ⚠️ BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

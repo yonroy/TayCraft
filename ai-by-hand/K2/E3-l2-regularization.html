@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E3 — L2 regularization (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,131 +25,165 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E3</span><h1>L2 regularization <small>— weight decay</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Trọng số lớn → hàm "gồ ghề", khớp cả nhiễu (overfit). L2 thêm áp lực kéo mọi trọng số về 0 → đường biên
-    mượt, khái quát tốt hơn trên dữ liệu mới. λ điều tiết mức phạt.
-    <div class="formula">
-      L_tổng = L_data + λ·Σ wᵢ² &nbsp;&nbsp; ∂(phạt)/∂wᵢ = 2λ·wᵢ &nbsp;→&nbsp; w ← w − η(g + 2λw)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E3</span>
+    <h1>L2 regularization <small>— weight decay: kéo trọng số về 0</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi bước học, ngoài đi theo gradient dữ liệu, trọng số còn bị <b>kéo co về 0</b> một chút (tỉ lệ với chính nó). Trọng số lớn bị kéo
-    mạnh hơn → cả mô hình "nhẹ" và mượt. Vì thế gọi là <b>weight decay</b> (trọng số rò rỉ dần).
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Trọng số lớn → hàm "gồ ghề", khớp cả nhiễu (overfit). L2 thêm phạt λ·Σw² kéo mọi trọng số về 0 → đường biên mượt, khái quát tốt hơn.
+    Hãy <b>tự tay</b> chạy một bước có L2. Phần thưởng: tính điểm tối ưu và thấy L2 <b>co nghiệm</b> theo hệ số 1/(1+λ) — nhưng không bao giờ về 0 hẳn.
+    <div class="formula" style="margin-top:5px">
+      L_tổng = L_data + λ·Σwᵢ² &nbsp;·&nbsp; ∂(phạt)/∂wᵢ = 2λ·wᵢ &nbsp;→&nbsp; w ← w − η(g + 2λw)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">λ=<span data-q="lam">0.1</span></span></div>
-    <div class="calc" style="font-size:14.5px">
-      w = ( <span class="gv" data-q="w1">2</span>, <span class="gv" data-q="w2">−1</span>, <span class="gv" data-q="w3">3</span> ) ;
-      gradient dữ liệu g = ( <span class="gv" data-q="g1">0.5</span>, <span class="gv" data-q="g2">0.5</span>, <span class="gv" data-q="g3">−0.5</span> ) ;
-      λ = <span class="gv" data-q="lam">0.1</span> ; η = <span class="gv" data-q="eta">0.1</span>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">λ = <span data-q="lam">0.1</span></span></div>
+    <div class="calc big">
+      w = ( <span class="gv" data-q="w1">2</span>, <span class="gv" data-q="w2">−1</span>, <span class="gv" data-q="w3">3</span> ) &nbsp;·&nbsp;
+      g<sub>data</sub> = ( <span class="gv" data-q="g1">0.5</span>, <span class="gv" data-q="g2">0.5</span>, <span class="gv" data-q="g3">−0.5</span> ) &nbsp;·&nbsp;
+      λ = <span class="gv" data-q="lam">0.1</span> &nbsp;·&nbsp; η = <span class="gv" data-q="eta">0.1</span>
     </div>
   </div>
 
-  <!-- BƯỚC 1 — phạt -->
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Phạt L2</h2><span class="tag">λ·Σw²</span></div>
-    <div class="calc">
-      λ·Σw² = <span data-q="lam">0.1</span>·(<span data-q="sqExpr">2² + (−1)² + 3²</span>) = <span data-q="lam">0.1</span>·<span data-q="sumsq">14</span> = <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      λ·Σw² = <span data-q="lam">0.1</span>·(<span data-q="sqExpr">2² + (−1)² + 3²</span>) = <span data-q="lam">0.1</span>·<span data-q="sumsq">14</span> = <span class="wcell" style="min-width:46px"></span>
     </div>
     <div class="why"><b>Vì sao:</b> cộng vào loss → tối ưu phải <b>đánh đổi</b> giữa khớp dữ liệu và giữ w nhỏ.</div>
   </div>
 
-  <!-- BƯỚC 2 — gradient phạt -->
+  <!-- STEP 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Gradient phạt</h2><span class="tag">2λw</span></div>
-    <div class="calc">
-      2λw = <span data-q="dlam">0.2</span>·(<span data-q="w1">2</span>, <span data-q="w2">−1</span>, <span data-q="w3">3</span>) = ( <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span>, <span class="blk" style="min-width:34px"></span> )
+    <div class="calc big">
+      2λw = <span data-q="dlam">0.2</span>·(<span data-q="w1">2</span>, <span data-q="w2">−1</span>, <span data-q="w3">3</span>) = ( <span class="wcell" style="min-width:34px"></span>, <span class="wcell" style="min-width:34px"></span>, <span class="wcell" style="min-width:34px"></span> )
     </div>
     <div class="hint">Gradient phạt <b>tỉ lệ chính w</b> → trọng số lớn bị kéo về 0 mạnh hơn.</div>
   </div>
 
-  <!-- BƯỚC 3 — cập nhật -->
+  <!-- STEP 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Gradient tổng &amp; cập nhật</h2><span class="tag">g + 2λw</span></div>
-    <div class="calc">
-      w ← w − η·(g + 2λw) = ( <span class="blk" style="min-width:40px"></span>, <span class="blk" style="min-width:44px"></span>, <span class="blk" style="min-width:40px"></span> )
+    <div class="calc big">
+      w ← w − η·(g + 2λw) = ( <span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:44px"></span>, <span class="wcell" style="min-width:40px"></span> )
     </div>
     <div class="why"><b>Vì sao:</b> mọi trọng số bị thu nhỏ thêm so với chỉ dùng gradient dữ liệu g.</div>
   </div>
 
-  <!-- BƯỚC 4 — vai trò λ -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>L2 co nghiệm ×1/(1+λ) — không về 0 hẳn</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E3</span>
+    <h1>L2 regularization <small>— điểm tối ưu bị kéo về gốc bao nhiêu?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: co nghiệm 1/(1+λ) -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vai trò của λ</h2><span class="tag">đánh đổi</span></div>
-    <div class="note">λ lớn → w bị ép quá nhỏ → <b>underfit</b>; λ nhỏ → ít tác dụng → vẫn <b>overfit</b>. AdamW (D14) áp decay <b>tách rời</b> đúng tinh thần này.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — L2 co nghiệm về đâu?</h2><span class="tag">×1/(1+λ)</span></div>
+    <div class="note" style="margin-top:0">
+      Xét một trọng số với loss dữ liệu (w − a)² muốn w = a, cộng phạt λw². Tìm điểm tối ưu: đạo hàm 2(w−a) + 2λw = 0 ⇒ <b>w* = a/(1+λ)</b>.
+      Lấy a = <b>6</b>:
+    </div>
+    <div class="calc big">
+      λ = 0.5: w* = 6/(1+0.5) = 6/1.5 = <span class="wcell" style="min-width:36px"></span><br>
+      λ = 2: w* = 6/(1+2) = 6/3 = <span class="wcell" style="min-width:36px"></span> &nbsp;·&nbsp;
+      hệ số co (λ=0.5) = 1/1.5 = <span class="wcell" style="min-width:40px"></span>
+      &nbsp;<small style="color:#7a8794">— về 0 hẳn chưa?</small>
+    </div>
+    <div class="note">L2 <b>co</b> nghiệm theo hệ số 1/(1+λ): λ lớn → co mạnh, nhưng w* = a/(1+λ) &gt; 0 <b>không bao giờ về 0 hẳn</b>. (Bài E4: L1 mới ép được về 0 → trọng số thưa.)</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vai trò của λ</h2><span class="tag">đánh đổi</span></div>
+    <div class="note" style="margin-top:2px">λ lớn → w bị ép quá nhỏ → <b>underfit</b>; λ nhỏ → ít tác dụng → vẫn <b>overfit</b>. AdamW (D14) áp decay <b>tách rời</b> đúng tinh thần này.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>L2 ép trọng số về đâu? → <span class="blk" style="min-width:150px"></span></li>
-      <li>λ quá lớn gây gì? → <span class="blk" style="min-width:120px"></span></li>
+      <li>L2 co nghiệm theo hệ số nào? → <span class="blk" style="min-width:140px"></span></li>
+      <li>L2 có ép trọng số về 0 hẳn không? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — bình phương, nhân 2λ, chia (1+λ) ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Một bước L2</span>
+    <span><span class="ck"></span>Tính co nghiệm</span>
+    <span class="win">🎉 Bạn vừa chống overfit bằng toán!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E3</span><h1>L2 regularization <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E3</span><h1>L2 regularization <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Phạt L2</h2></div>
-    <div class="calc ans">λ·Σw² = <span data-q="lam">0.1</span>·<span data-q="sumsq">14</span> = <span class="blk" data-q="pen">1.4</span></div>
+    <div class="calc ans">λ·Σw² = <span data-q="lam">0.1</span>·<span data-q="sumsq">14</span> = <span class="wcell ans" data-q="pen">1.4</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Gradient phạt</h2></div>
-    <div class="calc ans">
-      2λw = ( <span class="blk" data-q="gp1">0.4</span>, <span class="blk" data-q="gp2">−0.2</span>, <span class="blk" data-q="gp3">0.6</span> )
-    </div>
+    <div class="calc ans">2λw = ( <span class="wcell ans" data-q="gp1">0.4</span>, <span class="wcell ans" data-q="gp2">−0.2</span>, <span class="wcell ans" data-q="gp3">0.6</span> )</div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Tổng &amp; cập nhật</h2></div>
-    <div class="calc ans">
-      g + 2λw = ( <span data-q="gt1">0.9</span>, <span data-q="gt2">0.3</span>, <span data-q="gt3">0.1</span> )<br>
-      w − <span data-q="eta">0.1</span>·(…) = ( <span class="blk" data-q="wn1">1.91</span>, <span class="blk" data-q="wn2">−1.03</span>, <span class="blk" data-q="wn3">2.99</span> )
+    <div class="figrow">
+      <svg id="figW" class="fig" viewBox="0 0 230 140" width="70mm" height="42mm" aria-label="trọng số trước và sau một bước có L2: đều co về 0"></svg>
+      <div style="flex:1">
+        <div class="calc ans">g + 2λw = ( <span data-q="gt1">0.9</span>, <span data-q="gt2">0.3</span>, <span data-q="gt3">0.1</span> ) → w − <span data-q="eta">0.1</span>·(…) = ( <span class="wcell ans" data-q="wn1">1.91</span>, <span class="wcell ans" data-q="wn2">−1.03</span>, <span class="wcell ans" data-q="wn3">2.99</span> )</div>
+        <div class="note">Cột <b>lam</b> = w trước, <b>cam</b> = w sau. Mỗi trọng số nhích <b>về 0</b> (lớn nhích nhiều hơn) — weight decay.</div>
+      </div>
     </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trọng số bị kéo về 0</h2><span class="tag">weight decay</span></div>
-    <div class="figrow">
-      <svg id="figW" class="fig" viewBox="0 0 230 140" width="74mm" height="42mm" aria-label="trọng số trước và sau một bước có L2: đều co về 0"></svg>
-      <div style="flex:1">
-        <div class="note">Cột <b>lam</b> = w trước, <b>cam</b> = w sau một bước. Mỗi trọng số nhích <b>về 0</b> (lớn nhích nhiều hơn) — đó là weight decay.
-          λ càng lớn, kéo càng mạnh → đường biên càng mượt.</div>
-      </div>
+    <div class="step-h"><div class="b">4</div><h2>Co nghiệm ×1/(1+λ) (a=6)</h2><span class="tag">không về 0</span></div>
+    <div class="calc ans">
+      λ=0.5: w* = 6/1.5 = <span class="wcell ans" data-q="ws1">4</span> · λ=2: w* = 6/3 = <span class="wcell ans" data-q="ws2">2</span> &nbsp;·&nbsp; hệ số co = <span class="wcell ans" data-q="shrink">0.67</span>
     </div>
+    <div class="why"><b>Vì sao:</b> 2(w−a)+2λw=0 ⇒ w*=a/(1+λ). Co theo tỉ lệ, luôn &gt; 0 → L2 không tạo trọng số bằng 0.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Ép về đâu? → <span class="qa">Về 0 (nhỏ lại) — mô hình mượt, ít overfit.</span></li>
-      <li>λ quá lớn? → <span class="qa">Underfit (phạt mạnh quá, w bị ép quá nhỏ).</span></li>
+      <li>Hệ số co? → <span class="qa">1/(1+λ): w* = a/(1+λ).</span></li>
+      <li>Về 0 hẳn? → <span class="qa">Không — chỉ co về gần 0 (L1 mới ép về đúng 0).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> L2 = phạt ‖w‖², gradient 2λw kéo trọng số về 0 (weight decay). Bài tiếp (E4): L1 phạt |w| → tạo <b>trọng số bằng 0</b>
-    (thưa, chọn đặc trưng).
+    <b style="color:var(--accent2)">Rút ra.</b> L2 = phạt ‖w‖², gradient 2λw kéo về 0 (weight decay); điểm tối ưu co ×1/(1+λ) nhưng không bằng 0.
+    Bài E4: L1 phạt |w| → gradient hằng → tạo <b>trọng số bằng 0</b> (thưa, chọn đặc trưng).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E3 · L2 regularization</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -179,7 +208,8 @@ function generate(){
     sumsq: ft(sumsq), pen: ft(pen),
     gp1: f2(gp[0]), gp2: f2(gp[1]), gp3: f2(gp[2]),
     gt1: f2(gt[0]), gt2: f2(gt[1]), gt3: f2(gt[2]),
-    wn1: f2(wn[0]), wn2: f2(wn[1]), wn3: f2(wn[2])
+    wn1: f2(wn[0]), wn2: f2(wn[1]), wn3: f2(wn[2]),
+    ws1: '4', ws2: '2', shrink: '0.67'      // co nghiệm cố định (a=6)
   });
   drawDecay('figW', w, wn);
 }

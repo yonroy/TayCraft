@@ -5,19 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E11 — Early stopping (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
 .page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
+.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
+.page .calc{line-height:1.75;}
+.page .why{margin-top:4px;}
 .page .note{margin-top:4px;}
 .vtab{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#475569;}
-.vtab b{color:#b45309;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -32,106 +30,143 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E11</span><h1>Early stopping <small>— dừng đúng lúc</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Train loss luôn giảm, nhưng quá lâu thì mô hình bắt đầu <b>học thuộc nhiễu</b> → val loss tăng lại.
-    Early stopping bắt đúng "đỉnh khái quát": dừng ở val loss thấp nhất, lưu mô hình ở đó.
-    <div class="formula">
-      Theo dõi val_loss; không cải thiện trong "patience" epoch → dừng, khôi phục trọng số tại val_loss tốt nhất.
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E11</span>
+    <h1>Early stopping <small>— dừng đúng lúc</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Như <b>ôn thi</b>: học thêm giúp tới một điểm, sau đó <b>học tủ</b> làm điểm thi tụt. Early stopping = "ngừng học khi điểm thi
-    thử bắt đầu tệ đi", giữ lại bản tốt nhất.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Train loss luôn giảm, nhưng huấn luyện <b>quá lâu</b> thì mô hình bắt đầu học thuộc nhiễu (overfit) → val loss tăng lại.
+    Hãy <b>tự tay</b> tìm đúng epoch để dừng — nơi val loss thấp nhất, trước khi nó tăng trở lại. Phần thưởng: thấy vì sao dừng sớm cũng là một cách "phanh" mô hình, y hệt tinh thần L2 (Bài E3).
+    <div class="formula" style="margin-top:5px">
+      Theo dõi val_loss; không cải thiện qua "patience" epoch liên tiếp → dừng, khôi phục trọng số tại val_loss nhỏ nhất.
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">patience = <span data-q="pat">2</span></span></div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">patience = <span class="gv" data-q="pat">2</span></span></div>
     <div class="calc vtab">
-      val_loss qua 6 epoch:
-      <span data-q="v1">0.50</span>, <span data-q="v2">0.40</span>, <span data-q="v3">0.35</span>,
-      <span data-q="v4">0.34</span>, <span data-q="v5">0.36</span>, <span data-q="v6">0.38</span>
+      train_loss: <span class="gv" data-q="t1">.90</span>, <span class="gv" data-q="t2">.84</span>, <span class="gv" data-q="t3">.78</span>,
+      <span class="gv" data-q="t4">.72</span>, <span class="gv" data-q="t5">.66</span>, <span class="gv" data-q="t6">.60</span><br>
+      val_loss:&nbsp;&nbsp;&nbsp; <span class="gv" data-q="v1">.50</span>, <span class="gv" data-q="v2">.40</span>, <span class="gv" data-q="v3">.35</span>,
+      <span class="gv" data-q="v4">.34</span>, <span class="gv" data-q="v5">.36</span>, <span class="gv" data-q="v6">.38</span>
     </div>
-    <div class="note">Train_loss vẫn giảm đều suốt 6 epoch — nhưng ta quyết định dừng theo <b>val_loss</b>.</div>
+    <div class="note">Mỗi cột là 1 epoch (epoch 1 → 6). Train_loss giảm đều suốt — nhưng ta quyết định <b>dừng theo val_loss</b>.</div>
   </div>
 
-  <!-- BƯỚC 1 — tìm val thấp nhất -->
+  <!-- STEP 1 — tìm val thấp nhất -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Tìm val thấp nhất</h2><span class="tag">đỉnh khái quát</span></div>
-    <div class="calc">
-      nhỏ nhất = <span class="blk" style="min-width:48px"></span> tại epoch <span class="blk" style="min-width:34px"></span>
+    <div class="calc big">
+      nhỏ nhất = <span class="wcell" style="min-width:15mm"></span> tại epoch <span class="wcell" style="min-width:13mm"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> đây là điểm khái quát tốt nhất — nơi ta muốn giữ mô hình.</div>
+    <div class="why"><b>Vì sao:</b> đây là điểm khái quát tốt nhất trên tập validation — nơi ta muốn giữ mô hình lại.</div>
   </div>
 
-  <!-- BƯỚC 2 — đếm không cải thiện -->
+  <!-- STEP 2 — đếm không cải thiện -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Đếm "không cải thiện"</h2><span class="tag">tới patience</span></div>
-    <div class="calc">
-      epoch 5 (<span data-q="v5">0.36</span> &gt; <span data-q="best">0.34</span>): xấu lần 1; epoch 6 (<span data-q="v6">0.38</span>): xấu lần 2 → đạt patience = <span class="blk" style="min-width:30px"></span>
+    <div class="calc big">
+      epoch 5 (<span class="gv" data-q="v5">.36</span> &gt; <span class="gv" data-q="best">.34</span>): xấu lần 1; epoch 6 (<span class="gv" data-q="v6">.38</span>): xấu lần 2 → đạt patience = <span class="wcell" style="min-width:13mm"></span>
     </div>
-    <div class="hint">patience cho phép <b>dao động nhỏ</b> trước khi kết luận đã qua đỉnh.</div>
+    <div class="hint">patience cho phép <b>dao động nhỏ</b> trước khi kết luận đã qua đỉnh khái quát.</div>
   </div>
 
-  <!-- BƯỚC 3 — dừng & khôi phục -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Dừng & khôi phục</h2><span class="tag">lấy bản tốt nhất</span></div>
-    <div class="calc">
-      dừng sau epoch <span class="blk" style="min-width:30px"></span>, khôi phục trọng số epoch <span class="blk" style="min-width:30px"></span> (val = <span data-q="best">0.34</span>)
-    </div>
-    <div class="why"><b>Vì sao:</b> train loss thấp hơn ở epoch cuối nhưng đó là overfit → bỏ.</div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Dừng sớm = giữ trọng số nhỏ (regularization ngầm)</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E11</span>
+    <h1>Early stopping <small>— vì sao dừng sớm cũng "phanh" trọng số</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
 
-  <!-- BƯỚC 4 — đường cong -->
+  <!-- STEP 3 — dừng & khôi phục -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đường cong train ↓ val ↑</h2><span class="tag">dấu hiệu overfit</span></div>
-    <div class="note">Dấu hiệu overfit là <b>khoảng cách</b> train–val nới rộng. Early stopping rẻ và hiệu quả; thường đi kèm lưu checkpoint tốt nhất.</div>
+    <div class="step-h"><div class="b">3</div><h2>Dừng &amp; khôi phục</h2><span class="tag">lấy bản tốt nhất</span></div>
+    <div class="calc big">
+      dừng sau epoch <span class="wcell" style="min-width:13mm"></span>, khôi phục trọng số epoch <span class="wcell" style="min-width:13mm"></span> (val = <span class="gv" data-q="best">.34</span>)
+    </div>
+    <div class="why"><b>Vì sao:</b> train loss ở epoch cuối thấp hơn, nhưng đó là overfit → bỏ, lấy bản val tốt nhất.</div>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM LÕI: ngân sách bước chặn dịch chuyển trọng số -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — dừng sớm chặn trọng số bao xa?</h2><span class="tag">regularization ngầm</span></div>
+    <div class="note" style="margin-top:0">
+      Coi khởi tạo w₀ ≈ 0. Mỗi bước GD dịch trọng số tối đa η·‖g‖ (η = tốc độ học, G = chặn trên của ‖g‖). Sau t bước, theo bất đẳng thức tam giác:
+    </div>
+    <div class="formula" style="margin-top:5px;font-size:14px">‖w_t − w₀‖ ≤ t · η · G</div>
+    <div class="calc big" style="margin-top:4px">
+      η = <span class="gv" data-q="eta">0.2</span> &nbsp;·&nbsp; G = <span class="gv" data-q="G">5</span><br>
+      t = 2 bước (dừng sớm): chặn = 2·η·G = <span class="wcell" style="min-width:15mm"></span> &nbsp;&nbsp;
+      t = 10 bước (train lâu): chặn = 10·η·G = <span class="wcell" style="min-width:15mm"></span>
+    </div>
+    <div class="hint">So 2 chặn: dừng sớm (t nhỏ) giữ ‖w‖ nhỏ hơn <b>hẳn</b> — giống hệt việc L2 (Bài E3) kéo ‖w‖ về gần 0, chỉ khác là <b>ngầm</b> (giới hạn số bước) thay vì <b>tường minh</b> (phạt λ‖w‖²).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Dừng dựa trên loss nào? → <span class="blk" style="min-width:150px"></span></li>
-      <li>"Patience" để làm gì? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Chặn t·η·G nhỏ hơn khi t nhỏ nói lên điều gì về ‖w‖? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:14mm"><span class="lb">✏️ Nháp — tìm min, đếm patience, nhân t·η·G ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tìm đỉnh khái quát</span>
+    <span><span class="ck"></span>Tính ngân sách bước t·η·G</span>
+    <span class="win">🎉 Bạn vừa thấy dừng sớm = regularization ngầm!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E11</span><h1>Early stopping <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E11</span><h1>Early stopping <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Val thấp nhất</h2></div>
-    <div class="calc ans"><span class="blk" data-q="best">0.34</span> tại epoch <span class="blk" data-q="bestEpoch">4</span></div>
+    <div class="calc ans">nhỏ nhất = <span class="wcell ans" data-q="best2">0.34</span> tại epoch <span class="wcell ans" data-q="bestEpoch">4</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Đạt patience</h2></div>
-    <div class="calc ans">2 epoch liên tiếp không cải thiện = patience <span class="blk" data-q="pat2">2</span></div>
+    <div class="calc ans">2 epoch liên tiếp tệ hơn → đạt patience = <span class="wcell ans" data-q="pat2">2</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Dừng & khôi phục</h2></div>
-    <div class="calc ans">dừng sau epoch <span class="blk" data-q="stopEpoch">6</span>, khôi phục epoch <span class="blk" data-q="bestEpoch">4</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Dừng &amp; khôi phục</h2></div>
+    <div class="calc ans">dừng sau epoch <span class="wcell ans" data-q="stopEpoch">6</span>, khôi phục epoch <span class="wcell ans" data-q="bestEpoch2">4</span></div>
   </div>
 
-  <!-- SƠ ĐỒ -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Ngân sách bước t·η·G</h2></div>
+    <div class="calc ans">t=2: chặn = <span class="wcell ans" data-q="bound2">2</span> &nbsp;·&nbsp; t=10: chặn = <span class="wcell ans" data-q="bound10">10</span></div>
+    <div class="why"><b>Vì sao:</b> ‖w_t‖ ≤ t·η·G tăng tuyến tính theo t → ít bước (dừng sớm) buộc trọng số ở gần w₀=0, y hệt L2 co ‖w‖ về 0 (Bài E3) — chỉ là "ngầm" thay vì "tường minh".</div>
+  </div>
+
+  <!-- SƠ ĐỒ — không có số "b" trơn nên không tính là bước cần câu hỏi riêng ở ĐỀ -->
   <div class="step">
     <div class="step-h"><div class="b" style="background:var(--accent2)">⌣</div><h2>Train giảm mãi · Val hình chữ U</h2><span class="tag">điểm dừng</span></div>
     <div class="figrow">
-      <svg id="figE" class="fig" viewBox="0 0 240 160" width="76mm" height="51mm" aria-label="đường train giảm mãi và val hình chữ U, đánh dấu điểm dừng tại đáy val"></svg>
+      <svg id="figE" class="fig" viewBox="0 0 240 160" width="76mm" height="49mm" aria-label="đường train giảm mãi và val hình chữ U, đánh dấu điểm dừng tại đáy val"></svg>
       <div style="flex:1">
         <div class="note"><b>Lam</b> = train loss (giảm mãi). <b>Cam</b> = val loss (chữ U). Chấm đánh dấu <b>đáy val</b> = điểm khôi phục;
           sau đó val tăng = overfit. Khoảng cách train–val nới rộng là dấu hiệu.</div>
@@ -143,66 +178,82 @@
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>Loss nào? → <span class="qa">Validation loss (không phải train loss).</span></li>
-      <li>Patience? → <span class="qa">Cho phép dao động nhỏ trước khi kết luận đã qua đỉnh khái quát.</span></li>
+      <li>Chặn nhỏ hơn khi t nhỏ? → <span class="qa">‖w‖ bị giữ nhỏ, gần w₀ — dừng sớm = một dạng regularization ngầm, giống L2.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Early stopping = dừng khi val loss hết cải thiện, giữ bản tốt nhất; chống overfit, tiết kiệm.
+    <b style="color:var(--accent2)">Rút ra.</b> Early stopping = dừng khi val loss hết cải thiện, giữ bản tốt nhất; vì ‖w_t‖ ≤ t·η·G, ít bước ⇒ trọng số nhỏ ⇒ regularization <b>ngầm</b>, cùng tinh thần L2 <b>tường minh</b> (Bài E3).
     Hết Phần E. Sang Phần F (CNN) — Bài tiếp (F1): <b style="color:var(--accent2)">một bộ lọc tích chập</b>.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E11 · Early stopping</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  function f2(v){ return (Math.round(v*100)/100).toFixed(2); }
-  // val: giảm tới đáy ở epoch 4 rồi tăng (patience=2 → dừng epoch 6)
-  var best = 0.30 + 0.02*WB.randInt(0, 4);     // 0.30..0.38
+  function f2(v){ return WB.fmt2(v); }
+
+  // ----- Bước 0-3: bảng train/val 6 epoch, val hình chữ U đáy tại epoch 4 -----
+  var t0 = 0.60 + 0.05*WB.randInt(0,6);        // 0.60..0.90
+  var tstep = 0.05 + 0.01*WB.randInt(0,5);     // 0.05..0.10
+  var train = [0,1,2,3,4,5].map(function(i){ return t0 - i*tstep; });
+
+  var best = 0.30 + 0.02*WB.randInt(0,4);      // 0.30..0.38
   var d1 = 0.01 + 0.01*WB.randInt(0,2);        // v3-v4
   var d2 = 0.04 + 0.01*WB.randInt(0,3);        // v2-v3
   var d3 = 0.08 + 0.01*WB.randInt(0,3);        // v1-v2
   var e1 = 0.02 + 0.01*WB.randInt(0,2);        // v5-v4
-  var e2 = e1 + 0.01 + 0.01*WB.randInt(0,2);   // v6-v4 (> e1 → vẫn xấu)
-  var v4 = best;
-  var v3 = v4 + d1, v2 = v3 + d2, v1 = v2 + d3;
-  var v5 = v4 + e1, v6 = v4 + e2;
-  WB.setAll({
-    pat: '2', pat2: '2',
-    v1: f2(v1), v2: f2(v2), v3: f2(v3), v4: f2(v4), v5: f2(v5), v6: f2(v6),
-    best: f2(best), bestEpoch: '4', stopEpoch: '6'
-  });
-  drawES('figE', [v1,v2,v3,v4,v5,v6]);
+  var e2 = e1 + 0.01 + 0.01*WB.randInt(0,2);   // v6-v4 (> e1 → vẫn xấu lần 2)
+  var v4 = best, v3 = v4+d1, v2 = v3+d2, v1 = v2+d3, v5 = v4+e1, v6 = v4+e2;
+  var val = [v1,v2,v3,v4,v5,v6];
+
+  var pat = 2, bestEpoch = 4, stopEpoch = 6;
+
+  // ----- Bước 4 tự kiểm lõi: ngân sách bước GD ‖w_t‖ ≤ t·η·G (η·G luôn nguyên) -----
+  var combos = [[0.1,10],[0.1,20],[0.2,5],[0.2,10],[0.25,4],[0.25,8],[0.5,2],[0.5,4]];
+  var c = WB.pick(combos);
+  var eta = c[0], G = c[1];
+  var bound2 = 2*eta*G, bound10 = 10*eta*G;
+
+  var set = {
+    pat: String(pat), pat2: String(pat),
+    bestEpoch: String(bestEpoch), bestEpoch2: String(bestEpoch), stopEpoch: String(stopEpoch),
+    best: f2(best), best2: f2(best),
+    eta: WB.fmtTrim(eta), G: String(G),
+    bound2: WB.fmtInt(bound2), bound10: WB.fmtInt(bound10)
+  };
+  for (var i=0;i<6;i++){ set['t'+(i+1)] = f2(train[i]); set['v'+(i+1)] = f2(val[i]); }
+  WB.setAll(set);
+  drawES('figE', train, val, bestEpoch-1);
 }
 
-// train giảm mãi (lam) + val chữ U (cam), chấm đáy
-function drawES(id, val){
+// train giảm mãi (lam) + val chữ U (cam), chấm đáy tại bestIdx (0-based)
+function drawES(id, train, val, bestIdx){
   var svg = document.getElementById(id);
   if (!svg) return;
   var x0 = 28, y0 = 130, W = 196, H = 104, N = 6;
-  var vmax = Math.max.apply(null, val), vmin = Math.min.apply(null, val);
+  var all = train.concat(val);
+  var vmax = Math.max.apply(null, all), vmin = Math.min.apply(null, all);
+  var lo = vmin - 0.03, span = (vmax - lo) + 0.03;
   function X(i){ return (x0 + i/(N-1)*W).toFixed(1); }
-  function Yv(v){ return (y0 - (v - 0.20)/(vmax - 0.20 + 0.02)*H).toFixed(1); }
+  function Y(v){ return (y0 - (v - lo)/span*H).toFixed(1); }
   var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
   s += '<line x1="'+x0+'" y1="'+(y0-H)+'" x2="'+x0+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
   s += '<text x="'+(x0-2)+'" y="'+(y0-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">loss</text>';
   s += '<text x="'+(x0+W)+'" y="'+(y0+11)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">epoch</text>';
-  // train: giảm đều
   var tp = '';
-  for (var i=0;i<N;i++){ tp += X(i)+','+Yv(0.46 - 0.05*i)+' '; }
+  for (var i=0;i<N;i++){ tp += X(i)+','+Y(train[i])+' '; }
   s += '<polyline points="'+tp.trim()+'" fill="none" stroke="#0e7490" stroke-width="2.2"/>';
-  // val: chữ U
   var vp = '';
-  for (var j=0;j<N;j++){ vp += X(j)+','+Yv(val[j])+' '; }
+  for (var j=0;j<N;j++){ vp += X(j)+','+Y(val[j])+' '; }
   s += '<polyline points="'+vp.trim()+'" fill="none" stroke="#b45309" stroke-width="2.2"/>';
-  // chấm đáy val (epoch 4 = index 3)
-  s += '<circle cx="'+X(3)+'" cy="'+Yv(val[3])+'" r="3.6" fill="#b45309"/>';
-  s += '<line x1="'+X(3)+'" y1="'+(y0-H)+'" x2="'+X(3)+'" y2="'+y0+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>';
-  s += '<text x="'+X(3)+'" y="'+(y0-H-1)+'" text-anchor="middle" style="font-size:8px" fill="#b45309" font-weight="700">dừng</text>';
-  s += '<text x="'+X(4.6)+'" y="'+Yv(0.30)+'" style="font-size:8px" fill="#0e7490" font-weight="700">train</text>';
-  s += '<text x="'+X(4.4)+'" y="'+Yv(val[5]+0.01)+'" style="font-size:8px" fill="#b45309" font-weight="700">val</text>';
+  s += '<circle cx="'+X(bestIdx)+'" cy="'+Y(val[bestIdx])+'" r="3.6" fill="#b45309"/>';
+  s += '<line x1="'+X(bestIdx)+'" y1="'+(y0-H)+'" x2="'+X(bestIdx)+'" y2="'+y0+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>';
+  s += '<text x="'+X(bestIdx)+'" y="'+(y0-H-1)+'" text-anchor="middle" style="font-size:8px" fill="#b45309" font-weight="700">dừng</text>';
+  s += '<text x="'+X(4.5)+'" y="'+Y(train[5])+'" style="font-size:8px" fill="#0e7490" font-weight="700">train</text>';
+  s += '<text x="'+X(4.3)+'" y="'+(parseFloat(Y(val[5]))-3)+'" style="font-size:8px" fill="#b45309" font-weight="700">val</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

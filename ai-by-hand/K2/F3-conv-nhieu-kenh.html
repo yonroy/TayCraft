@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F3 — Conv nhiều kênh (RGB) (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
 .page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
 .page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
+.page .calc{line-height:1.7;}
 .page .why{margin-top:5px;}
 .page .note{margin-top:4px;}
 /* hàng kênh: ma trận patch ⊛ kernel = kết quả */
@@ -19,9 +18,10 @@
 .crow .op{font-family:var(--mono);font-size:15px;color:#9aa3ad;}
 .crow .mtx{--cell:8mm;}
 .crow .mtx .cell{height:7mm;font-size:13px;}
+.crow .wcell{min-width:16mm;height:9mm;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -36,100 +36,147 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F3</span><h1>Conv nhiều kênh (RGB) <small>— Multi-channel conv</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài F3</span>
+    <h1>Conv nhiều kênh (RGB) <small>— Multi-channel conv</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Đặc trưng thật (màu, kết cấu) nằm <b>xuyên kênh</b>. Một filter phải nhìn cả 3 kênh cùng lúc → mỗi filter
-    là một khối 3D. Hiểu điều này là hiểu vì sao "số kênh đầu vào" quyết định độ dày kernel.
-    <div class="formula">
-      out(i,j) = Σ<sub>c</sub> Σ<sub>u,v</sub> K<sub>c</sub>(u,v)·X<sub>c</sub>(i+u, j+v) + b &nbsp;&nbsp;(c chạy qua các kênh)
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Ảnh thật có nhiều kênh chồng nhau (RGB = 3 lớp màu). Một bộ lọc (filter) phải "nhìn" <b>cả 3 kênh cùng lúc</b>
+    nên kernel của nó dày y hệt: <b>K×K×C<sub>in</sub></b>. Bạn sẽ tự tay tích chập từng kênh rồi <b>CỘNG DỒN</b> cả ba thành đúng
+    <b>MỘT</b> ô ở bản đồ đặc trưng — chiều sâu đầu vào sẽ "biến mất" ngay ở bước cộng đó.
+    <div class="formula" style="margin-top:5px">
+      out(i,j) = Σ<sub>c</sub> Σ<sub>u,v</sub> K<sub>c</sub>(u,v)·X<sub>c</sub>(i+u,j+v) + b &nbsp; (c chạy qua C<sub>in</sub> kênh)
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Filter như một <b>chồng 3 tấm kính</b> (một tấm/kênh). Áp lên cùng vị trí: mỗi tấm chấm điểm kênh của nó (tích vô hướng cục bộ),
-    rồi <b>cộng cả ba</b> thành <b>một số</b> ở bản đồ đặc trưng. 3 kênh vào → <b>1</b> kênh ra cho mỗi filter.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 kênh · kernel 2×2 · b=<span data-q="b">1</span></span></div>
-    <div class="calc" style="font-size:14px">
-      Mỗi kênh: cửa sổ 2×2 (X) ⊛ kernel 2×2 (W). Bias b = <span class="gv" data-q="b">1</span>. ⊛ = tích vô hướng 4 cặp ô (Bài 01).
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 kênh (C<sub>in</sub>=3) · kernel 2×2/kênh · b=<span class="gv" data-q="b">1</span></span></div>
+    <div class="calc" style="font-size:13.5px">
+      Mỗi kênh có cửa sổ đầu vào 2×2 (X<sub>c</sub>) và <b>một lát kernel 2×2 riêng</b> (K<sub>c</sub>) — 3 lát xếp chồng thành khối 3D.
+      ⊛ = tích vô hướng 4 cặp ô (Bài 01).
     </div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Conv từng kênh</h2><span class="tag">3 tích vô hướng</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Conv từng kênh</h2><span class="tag">3 tích vô hướng độc lập</span></div>
     <div class="crow"><span class="clab" style="color:#c0392b">R</span>
       <div class="mtx c2" id="xR"></div><span class="op">⊛</span><div class="mtx c2" id="wR"></div>
-      <span class="op">=</span> <span class="blk" style="min-width:44px"></span></div>
+      <span class="op">=</span> <span class="wcell"></span></div>
     <div class="crow"><span class="clab" style="color:#1e8b3a">G</span>
       <div class="mtx c2" id="xG"></div><span class="op">⊛</span><div class="mtx c2" id="wG"></div>
-      <span class="op">=</span> <span class="blk" style="min-width:44px"></span></div>
+      <span class="op">=</span> <span class="wcell"></span></div>
     <div class="crow"><span class="clab" style="color:#2563b0">B</span>
       <div class="mtx c2" id="xB"></div><span class="op">⊛</span><div class="mtx c2" id="wB"></div>
-      <span class="op">=</span> <span class="blk" style="min-width:44px"></span></div>
-    <div class="why"><b>Vì sao:</b> mỗi kênh chỉ là một tích vô hướng giữa kernel và cửa sổ của kênh đó — làm độc lập trước khi gộp.</div>
+      <span class="op">=</span> <span class="wcell"></span></div>
+    <div class="why"><b>Vì sao:</b> mỗi kênh chỉ là một tích vô hướng giữa lát kernel và cửa sổ của kênh đó — tính <b>độc lập</b> trước khi gộp.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F3 · Conv nhiều kênh</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Chiều sâu bị "nuốt" ở bước cộng dồn</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F3</span>
+    <h1>Conv nhiều kênh (RGB) <small>— cộng dồn "nuốt" chiều sâu</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Cộng các kênh + bias</h2><span class="tag">→ 1 ô ra</span></div>
     <div class="calc">
-      out = d<sub>R</sub> + d<sub>G</sub> + d<sub>B</sub> + b = <span class="blk" style="min-width:120px"></span> + <span data-q="b">1</span> = <span class="blk" style="min-width:48px"></span>
+      out = d<sub>R</sub> + d<sub>G</sub> + d<sub>B</sub> + b = <span class="wcell"></span> + <span class="gv" data-q="b">1</span> = <span class="wcell"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> gộp bằng chứng từ mọi kênh thành <b>một</b> giá trị → một điểm trên feature map. Độ sâu (kênh) bị ép phẳng về 1.</div>
+    <div class="why"><b>Vì sao:</b> gộp bằng chứng từ mọi kênh thành <b>một</b> giá trị → một điểm trên feature map. Độ sâu (C<sub>in</sub>) biến mất ở đầu ra của MỘT filter.</div>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM: chiều sâu bị nuốt -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — chiều sâu bị "nuốt"</h2><span class="tag">1 filter → 1 map, luôn luôn</span></div>
+    <div class="note" style="margin-top:0">
+      Thử <b>đổi thứ tự cộng</b> ba kênh: G trước, rồi B, rồi R. Nếu cộng dồn đúng cách, tổng phải <b>KHÔNG đổi</b> so với Bước 2
+      (phép cộng giao hoán) — đó là cách kiểm nhanh bạn cộng đúng.
+    </div>
+    <div class="calc big">
+      out' = d<sub>G</sub> + d<sub>B</sub> + d<sub>R</sub> + b = <span class="wcell"></span>
+      &nbsp;<small style="color:#7a8794">(đối chiếu: có bằng out ở Bước 2 không?)</small>
+    </div>
+    <div class="note">
+      Nếu <b>KHÔNG cộng dồn</b> mà giữ riêng 3 kênh, bạn có 3 con số → 3 bản đồ. Nhưng conv chuẩn LUÔN cộng dồn → dù C<sub>in</sub> = 3
+      hay C<sub>in</sub> = 100, MỘT filter luôn cho ra <b>đúng 1</b> bản đồ đặc trưng. Số kênh RA phụ thuộc <b>SỐ BỘ LỌC</b>, không phụ thuộc C<sub>in</sub> (Bài F4).
+    </div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Một filter conv trên ảnh RGB có độ sâu bao nhiêu? → <span class="blk" style="min-width:120px"></span></li>
-      <li>3 kênh vào, 1 filter → mấy kênh ra? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Đổi thứ tự cộng 3 kênh, kết quả out' có đổi không? Vì sao? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Ảnh có C<sub>in</sub>=100 kênh thay vì 3, MỘT filter vẫn cho ra mấy bản đồ? Điều gì quyết định số kênh RA? → <span class="blk" style="min-width:170px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F3 · Conv nhiều kênh</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:15mm"><span class="lb">✏️ Nháp — thử cộng theo thứ tự khác, so kết quả ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Conv từng kênh</span>
+    <span><span class="ck"></span>Cộng dồn + kiểm chiều sâu</span>
+    <span class="win">🎉 Bạn vừa thấy chiều sâu bị "nuốt" ở 1 filter!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F3 · Conv nhiều kênh</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F3</span><h1>Conv nhiều kênh (RGB) <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F3</span><h1>Conv nhiều kênh (RGB) <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Conv từng kênh</h2></div>
     <div class="crow"><span class="clab" style="color:#c0392b">R</span>
       <div class="mtx c2" id="kxR"></div><span class="op">⊛</span><div class="mtx c2" id="kwR"></div>
-      <span class="op">=</span> <b data-q="dR">2</b></div>
+      <span class="op">=</span> <span class="wcell ans" data-q="dR">2</span></div>
     <div class="crow"><span class="clab" style="color:#1e8b3a">G</span>
       <div class="mtx c2" id="kxG"></div><span class="op">⊛</span><div class="mtx c2" id="kwG"></div>
-      <span class="op">=</span> <b data-q="dG">3</b></div>
+      <span class="op">=</span> <span class="wcell ans" data-q="dG">3</span></div>
     <div class="crow"><span class="clab" style="color:#2563b0">B</span>
       <div class="mtx c2" id="kxB"></div><span class="op">⊛</span><div class="mtx c2" id="kwB"></div>
-      <span class="op">=</span> <b data-q="dB">0</b></div>
+      <span class="op">=</span> <span class="wcell ans" data-q="dB">0</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Cộng + bias</h2></div>
-    <div class="calc ans">out = <span data-q="dR">2</span> + <span data-q="dG">3</span> + <span data-q="dB">0</span> + <span data-q="b">1</span> = <span class="blk" data-q="out">6</span></div>
+    <div class="calc ans">out = <span data-q="dR">2</span> + <span data-q="dG">3</span> + <span data-q="dB">0</span> + <span class="gv" data-q="b">1</span> = <span class="wcell ans" data-q="out">6</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đổi thứ tự cộng</h2></div>
+    <div class="calc ans">out' = <span data-q="dG">3</span> + <span data-q="dB">0</span> + <span data-q="dR">2</span> + <span class="gv" data-q="b">1</span> = <span class="wcell ans" data-q="out2">6</span>
+      &nbsp;<small style="color:#7a8794">= out ở Bước 2 (giao hoán — thứ tự cộng không đổi tổng)</small></div>
+    <div class="note">Nếu KHÔNG cộng dồn: 3 số riêng d<sub>R</sub>, d<sub>G</sub>, d<sub>B</sub> → 3 bản đồ. Cộng dồn (chuẩn conv): chỉ <b>1</b> số duy nhất — bất kể C<sub>in</sub> là 3 hay 100.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>3 kênh vào → 1 ô ra</h2><span class="tag">Σ kênh + b</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Chiều sâu bị "nuốt": 3 kênh vào → 1 ô ra</h2><span class="tag">Σ kênh + b</span></div>
     <div class="figrow">
-      <svg id="figStack" class="fig" viewBox="0 0 200 150" width="64mm" height="48mm" aria-label="3 lát kênh RGB cộng dồn thành một ô ra"></svg>
+      <svg id="figStack" class="fig" viewBox="0 0 260 150" width="82mm" height="46mm" aria-label="3 lát kênh RGB cộng dồn thành một ô ra, đối chiếu với 3 ô riêng nếu không cộng"></svg>
       <div style="flex:1">
-        <div class="note">Filter có <b>độ sâu = số kênh vào</b> (ở đây 3). Mỗi kênh cho một tích vô hướng; cộng cả ba + bias → <b>một</b> ô.
-          Nhiều filter → nhiều kênh ra (F4). Tham số một filter = K·K·C<sub>in</sub> + 1 (F10).</div>
+        <div class="note">Filter có <b>độ sâu = C<sub>in</sub></b> (ở đây 3). Mỗi kênh cho một tích vô hướng; cộng cả ba + bias → <b>một</b> ô (✓).
+          Giữ riêng từng kênh (✗, không dùng trong conv chuẩn) sẽ ra 3 ô. Nhiều filter → nhiều kênh ra (F4). Tham số một filter = K·K·C<sub>in</sub> + 1 (F10).</div>
       </div>
     </div>
   </div>
@@ -137,17 +184,18 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Độ sâu filter? → <span class="qa">3 (bằng số kênh vào).</span></li>
-      <li>3 kênh vào, 1 filter → mấy kênh ra? → <span class="qa">1 (cộng các kênh thành một feature map).</span></li>
+      <li>Đổi thứ tự cộng? → <span class="qa">Không đổi — phép cộng giao hoán, cộng theo thứ tự nào tổng cũng như cũ.</span></li>
+      <li>C<sub>in</sub>=100? → <span class="qa">Vẫn đúng 1 bản đồ/filter. Số kênh RA phụ thuộc SỐ BỘ LỌC, không phụ thuộc C<sub>in</sub>.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Conv đa kênh = conv từng kênh rồi cộng + bias; độ sâu filter = số kênh vào, mỗi filter ra 1 kênh.
-    Bài tiếp <b style="color:var(--accent2)">F4</b>: nhiều filter → nhiều feature map.
+    <b style="color:var(--accent2)">Rút ra.</b> Conv đa kênh = tích chập riêng từng kênh rồi <b>cộng dồn</b> + bias; độ sâu filter luôn bằng C<sub>in</sub>
+    nhưng đầu ra của MỘT filter luôn chỉ có 1 kênh — chiều sâu bị "nuốt" ngay ở bước cộng.
+    Bài tiếp <b style="color:var(--accent2)">F4</b>: nhiều filter → nhiều bản đồ đặc trưng (kênh ra = số filter).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F3 · Conv nhiều kênh</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F3 · Conv nhiều kênh</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -167,31 +215,43 @@ function generate(){
   var b = WB.pick([0,1,2,-1]);
   var dR=dot(xR,wR), dG=dot(xG,wG), dB=dot(xB,wB);
   var out = dR+dG+dB+b;
+  var out2 = dG+dB+dR+b;   // đổi thứ tự cộng — phải bằng out (giao hoán)
 
   // ĐỀ
   fillG('xR',xR); fillG('wR',wR); fillG('xG',xG); fillG('wG',wG); fillG('xB',xB); fillG('wB',wB);
   // ĐÁP ÁN
   fillG('kxR',xR); fillG('kwR',wR); fillG('kxG',xG); fillG('kwG',wG); fillG('kxB',xB); fillG('kwB',wB);
 
-  WB.setAll({ b:WB.fmtInt(b), dR:WB.fmtInt(dR), dG:WB.fmtInt(dG), dB:WB.fmtInt(dB), out:WB.fmtInt(out) });
+  WB.setAll({ b:WB.fmtInt(b), dR:WB.fmtInt(dR), dG:WB.fmtInt(dG), dB:WB.fmtInt(dB), out:WB.fmtInt(out), out2:WB.fmtInt(out2) });
   drawStack('figStack');
 }
 
-// 3 lát kênh xếp chéo → cộng dồn → 1 ô ra (+b)
+// 3 lát kênh xếp chéo → cộng dồn → 1 ô ra (+b) ✓  |  đối chiếu: giữ riêng → 3 ô ✗
 function drawStack(id){
   var svg=document.getElementById(id); if(!svg) return;
   var cols=['#f3c9c9','#c9eccf','#cfe0f3'], strk=['#c0392b','#1e8b3a','#2563b0'];
   var s='';
   for(var k=2;k>=0;k--){
-    var x=22+k*12, y=30+k*14;
+    var x=18+k*11, y=28+k*13;
     for(var i=0;i<2;i++) for(var j=0;j<2;j++)
-      s += '<rect x="'+(x+j*14)+'" y="'+(y+i*14)+'" width="14" height="14" fill="'+cols[k]+'" stroke="'+strk[k]+'"/>';
+      s += '<rect x="'+(x+j*13)+'" y="'+(y+i*13)+'" width="13" height="13" fill="'+cols[k]+'" stroke="'+strk[k]+'"/>';
   }
-  s += '<text x="100" y="78" font-size="15" fill="#c9c2b2">Σ→</text>';
-  s += '<rect x="134" y="62" width="26" height="26" fill="#ffe6cc" stroke="#b45309" stroke-width="1.8"/>';
-  s += '<text x="147" y="79" text-anchor="middle" font-size="12" font-weight="700" fill="#7a3d00">+b</text>';
-  s += '<text x="24" y="22" font-size="8" fill="#6b7280">3 kênh vào (R,G,B)</text>';
-  s += '<text x="147" y="56" text-anchor="middle" font-size="8" fill="#b45309">1 ô ra</text>';
+  s += '<text x="90" y="70" font-size="14" fill="#c9c2b2">Σ→</text>';
+  s += '<rect x="118" y="56" width="24" height="24" fill="#ffe6cc" stroke="#b45309" stroke-width="1.8"/>';
+  s += '<text x="130" y="72" text-anchor="middle" font-size="11" font-weight="700" fill="#7a3d00">+b</text>';
+  s += '<text x="150" y="72" font-size="13" font-weight="700" fill="#1e8b3a">✓ 1 ô</text>';
+  s += '<text x="16" y="18" font-size="8" fill="#6b7280">3 kênh vào (R,G,B)</text>';
+  // đối chiếu: nếu KHÔNG cộng dồn → 3 ô riêng (mờ, gạch chéo)
+  s += '<line x1="10" y1="98" x2="250" y2="98" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3 3"/>';
+  s += '<text x="16" y="112" font-size="8" fill="#9aa3ad">Nếu KHÔNG cộng dồn (không dùng):</text>';
+  var lab=['dᵣ','dᴳ','dʙ'], lc=['#c0392b','#1e8b3a','#2563b0'];
+  for(var m=0;m<3;m++){
+    var bx=20+m*40;
+    s += '<rect x="'+bx+'" y="118" width="22" height="22" fill="#f3f4f6" stroke="'+lc[m]+'" stroke-width="1.2" stroke-dasharray="2 2"/>';
+    s += '<line x1="'+bx+'" y1="118" x2="'+(bx+22)+'" y2="140" stroke="#9aa3ad" stroke-width="1"/>';
+    s += '<text x="'+(bx+11)+'" y="150" text-anchor="middle" font-size="7" fill="#9aa3ad">'+lab[m]+'</text>';
+  }
+  s += '<text x="160" y="133" font-size="12" font-weight="700" fill="#9aa3ad">✗ 3 ô</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

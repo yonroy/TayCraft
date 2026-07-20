@@ -5,16 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài G8 — Giải mã: Greedy vs Beam (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
+.page .step{margin-top:7px;}
 .page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .calc{line-height:1.75;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,98 +27,156 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G8</span><h1>Giải mã: Greedy vs Beam <small>— Greedy vs Beam search</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Chuỗi tốt nhất <b>không</b> phải nối các token tốt nhất từng bước (token đầu hơi kém có thể mở ra phần sau rất tốt).
-    Greedy thiển cận; beam tìm rộng hơn → bản dịch/sinh chất lượng cao hơn ở chi phí tính toán.
-    <div class="formula">
-      điểm chuỗi = ∏ p(token<sub>t</sub>) &nbsp;·&nbsp; Greedy: argmax mỗi bước &nbsp;·&nbsp; Beam: giữ top-k theo điểm tích lũy
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài G8</span>
+    <h1>Giải mã: Greedy vs Beam <small>— vì sao "tốt mỗi bước" chưa chắc là "tốt cả chuỗi"</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Greedy = <b>luôn rẽ vào đường đẹp nhất ngay trước mặt</b> → dễ vào ngõ cụt. Beam = giữ <b>k tuyến đường hứa hẹn nhất</b> song song, mỗi bước
-    mở rộng tất cả rồi tỉa lại còn k → ít bỏ lỡ tuyến tốt hơn ở xa.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Bộ giải mã sinh chuỗi từng token một. <b>Greedy</b> luôn chọn token xác suất cao nhất <b>ngay bước đó</b> — nhanh nhưng thiển cận.
+    <b>Beam</b> (rộng k) giữ lại k chuỗi ứng viên tốt nhất theo <b>tích xác suất cả chuỗi</b>, mở rộng hết rồi mới tỉa — tốn hơn nhưng nhìn xa hơn.
+    Hãy tự tay chạy cả hai trên cùng một cây xác suất 2 bước, rồi <b>bắt tận tay</b> lúc greedy chọn sai.
+    <div class="formula" style="margin-top:5px">
+      điểm chuỗi = ∏ p(token<sub>t</sub>) &nbsp;·&nbsp; Greedy: argmax mỗi bước &nbsp;·&nbsp; Beam(k): giữ top-k theo điểm tích lũy
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 token A/B · beam k=2</span></div>
-    <div class="calc" style="font-size:14px">
-      Bước 1: P(A)=<span class="gv" data-q="pA">0.6</span>, P(B)=<span class="gv" data-q="pB">0.4</span>. &nbsp;Sau A: P(A)=<span class="gv" data-q="p2aa">0.5</span>, P(B)=<span class="gv" data-q="p2ab">0.5</span>. &nbsp;Sau B: P(A)=<span class="gv" data-q="p2ba">0.9</span>, P(B)=<span class="gv" data-q="p2bb">0.1</span>.
+    <div class="calc">
+      Bước 1: P(A)=<span class="gv" data-q="pA">0.60</span>, P(B)=<span class="gv" data-q="pB">0.40</span>.
+      &nbsp;Sau A: P(A|A)=<span class="gv" data-q="p2aa">0.55</span>, P(B|A)=<span class="gv" data-q="p2ab">0.45</span>.
+      &nbsp;Sau B: P(A|B)=<span class="gv" data-q="p2ba">0.90</span>, P(B|B)=<span class="gv" data-q="p2bb">0.10</span>.
     </div>
+    <div class="note">Mỗi cặp xác suất là phân phối trên 2 token kế tiếp (cộng lại = 1).</div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Greedy (tham lam từng bước)</h2><span class="tag">argmax</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Greedy — bước 1</h2><span class="tag">argmax</span></div>
     <div class="calc">
-      Bước 1 chọn A (<span data-q="pA">0.6</span>); bước 2 chọn max sau A = <span data-q="p2aa">0.5</span> → chuỗi <b>AA</b>, điểm = <span data-q="pA">0.6</span>·<span data-q="p2aa">0.5</span> = <span class="blk" style="min-width:48px"></span>
+      So sánh P(A)=<span data-q="pA">0.60</span> và P(B)=<span data-q="pB">0.40</span> → greedy chọn token
+      <span class="wcell" style="min-width:30px"></span>, xác suất = <span class="wcell" style="min-width:42px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> greedy khóa chặt token đầu mạnh nhất, không xét hệ quả về sau.</div>
+    <div class="why"><b>Vì sao:</b> greedy luôn rẽ vào token cao nhất <b>ngay lúc này</b>, không nhìn trước bước sau.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Beam mở rộng mọi nhánh</h2><span class="tag">∏ p</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Greedy — bước 2 &amp; chốt chuỗi</h2><span class="tag">1 nhánh duy nhất</span></div>
     <div class="calc">
-      AA = <span data-q="pA">0.6</span>·<span data-q="p2aa">0.5</span> = <span class="blk" style="min-width:44px"></span> · AB = <span class="blk" style="min-width:44px"></span> · BA = <span data-q="pB">0.4</span>·<span data-q="p2ba">0.9</span> = <span class="blk" style="min-width:44px"></span> · BB = <span class="blk" style="min-width:44px"></span>
+      Trong nhánh vừa chọn, so 2 xác suất bước 2 → token thứ 2 = <span class="wcell" style="min-width:30px"></span>.
+      Chuỗi greedy = <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp;
+      điểm chuỗi = tích 2 xác suất = <span class="wcell" style="min-width:44px"></span>
     </div>
-    <div class="hint">nhân xác suất dọc chuỗi (hoặc cộng log p).</div>
+    <div class="hint">Greedy chỉ đi tiếp <b>1 nhánh</b> — bỏ hẳn nhánh còn lại của bước 1, không bao giờ quay lại xét.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G8 · Greedy vs Beam</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Beam mở rộng cả 2 nhánh rồi mới tỉa</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G8</span>
+    <h1>Giải mã: Greedy vs Beam <small>— tự kiểm: beam có thực sự tốt hơn?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
   </div>
 
   <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tỉa top-k & chọn</h2><span class="tag">k=2</span></div>
-    <div class="calc">Giữ 2 tốt nhất → <b>tốt nhất = <span class="blk" style="min-width:90px"></span></b> &nbsp;(so với greedy AA = <span data-q="sAA">0.30</span>)</div>
-    <div class="why"><b>Vì sao:</b> token đầu B (kém hơn ở bước 1) mở ra phần sau rất mạnh → beam tìm được, greedy bỏ lỡ.</div>
+    <div class="step-h"><div class="b">3</div><h2>Beam — mở rộng cả 4 nhánh</h2><span class="tag">∏ p mỗi nhánh</span></div>
+    <div class="calc">
+      AA = P(A)·P(A|A) = <span class="wcell" style="min-width:40px"></span> ·
+      AB = P(A)·P(B|A) = <span class="wcell" style="min-width:40px"></span> ·
+      BA = P(B)·P(A|B) = <span class="wcell" style="min-width:40px"></span> ·
+      BB = P(B)·P(B|B) = <span class="wcell" style="min-width:40px"></span>
+    </div>
+    <div class="hint">Beam không bỏ nhánh nào ở bước 1 — mở rộng <b>cả 2</b> token rồi mới tính tiếp và tỉa lại còn k=2.</div>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM LÕI -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — Greedy = Beam rộng 1?</h2><span class="tag">so điểm cả chuỗi</span></div>
+    <div class="calc">
+      Chép điểm chuỗi GREEDY (Bước 2) → <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp;
+      điểm TỐT NHẤT trong 4 nhánh Beam (Bước 3) → <span class="wcell" style="min-width:44px"></span>
+    </div>
+    <div class="calc">Vậy chuỗi nào có điểm cao hơn? → <span class="wcell" style="min-width:80px"></span></div>
+    <div class="why"><b>Vì sao:</b> greedy tối ưu <b>từng bước</b> (chọn tốt nhất ngay lúc đó), không thấy trước hệ quả.
+      Beam so <b>tích xác suất cả chuỗi</b> trên mọi nhánh đã mở → vì chuỗi greedy luôn nằm trong số các nhánh mà beam xét,
+      điểm tốt nhất của beam <b>không bao giờ thấp hơn</b> greedy (bằng nhau khi k=1, hoặc khi greedy tình cờ đã tối ưu).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vì sao greedy không tối ưu? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Vì sao greedy có thể chọn sai dù luôn lấy xác suất cao nhất mỗi bước? → <span class="blk" style="min-width:190px"></span></li>
       <li>Beam k=1 tương đương gì? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G8 · Greedy vs Beam</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — nhân xác suất từng nhánh ở đây (hoặc cộng log-xác suất)</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Chạy greedy 2 bước</span>
+    <span><span class="ck"></span>So 4 nhánh beam</span>
+    <span class="win">🎉 Bạn vừa bắt tận tay lúc greedy đi sai đường!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G8 · Greedy vs Beam</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G8</span><h1>Giải mã: Greedy vs Beam <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G8</span><h1>Giải mã: Greedy vs Beam <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Greedy</h2></div>
-    <div class="calc ans">AA = <span data-q="pA">0.6</span>·<span data-q="p2aa">0.5</span> = <span class="blk" data-q="sAA">0.30</span> (greedy khóa token đầu A)</div>
+    <div class="step-h"><div class="b">1</div><h2>Greedy — bước 1</h2></div>
+    <div class="calc ans">token = <span class="wcell ans" data-q="tok1">A</span>, xác suất = <span class="wcell ans" data-q="val1">0.60</span>
+      &nbsp;(P(A)=<span data-q="pA">0.60</span> &gt; P(B)=<span data-q="pB">0.40</span>)</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Beam: 4 nhánh</h2></div>
-    <div class="calc ans">AA = <span class="blk" data-q="sAA">0.30</span> · AB = <span class="blk" data-q="sAB">0.30</span> · BA = <span class="blk" data-q="sBA">0.36</span> · BB = <span class="blk" data-q="sBB">0.04</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Greedy — bước 2 &amp; chốt chuỗi</h2></div>
+    <div class="calc ans">token 2 = <span class="wcell ans" data-q="tok2">A</span> · chuỗi = <span class="wcell ans" data-q="gChain">AA</span>
+      · điểm = <span class="wcell ans" data-q="gScore">0.33</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tỉa & chọn</h2></div>
-    <div class="calc ans">tốt nhất = <span class="blk" data-q="beam">BA = 0.36</span> &gt; greedy AA = <span data-q="sAA">0.30</span> → beam thắng</div>
+    <div class="step-h"><div class="b">3</div><h2>Beam — 4 nhánh</h2></div>
+    <div class="calc ans">AA = <span class="wcell ans" data-q="sAA">0.33</span> · AB = <span class="wcell ans" data-q="sAB">0.27</span>
+      · BA = <span class="wcell ans" data-q="sBA">0.36</span> · BB = <span class="wcell ans" data-q="sBB">0.04</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — beam thắng greedy</h2></div>
+    <div class="calc ans">điểm greedy = <span class="wcell ans" data-q="gScore">0.33</span> &nbsp;·&nbsp;
+      điểm beam tốt nhất = <span class="wcell ans" data-q="bestScore">0.36</span> (nhánh <span class="wcell ans" data-q="bestName">BA</span>)
+      &nbsp;·&nbsp; chuỗi cao hơn = <span class="wcell ans" data-q="winner">Beam</span></div>
+    <div class="why"><b>Vì sao:</b> token đầu B (kém hơn A ở bước 1) mở ra nhánh bước-2 rất mạnh → beam mở rộng cả 2 nhánh nên tìm ra,
+      greedy đã khóa chặt token A ngay từ bước 1 nên bỏ lỡ.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Cây giải mã 2 bước</h2><span class="tag">cam greedy · lục tốt nhất</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Cây giải mã 2 bước</h2><span class="tag">cam = đường greedy · tím = đường tốt nhất (beam)</span></div>
     <div class="figrow">
-      <svg id="figTree" class="fig" viewBox="0 0 210 130" width="66mm" height="41mm" aria-label="cây giải mã 2 bước, tô nhánh greedy và nhánh tốt nhất"></svg>
+      <svg id="figTree" class="fig" viewBox="0 0 210 130" width="66mm" height="41mm" aria-label="cây giải mã 2 bước, tô đường greedy màu cam và đường tốt nhất beam màu tím"></svg>
       <div style="flex:1">
-        <div class="note">k=1 chính là greedy; k lớn → gần tối ưu nhưng tốn. Beam còn dễ ra câu <b>nhạt/lặp</b> → thực tế kèm length penalty / sampling
-          (top-k, top-p, nhiệt độ — Bài I2).</div>
+        <div class="note">k=1 chính là greedy (chỉ giữ 1 chuỗi mỗi bước); k lớn hơn → gần tối ưu hơn nhưng tốn hơn.
+          Beam vẫn có thể ra câu <b>nhạt/lặp</b> → thực tế còn kèm length penalty / sampling (top-k, top-p, nhiệt độ — Bài I2).</div>
       </div>
     </div>
   </div>
@@ -128,62 +184,78 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Greedy không tối ưu? → <span class="qa">Chuỗi tốt nhất ≠ nối token tốt nhất từng bước (thiển cận).</span></li>
-      <li>Beam k=1? → <span class="qa">Chính là greedy search.</span></li>
+      <li>Vì sao greedy có thể chọn sai? → <span class="qa">Nó tối ưu TỪNG BƯỚC (cục bộ), không thấy chuỗi tổng — bỏ lỡ nhánh yếu ở đầu nhưng mạnh ở sau.</span></li>
+      <li>Beam k=1? → <span class="qa">Chính là Greedy search (chỉ giữ 1 chuỗi mỗi bước).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Greedy tham lam từng bước (dễ hụt); beam giữ top-k theo điểm tích lũy → tốt hơn, tốn hơn.
-    Bài tiếp <b style="color:var(--accent2)">G9</b>: mẹo huấn luyện decoder — teacher forcing.
+    <b style="color:var(--accent2)">Rút ra.</b> Greedy tối ưu từng bước (nhanh, dễ hụt); beam so tích xác suất cả chuỗi trên nhiều nhánh → điểm tốt nhất
+    của beam luôn ≥ greedy (bằng nhau ở k=1). Bài tiếp <b style="color:var(--accent2)">G9</b>: mẹo huấn luyện decoder — teacher forcing.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G8 · Greedy vs Beam</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G8 · Greedy vs Beam</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
-// Giữ p2aa ≥ p2ab để greedy bước 2 luôn chọn A → chuỗi greedy = AA (khớp phần đề).
-// Mỗi preset có một nhánh sau B mạnh → beamBest ≠ AA (beam thắng greedy).
-// Giữ p2aa ≥ p2ab để greedy bước 2 luôn chọn A → chuỗi greedy = AA (khớp phần đề);
-// mỗi preset có một nhánh sau B mạnh để beamBest ≠ AA (beam thắng greedy).
+// Preset thiết kế để BẪY luôn xảy ra: pA>pB (greedy chọn A ở bước 1),
+// nhưng nhánh sau B có xác suất bước-2 rất cao → BA (hoặc BB) > AA → beam luôn thắng greedy.
 var PRE=[
-  {pA:0.6, pB:0.4, p2aa:0.5, p2ab:0.5, p2ba:0.9, p2bb:0.1},   // BA=0.36 > AA=0.30
-  {pA:0.55, pB:0.45, p2aa:0.5, p2ab:0.5, p2ba:0.2, p2bb:0.8}  // BB=0.36 > AA=0.275
+  {pA:0.60, pB:0.40, p2aa:0.55, p2ab:0.45, p2ba:0.90, p2bb:0.10},  // AA=0.33 < BA=0.36
+  {pA:0.55, pB:0.45, p2aa:0.60, p2ab:0.40, p2ba:0.80, p2bb:0.20}   // AA=0.33 < BA=0.36
 ];
+
 function generate(){
-  var f2=WB.fmt2;
-  var p=WB.pick(PRE);
+  var f2 = WB.fmt2;
+  var p = WB.pick(PRE);
   function r2(v){ return Math.round(v*100)/100; }
-  var sAA=r2(p.pA*p.p2aa), sAB=r2(p.pA*p.p2ab), sBA=r2(p.pB*p.p2ba), sBB=r2(p.pB*p.p2bb);
-  var scores=[{n:'AA',v:sAA},{n:'AB',v:sAB},{n:'BA',v:sBA},{n:'BB',v:sBB}];
-  var best=scores[0]; scores.forEach(function(s){ if(s.v>best.v) best=s; });
+
+  // Greedy: argmax từng bước (không hardcode nhánh — tính động).
+  var tok1 = p.pA >= p.pB ? 'A' : 'B';
+  var val1 = tok1 === 'A' ? p.pA : p.pB;
+  var branch2 = tok1 === 'A' ? {a:p.p2aa, b:p.p2ab} : {a:p.p2ba, b:p.p2bb};
+  var tok2 = branch2.a >= branch2.b ? 'A' : 'B';
+  var val2 = branch2.a >= branch2.b ? branch2.a : branch2.b;
+  var gChain = tok1 + tok2;
+  var gScore = r2(val1 * val2);
+
+  // Beam: mở rộng cả 4 nhánh, tính tích xác suất cả chuỗi.
+  var sAA = r2(p.pA*p.p2aa), sAB = r2(p.pA*p.p2ab), sBA = r2(p.pB*p.p2ba), sBB = r2(p.pB*p.p2bb);
+  var scores = [{n:'AA',v:sAA},{n:'AB',v:sAB},{n:'BA',v:sBA},{n:'BB',v:sBB}];
+  var best = scores[0];
+  scores.forEach(function(s){ if (s.v > best.v) best = s; });
+  var winner = best.v > gScore ? 'Beam' : 'Bằng nhau';
+
   WB.setAll({
     pA:f2(p.pA), pB:f2(p.pB), p2aa:f2(p.p2aa), p2ab:f2(p.p2ab), p2ba:f2(p.p2ba), p2bb:f2(p.p2bb),
+    tok1:tok1, val1:f2(val1), tok2:tok2, gChain:gChain, gScore:f2(gScore),
     sAA:f2(sAA), sAB:f2(sAB), sBA:f2(sBA), sBB:f2(sBB),
-    beam: best.n+' = '+f2(best.v)
+    bestScore:f2(best.v), bestName:best.n, winner:winner
   });
-  drawTree('figTree', scores, 'AA', best.n);
+  drawTree('figTree', scores, gChain, best.n);
 }
 
 function drawTree(id, scores, greedyName, bestName){
-  var svg=document.getElementById(id); if(!svg) return;
+  var svg = document.getElementById(id); if (!svg) return;
   var root=[20,64], n1=[[88,36],[88,92]], leaf=[[170,20],[170,52],[170,78],[170,110]];
   var names=['AA','AB','BA','BB'];
   var s='';
   s += '<line x1="'+root[0]+'" y1="'+root[1]+'" x2="'+n1[0][0]+'" y2="'+n1[0][1]+'" stroke="#bbb" stroke-width="1.3"/>';
   s += '<line x1="'+root[0]+'" y1="'+root[1]+'" x2="'+n1[1][0]+'" y2="'+n1[1][1]+'" stroke="#bbb" stroke-width="1.3"/>';
   var pe=[[0,0],[0,1],[1,2],[1,3]];
-  for(var e=0;e<4;e++) s += '<line x1="'+n1[pe[e][0]][0]+'" y1="'+n1[pe[e][0]][1]+'" x2="'+leaf[pe[e][1]][0]+'" y2="'+leaf[pe[e][1]][1]+'" stroke="#ddd" stroke-width="1"/>';
+  for (var e=0;e<4;e++) s += '<line x1="'+n1[pe[e][0]][0]+'" y1="'+n1[pe[e][0]][1]+'" x2="'+leaf[pe[e][1]][0]+'" y2="'+leaf[pe[e][1]][1]+'" stroke="#ddd" stroke-width="1"/>';
   s += '<circle cx="'+root[0]+'" cy="'+root[1]+'" r="7" fill="#fff" stroke="#1a1a1a"/>';
-  s += '<text x="'+n1[0][0]+'" y="'+(n1[0][1]+3)+'" text-anchor="middle" font-size="10" font-weight="700">A</text>';
-  s += '<text x="'+n1[1][0]+'" y="'+(n1[1][1]+3)+'" text-anchor="middle" font-size="10" font-weight="700">B</text>';
-  for(var i=0;i<4;i++){
-    var col = names[i]===bestName ? '#0a8a3a' : (names[i]===greedyName ? '#b45309' : '#888');
-    s += '<text x="'+leaf[i][0]+'" y="'+(leaf[i][1]+3)+'" text-anchor="end" font-size="10" font-weight="700" fill="'+col+'">'+names[i]+' '+WB.fmt2(scores[i].v)+'</text>';
+  s += '<text x="'+n1[0][0]+'" y="'+(n1[0][1]+3)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#0e7490">A</text>';
+  s += '<text x="'+n1[1][0]+'" y="'+(n1[1][1]+3)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#0e7490">B</text>';
+  for (var i=0;i<4;i++){
+    var isGreedy = names[i]===greedyName, isBest = names[i]===bestName;
+    var col = isBest && isGreedy ? '#b45309' : isBest ? '#7c5cff' : isGreedy ? '#b45309' : '#888';
+    var w = (isGreedy||isBest) ? '700' : '600';
+    s += '<text x="'+leaf[i][0]+'" y="'+(leaf[i][1]+3)+'" text-anchor="end" font-size="10" font-weight="'+w+'" fill="'+col+'">'+names[i]+' '+WB.fmt2(scores[i].v)+'</text>';
   }
   s += '<text x="90" y="14" text-anchor="middle" style="font-size:8px" fill="#6b7280">cây giải mã 2 bước</text>';
-  svg.innerHTML=s;
+  svg.innerHTML = s;
 }
 WB.wire(generate);
 generate();

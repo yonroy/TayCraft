@@ -4,188 +4,446 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài H3 — Khối GPT, Masked Attention (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.extbl{border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px;}
-.extbl td{border:1px solid #d5c49a;padding:1px 8px;text-align:center;}
-.extbl td.h{background:#f3ede0;font-weight:700;}
-</style>
+<!-- Phong cách DASHBOARD: panel + bảng số + thanh giá trị. Hệ class riêng → wb-dashboard.css,
+     KHÔNG link kèm wb.css (trùng tên .page/.why/.cell → đè nhau, vỡ layout). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ (A) ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần H</div>
+  <div class="top">
+    <span class="no">H3</span>
+    <h1>Khối GPT — Masked Attention <small>— chỉ nhìn quá khứ</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>được nhìn (quá khứ)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>bị che (tương lai) &amp; đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài H3</span><h1>Khối GPT — Masked Attention <small>— chỉ nhìn quá khứ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nếu token thấy được <b>tương lai</b>, mô hình "gian lận" lúc huấn luyện (biết đáp án). Causal mask buộc dự
-    đoán chỉ dựa trên quá khứ → học đúng cách sinh tuần tự. Đây là khác biệt then chốt của decoder GPT.
-    <div class="formula">điểm[i][j] += (j &gt; i ? −∞ : 0) &nbsp;→&nbsp; token i chỉ chú ý j ≤ i (quá khứ + hiện tại)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Self-Attention (Bài H2) gốc cho mỗi token nhìn <b>mọi</b> token — kể cả tương lai, tức "gian lận" đáp án khi
+    huấn luyện. GPT sửa bằng <b>causal mask</b>: cộng <b>−∞</b> vào điểm của mọi ô tương lai <b>trước khi softmax</b>, vì
+    e<sup>−∞</sup> = 0 nên softmax tự triệt tiêu chúng. Cuối phiếu bạn tự chứng minh <b>hai bất biến</b>: (1) token đầu câu luôn
+    chỉ nhìn chính nó — <b>bất kể điểm số</b>; (2) thêm token mới vào cuối câu thì <b>mọi hàng cũ đứng yên</b> — đây chính là lý do
+    GPT được phép <b>nhớ lại</b> thay vì tính lại (nền tảng KV-cache, Bài H10).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    <b>Mặt nạ tam giác</b>: đứng ở token i, "che kín" mọi token sau i. Như đọc sách mà <b>tay che phần chưa đọc</b> — chỉ được dùng những
-    gì đã thấy để đoán chữ kế.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 token · điểm của token 2</span></div>
-    <div class="calc" style="font-size:14px">
-      điểm thô token 2 với [t₁, t₂, t₃] = ( <span class="gv" data-q="s1">1</span>, <span class="gv" data-q="s2">2</span>, <span class="gv" data-q="s3">3</span> )
-    </div>
-    <table class="extbl"><tr><td class="h">x</td><td>0</td><td>1</td><td>2</td></tr>
-      <tr><td class="h">eˣ</td><td>1.00</td><td>2.72</td><td>7.39</td></tr></table>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Áp causal mask cho token 2</h2><span class="tag">che t₃</span></div>
-    <div class="calc">
-      điểm sau mask = ( <span data-q="s1">1</span>, <span data-q="s2">2</span>, <span class="blk" style="min-width:36px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> t₃ ở tương lai (j=3 &gt; i=2) → đặt −∞; t₁, t₂ (quá khứ + hiện tại) giữ nguyên.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax (chỉ quá khứ)</h2><span class="tag">eˣ / Σ</span></div>
-    <div class="calc">
-      e<sup><span data-q="s1">1</span></sup>=<span data-q="e1">2.72</span>, e<sup><span data-q="s2">2</span></sup>=<span data-q="e2">7.39</span>, e<sup>−∞</sup>=0, Σ=<span data-q="Z">10.11</span> →
-      α = ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:30px"></span> )
-    </div>
-    <div class="hint">Trọng số dồn cho token đã thấy; ô tương lai = 0; tổng = 1.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Token 1 thấy gì?</h2><span class="tag">đầu chuỗi</span></div>
-    <div class="calc">
-      token 1 chỉ thấy chính nó → α = ( <span class="blk" style="min-width:30px"></span>, 0, 0 )
-    </div>
-    <div class="why"><b>Vì sao:</b> đầu chuỗi không có quá khứ → tự chú ý 100%.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Ma trận tam giác</h2><span class="tag">lower-triangular</span></div>
-    <div class="note">Gộp mọi token → mặt nạ <b>tam giác dưới</b> (mỗi hàng i chỉ mở tới cột i). Lúc suy luận kết hợp KV cache (H10) sinh từng token.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Causal mask che gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao GPT cần mask này? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT Masked Attention</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài H3</span><h1>Khối GPT — Masked Attention <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Sau mask</h2></div>
-    <div class="calc ans">( <span data-q="s1">1</span>, <span data-q="s2">2</span>, <span class="blk" data-q="pad">−∞</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax token 2</h2></div>
-    <div class="calc ans">α = ( <span class="blk" data-q="a1">0.27</span>, <span class="blk" data-q="a2">0.73</span>, <span class="blk" data-q="a3">0</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Token 1</h2></div>
-    <div class="calc ans">α = ( <span class="blk" data-q="t1a">1</span>, 0, 0 )</div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Ma trận chú ý tam giác dưới</h2><span class="tag">nửa trên bị che</span></div>
-    <div class="figrow">
-      <svg id="figM" class="fig" viewBox="0 0 200 160" width="58mm" height="46mm" aria-label="ma trận ba nhân ba, các ô phía trên đường chéo bị tô xám vì che tương lai"></svg>
-      <div style="flex:1">
-        <div class="note">Hàng = token đang chú ý, cột = token được nhìn. Ô <b>xám</b> (trên đường chéo) bị che (tương lai); ô <b>trắng</b> (≤ đường chéo) được chú ý.</div>
+  <!-- ① ÁP MASK -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Dữ liệu &amp; áp mask — điền −∞ vào ô tương lai</span><span class="f">điểm thô, hàng i = token i chú ý cột j</span></div>
+    <div class="split">
+      <div>
+        <div style="display:flex;gap:1px;margin-left:14mm;margin-bottom:1px">
+          <div style="width:12mm;text-align:center;font:700 8px var(--mono);color:var(--dim)">t₁</div>
+          <div style="width:12mm;text-align:center;font:700 8px var(--mono);color:var(--dim)">t₂</div>
+          <div style="width:12mm;text-align:center;font:700 8px var(--mono);color:var(--dim)">t₃</div>
+        </div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:7mm"><span>t₁</span><span>t₂</span><span>t₃</span></div>
+          <div class="mx c3" style="--cw:12mm;--ch:7mm" id="mxMask">
+            <div class="gv" data-q="s11">1</div><div class="blank"></div><div class="blank"></div>
+            <div class="gv" data-q="s21">1</div><div class="gv" data-q="s22">2</div><div class="blank"></div>
+            <div class="gv" data-q="s31">0</div><div class="gv" data-q="s32">2</div><div class="gv" data-q="s33">1</div>
+          </div>
+        </div>
+        <div class="cap">Ô <b>lam</b> = điểm cho sẵn (đã chia √d<sub>k</sub>). Ô <b>trống</b> phía trên đường chéo = tương lai —
+          hãy viết <b>−∞</b> vào đó (j &gt; i).</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <table style="max-width:44mm">
+          <tr><th class="l">x</th><th>0</th><th>1</th><th>2</th></tr>
+          <tr><td class="l">e<sup>x</sup></td><td>1.00</td><td>2.72</td><td>7.39</td></tr>
+        </table>
+        <div class="cap" style="margin-top:2mm"><b>Bảng tra eˣ</b> — dùng để khỏi bấm máy tính. Nhớ: <b>e<sup>−∞</sup> = 0</b>
+          (không có trong bảng vì luôn bằng 0).</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Che gì? → <span class="qa">Các token tương lai (j &gt; i).</span></li>
-      <li>Vì sao cần? → <span class="qa">Để mô hình không "gian lận" nhìn đáp án — học sinh tuần tự đúng.</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng — vì sao −∞ triệt tiêu</span><span class="f">minh hoạ hàng t₂</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 480 118" width="100%" height="33mm"
+           aria-label="ba tầng điểm, ex, alpha cho hàng token 2; cột tương lai xám, tầng ex và alpha để trống điền"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Causal mask = tam giác dưới, che tương lai → token chỉ chú ý quá khứ; đó là decoder GPT. Bài tiếp (H5):
-    cross-attention nối encoder ↔ decoder.
+  <!-- ② HÀNG t1 — TỰ KIỂM VẾ 1 -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Hàng t₁ — Tự kiểm Vế 1</span><span class="f">softmax của ĐÚNG MỘT phần tử</span></div>
+    <div class="pb">
+      <div class="cap" style="margin:0 0 1.4mm">t₁ ở đầu câu → không có quá khứ, chỉ nhìn <b>chính nó</b>; hai ô còn lại là tương lai.</div>
+      <table>
+        <tr><th class="l">Nhìn cột</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ Σ₁</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁ (chính nó)</td><td class="gvt" data-q="s11">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="tr11"></div></td></tr>
+        <tr><td class="l">t₂ (tương lai)</td><td class="gvt">−∞</td><td>0</td><td>0</td><td><div class="track uni" id="tr12"></div></td></tr>
+        <tr><td class="l">t₃ (tương lai)</td><td class="gvt">−∞</td><td>0</td><td>0</td><td><div class="track uni" id="tr13"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        Σ₁ = <span class="slot sm"></span> + 0 + 0 = <span class="slot sm"></span> &nbsp;→&nbsp;
+        α₁₁ = <span class="slot sm"></span> ÷ <span class="slot sm"></span> = <span class="slot"></span>
+        <span style="font-size:9.2px;color:var(--dim)">&nbsp; (tử số = mẫu số → luôn bằng mấy, <b>bất kể</b> điểm t₁ là bao nhiêu?)</span>
+      </div>
+      <div class="cap">🎲 Bấm <b>Đổi số</b> vài lần — điểm t₁ đổi liên tục nhưng α₁ luôn = ( <span class="slot sm"></span>, 0, 0 ).
+        Sự <b>đứng yên</b> đó chính là bằng chứng Vế 1.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT Masked Attention</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT Masked Attention</span><span>Trang 1/4 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐỀ (B) ================= -->
+<section class="page">
+  <div class="top">
+    <span class="no">H3</span>
+    <h1>Khối GPT — Masked Attention <small>— softmax từng hàng &amp; bất biến tiền tố</small></h1>
+    <span class="chip">PHẦN H · ATTENTION</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>tiếp theo trang 1</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>được nhìn (quá khứ)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>bị che (tương lai) &amp; đáp án</span>
+    </span>
+  </div>
+
+  <!-- ③ HÀNG t2 -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Hàng t₂ — softmax với 1 ô bị che</span><span class="f">Σ₂ chỉ cộng phần quá khứ + hiện tại</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Nhìn cột</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ Σ₂</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁</td><td class="gvt" data-q="s21">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="tr21"></div></td></tr>
+        <tr><td class="l">t₂ (chính nó)</td><td class="gvt" data-q="s22">2</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="tr22"></div></td></tr>
+        <tr><td class="l">t₃ (tương lai)</td><td class="gvt">−∞</td><td>0</td><td>0</td><td><div class="track uni" id="tr23"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">Σ₂ = <span class="slot sm"></span> + <span class="slot sm"></span> + 0 = <span class="slot"></span></div>
+    </div>
+  </div>
+
+  <!-- ④ HÀNG t3 -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Hàng t₃ — softmax không che, nhìn cả 3</span><span class="f">token cuối câu = tầm nhìn rộng nhất</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Nhìn cột</th><th>điểm</th><th>eˣ</th><th>α = eˣ ÷ Σ₃</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁</td><td class="gvt" data-q="s31">0</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="tr31"></div></td></tr>
+        <tr><td class="l">t₂</td><td class="gvt" data-q="s32">2</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="tr32"></div></td></tr>
+        <tr><td class="l">t₃ (chính nó)</td><td class="gvt" data-q="s33">1</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><div class="track uni" id="tr33"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">Σ₃ = <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span></div>
+      <div class="cap">Xếp 3 panel ②③④ cạnh nhau: số ô tô đậm tăng dần 1→2→3 — đó chính là hình <b>tam giác dưới</b> của ma trận A.</div>
+    </div>
+  </div>
+
+  <!-- ⑤ TỰ KIỂM VẾ 2 -->
+  <div class="panel">
+    <div class="ph"><span class="t">⑤ Tự kiểm Vế 2 — thêm token t₄ vào cuối câu</span><span class="f">hàng cũ có đổi không?</span></div>
+    <div class="pb">
+      <div class="cap" style="margin:0 0 1.4mm">Với t₁, t₂, t₃ thì t₄ luôn ở <b>tương lai</b> (j=4 &gt; i) → luôn bị che, bất kể điểm số t₄ là bao nhiêu.
+        Hãy <b>chép lại</b> α đã tính ở trên rồi thêm đúng một số 0 ở cuối:</div>
+      <table>
+        <tr><th class="l">Hàng</th><th>Trước (3 token)</th><th>Sau khi thêm t₄ (4 token)</th></tr>
+        <tr><td class="l">t₁</td><td class="evt">( <span data-q="a11e">1.00</span>, 0.00, 0.00 )</td>
+            <td>( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )</td></tr>
+        <tr><td class="l">t₂</td><td class="evt">( <span data-q="a21e">0.27</span>, <span data-q="a22e">0.73</span>, 0.00 )</td>
+            <td>( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )</td></tr>
+        <tr><td class="l">t₃</td><td class="evt">( <span data-q="a31e">0.09</span>, <span data-q="a32e">0.67</span>, <span data-q="a33e">0.24</span> )</td>
+            <td>( <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span>, <span class="slot sm"></span> )</td></tr>
+      </table>
+      <div class="cap">Không đổi một chữ số nào → đây là <b>nền tảng của KV-cache</b>: xem thêm <span class="qa" style="color:var(--ink);font-weight:400">"Rút ra"</span> ở trang đáp án.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:30mm"><span class="lb">✏️ Nháp — cộng/chia tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Áp mask xong (3 ô −∞)</span>
+    <span><span class="ck"></span>3 hàng softmax + tô thanh</span>
+    <span><span class="ck"></span>Chứng minh Vế 1 + Vế 2</span>
+    <span class="win">🎉 Bạn vừa dựng xong khối GPT!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT Masked Attention</span><span>Trang 2/4 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 3 — ĐÁP ÁN (A) ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H3</span>
+    <h1>Khối GPT — Masked Attention <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>được nhìn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>bị che · đáp án</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Dữ liệu &amp; áp mask — đã điền −∞</span></div>
+    <div class="split">
+      <div>
+        <div style="display:flex;gap:1px;margin-left:14mm;margin-bottom:1px">
+          <div style="width:12mm;text-align:center;font:700 8px var(--mono);color:var(--dim)">t₁</div>
+          <div style="width:12mm;text-align:center;font:700 8px var(--mono);color:var(--dim)">t₂</div>
+          <div style="width:12mm;text-align:center;font:700 8px var(--mono);color:var(--dim)">t₃</div>
+        </div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:7mm"><span>t₁</span><span>t₂</span><span>t₃</span></div>
+          <div class="mx c3" style="--cw:12mm;--ch:7mm">
+            <div class="gv" data-q="s11">1</div><div class="ansc" data-q="pad">−∞</div><div class="ansc" data-q="pad">−∞</div>
+            <div class="gv" data-q="s21">1</div><div class="gv" data-q="s22">2</div><div class="ansc" data-q="pad">−∞</div>
+            <div class="gv" data-q="s31">0</div><div class="gv" data-q="s32">2</div><div class="gv" data-q="s33">1</div>
+          </div>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="why" style="margin:0"><b>Vì sao −∞ trước softmax:</b> nếu chỉ đặt trọng số = 0 <b>sau</b> khi tính softmax, mẫu số Σ vẫn
+          cộng nhầm phần tương lai → sai lệch toàn bộ hàng. Đặt −∞ vào <b>điểm</b> khiến e<sup>−∞</sup>=0 <b>trước khi vào Σ</b> — Σ tự động đúng.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền — hàng t₂</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 480 118" width="100%" height="33mm" aria-label="sơ đồ đã điền số cho hàng t2"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Hàng t₁ — Tự kiểm Vế 1 (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Nhìn cột</th><th>điểm</th><th>eˣ</th><th>α</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁ (chính nó)</td><td class="evt" data-q="s11">1</td><td class="gvt" data-q="e11">2.72</td><td><span class="cellb ans" data-q="a11">1.00</span></td><td><div class="track uni" id="ta11"></div></td></tr>
+        <tr><td class="l">t₂ (tương lai)</td><td class="evt">−∞</td><td>0.00</td><td>0.00</td><td><div class="track uni" id="ta12"></div></td></tr>
+        <tr><td class="l">t₃ (tương lai)</td><td class="evt">−∞</td><td>0.00</td><td>0.00</td><td><div class="track uni" id="ta13"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">
+        Σ₁ = <span class="slot ans" data-q="e11b">2.72</span> + 0 + 0 = <span class="slot ans" data-q="e11c">2.72</span> &nbsp;→&nbsp;
+        α₁₁ = <span class="slot ans" data-q="e11d">2.72</span> ÷ <span class="slot ans" data-q="e11e">2.72</span> = <span class="slot ans" data-q="a11b">1.00</span>
+      </div>
+      <div class="why p" style="margin:1.6mm 0 0"><b>Cốt lõi Vế 1:</b> tử số và mẫu số <b>luôn là cùng một số</b> e<sup>s₁₁</sup> — không quan trọng s₁₁ bằng bao nhiêu, thương số
+        <b>luôn = 1</b>. Đó là lý do bấm 🎲 đổi điểm t₁ mà α₁ = (1, 0, 0) <b>không hề nhúc nhích</b>.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Hàng t₂ (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Nhìn cột</th><th>điểm</th><th>eˣ</th><th>α</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁</td><td class="evt" data-q="s21">1</td><td class="gvt" data-q="e21">2.72</td><td><span class="cellb ans" data-q="a21">0.27</span></td><td><div class="track uni" id="ta21"></div></td></tr>
+        <tr><td class="l">t₂ (chính nó)</td><td class="evt" data-q="s22">2</td><td class="gvt" data-q="e22">7.39</td><td><span class="cellb ans" data-q="a22">0.73</span></td><td><div class="track uni" id="ta22"></div></td></tr>
+        <tr><td class="l">t₃ (tương lai)</td><td class="evt">−∞</td><td>0.00</td><td>0.00</td><td><div class="track uni" id="ta23"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">Σ₂ = <span class="slot ans" data-q="e21b">2.72</span> + <span class="slot ans" data-q="e22b">7.39</span> + 0 = <span class="slot ans" data-q="Z2">10.11</span></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT Masked Attention</span><span>Trang 3/4 · ĐÁP ÁN</span></div>
+</section>
+
+<!-- ================= TRANG 4 — ĐÁP ÁN (B) ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">H3</span>
+    <h1>Khối GPT — Masked Attention <small>— lời giải (tiếp)</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>tiếp theo trang 3</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>được nhìn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>bị che · đáp án</span></span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Hàng t₃ (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Nhìn cột</th><th>điểm</th><th>eˣ</th><th>α</th><th>Tô thanh α</th></tr>
+        <tr><td class="l">t₁</td><td class="evt" data-q="s31">0</td><td class="gvt" data-q="e31">1.00</td><td><span class="cellb ans" data-q="a31">0.09</span></td><td><div class="track uni" id="ta31"></div></td></tr>
+        <tr><td class="l">t₂</td><td class="evt" data-q="s32">2</td><td class="gvt" data-q="e32">7.39</td><td><span class="cellb ans" data-q="a32">0.67</span></td><td><div class="track uni" id="ta32"></div></td></tr>
+        <tr><td class="l">t₃ (chính nó)</td><td class="evt" data-q="s33">1</td><td class="gvt" data-q="e33">2.72</td><td><span class="cellb ans" data-q="a33">0.24</span></td><td><div class="track uni" id="ta33"></div></td></tr>
+      </table>
+      <div class="eq" style="margin-top:1.6mm">Σ₃ = <span class="slot ans" data-q="e31b">1.00</span> + <span class="slot ans" data-q="e32b">7.39</span> + <span class="slot ans" data-q="e33b">2.72</span> = <span class="slot ans" data-q="Z3">11.11</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">⑤ Tự kiểm Vế 2 — thêm t₄ (lời giải)</span></div>
+    <div class="pb">
+      <table>
+        <tr><th class="l">Hàng</th><th>Trước (3 token)</th><th>Sau khi thêm t₄ (4 token)</th></tr>
+        <tr><td class="l">t₁</td><td class="evt">( <span data-q="a11e">1.00</span>, 0.00, 0.00 )</td>
+            <td class="ans" style="font:700 10px var(--mono)">( <span data-q="b1_1">1.00</span>, <span data-q="b1_2">0.00</span>, <span data-q="b1_3">0.00</span>, <span data-q="b1_4">0.00</span> )</td></tr>
+        <tr><td class="l">t₂</td><td class="evt">( <span data-q="a21e">0.27</span>, <span data-q="a22e">0.73</span>, 0.00 )</td>
+            <td class="ans" style="font:700 10px var(--mono)">( <span data-q="b2_1">0.27</span>, <span data-q="b2_2">0.73</span>, <span data-q="b2_3">0.00</span>, <span data-q="b2_4">0.00</span> )</td></tr>
+        <tr><td class="l">t₃</td><td class="evt">( <span data-q="a31e">0.09</span>, <span data-q="a32e">0.67</span>, <span data-q="a33e">0.24</span> )</td>
+            <td class="ans" style="font:700 10px var(--mono)">( <span data-q="b3_1">0.09</span>, <span data-q="b3_2">0.67</span>, <span data-q="b3_3">0.24</span>, <span data-q="b3_4">0.00</span> )</td></tr>
+      </table>
+      <div class="why p" style="margin:1.6mm 0 0"><b>Cốt lõi Vế 2:</b> cột t₄ luôn nhận −∞ ở các hàng t₁,t₂,t₃ (vì t₄ luôn ở tương lai với chúng)
+        → e<sup>−∞</sup>=0 <b>không góp gì</b> vào Σ của các hàng cũ. Σ cũ giữ nguyên ⇒ mọi α cũ giữ nguyên, chỉ có <b>một số 0 nối thêm</b> vào cuối.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi làm causal mask</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Che sau khi softmax xong, đặt hệ số về 0."</b><br>
+          <span style="color:var(--dim)">Sai: Σ đã lỡ cộng nhầm phần tương lai vào mẫu số → mọi trọng số còn lại bị lệch. Phải che <b>trước</b> softmax, ở tầng điểm.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Đặt điểm tương lai = 0, khỏi cần −∞."</b><br>
+          <span style="color:var(--dim)">Sai: e⁰=1 ≠ 0 → token tương lai vẫn được cấp trọng số. Phải dùng −∞ vì đúng e<sup>−∞</sup>=0.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Che tam giác TRÊN nghĩa là j &lt; i."</b><br>
+          <span style="color:var(--dim)">Nhầm hướng: tương lai là <b>j &gt; i</b> (cột lớn hơn hàng) → mask nửa <b>trên</b> đường chéo, giữ <b>dưới + chéo</b> (j ≤ i).</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "Thêm token mới thì phải tính lại toàn bộ ma trận A."</b><br>
+          <span style="color:var(--dim)">Sai — đây chính là ngộ nhận Vế 2 dạy bạn tránh: hàng cũ <b>bất biến</b>, chỉ cần tính hàng mới. Nền tảng của KV-cache.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> Causal mask = cộng −∞ vào nửa <b>trên</b> đường chéo của ma trận điểm, trước softmax; kết quả là ma trận α
+    <b>tam giác dưới</b> — token chỉ chú ý quá khứ + hiện tại (self-attention H2 + mask = decoder GPT). Hai bất biến vừa chứng minh
+    không chỉ là "tính chất đẹp": vì hàng t₁,…,tₙ <b>không bao giờ đổi</b> khi câu dài thêm, mô hình được phép <b>nhớ lại</b> K, V đã
+    tính thay vì tính lại từ đầu mỗi bước sinh — đó chính là <b>KV-cache (Bài H10)</b>, lý do GPT sinh chữ nhanh. Bài tiếp theo
+    (<b>H4</b>): multi-head — chạy nhiều bộ chú ý song song.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài H3 · Khối GPT Masked Attention</span><span>Trang 4/4 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 var EXP = {0:1, 1:2.72, 2:7.39};
+var BLU='#0e7490', ORG='#b45309', INK='#16202e', DIM='#6b7280';
+
+function round2(x){ return Math.round(x*100)/100; }
+
 function generate(){
-  var f2 = WB.fmt2;
-  // điểm t₁,t₂ rơi mốc bảng; t₃ bị che. Chọn s1≠s2 để α không đối xứng.
-  var pair = WB.pick([[1,2],[2,1],[0,2],[2,0],[0,1],[1,0]]);
-  var s1=pair[0], s2=pair[1], s3=WB.randInt(1,3);
-  var e1=EXP[s1], e2=EXP[s2];
-  var Z=Math.round((e1+e2)*100)/100;
-  var a1=Math.round(e1/(e1+e2)*100)/100, a2=Math.round((1-a1)*100)/100;
+  var f2 = WB.fmt2, fi = WB.fmtInt;
+
+  // hàng t1: chỉ 1 ô mở (chính nó) — giá trị s11 KHÔNG ảnh hưởng α11 (luôn =1), đó là Vế 1.
+  var s11 = WB.pick([0,1,2]);
+  // hàng t2: 2 ô mở, GUARD s21≠s22 để α không đối xứng 0.5/0.5 (dễ đọc bằng mắt hơn).
+  var s21 = WB.pick([0,1,2]), s22;
+  do { s22 = WB.pick([0,1,2]); } while (s22 === s21);
+  // hàng t3: 3 ô mở, không cần guard.
+  var s31 = WB.pick([0,1,2]), s32 = WB.pick([0,1,2]), s33 = WB.pick([0,1,2]);
+
+  var e11 = EXP[s11], Z1 = e11, a11 = round2(e11/Z1); // luôn 1.00
+
+  var e21 = EXP[s21], e22 = EXP[s22], Z2 = round2(e21+e22);
+  var a21 = round2(e21/Z2), a22 = round2(1-a21);
+
+  var e31 = EXP[s31], e32 = EXP[s32], e33 = EXP[s33], Z3 = round2(e31+e32+e33);
+  var a31 = round2(e31/Z3), a32 = round2(e32/Z3), a33 = round2(1-a31-a32);
+
   WB.setAll({
-    s1:String(s1), s2:String(s2), s3:String(s3),
-    e1:f2(e1), e2:f2(e2), Z:f2(Z),
-    a1:f2(a1), a2:f2(a2), a3:'0', t1a:'1', pad:'−∞'
+    s11: fi(s11), s21: fi(s21), s22: fi(s22), s31: fi(s31), s32: fi(s32), s33: fi(s33),
+    pad: '−∞',
+    e11: f2(e11), e11b: f2(e11), e11c: f2(Z1), e11d: f2(e11), e11e: f2(Z1),
+    a11: f2(a11), a11b: f2(a11), a11e: f2(a11),
+    e21: f2(e21), e22: f2(e22), e21b: f2(e21), e22b: f2(e22), Z2: f2(Z2),
+    a21: f2(a21), a22: f2(a22), a21e: f2(a21), a22e: f2(a22),
+    e31: f2(e31), e32: f2(e32), e33: f2(e33), e31b: f2(e31), e32b: f2(e32), e33b: f2(e33), Z3: f2(Z3),
+    a31: f2(a31), a32: f2(a32), a33: f2(a33), a31e: f2(a31), a32e: f2(a32), a33e: f2(a33),
+    // ⑤ vế 2 — hàng cũ chép nguyên, thêm đúng một số 0 cuối
+    b1_1: f2(a11), b1_2: '0.00', b1_3: '0.00', b1_4: '0.00',
+    b2_1: f2(a21), b2_2: f2(a22), b2_3: '0.00', b2_4: '0.00',
+    b3_1: f2(a31), b3_2: f2(a32), b3_3: f2(a33), b3_4: '0.00'
   });
-  drawTri('figM');
+
+  // thanh α: ĐỀ luôn để trống (chỉ vạch 0+mốc), ĐÁP ÁN tô đầy theo giá trị thật (uni: 0..1)
+  drawBarUni('tr11',0,1,false); drawBarUni('tr12',0,1,false); drawBarUni('tr13',0,1,false);
+  drawBarUni('tr21',0,1,false); drawBarUni('tr22',0,1,false); drawBarUni('tr23',0,1,false);
+  drawBarUni('tr31',0,1,false); drawBarUni('tr32',0,1,false); drawBarUni('tr33',0,1,false);
+  drawBarUni('ta11',a11,1,true); drawBarUni('ta12',0,1,true); drawBarUni('ta13',0,1,true);
+  drawBarUni('ta21',a21,1,true); drawBarUni('ta22',a22,1,true); drawBarUni('ta23',0,1,true);
+  drawBarUni('ta31',a31,1,true); drawBarUni('ta32',a32,1,true); drawBarUni('ta33',a33,1,true);
+
+  drawMech('figQ', s21, s22, e21, e22, Z2, a21, a22, false);
+  drawMech('figA', s21, s22, e21, e22, Z2, a21, a22, true);
 }
-function drawTri(id){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=44, y0=18, c=34;
-  var s='';
-  for(var i=0;i<3;i++){
-    s+='<text x="'+(x0-10)+'" y="'+(y0+i*c+c/2+4)+'" text-anchor="end" font-size="9" fill="#5b6776">t'+(i+1)+'</text>';
-    s+='<text x="'+(x0+i*c+c/2)+'" y="'+(y0-5)+'" text-anchor="middle" font-size="9" fill="#5b6776">t'+(i+1)+'</text>';
-    for(var j=0;j<3;j++){
-      var masked=(j>i);
-      s+='<rect x="'+(x0+j*c)+'" y="'+(y0+i*c)+'" width="'+(c-2)+'" height="'+(c-2)+'" fill="'+(masked?'#9aa3ad44':'#0e749022')+'" stroke="'+(masked?'#9aa3ad':'#0e7490')+'" stroke-width="1.2"/>';
-      s+='<text x="'+(x0+j*c+c/2-1)+'" y="'+(y0+i*c+c/2+4)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+(masked?'#9aa3ad':'#0e7490')+'">'+(masked?'−∞':'✓')+'</text>';
+
+// thanh 1 chiều (0..max, gốc TRÁI) — α luôn ≥0. fill=false → chỉ vạch 0+mốc (ĐỀ để trống).
+function drawBarUni(id, v, max, fill){
+  var el = document.getElementById(id); if (!el) return;
+  var h = '<div class="zero"></div><div class="tick" style="left:33%"></div><div class="tick" style="left:66%"></div>';
+  if (fill && v > 0){
+    var pct = Math.min(v/max, 1) * 100;
+    h += '<div class="fill pos" style="left:0;width:' + pct + '%"></div>';
+  }
+  el.innerHTML = h;
+}
+
+// sơ đồ luồng: 3 tầng (điểm / eˣ / α) cho hàng t2 — cột t3 luôn xám (tương lai).
+// showAns=false: tầng eˣ và α ẩn ("?"); showAns=true: lộ số thật.
+function drawMech(id, s21, s22, e21, e22, Z2, a21, a22, showAns){
+  var svg = document.getElementById(id); if (!svg) return;
+  var f2 = WB.fmt2;
+  var ox = 70, c = 66, s = '';
+  var cols = ['t₁','t₂','t₃ (tương lai)'];
+  for (var k = 0; k < 3; k++){
+    s += '<text x="' + (ox + k*c + (c-8)/2) + '" y="14" text-anchor="middle" font-size="' + (k===2?8:9.5) + '" font-weight="700" fill="' + (k===2?DIM:ORG) + '">' + cols[k] + '</text>';
+  }
+  var ylab = [38, 68, 98], labels = ['điểm', 'eˣ', 'α'];
+  var scoreCells = [String(s21), String(s22), '−∞'];
+  var expCells = showAns ? [f2(e21), f2(e22), '0.00'] : ['?', '?', '0'];
+  var alphaCells = showAns ? [f2(a21), f2(a22), '0.00'] : ['?', '?', '0'];
+  var rows = [scoreCells, expCells, alphaCells];
+  for (var r = 0; r < 3; r++){
+    s += '<text x="6" y="' + (ylab[r]+4) + '" font-size="10" fill="#334155">' + labels[r] + '</text>';
+    for (var kk = 0; kk < 3; kk++){
+      var fut = (kk === 2);
+      var blank = (!showAns && r > 0 && !fut);
+      var fill = fut ? '#9aa3ad22' : (blank ? '#0e749006' : '#0e749012');
+      var stroke = fut ? DIM : BLU;
+      var dash = (fut || blank) ? '3 2' : null;
+      s += '<rect x="' + (ox+kk*c) + '" y="' + (ylab[r]-14) + '" width="' + (c-8) + '" height="24" rx="3"'
+         + ' fill="' + fill + '" stroke="' + stroke + '" stroke-width="1"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>';
+      var tc = fut ? DIM : (blank ? '#94a3b8' : BLU);
+      s += '<text x="' + (ox+kk*c+(c-8)/2) + '" y="' + (ylab[r]+4) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="' + tc + '">' + rows[r][kk] + '</text>';
     }
   }
-  s+='<text x="'+(x0+1.5*c)+'" y="'+(y0+3*c+16)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">hàng i chỉ mở tới cột i (tam giác dưới)</text>';
-  svg.innerHTML=s;
+  // mũi tên xuống giữa các tầng
+  for (var a = 0; a < 2; a++){
+    s += '<line x1="' + (ox-14) + '" y1="' + (ylab[a]+16) + '" x2="' + (ox-14) + '" y2="' + (ylab[a+1]-16) + '" stroke="' + DIM + '" stroke-width="1.1"/>';
+  }
+  s += '<text x="' + (ox+3*c+10) + '" y="42" font-size="9" fill="' + DIM + '">e<tspan baseline-shift="super" font-size="6.5">−∞</tspan> = 0</text>';
+  s += '<text x="' + (ox+3*c+10) + '" y="72" font-size="8.6" fill="' + DIM + '">Σ = ' + (showAns ? f2(Z2) : '?') + '</text>';
+  s += '<text x="' + (ox+3*c+10) + '" y="102" font-size="8.6" fill="' + DIM + '">tổng hàng = 1.00</text>';
+  svg.innerHTML = s;
 }
+
 WB.wire(generate);
 generate();
 </script>

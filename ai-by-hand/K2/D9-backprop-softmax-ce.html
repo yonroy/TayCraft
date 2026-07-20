@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D9 — Backprop qua Softmax + CE (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,140 +25,172 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D9</span><h1>Backprop qua Softmax + CE <small>— gradient = p − y</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Riêng đạo hàm softmax rất rối (Jacobian K×K), riêng −ln cũng phiền; nhưng <b>ghép lại</b> mọi thứ triệt tiêu,
-    còn <b>p − y</b>. Nhờ vậy lớp đầu ra phân loại có gradient tính tức thì, ổn định số.
-    <div class="formula">
-      p = softmax(z) &nbsp;&nbsp; L = −Σ yₖ ln pₖ &nbsp;(y one-hot) &nbsp;&nbsp; ∂L/∂zₖ = pₖ − yₖ
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài D9</span>
+    <h1>Backprop qua Softmax + CE <small>— ghép lại, gradient rút gọn còn p − y</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    "Trách nhiệm sai" của mỗi logit = <b>dự đoán trừ sự thật</b>: lớp đúng (y=1) bị kéo xuống p−1 (âm → khiến logit đó <b>tăng</b>), các lớp
-    sai (y=0) bị đẩy p (dương → logit <b>giảm</b>). Mạng tự "nâng đúng, hạ sai".
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Riêng đạo hàm softmax rất rối (Jacobian K×K), riêng −ln cũng phiền; nhưng <b>ghép lại</b> mọi thứ triệt tiêu, còn <b>p − y</b>.
+    Hãy <b>tự tay</b> lấy gradient từng logit. Phần thưởng: thấy trường hợp <b>2 lớp</b> thu về đúng sigmoid + BCE (Bài D2) — cùng một công thức.
+    <div class="formula" style="margin-top:5px">
+      p = softmax(z) &nbsp;·&nbsp; L = −Σ yₖ ln pₖ (y one-hot) &nbsp;·&nbsp; ∂L/∂zₖ = pₖ − yₖ
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn (softmax đã tính)</h2><span class="tag">3 lớp</span></div>
-    <div class="calc" style="font-size:14px">
+    <div class="calc big">
       logit z = ( <span class="gv" data-q="z1">2</span>, <span class="gv" data-q="z2">0</span>, <span class="gv" data-q="z3">1</span> ) →
       p = ( <span class="gv" data-q="p1">0.67</span>, <span class="gv" data-q="p2">0.09</span>, <span class="gv" data-q="p3">0.24</span> )<br>
       nhãn đúng = lớp <span class="gv" data-q="tidx">1</span> → one-hot y = ( <span class="gv" data-q="y1">1</span>, <span class="gv" data-q="y2">0</span>, <span class="gv" data-q="y3">0</span> )
     </div>
   </div>
 
-  <!-- BƯỚC 1 — loss -->
+  <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Loss</h2><span class="tag">−ln p đúng</span></div>
-    <div class="calc">
-      L = −ln(p đúng) = −ln(<span data-q="pt">0.67</span>) = −(<span data-q="lnpt">−0.40</span>) = <span class="blk" style="min-width:46px"></span>
-    </div>
+    <div class="calc">L = −ln(p đúng) = −ln(<span data-q="pt">0.67</span>) = −(<span data-q="lnpt">−0.40</span>) = <span class="wcell" style="min-width:44px"></span></div>
     <div class="why"><b>Vì sao:</b> chỉ lớp đúng đóng góp (các yₖ khác = 0 nên triệt số hạng của chúng).</div>
   </div>
 
-  <!-- BƯỚC 2 — gradient p−y -->
+  <!-- STEP 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Gradient từng logit = p − y</h2><span class="tag">không Jacobian</span></div>
-    <div class="calc">
-      ∂L/∂z₁ = <span data-q="p1">0.67</span> − <span data-q="y1">1</span> = <span class="blk" style="min-width:46px"></span> ;
-      ∂L/∂z₂ = <span data-q="p2">0.09</span> − <span data-q="y2">0</span> = <span class="blk" style="min-width:40px"></span> ;
-      ∂L/∂z₃ = <span data-q="p3">0.24</span> − <span data-q="y3">0</span> = <span class="blk" style="min-width:40px"></span>
+    <div class="calc big">
+      ∂L/∂z₁ = <span data-q="p1">0.67</span> − <span data-q="y1">1</span> = <span class="wcell" style="min-width:44px"></span> ·
+      ∂L/∂z₂ = <span data-q="p2">0.09</span> − <span data-q="y2">0</span> = <span class="wcell" style="min-width:38px"></span> ·
+      ∂L/∂z₃ = <span data-q="p3">0.24</span> − <span data-q="y3">0</span> = <span class="wcell" style="min-width:38px"></span>
     </div>
     <div class="hint">Chỉ lấy p rồi trừ one-hot — không cần Jacobian, không đạo hàm log.</div>
   </div>
 
-  <!-- BƯỚC 3 — tổng = 0 -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Kiểm: tổng gradient = 0</h2><span class="tag">sanity check</span></div>
-    <div class="calc">
-      <span data-q="g1">−0.33</span> + <span data-q="g2">0.09</span> + <span data-q="g3">0.24</span> = <span class="blk" style="min-width:34px"></span>
+    <div class="step-h"><div class="b">3</div><h2>Kiểm: tổng gradient = 0</h2><span class="tag">Σp = Σy = 1</span></div>
+    <div class="calc big">
+      <span data-q="g1">−0.33</span> + <span data-q="g2">0.09</span> + <span data-q="g3">0.24</span> = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> Σpₖ = 1 và Σyₖ = 1 nên tổng (p − y) luôn 0 — một kiểm tra nhanh rất tốt.</div>
+    <div class="why"><b>Vì sao:</b> Σpₖ = 1 và Σyₖ = 1 nên tổng (p − y) luôn 0 — một kiểm tra nhanh rất tốt (nâng lớp này thì hạ lớp kia).</div>
   </div>
 
-  <!-- BƯỚC 4 — cập nhật -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D9 · Backprop Softmax + CE</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Softmax+CE — trường hợp 2 lớp = sigmoid+BCE</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D9</span>
+    <h1>Backprop qua Softmax + CE <small>— 2 lớp thu về logistic + BCE</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: 2 lớp = sigmoid + BCE -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Cập nhật: nâng đúng, hạ sai</h2><span class="tag">z ← z − η(p−y)</span></div>
-    <div class="note">Lớp đúng có gradient <b>âm</b> → trừ đi làm logit <b>tăng</b>; lớp sai gradient dương → logit <b>giảm</b>. Gradient (p − y) này
-      tiếp tục backprop xuống các lớp trước (Bài D8).</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — 2 lớp: softmax+CE = sigmoid+BCE</h2><span class="tag">ví dụ cố định</span></div>
+    <div class="note" style="margin-top:0">
+      Với đúng <b>2 lớp</b>, softmax(z₁, z₂) cho p₁ = σ(z₁ − z₂) — chính là sigmoid của một logit u = z₁ − z₂. Lấy z = (2, 0), y = (1, 0) ⇒ u = 2, p₁ = σ(2) = <b>0.88</b>:
+    </div>
+    <div class="calc big">
+      Cách softmax+CE: gradient = (p₁ − 1, p₂ − 0) = (0.88 − 1, 0.12) = ( <span class="wcell" style="min-width:40px"></span>, <span class="wcell" style="min-width:36px"></span> )<br>
+      Cách sigmoid+BCE (Bài D2): p − y = 0.88 − 1 = <span class="wcell" style="min-width:44px"></span>
+      &nbsp;<small style="color:#7a8794">— khớp gradient logit lớp đúng?</small>
+    </div>
+    <div class="note">Hai cách ra <b>cùng số</b>: softmax+CE là bản <b>đa lớp</b> của sigmoid+BCE, và cả hai cho gradient <b>p − y</b>. Vì thế lớp ra phân loại (2 lớp hay K lớp) đều học cực mượt.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Cập nhật: nâng đúng, hạ sai</h2><span class="tag">z ← z − η(p−y)</span></div>
+    <div class="note" style="margin-top:2px">Lớp đúng có gradient <b>âm</b> (p−1 &lt; 0) → trừ đi làm logit <b>tăng</b>; lớp sai gradient dương → logit <b>giảm</b>. Gradient (p − y) này tiếp tục
+      backprop xuống các lớp trước (Bài D8). Khi p đúng → 1 thì gradient → 0: học xong tự dừng.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>∂(CE∘softmax)/∂logit bằng gì? → <span class="blk" style="min-width:130px"></span></li>
-      <li>Tổng các gradient logit bằng? → <span class="blk" style="min-width:40px"></span></li>
+      <li>Với 2 lớp, softmax+CE trùng công thức nào? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D9 · Backprop Softmax + CE</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — trừ one-hot &amp; cộng kiểm ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Gradient p − y</span>
+    <span><span class="ck"></span>Kiểm 2 lớp = BCE</span>
+    <span class="win">🎉 Bạn vừa backprop lớp ra phân loại!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D9 · Backprop Softmax + CE</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D9</span><h1>Backprop qua Softmax + CE <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D9</span><h1>Backprop qua Softmax + CE <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Loss</h2></div>
-    <div class="calc ans">L = −ln(<span data-q="pt">0.67</span>) = −(<span data-q="lnpt">−0.40</span>) = <span class="blk" data-q="loss">0.40</span></div>
+    <div class="calc ans">L = −ln(<span data-q="pt">0.67</span>) = −(<span data-q="lnpt">−0.40</span>) = <span class="wcell ans" data-q="loss">0.40</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Gradient p − y</h2></div>
-    <div class="calc ans">
-      ( <span class="blk" data-q="g1">−0.33</span>, <span class="blk" data-q="g2">0.09</span>, <span class="blk" data-q="g3">0.24</span> )
-    </div>
+    <div class="calc ans big">( <span class="wcell ans" data-q="g1">−0.33</span>, <span class="wcell ans" data-q="g2">0.09</span>, <span class="wcell ans" data-q="g3">0.24</span> )</div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tổng</h2></div>
-    <div class="calc ans">
-      <span data-q="g1">−0.33</span> + <span data-q="g2">0.09</span> + <span data-q="g3">0.24</span> = <span class="blk" data-q="gsum">0</span> ✓
-    </div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Cột: p, y, và p − y</h2><span class="tag">nâng đúng hạ sai</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Tổng = 0</h2></div>
     <div class="figrow">
-      <svg id="figG" class="fig" viewBox="0 0 240 150" width="76mm" height="46mm" aria-label="cột dự đoán p, nhãn one-hot y, và gradient p trừ y cho 3 lớp"></svg>
+      <svg id="figG" class="fig" viewBox="0 0 240 150" width="72mm" height="44mm" aria-label="cột dự đoán p, nhãn one-hot y, và gradient p trừ y cho 3 lớp"></svg>
       <div style="flex:1">
-        <div class="note">Cột <b>lam</b> = p (dự đoán), <b>cam</b> = y (one-hot), <b>tím</b> = p − y (gradient). Lớp đúng có cột tím <b>xuống dưới 0</b>
-          (kéo logit lên); lớp sai cột tím dương (hạ logit).</div>
+        <div class="calc ans"><span data-q="g1">−0.33</span> + <span data-q="g2">0.09</span> + <span data-q="g3">0.24</span> = <span class="wcell ans" data-q="gsum">0</span> ✓</div>
+        <div class="note">Cột <b>lam</b> = p, <b>cam</b> = y (one-hot), <b>tím</b> = p − y. Lớp đúng cột tím <b>xuống dưới 0</b> (kéo logit lên); lớp sai cột tím dương (hạ logit).</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>2 lớp = sigmoid + BCE</h2><span class="tag">cùng p − y</span></div>
+    <div class="calc ans">
+      softmax+CE: (0.88−1, 0.12) = ( <span class="wcell ans" data-q="tw1">−0.12</span>, <span class="wcell ans" data-q="tw2">0.12</span> ) &nbsp;·&nbsp;
+      sigmoid+BCE: 0.88−1 = <span class="wcell ans" data-q="tw3">−0.12</span>
+    </div>
+    <div class="why"><b>Vì sao:</b> p₁ = σ(z₁−z₂) nên "2 lớp softmax" = logistic một logit; cả hai cho gradient p − y. Softmax+CE = tổng quát K lớp của sigmoid+BCE.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>∂(CE∘softmax)/∂logit? → <span class="qa">p − y (dự đoán trừ one-hot).</span></li>
-      <li>Tổng gradient logit? → <span class="qa">0.</span></li>
+      <li>2 lớp trùng công thức? → <span class="qa">Sigmoid + BCE (Bài D2) — softmax+CE là bản đa lớp.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Softmax + CE → gradient <b>p − y</b> cực gọn, ổn định; nâng lớp đúng, hạ lớp sai. Bài tiếp (D10): dùng gradient
-    để cập nhật — <b>SGD</b> trên một mini-batch.
+    <b style="color:var(--accent2)">Rút ra.</b> Softmax + CE → gradient <b>p − y</b> cực gọn, ổn định (tổng = 0, nâng đúng hạ sai); 2 lớp thu về sigmoid+BCE.
+    Bài D10: dùng gradient để cập nhật — <b>SGD</b> trên một mini-batch.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D9 · Backprop Softmax + CE</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D9 · Backprop Softmax + CE</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
   var f2 = WB.fmt2;
-  // bộ (z, p) softmax tính sẵn (tổng p = 1.00); ln cho mỗi p
+  // bộ (z, p) softmax tính sẵn (tổng p = 1.00)
   var TRI = [
     { z:[2,0,1], p:[0.67,0.09,0.24] },
     { z:[1,0,2], p:[0.24,0.09,0.67] },
@@ -181,15 +208,14 @@ function generate(){
   var pt = c.p[t], lnpt = LN[pt.toFixed(2)];
   var loss = -lnpt;
 
-  function sg(v){ var s = f2(v); return s; }   // fmt2 đã có dấu −
-
   WB.setAll({
     z1: String(c.z[0]), z2: String(c.z[1]), z3: String(c.z[2]),
     p1: f2(c.p[0]), p2: f2(c.p[1]), p3: f2(c.p[2]),
     tidx: String(t+1), y1: String(y[0]), y2: String(y[1]), y3: String(y[2]),
     pt: f2(pt), lnpt: f2(lnpt), loss: f2(loss),
-    g1: sg(g[0]), g2: sg(g[1]), g3: sg(g[2]),
-    gsum: f2(gsum)
+    g1: f2(g[0]), g2: f2(g[1]), g3: f2(g[2]),
+    gsum: f2(gsum),
+    tw1: '−0.12', tw2: '0.12', tw3: '−0.12'    // ví dụ 2 lớp cố định z=(2,0), σ(2)=0.88
   });
   drawGrad('figG', c.p, y, g);
 }
@@ -198,7 +224,7 @@ function generate(){
 function drawGrad(id, p, y, g){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var x0 = 22, zeroY = 86, H = 64, gap = 72, bw = 16;   // trục 0 ở giữa để chứa cột âm
+  var x0 = 22, zeroY = 86, H = 64, gap = 72, bw = 16;
   var s = '<line x1="'+x0+'" y1="'+zeroY+'" x2="'+(x0+3*gap)+'" y2="'+zeroY+'" stroke="#9aa3ad" stroke-width="1"/>';
   s += '<text x="'+(x0-2)+'" y="'+(zeroY+3)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">0</text>';
   function bar(x, val, col){

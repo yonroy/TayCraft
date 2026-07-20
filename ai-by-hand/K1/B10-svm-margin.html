@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B10 — SVM: lề hình học (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,42 +22,38 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B10</span><h1>SVM: lề hình học <small>— SVM margin</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nhiều đường tách được hai lớp, nhưng đường <b>"thoáng" nhất</b> (xa cả hai bên nhất) ít sai trên
-    dữ liệu mới. SVM định nghĩa rõ "thoáng" = lề, và chỉ vài <b>vectơ hỗ trợ</b> sát lề mới quyết định đường.
-    <div class="formula">
-      Đường: w·x + b = 0 &nbsp;|&nbsp; khoảng cách: d = |w·x + b| / ‖w‖ &nbsp;|&nbsp; bề rộng lề = 2/‖w‖
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài B10</span>
+    <h1>SVM: lề hình học <small>— con đường rộng nhất giữa hai lớp</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Tưởng tượng một <b>con đường</b> rộng nhất có thể nhét giữa hai lớp mà không đè lên điểm nào. Vạch giữa là ranh giới; mép
-    đường chạm vài điểm — đó là <b>vectơ hỗ trợ</b>. Càng rộng đường, phân loại càng "chắc tay".
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho đường <b>w·x + b = 0</b> và 3 điểm. Hãy <b>tự tay</b> tính ‖w‖,
+    khoảng cách hình học từ A và B tới đường, và bề rộng lề <b>2/‖w‖</b>.
+    Phần thưởng: nhân (w, b) với 2 để thấy <b>lề hình học bất biến</b> — vì sao ta chuẩn hóa cho vectơ hỗ trợ |score| = 1.
   </div>
 
   <!-- BƯỚC 0 -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn — đường &amp; điểm</h2><span class="tag">w, b, 3 điểm</span></div>
-    <div class="calc">
-      w = (<span class="gv" data-q="w1">1</span>, <span class="gv" data-q="w2">1</span>) &nbsp; b = <span class="gv" data-q="b">−3</span><br>
-      A(<span data-q="Ax">3</span>,<span data-q="Ay">2</span>) 🔵 &nbsp; B(<span data-q="Bx">1</span>,<span data-q="By">1</span>) 🔴 &nbsp; C(<span data-q="Cx">4</span>,<span data-q="Cy">4</span>) 🔵
+    <div class="calc" style="line-height:1.9">
+      w = (<span class="gv" data-q="w1">1</span>, <span class="gv" data-q="w2">1</span>) &nbsp; b = <span class="gv" data-q="b">−3</span> &nbsp;<small style="color:#7a8794">— đường: w·x + b = 0</small><br>
+      A(<span class="gv" data-q="Ax">3</span>,<span class="gv" data-q="Ay">2</span>) 🔵 &nbsp; B(<span class="gv" data-q="Bx">1</span>,<span class="gv" data-q="By">1</span>) 🔴 &nbsp; C(<span class="gv" data-q="Cx">4</span>,<span class="gv" data-q="Cy">4</span>) 🔵
     </div>
-    <div class="why" style="margin-top:5px"><b>Vì sao:</b> w·x+b là "điểm số thô"; chia cho ‖w‖ mới thành <b>khoảng cách thật</b> tới đường.</div>
+    <div class="why"><b>Vì sao:</b> w·x+b là "điểm số thô"; chia cho ‖w‖ mới thành <b>khoảng cách thật</b> tới đường.</div>
   </div>
 
   <div class="grid2">
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Chuẩn ‖w‖</h2><span class="tag">độ dài w</span></div>
-    <div class="calc">
-      ‖w‖ = √(<span data-q="w1">1</span>² + <span data-q="w2">1</span>²) = √2 ≈ <span class="blk"></span>
+    <div class="calc big">
+      ‖w‖ = √(<span data-q="w1">1</span>² + <span data-q="w2">1</span>²)<br>= √2 ≈ <span class="wcell"></span>
     </div>
     <div class="hint"><b>Mẹo:</b> ‖w‖ là độ dài vectơ pháp tuyến — không phụ thuộc điểm nào.</div>
   </div>
@@ -61,29 +61,30 @@
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Khoảng cách từ A</h2><span class="tag">phía 🔵</span></div>
-    <div class="calc">
-      w·A + b = <span class="blk"></span> &nbsp;→&nbsp; d_A = |·|/√2 ≈ <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      w·A + b = <span class="wcell"></span><br>
+      d_A = |·|/√2 ≈ <span class="wcell" style="min-width:52px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> dấu của w·x+b cho biết <b>phía</b> nào của đường; trị tuyệt đối chia ‖w‖ cho khoảng cách.</div>
+    <div class="why"><b>Vì sao:</b> dấu w·x+b cho biết <b>phía</b>; |·| chia ‖w‖ ra khoảng cách.</div>
   </div>
   </div><!-- /grid2 -->
 
-  <!-- BƯỚC 3 + 4 -->
   <div class="grid2">
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Khoảng cách từ B</h2><span class="tag">phía 🔴</span></div>
-    <div class="calc">
-      w·B + b = <span class="blk"></span> &nbsp;→&nbsp; d_B = |·|/√2 ≈ <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      w·B + b = <span class="wcell"></span><br>
+      d_B = |·|/√2 ≈ <span class="wcell" style="min-width:52px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> B gần đường hơn → ứng viên <b>vectơ hỗ trợ</b>.</div>
+    <div class="why"><b>Vì sao:</b> B gần đường hơn (|score|=1) → <b>vectơ hỗ trợ</b>.</div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">4</div><h2>Bề rộng lề</h2><span class="tag">2/‖w‖</span></div>
-    <div class="calc">
-      bề rộng = 2/√2 = √2 ≈ <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      bề rộng = 2/√2<br>= √2 ≈ <span class="wcell" style="min-width:52px"></span>
     </div>
-    <div class="note">SVM <b>tối đa hóa</b> đại lượng này ⇔ <b>tối thiểu ‖w‖</b>, với ràng buộc mọi điểm đúng phía &amp; ngoài lề.</div>
+    <div class="note">SVM <b>tối đa hóa</b> đại lượng này ⇔ <b>tối thiểu ‖w‖</b>.</div>
   </div>
   </div><!-- /grid2 -->
 
@@ -96,16 +97,31 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A4 · tính tay<br>SVM lề — tiếp theo</div>
   </div>
-  <div class="wb-title"><span class="no">Bài B10</span><h1>SVM lề <small>— vẽ đường &amp; lề</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài B10</span>
+    <h1>SVM lề <small>— bất biến tỉ lệ &amp; vẽ lề</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
 
-  <!-- BƯỚC 5 -->
+  <!-- BƯỚC 5 — TỰ KIỂM: BẤT BIẾN TỈ LỆ -->
   <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Vẽ đường phân tách &amp; lề</h2><span class="tag">đường + lề</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — nhân (w, b) với 2</h2><span class="tag">lề bất biến</span></div>
+    <div class="calc big" style="line-height:2.15">
+      w' = (2, 2), b' = 2b. &nbsp; Đường w'·x + b' = 0 <span class="blk" style="min-width:80px"></span> đường cũ.<br>
+      score'_A = 2·score_A = <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp; ‖w'‖ = 2√2 ≈ <span class="wcell" style="min-width:44px"></span><br>
+      d'_A = |score'_A| / ‖w'‖ = <span class="wcell" style="min-width:52px"></span> &nbsp;<small style="color:#7a8794">— so với d_A Bước 2</small>
+    </div>
+    <div class="note">Cả tử (score) lẫn mẫu (‖w‖) đều ×2 → <b>d không đổi</b>: khoảng cách hình học <b>bất biến</b> khi đổi tỉ lệ (w, b). Vì thế SVM tự do <b>chuẩn hóa</b>: đặt |score| tại vectơ hỗ trợ = 1 (dạng chuẩn) → nửa lề = 1/‖w‖, cả lề = 2/‖w‖.</div>
+  </div>
+
+  <!-- BƯỚC 6 — HERO: vẽ đường + lề -->
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Vẽ đường phân tách &amp; lề</h2><span class="tag">đường + lề</span></div>
     <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="ba điểm hai lớp cho sẵn, khung trống để tự kẻ đường và hai mép lề"></svg>
-      <div style="flex:1">
-        <div class="why"><b>Vì sao:</b> đường w·x+b=0 chia đôi mặt phẳng; hai mép lề (nét đứt) cách đều đường, chạm <b>vectơ hỗ trợ</b>.</div>
-        <div class="note">Tự kẻ đường giữa (lam) và hai mép lề (nét đứt); điểm chạm mép = vectơ hỗ trợ. Đường ⟂ w = (1,1).</div>
+      <svg id="figQ" class="fig" viewBox="0 0 200 150" width="66mm" height="49.5mm" aria-label="ba điểm hai lớp cho sẵn, khung trống để tự kẻ đường và hai mép lề"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="note"><b>Vẽ tay:</b> kẻ đường giữa (lam) ⟂ w=(1,1), rồi hai mép lề (nét đứt) cách đều; điểm chạm mép = vectơ hỗ trợ.</div>
+        <div class="calc" style="margin-top:6px">vectơ hỗ trợ (|score|=1) = <span class="wcell" style="min-width:44px"></span></div>
       </div>
     </div>
   </div>
@@ -115,14 +131,20 @@
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Dấu của w·x + b cho biết gì? → <span class="blk" style="min-width:200px"></span></li>
-      <li>SVM tối ưu hóa cái gì? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Vì sao đặt được |score| = 1 ở vectơ hỗ trợ? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Đo lề &amp; khoảng cách</span>
+    <span><span class="ck"></span>Kiểm bất biến tỉ lệ</span>
+    <span class="win">🎉 Bạn vừa dựng lề SVM!</span>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B10 · SVM lề hình học</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -132,32 +154,43 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Chuẩn ‖w‖</h2></div>
-    <div class="calc ans">
-      ‖w‖ = √(<span data-q="w1">1</span>²+<span data-q="w2">1</span>²) = √2 ≈ <span class="blk" data-q="normw">1.41</span>
+    <div class="calc ans big">
+      ‖w‖ = √(<span data-q="w1">1</span>²+<span data-q="w2">1</span>²) = √2 ≈ <span class="wcell ans" data-q="normw">1.41</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2–3</div><h2>Khoảng cách A, B</h2></div>
-    <div class="calc ans">
-      w·A+b = <span class="blk" data-q="scoreA">2</span> (dương → 🔵) → d_A = <span class="blk" data-q="dA">1.41</span><br>
-      w·B+b = <span class="blk" data-q="scoreB">−1</span> (âm → 🔴) → d_B = <span class="blk" data-q="dB">0.71</span>
+    <div class="calc ans big">
+      w·A+b = <span class="wcell ans" data-q="scoreA">2</span> (dương → 🔵) → d_A = <span class="wcell ans" data-q="dA">1.41</span><br>
+      w·B+b = <span class="wcell ans" data-q="scoreB">−1</span> (âm → 🔴) → d_B = <span class="wcell ans" data-q="dB">0.71</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">4</div><h2>Bề rộng lề</h2></div>
-    <div class="calc ans">
-      2/√2 = √2 ≈ <span class="blk" data-q="margin">1.41</span>
+    <div class="calc ans big">
+      2/√2 = √2 ≈ <span class="wcell ans" data-q="margin">1.41</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">5</div><h2>Hình minh họa</h2><span class="tag">đường + lề</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — bất biến tỉ lệ</h2><span class="tag">chuẩn hóa</span></div>
+    <div class="calc ans big">
+      Đường w'·x+b'=0 <span class="wcell ans" data-q="sameLine">= (trùng)</span> đường cũ (chia 2 ra lại w·x+b=0)<br>
+      score'_A = <span class="wcell ans" data-q="scoreA2">4</span> &nbsp;·&nbsp; ‖w'‖ = 2√2 ≈ <span class="wcell ans" data-q="normw2">2.83</span> &nbsp;·&nbsp;
+      d'_A = <span data-q="scoreA2">4</span>/<span data-q="normw2">2.83</span> = <span class="wcell ans" data-q="dA2">1.41</span> = d_A
+    </div>
+    <div class="why"><b>Vì sao:</b> tử và mẫu cùng ×2 → khoảng cách hình học |w·x+b|/‖w‖ <b>không đổi</b>. Cặp (w,b) chỉ xác định tới một hằng số tỉ lệ; SVM cố định nó bằng cách đặt <b>|score| = 1 tại vectơ hỗ trợ</b> → nửa lề = 1/‖w‖.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Hình — đường &amp; lề</h2></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 200 150" width="70mm" height="52mm" aria-label="đường phân tách, hai mép lề nét đứt, ba điểm hai lớp"></svg>
-      <div style="flex:1">
-        <div class="note"><b style="color:var(--accent)">Đường giữa (lam)</b> là ranh giới; <b>hai nét đứt</b> là mép lề. Điểm chạm mép = vectơ hỗ trợ.</div>
+      <svg id="figK" class="fig" viewBox="0 0 200 150" width="62mm" height="46.5mm" aria-label="đường phân tách, hai mép lề nét đứt, ba điểm hai lớp"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans">vectơ hỗ trợ = <span class="wcell ans" data-q="svf">B</span></div>
+        <div class="note"><b style="color:var(--accent)">Đường giữa (lam)</b> = ranh giới; <b>hai nét đứt</b> = mép lề. Điểm chạm mép (|score|=1) = vectơ hỗ trợ.</div>
       </div>
     </div>
   </div>
@@ -166,12 +199,12 @@
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
       <li>Dấu w·x+b → <span class="qa">Điểm nằm phía nào của đường phân tách.</span></li>
-      <li>SVM tối ưu → <span class="qa">Lề rộng nhất ⇔ ‖w‖ nhỏ nhất (với ràng buộc phân loại đúng).</span></li>
+      <li>Đặt được |score|=1 vì → <span class="qa">Lề hình học bất biến khi đổi tỉ lệ (w,b) → tự do chọn tỉ lệ chuẩn hóa.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Lề = |w·x+b|/‖w‖, bề rộng = 2/‖w‖; SVM chọn đường lề rộng nhất, chỉ phụ thuộc vectơ hỗ trợ.
+    <b style="color:var(--accent2)">Rút ra.</b> Lề = |w·x+b|/‖w‖ (bất biến tỉ lệ), bề rộng = 2/‖w‖; SVM chọn đường lề rộng nhất, chỉ phụ thuộc vectơ hỗ trợ.
     Bài tiếp (B11): ghép nhiều mô hình yếu — <b>Gradient Boosting</b>.
   </div>
 
@@ -183,7 +216,7 @@
 function generate(){
   var w1 = 1, w2 = 1;                       // giữ ‖w‖ = √2 để số đẹp
   var b = WB.pick([-2, -3, -4]);
-  // chọn điểm cho điểm số cố định: A→+2, B→−1, C→+4
+  // chọn điểm cho điểm số cố định: A→+2, B→−1 (vectơ hỗ trợ), C→+4
   function ptForScore(score){
     var sum = score - b;                    // x+y = score − b (vì w=(1,1))
     var x = Math.max(0, Math.min(sum, WB.randInt(0, sum)));
@@ -195,6 +228,8 @@ function generate(){
   var scoreA = w1*A[0]+w2*A[1]+b, scoreB = w1*B[0]+w2*B[1]+b;
   var dA = Math.abs(scoreA)/normw, dB = Math.abs(scoreB)/normw;
   var margin = 2/normw;
+  // tự kiểm — nhân đôi tỉ lệ
+  var scoreA2 = 2*scoreA, normw2 = 2*normw, dA2 = Math.abs(scoreA2)/normw2;
 
   WB.setAll({
     w1: ''+w1, w2: ''+w2, b: WB.fmtInt(b),
@@ -202,7 +237,9 @@ function generate(){
     normw: WB.fmt2(normw),
     scoreA: WB.fmtInt(scoreA), dA: WB.fmt2(dA),
     scoreB: WB.fmtInt(scoreB), dB: WB.fmt2(dB),
-    margin: WB.fmt2(margin)
+    margin: WB.fmt2(margin),
+    sameLine: '= (trùng)', scoreA2: WB.fmtInt(scoreA2), normw2: WB.fmt2(normw2), dA2: WB.fmt2(dA2),
+    svf: 'B'
   });
 
   var figPts = [['A',A,'#0e7490'],['B',B,'#dc2626'],['C',C,'#0e7490']];

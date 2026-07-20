@@ -1,12 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài C1 — Lớp tuyến tính (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pC">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,20 +22,20 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · nền tảng</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần C</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài C1</span><h1>Lớp tuyến tính <small>— Linear Layer · y = Wx + b</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài C1</span>
+    <h1>Lớp tuyến tính <small>— y = Wx + b, khối Lego của deep learning</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~15 phút</span></div>
 
-  <div class="intro">
-    <b>Lớp cơ bản nhất.</b> Một lớp tuyến tính (fully-connected / Dense) nhận đầu vào <b>x</b>, nhân với <b>ma trận
-    trọng số W</b> rồi cộng <b>bias b</b>. W quyết định "trộn" đầu vào ra sao, b dịch chuyển kết quả. Đây là khối
-    Lego lặp lại trong toàn bộ deep learning.
-    <div class="formula">
-      y = W x + b
-      &nbsp;&nbsp;<s style="color:var(--dim)">W: (3×2) · x: (2×1) · b: (3×1) → y: (3×1)</s>
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho W (3×2), x (2×1), b (3×1). Hãy <b>tự tay</b> nhân từng hàng W với x, cộng bias ra y (3×1),
+    rồi đếm tham số cho cỡ lớp khác. Phần thưởng: xếp <b>2 lớp tuyến tính</b> lại và thấy chúng <b>gộp thành 1 lớp</b> —
+    lý do phải có hàm phi tuyến (C4).
   </div>
 
   <!-- GIVEN -->
@@ -51,16 +55,16 @@
       <div class="mwrap"><div class="mlabel">b <s>3×1</s></div>
         <div class="mtx c1"><div class="cell given" data-q="b1">1</div><div class="cell given" data-q="b2">0</div><div class="cell given" data-q="b3">2</div></div></div>
     </div>
+    <div class="why"><b>Vì sao:</b> mỗi <b>hàng của W</b> là một "bộ dò" hỏi đầu vào một câu (tích vô hướng); bias dịch kết quả lên/xuống.</div>
   </div>
 
-  <div class="grid2">
   <!-- STEP 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Tính Wx</h2><span class="tag">mỗi hàng W · x</span></div>
-    <div class="calc">
-      (Wx)<sub>1</sub> = <span data-q="w11w">1</span>·<span data-q="x1w">2</span> + <span data-q="w12w">2</span>·<span data-q="x2w">1</span> = <span class="blk"></span><br>
-      (Wx)<sub>2</sub> = <span data-q="w21w">0</span>·<span data-q="x1w">2</span> + <span data-q="w22w">1</span>·<span data-q="x2w">1</span> = <span class="blk"></span><br>
-      (Wx)<sub>3</sub> = <span data-q="w31w">3</span>·<span data-q="x1w">2</span> + <span data-q="w32w">(−1)</span>·<span data-q="x2w">1</span> = <span class="blk"></span>
+    <div class="calc big">
+      (Wx)<sub>1</sub> = <span data-q="w11w">1</span>·<span data-q="x1w">2</span> + <span data-q="w12w">2</span>·<span data-q="x2w">1</span> = <span class="wcell"></span> &nbsp;
+      (Wx)<sub>2</sub> = <span data-q="w21w">0</span>·<span data-q="x1w">2</span> + <span data-q="w22w">1</span>·<span data-q="x2w">1</span> = <span class="wcell"></span><br>
+      (Wx)<sub>3</sub> = <span data-q="w31w">3</span>·<span data-q="x1w">2</span> + <span data-q="w32w">(−1)</span>·<span data-q="x2w">1</span> = <span class="wcell"></span>
     </div>
     <div class="hint"><b>Mẫu:</b> <span data-q="hint1">hàng 1 của W = (1,2) chấm x = (2,1) → 2+2 = 4.</span></div>
   </div>
@@ -69,10 +73,10 @@
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Cộng bias → y</h2><span class="tag">Wx + b</span></div>
     <div class="row">
-      <div class="calc">
-        y<sub>1</sub> = <span class="blk"></span><span data-q="b1term"> + 1</span> = <span class="blk"></span><br>
-        y<sub>2</sub> = <span class="blk"></span><span data-q="b2term"> + 0</span> = <span class="blk"></span><br>
-        y<sub>3</sub> = <span class="blk"></span><span data-q="b3term"> + 2</span> = <span class="blk"></span>
+      <div class="calc big">
+        y<sub>1</sub> = <span class="blk"></span><span data-q="b1term"> + 1</span> = <span class="wcell"></span><br>
+        y<sub>2</sub> = <span class="blk"></span><span data-q="b2term"> + 0</span> = <span class="wcell"></span><br>
+        y<sub>3</sub> = <span class="blk"></span><span data-q="b3term"> + 2</span> = <span class="wcell"></span>
       </div>
       <div class="mwrap"><div class="mlabel">y <s>3×1</s></div>
         <div class="mtx c1" style="--cell:14mm">
@@ -81,35 +85,65 @@
     </div>
   </div>
 
-  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đọc ý nghĩa</h2><span class="tag">vai trò W, b</span></div>
-    <div class="note" style="margin-top:2px">
-      Mỗi <b>hàng của W</b> là một "bộ dò" riêng — nó hỏi đầu vào một câu hỏi (qua tích vô hướng). 3 hàng → 3 câu hỏi
-      → 3 con số đầu ra. <b>Bias</b> giống ngưỡng nền: cộng thêm để dịch kết quả lên/xuống.
-    </div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: lớp nối đầy đủ</h2><span class="tag">mỗi mũi tên = 1 trọng số</span></div>
+    <svg id="figLin" class="fig" viewBox="0 0 250 122" width="112mm" height="55mm" aria-label="đồ thị lớp tuyến tính 2 đầu vào nối tới 3 đầu ra"></svg>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C1 · Lớp tuyến tính</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Lớp tuyến tính — tiếp theo</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài C1</span>
+    <h1>Lớp tuyến tính <small>— đếm tham số &amp; xếp 2 lớp</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN C · NƠ-RON</span>
   </div>
 
   <!-- STEP 4 -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đổi số đầu ra?</h2><span class="tag">đếm tham số</span></div>
-    <div class="calc">
-      Muốn 5 đầu ra từ 2 đầu vào: W cỡ <span class="blk"></span> × <span class="blk"></span>, b dài <span class="blk"></span><br>
-      Tổng tham số = <span class="blk"></span> (W) + <span class="blk"></span> (b)
+    <div class="step-h"><div class="b">4</div><h2>Đổi cỡ đầu ra?</h2><span class="tag">đếm tham số</span></div>
+    <div class="calc big">
+      Muốn 5 đầu ra từ 2 đầu vào: W cỡ <span class="wcell" style="min-width:34px"></span> × <span class="wcell" style="min-width:34px"></span>, b dài <span class="wcell" style="min-width:34px"></span><br>
+      Tổng tham số = <span class="wcell" style="min-width:34px"></span> (W) + <span class="wcell" style="min-width:34px"></span> (b) = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="note">Số đầu ra = số hàng của W = độ dài b. Đầu vào dài bao nhiêu thì W có bấy nhiêu cột.</div>
+    <div class="note">Số đầu ra = số hàng W = độ dài b. Đầu vào dài bao nhiêu thì W có bấy nhiêu cột.</div>
   </div>
-  </div><!-- /grid2 -->
 
+  <!-- STEP 5 — TỰ KIỂM: XẾP 2 LỚP -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: lớp nối đầy đủ</h2><span class="tag">mỗi mũi tên = 1 trọng số</span></div>
-    <svg id="figLin" class="fig" viewBox="0 0 250 122" width="118mm" height="58mm" aria-label="đồ thị lớp tuyến tính 2 đầu vào nối tới 3 đầu ra"></svg>
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — xếp 2 lớp tuyến tính</h2><span class="tag">gộp thành 1</span></div>
+    <div class="calc big" style="line-height:2.15">
+      Ví dụ 1 chiều: lớp 1 cho u = <span class="gv" data-q="a">2</span>·x + <span class="gv" data-q="p">1</span>; lớp 2 cho v = <span class="gv" data-q="c">3</span>·u + <span class="gv" data-q="q">−1</span>.<br>
+      Thay u vào: v = <span data-q="c">3</span>·(<span data-q="a">2</span>x + <span data-q="p">1</span>) + <span data-q="q">−1</span> = <span class="wcell" style="min-width:40px"></span>·x + <span class="wcell" style="min-width:40px"></span><br>
+      Kiểm tại x = 2: đi 2 lớp <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp; đi 1 lớp gộp <span class="wcell" style="min-width:44px"></span> &nbsp;<small style="color:#7a8794">— phải bằng nhau</small>
+    </div>
+    <div class="note">Hai lớp tuyến tính nối nhau = <b>một</b> lớp tuyến tính (a' = c·a, b' = c·p + q). Xếp bao nhiêu lớp <b>vẫn chỉ ra một hàm bậc nhất</b> → không "bẻ cong" được. Vì thế cần <b>hàm kích hoạt phi tuyến</b> chèn giữa (C4).</div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C1 · Lớp tuyến tính</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra</div>
+    <ol>
+      <li>Lớp tuyến tính gồm phép toán nào? → <span class="blk" style="min-width:190px"></span></li>
+      <li>Vì sao xếp nhiều lớp tuyến tính vẫn "yếu"? → <span class="blk" style="min-width:160px"></span></li>
+    </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính y = Wx + b</span>
+    <span><span class="ck"></span>Đếm tham số &amp; gộp 2 lớp</span>
+    <span class="win">🎉 Bạn vừa chạy một lớp tuyến tính!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C1 · Lớp tuyến tính</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -119,20 +153,20 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Wx</h2></div>
-    <div class="calc ans">
-      (Wx)<sub>1</sub> = <span data-q="sumWx1">2+2</span> = <span class="blk" data-q="Wx1">4</span> &nbsp;|&nbsp;
-      (Wx)<sub>2</sub> = <span data-q="sumWx2">0+1</span> = <span class="blk" data-q="Wx2">1</span> &nbsp;|&nbsp;
-      (Wx)<sub>3</sub> = <span data-q="sumWx3">6−1</span> = <span class="blk" data-q="Wx3">5</span>
+    <div class="calc ans big">
+      (Wx)<sub>1</sub> = <span data-q="sumWx1">2+2</span> = <span class="wcell ans" data-q="Wx1">4</span> &nbsp;·&nbsp;
+      (Wx)<sub>2</sub> = <span data-q="sumWx2">0+1</span> = <span class="wcell ans" data-q="Wx2">1</span> &nbsp;·&nbsp;
+      (Wx)<sub>3</sub> = <span data-q="sumWx3">6−1</span> = <span class="wcell ans" data-q="Wx3">5</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>y = Wx + b</h2></div>
     <div class="row">
-      <div class="calc ans">
-        y<sub>1</sub> = <span data-q="sumY1">4+1</span> = <span class="blk" data-q="y1">5</span> &nbsp;|&nbsp;
-        y<sub>2</sub> = <span data-q="sumY2">1+0</span> = <span class="blk" data-q="y2">1</span> &nbsp;|&nbsp;
-        y<sub>3</sub> = <span data-q="sumY3">5+2</span> = <span class="blk" data-q="y3">7</span>
+      <div class="calc ans big">
+        y<sub>1</sub> = <span data-q="sumY1">4+1</span> = <span class="wcell ans" data-q="y1">5</span> &nbsp;·&nbsp;
+        y<sub>2</sub> = <span data-q="sumY2">1+0</span> = <span class="wcell ans" data-q="y2">1</span> &nbsp;·&nbsp;
+        y<sub>3</sub> = <span data-q="sumY3">5+2</span> = <span class="wcell ans" data-q="y3">7</span>
       </div>
       <div class="mwrap"><div class="mlabel">y</div>
         <div class="mtx c1" style="--cell:14mm">
@@ -143,19 +177,35 @@
 
   <div class="step">
     <div class="step-h"><div class="b">4</div><h2>Đếm tham số</h2></div>
-    <div class="calc ans">
-      W = <span class="blk">5</span> × <span class="blk">2</span> &nbsp;|&nbsp; b dài <span class="blk">5</span> &nbsp;|&nbsp;
-      tổng = <span class="blk">10</span> + <span class="blk">5</span> = 15
+    <div class="calc ans big">
+      W = <span class="wcell ans" data-q="wr">5</span> × <span class="wcell ans" data-q="wc">2</span> &nbsp;·&nbsp; b dài <span class="wcell ans" data-q="bl">5</span> &nbsp;·&nbsp;
+      tổng = <span class="wcell ans" data-q="pw">10</span> + <span class="wcell ans" data-q="pb">5</span> = <span class="wcell ans" data-q="ptot">15</span>
     </div>
   </div>
 
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — 2 lớp gộp thành 1</h2><span class="tag">a'=c·a, b'=c·p+q</span></div>
+    <div class="calc ans big">
+      v = <span data-q="c">3</span>(<span data-q="a">2</span>x+<span data-q="p">1</span>)<span data-q="qterm">−1</span> = <span class="wcell ans" data-q="ap">6</span>·x + <span class="wcell ans" data-q="bp">2</span><br>
+      x=2: 2 lớp = <span class="wcell ans" data-q="v2">14</span> &nbsp;·&nbsp; 1 lớp gộp = <span data-q="ap">6</span>·2+<span data-q="bp">2</span> = <span class="wcell ans" data-q="v2b">14</span> ✓
+    </div>
+    <div class="why"><b>Vì sao:</b> ghép hai phép bậc nhất vẫn ra một phép bậc nhất (a'=c·a, b'=c·p+q). Không có phi tuyến chèn giữa thì độ sâu <b>vô ích</b> — mạng chỉ vẽ được đường/mặt phẳng thẳng.</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qh">✎ Tự kiểm tra — đáp án</div>
+    <ol>
+      <li>Lớp tuyến tính = <span class="qa">Nhân ma trận W·x (Bài A7) + cộng bias b.</span></li>
+      <li>Nhiều lớp vẫn yếu vì → <span class="qa">Ghép các hàm tuyến tính vẫn ra một hàm tuyến tính → cần phi tuyến.</span></li>
+    </ol>
+  </div>
+
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> y = <span data-q="yTuple">(5, 1, 7)</span>. Một lớp tuyến tính = <b>nhân ma trận (Bài A7) + cộng bias</b>.
-    Nhưng xếp bao nhiêu lớp tuyến tính lại vẫn chỉ ra một hàm tuyến tính — <b>chưa học được điều phức tạp</b>.
+    <b style="color:var(--accent2)">Rút ra.</b> y = <span data-q="yTuple">(5, 1, 7)</span>. Một lớp tuyến tính = nhân ma trận + cộng bias; xếp nhiều lớp vẫn tuyến tính.
     Bài C4 thêm <b>hàm kích hoạt phi tuyến</b> để mạng "bẻ cong" được.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C1 · Lớp tuyến tính</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài C1 · Lớp tuyến tính</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -172,6 +222,11 @@ function generate(){
     Wx[i] = t[0]+t[1];
   }
   var y = [Wx[0]+b[0], Wx[1]+b[1], Wx[2]+b[2]];
+
+  // Tự kiểm — xếp 2 lớp 1 chiều
+  var a = WB.randIntNZ(2,3), p = WB.randIntNZ(-2,2), c = WB.randIntNZ(2,3), q = WB.randIntNZ(-2,2);
+  var ap = c*a, bp = c*p+q;
+  var v2 = ap*2 + bp;
 
   var map = {
     w11: WB.fmtInt(W[0][0]), w12: WB.fmtInt(W[0][1]),
@@ -190,7 +245,13 @@ function generate(){
     y1: WB.fmtInt(y[0]), y2: WB.fmtInt(y[1]), y3: WB.fmtInt(y[2]),
     yTuple: '(' + WB.fmtInt(y[0]) + ', ' + WB.fmtInt(y[1]) + ', ' + WB.fmtInt(y[2]) + ')',
     hint1: 'hàng 1 của W = (' + WB.fmtInt(W[0][0]) + ',' + WB.fmtInt(W[0][1]) + ') chấm x = (' +
-      WB.fmtInt(x[0]) + ',' + WB.fmtInt(x[1]) + ') → ' + WB.sumExpr(terms[0]) + ' = ' + WB.fmtInt(Wx[0]) + '.'
+      WB.fmtInt(x[0]) + ',' + WB.fmtInt(x[1]) + ') → ' + WB.sumExpr(terms[0]) + ' = ' + WB.fmtInt(Wx[0]) + '.',
+    // đếm tham số (5 out, 2 in)
+    wr: '5', wc: '2', bl: '5', pw: '10', pb: '5', ptot: '15',
+    // tự kiểm
+    a: WB.fmtInt(a), p: WB.fmtInt(p), c: WB.fmtInt(c), q: WB.fmtInt(q),
+    qterm: WB.opTerm(q),
+    ap: WB.fmtInt(ap), bp: WB.fmtInt(bp), v2: WB.fmtInt(v2), v2b: WB.fmtInt(v2)
   };
   WB.setAll(map);
 }
@@ -201,16 +262,13 @@ function drawLin(){
   var inN = [{ x: 48, y: 42, t: 'x₁' }, { x: 48, y: 90, t: 'x₂' }];
   var outN = [{ x: 196, y: 26, t: 'y₁' }, { x: 196, y: 66, t: 'y₂' }, { x: 196, y: 106, t: 'y₃' }];
   var s = '<defs><marker id="alin" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker></defs>';
-  // cạnh = trọng số
   inN.forEach(function(a){ outN.forEach(function(b){
     s += '<line x1="' + (a.x + 13) + '" y1="' + a.y + '" x2="' + (b.x - 14) + '" y2="' + b.y + '" stroke="#b45309" stroke-width="1" opacity="0.55" marker-end="url(#alin)"/>';
   }); });
-  // nút vào
   inN.forEach(function(a){
     s += '<circle cx="' + a.x + '" cy="' + a.y + '" r="13" fill="#eaf4f6" stroke="#7fb4bf" stroke-width="1.6"/>';
     s += '<text x="' + a.x + '" y="' + (a.y + 4) + '" text-anchor="middle" style="font-size:11px" fill="#0e7490" font-weight="700">' + a.t + '</text>';
   });
-  // nút ra + bias
   outN.forEach(function(b){
     s += '<circle cx="' + b.x + '" cy="' + b.y + '" r="13" fill="#fff" stroke="#16202e" stroke-width="1.6"/>';
     s += '<text x="' + b.x + '" y="' + (b.y + 4) + '" text-anchor="middle" style="font-size:11px" fill="#16202e" font-weight="700">' + b.t + '</text>';

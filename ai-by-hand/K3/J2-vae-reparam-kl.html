@@ -3,197 +3,438 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài J2 — VAE reparam + KL (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<title>Làm toán AI · Bài J2 — VAE Reparam + KL (A4 in được)</title>
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css. -->
+<link rel="stylesheet" href="../wb-dashboard.css">
+<!-- Cân mật độ riêng cho phiếu này (mục tiêu 2 trang): override phi-phá-hoại,
+     KHÔNG sửa wb-dashboard.css dùng chung — chỉ siết khoảng cách tại đây. -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+  .panel{margin-top:.9mm}
+  .ph{padding:1mm 2.6mm}
+  .pb{padding:1.1mm 2.6mm}
+  .split > div{padding:1.1mm 2.6mm}
+  .mission{margin-top:1.4mm;padding:1.2mm 3mm}
+  .eq{line-height:1.5}
+  .cap{margin-top:.6mm}
+  .why{margin-top:1mm;padding:1.1mm 2.6mm;line-height:1.35}
+  .done{margin-top:.8mm}
+  .scratch{margin-top:1.4mm}
+  .subbar{padding:1mm 0 0}
+  .top{padding-bottom:1.4mm}
+  td{padding:.7mm 0}
+  table tr:first-child th{padding-bottom:.6mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần J</div>
+  <div class="top">
+    <span class="no">J2</span>
+    <h1>VAE — Reparam + KL <small>— hai mẹo cốt lõi để "lấy mẫu" học được bằng gradient</small></h1>
+    <span class="chip">PHẦN J · SINH</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>μ, σ · cho sẵn (encoder)</span>
+      <span><span class="sw" style="background:var(--purple)"></span>ε · nhiễu N(0,1)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>z, KL · đáp án</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài J2</span><h1>VAE — Reparam + KL <small>— hai mẹo cốt lõi của VAE</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> VAE muốn <b>lấy mẫu</b> z nhưng "lấy mẫu" chặn gradient. Reparam tách ngẫu nhiên ra ε để z <b>khả vi</b> theo
-    μ, σ. KL kéo phân phối ẩn về N(0,1) → vùng ẩn liền mạch, lấy mẫu sinh ảnh mới được.
-    <div class="formula">z = μ + σ·ε, &nbsp; ε ~ N(0,1) &nbsp;·&nbsp; KL = ½ Σ ( μ² + σ² − 1 − ln σ² )</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> VAE muốn <b>lấy mẫu</b> z từ phân phối do encoder ra (μ, σ), nhưng "bốc ngẫu nhiên" chặn gradient.
+    <b>Reparam</b> tách phần ngẫu nhiên ra ε rồi <b>dịch &amp; co</b>: z = μ + σ·ε → z khả vi theo μ, σ. <b>KL</b> đo mức phân phối
+    ẩn lệch khỏi chuẩn N(0,1) để phạt. Cuối phiếu bạn tự chứng minh: <b>KL = 0 khi và chỉ khi (μ,σ) = (0,1)</b> — mọi lệch
+    khỏi chuẩn đều bị phạt dương.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    <b>Reparam:</b> thay vì "bốc z ngẫu nhiên" (không đạo hàm được), ta bốc ε cố định rồi <b>dịch & co</b> bằng μ, σ → gradient chảy qua
-    μ, σ như thường. <b>KL:</b> "phạt" nếu mã ẩn lệch khỏi N(0,1) → giữ vùng ẩn gọn, không rỗng chỗ.
-  </div>
-
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 chiều ẩn · σ = 1</span></div>
-    <div class="calc" style="font-size:14px">
-      μ = ( <span class="gv" data-q="mu1">1</span>, <span class="gv" data-q="mu2">0</span> ) ·
-      σ = ( <span class="gv" data-q="s1">1</span>, <span class="gv" data-q="s2">1</span> ) ·
-      nhiễu ε = ( <span class="gv" data-q="e1">0.5</span>, <span class="gv" data-q="e2">−0.5</span> )
-    </div>
-    <div class="note">σ = 1 → ln σ² = ln 1 = 0 (chọn cho dễ tính tay).</div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Reparam z = μ + σ·ε</h2><span class="tag">khả vi</span></div>
-    <div class="calc">
-      z = ( <span data-q="mu1">1</span> + <span data-q="s1">1</span>·<span data-q="e1">0.5</span>, <span data-q="mu2">0</span> + <span data-q="s2">1</span>·<span data-q="e2">−0.5</span> ) =
-      ( <span class="blk" style="min-width:42px"></span>, <span class="blk" style="min-width:42px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> ngẫu nhiên nằm ở ε; z là <b>hàm khả vi</b> của μ, σ → backprop qua μ, σ được.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>KL từng chiều</h2><span class="tag">½(μ²+σ²−1−ln σ²)</span></div>
-    <div class="calc">
-      chiều 1: ½(<span data-q="mu1">1</span>²+1−1−0) = <span class="blk" style="min-width:36px"></span> ;
-      chiều 2: ½(<span data-q="mu2">0</span>²+1−1−0) = <span class="blk" style="min-width:36px"></span>
-    </div>
-    <div class="hint">σ = 1, μ = 0 cho KL = 0 (đúng N(0,1)); μ ≠ 0 thì bị phạt ½μ².</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tổng KL</h2><span class="tag">cộng các chiều</span></div>
-    <div class="calc">
-      KL = <span data-q="kl1">0.5</span> + <span data-q="kl2">0</span> = <span class="blk" style="min-width:40px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> chiều nào μ ≠ 0 sẽ bị phạt; loss VAE = tái tạo + KL.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đánh đổi</h2><span class="tag">tái tạo ↔ KL</span></div>
-    <div class="note">KL quá mạnh → ẩn về chuẩn nhưng tái tạo mờ (posterior collapse); quá yếu → vùng ẩn lỗ chỗ, sinh kém. Cân bằng bằng β-VAE (chỉnh trọng số KL).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Reparam giải quyết vấn đề gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>KL ép phân phối ẩn về đâu? → <span class="blk" style="min-width:120px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài J2</span><h1>VAE — Reparam + KL <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Reparam z</h2></div>
-    <div class="calc ans">z = ( <span class="blk" data-q="z1">1.5</span>, <span class="blk" data-q="z2">−0.5</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>KL từng chiều</h2></div>
-    <div class="calc ans">( <span class="blk" data-q="kl1">0.5</span>, <span class="blk" data-q="kl2">0</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Tổng KL</h2></div>
-    <div class="calc ans">KL = <span class="blk" data-q="kl">0.5</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>μ, σ → ⊕ε → z trong vùng ẩn N(0,1)</h2><span class="tag">reparam</span></div>
-    <div class="figrow">
-      <svg id="figV" class="fig" viewBox="0 0 240 140" width="78mm" height="46mm" aria-label="sơ đồ mu sigma kết hợp epsilon thành z, đặt trong vòng tròn phân phối chuẩn"></svg>
-      <div style="flex:1">
-        <div class="note">μ, σ (từ encoder) + ε (nhiễu chuẩn) → z. KL kéo đám mây mã ẩn về quanh gốc (N(0,1)) để vùng ẩn liền mạch, lấy mẫu sinh được.</div>
+  <!-- DỮ LIỆU CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Dữ liệu cho sẵn</span><span class="f">2 chiều ẩn · encoder ra μ, σ · nhiễu ε cho trước</span></div>
+    <div class="split">
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:6.4mm"><span>μ</span><span>σ</span><span>ε</span></div>
+          <div class="mx c2" style="--cw:11mm;--ch:6.4mm">
+            <div class="gv" data-q="mu1">1</div><div class="gv" data-q="mu2">0</div>
+            <div class="gv" data-q="s1">1</div><div class="gv" data-q="s2">1</div>
+            <div class="pv" data-q="e1">0.5</div><div class="pv" data-q="e2">−0.5</div>
+          </div>
+        </div>
+        <div class="cap">Cột trái = chiều 1, cột phải = chiều 2. <b>μ, σ</b> (lam) do encoder xuất ra; <b>ε</b> (tím) rút một lần từ N(0,1), coi như hằng số đã cho.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="mxwrap">
+          <div class="rowlab" style="--ch:5.6mm"><span>σ</span><span>ln σ²</span></div>
+          <div class="mx c2" style="--cw:14mm;--ch:5.6mm">
+            <div>1</div><div>2</div>
+            <div class="pe">0</div><div class="pe">1.39</div>
+          </div>
+        </div>
+        <div class="cap">Bảng tra <b>ln σ²</b> — KHÔNG bấm máy tính, đọc thẳng σ → ln σ² (σ=1 → σ²=1 → ln1=0 · σ=2 → σ²=4 → ln4≈1.39).</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Reparam? → <span class="qa">Cho gradient chảy qua bước lấy mẫu (z khả vi theo μ, σ).</span></li>
-      <li>KL về đâu? → <span class="qa">Chuẩn N(0,1).</span></li>
-    </ol>
+  <!-- SƠ ĐỒ -->
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ luồng</span><span class="f">μ,σ,ε → z (reparam) → KL từng chiều → ΣKL</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figQ" viewBox="0 0 552 96" width="100%" height="30mm"
+           aria-label="hai chieu z tinh tu mu sigma epsilon, roi KL tung chieu, roi tong KL, cac o so de trong"></svg>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> VAE = reparam (z = μ+σε, khả vi) + KL (ẩn về N(0,1)); loss = tái tạo + KL. Bài tiếp (J3): mô hình sinh đối kháng — <b>GAN</b>.
+  <!-- ① REPARAM -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Reparam — z = μ + σ·ε</span><span class="f">dịch &amp; co, gradient chảy qua μ,σ</span></div>
+    <div class="pb">
+      <div class="eq">
+        z₁ = <span data-q="mu1">1</span> + <span data-q="s1">1</span>·<span data-q="e1">0.5</span> = <span class="slot sm"></span> &nbsp;·&nbsp;
+        z₂ = <span data-q="mu2">0</span> + <span data-q="s2">1</span>·<span data-q="e2">−0.5</span> = <span class="slot sm"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>z₁</th><th>z₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track" id="t_z1"></div></td><td><div class="track" id="t_z2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>−5 … 0 … +5</b> (tô trái nếu âm, phải nếu dương). Dự đoán: bốc lại ε nhiều lần rồi lấy trung bình các z —
+      trung bình đó tiến gần số nào? (gợi ý: trung bình của ε tiến về 0) → <span class="slot" style="min-width:16mm"></span></div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <!-- ② KL TỪNG CHIỀU -->
+  <div class="panel">
+    <div class="ph"><span class="t">② KL từng chiều</span><span class="f">KLᵢ = ½(μᵢ² + σᵢ² − 1 − ln σᵢ²)</span></div>
+    <div class="pb">
+      <div class="eq">
+        KL₁ = ½(<span data-q="mu1">1</span>² + <span data-q="s1">1</span>² − 1 − <span class="slot sm"></span>) = <span class="slot"></span><br>
+        KL₂ = ½(<span data-q="mu2">0</span>² + <span data-q="s2">1</span>² − 1 − <span class="slot sm"></span>) = <span class="slot"></span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>KL₁</th><th>KL₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_k1"></div></td><td><div class="track uni" id="t_k2"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>0 … 3</b> · ln σᵢ² lấy từ bảng tra ở trên. So KL₁ với KL₂ vừa tính: giá trị nào lớn hơn?
+      Nhìn lại μ, σ tương ứng — vì sao? → <span class="slot" style="min-width:60mm"></span></div>
+    </div>
+  </div>
+
+  <!-- ③ TỔNG KL -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tổng KL — cộng các chiều</span><span class="f">loss VAE = tái tạo + KL</span></div>
+    <div class="pb">
+      <div class="eq">KL = KL₁ + KL₂ = <span class="slot sm"></span> + <span class="slot sm"></span> = <span class="slot"></span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>ΣKL</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="t_kt"></div></td></tr>
+      </table>
+      <div class="cap">Thang thanh: <b>0 … 6</b>. KL đóng vai trò gì trong tổng loss? → <span class="slot" style="min-width:70mm"></span></div>
+    </div>
+  </div>
+
+  <!-- ④ TỰ KIỂM -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — KL = 0 khi và chỉ khi (μ,σ)=(0,1)</span><span class="f">so trường hợp CHUẨN với THỰC TẾ (Bước③)</span></div>
+    <div class="pb">
+      <div class="eq">
+        Trường hợp <b>CHUẨN</b> (μ=0, σ=1 — đúng N(0,1)):<br>
+        KL_chuẩn = ½(0² + 1² − 1 − ln 1) = ½(0 + 1 − 1 − 0) = <span class="slot sm"></span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--teal);letter-spacing:.08em;margin-bottom:1mm">CHUẨN (μ=0,σ=1) — LUÔN VẬY</div>
+          <table><tr><td class="l">KL_chuẩn</td><td><div class="track uni" id="t_c1"></div></td></tr></table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">THỰC TẾ (μ,σ ngẫu nhiên — Bước③)</div>
+          <table><tr><td class="l">ΣKL</td><td><div class="track uni" id="t_u1"></div></td></tr></table>
+        </div>
+      </div>
+      <div class="cap">Thang thanh: <b>0 … 6</b> (cả hai cột). Bấm 🎲 nhiều lần: cột CHUẨN có bao giờ đổi không? Vì sao cột đó luôn đứng yên
+      trong khi cột THỰC TẾ thì không? → <span class="slot" style="min-width:70mm"></span></div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:11mm"><span class="lb">✏️ Nháp — tính tay ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>Ra z &amp; tô thanh</span>
+    <span><span class="ck"></span>Ra KL từng chiều &amp; ΣKL</span>
+    <span><span class="ck"></span>Chứng minh KL=0 ⟺ (μ,σ)=(0,1)</span>
+    <span class="win">🎉 Bạn vừa nắm hai mẹo cốt lõi của VAE!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL</span><span>Trang 1/2 · ĐỀ</span></div>
+</section>
+
+<!-- ================= TRANG 2 — ĐÁP ÁN ================= -->
+<section class="page key">
+  <div class="top">
+    <span class="no">J2</span>
+    <h1>VAE — Reparam + KL <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>μ, σ · cho sẵn (encoder)</span>
+      <span><span class="sw" style="background:var(--purple)"></span>ε · nhiễu N(0,1)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>z, KL · đáp án</span>
+    </span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền</span><span class="f">μ,σ,ε → z (reparam) → KL từng chiều → ΣKL</span></div>
+    <div class="pb" style="padding:1.2mm 2.6mm">
+      <svg id="figA" viewBox="0 0 552 96" width="100%" height="30mm" aria-label="sơ đồ đã điền đủ số"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Reparam — z = μ + σ·ε</span></div>
+    <div class="pb">
+      <div class="eq">
+        z₁ = <span data-q="mu1">1</span> + <span data-q="s1">1</span>·<span data-q="e1">0.5</span> = <span class="slot ans" data-q="z1">1.5</span> &nbsp;·&nbsp;
+        z₂ = <span data-q="mu2">0</span> + <span data-q="s2">1</span>·<span data-q="e2">−0.5</span> = <span class="slot ans" data-q="z2">−0.5</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>z₁</th><th>z₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track" id="a_z1"></div></td><td><div class="track" id="a_z2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao khả vi:</b> phần ngẫu nhiên nằm trọn ở ε (hằng số đã bốc) — z là <b>hàm affine</b> của μ, σ nên
+      ∂z/∂μ=1 và ∂z/∂σ=ε đều tính được → gradient chảy ngược qua μ, σ như một phép toán bình thường.
+      Trung bình nhiều lần bốc ε → z hội tụ về <b>μ</b> (vì E[ε]=0 nên E[z]=μ — μ chính là "tâm" mà z dao động quanh).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② KL từng chiều</span></div>
+    <div class="pb">
+      <div class="eq">
+        KL₁ = ½(<span data-q="mu1">1</span>² + <span data-q="s1">1</span>² − 1 − <span class="slot ans sm" data-q="ln1">0</span>) = <span class="slot ans" data-q="kl1">0.50</span><br>
+        KL₂ = ½(<span data-q="mu2">0</span>² + <span data-q="s2">1</span>² − 1 − <span class="slot ans sm" data-q="ln2">0</span>) = <span class="slot ans" data-q="kl2">0.00</span>
+      </div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>KL₁</th><th>KL₂</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_k1"></div></td><td><div class="track uni" id="a_k2"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao có cả σ² lẫn −ln σ²:</b> KL phạt <b>hai kiểu lệch</b> cùng lúc — lệch tâm (μ≠0, số hạng μ²) VÀ lệch độ rộng
+      (σ≠1, số hạng σ²−1−ln σ²). Khi σ=1 thì σ²−1−ln σ² = 1−1−0 = 0 — số hạng độ rộng <b>tự triệt tiêu</b>, chỉ còn ½μ² như hình mẫu quen thuộc;
+      σ=2 làm số hạng đó tăng lên 4−1−1.39=1.61, kéo KL lên dù μ không đổi.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Tổng KL</span></div>
+    <div class="pb">
+      <div class="eq">KL = <span class="slot ans sm" data-q="kl1">0.50</span> + <span class="slot ans sm" data-q="kl2">0.00</span> = <span class="slot ans" data-q="kl">0.50</span></div>
+      <table style="margin-top:2mm">
+        <tr><th class="l">Tô thanh</th><th>ΣKL</th></tr>
+        <tr><td class="l">giá trị</td><td><div class="track uni" id="a_kt"></div></td></tr>
+      </table>
+      <div class="why"><b>Vì sao cộng dồn được:</b> mỗi chiều ẩn độc lập theo giả định của VAE (KL của phân phối tích = tổng KL từng chiều)
+      → KL toàn phần đơn giản là <b>Σ</b>, không cần công thức riêng cho nhiều chiều. Loss VAE = tái tạo + KL: tái tạo kéo z về đúng thông tin của x,
+      KL kéo z về N(0,1) — hai lực ngược hướng, cân bằng bằng nhau tạo ra không gian ẩn vừa <b>có ý nghĩa</b> vừa <b>liền mạch</b>.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Tự kiểm — KL = 0 khi và chỉ khi (μ,σ)=(0,1)</span></div>
+    <div class="pb">
+      <div class="eq">
+        KL_chuẩn = ½(0² + 1² − 1 − ln 1) = ½(0 + 1 − 1 − 0) = <span class="slot ans sm" data-q="klc">0</span>
+      </div>
+      <div class="split" style="margin-top:2mm">
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--teal);letter-spacing:.08em;margin-bottom:1mm">CHUẨN (μ=0,σ=1) — LUÔN VẬY</div>
+          <table><tr><td class="l">KL_chuẩn</td><td><div class="track uni" id="a_c1"></div></td></tr></table>
+        </div>
+        <div class="rule-v"></div>
+        <div>
+          <div style="font:800 8.4px var(--sans);color:var(--orange);letter-spacing:.08em;margin-bottom:1mm">THỰC TẾ (μ,σ ngẫu nhiên)</div>
+          <table><tr><td class="l">ΣKL</td><td><div class="track uni" id="a_u1"></div></td></tr></table>
+        </div>
+      </div>
+    </div>
+    <div class="why p" style="margin:0 2.6mm 2mm"><b>Đây là điểm cốt lõi của cả bài:</b> cột CHUẨN đứng yên ở <b>0</b> dù bạn bấm 🎲
+    bao nhiêu lần — chính sự <b>đứng yên</b> đó là bằng chứng: μ=0 và σ=1 đồng thời là điều kiện <b>cần và đủ</b> để mọi số hạng của KL
+    triệt tiêu (μ²=0, σ²−1−ln σ²=0). Bất kỳ độ lệch nào — μ trôi khỏi tâm, hoặc σ co/giãn khỏi 1 — đều cộng thêm phần dương vào KL,
+    không có hướng lệch nào "miễn phí". Đây chính là lý do KL bị gọi là <b>lực kéo</b> ép toàn bộ không gian ẩn của VAE hội tụ về một
+    khối cầu chuẩn N(0,1) duy nhất, liền mạch — để khi <b>sinh mới</b>, ta chỉ cần bốc z ~ N(0,1) bất kỳ mà không sợ rơi vào "vùng chết".</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính khi làm VAE</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Bỏ ε, lấy z = μ luôn cho ổn định."</b><br>
+          <span style="color:var(--dim)">Mất hẳn tính <b>ngẫu nhiên</b> của mô hình sinh — z không còn là mẫu từ một phân phối, mà là điểm cố định.
+          Lúc <b>sinh mới</b> (không có encoder), mô hình chỉ biết bốc từ N(0,1); nếu train mà bỏ ε, decoder chưa từng thấy z lệch khỏi μ → sinh kém.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "z = μ · σ · ε (nhân hết ba số)."</b><br>
+          <span style="color:var(--dim)">Công thức đúng là <b>cộng</b>: z = μ + σ·ε — μ <b>dịch tâm</b>, σ <b>co/giãn</b> nhiễu quanh tâm đó. Nhân μ vào sẽ làm
+          μ=0 luôn kéo z về 0 bất kể ε, phá vỡ vai trò "tâm phân phối" của μ.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "σ âm cũng tính bình thường, cứ thay vào công thức."</b><br>
+          <span style="color:var(--dim)">σ là độ lệch chuẩn, <b>phải luôn dương</b>. Vì vậy encoder thực tế không xuất σ trực tiếp mà xuất
+          <b>log σ²</b> rồi lấy exp — đảm bảo σ dương với mọi giá trị encoder xuất ra, không cần ràng buộc thêm.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "KL càng nhỏ càng tốt, cho về 0 luôn là lý tưởng."</b><br>
+          <span style="color:var(--dim)">KL=0 nghĩa là <b>mọi</b> input đều mã hóa giống N(0,1) — z không còn mang thông tin gì về x
+          (<b>posterior collapse</b>), decoder học cách phớt lờ z, tái tạo sẽ tệ. Cần <b>cân bằng</b> KL với loss tái tạo (β-VAE), không tối thiểu hóa một mình KL.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="why t">
+    <b>Rút ra.</b> VAE = <b>reparam</b> (z=μ+σε, khả vi qua encoder, gradient chảy được) + <b>KL</b> (ép vùng ẩn về N(0,1),
+    KL=0 chỉ khi đúng (μ,σ)=(0,1) — mọi lệch đều bị phạt dương, giữ không gian ẩn liền mạch để lấy mẫu sinh mới). Loss VAE = tái tạo + KL,
+    cân bằng bằng β-VAE. Bài tiếp theo <b>J3</b>: mô hình sinh đối kháng — <b>GAN</b>.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài J2 · VAE Reparam + KL</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+// Bảng tra ln σ² (σ ∈ {1,2}) — dữ liệu cho sẵn trên phiếu.
+var LNSQ = {1: 0, 2: 1.39};
+var S = {};
+
 function generate(){
-  var f = WB.fmtTrim;
-  var mu1 = WB.randInt(-1,2), mu2 = WB.randInt(-1,2);
-  var s1=1, s2=1;
-  var e1 = WB.pick([0.5,-0.5,1,-1]), e2 = WB.pick([0.5,-0.5,1,-1]);
+  var fT = WB.fmtTrim, f2 = WB.fmt2, fI = WB.fmtInt;
+  var mu1 = WB.randIntNZ(-2,2);       // luôn khác 0 → KL₁ luôn > 0, thấy rõ "lệch bị phạt"
+  var mu2 = WB.randInt(-2,2);         // có thể = 0 → tương phản với chiều 1
+  var s1 = WB.pick([1,2]);
+  var s2 = WB.pick([1,2]);
+  var e1 = WB.pick([0.5,-0.5,1,-1]);
+  var e2 = WB.pick([0.5,-0.5,1,-1]);
+
   var z1 = mu1 + s1*e1, z2 = mu2 + s2*e2;
-  var kl1 = 0.5*mu1*mu1, kl2 = 0.5*mu2*mu2;
-  var kl = kl1 + kl2;
+  var ln1 = LNSQ[s1], ln2 = LNSQ[s2];
+  var kl1 = Math.round(0.5*(mu1*mu1 + s1*s1 - 1 - ln1)*100)/100;
+  var kl2 = Math.round(0.5*(mu2*mu2 + s2*s2 - 1 - ln2)*100)/100;
+  var kl = Math.round((kl1+kl2)*100)/100;
+
+  S = {mu1:mu1, mu2:mu2, s1:s1, s2:s2, e1:e1, e2:e2, z1:z1, z2:z2, ln1:ln1, ln2:ln2, kl1:kl1, kl2:kl2, kl:kl};
+
   WB.setAll({
-    mu1:f(mu1), mu2:f(mu2), s1:String(s1), s2:String(s2), e1:f(e1), e2:f(e2),
-    z1:f(z1), z2:f(z2), kl1:f(kl1), kl2:f(kl2), kl:f(kl)
+    mu1: fI(mu1), mu2: fI(mu2), s1: String(s1), s2: String(s2), e1: fT(e1), e2: fT(e2),
+    z1: fT(z1), z2: fT(z2),
+    ln1: f2(ln1), ln2: f2(ln2),
+    kl1: f2(kl1), kl2: f2(kl2), kl: f2(kl),
+    klc: '0'
   });
-  drawVAE('figV', z1, z2);
+
+  // ĐỀ: thanh trống (chỉ vạch mốc). ĐÁP ÁN: tô đầy.
+  drawBar('t_z1', 0, 5, false); drawBar('t_z2', 0, 5, false);
+  drawBar('a_z1', z1, 5, true); drawBar('a_z2', z2, 5, true);
+
+  drawBarUni('t_k1', 0, 3, false); drawBarUni('t_k2', 0, 3, false);
+  drawBarUni('a_k1', kl1, 3, true); drawBarUni('a_k2', kl2, 3, true);
+
+  drawBarUni('t_kt', 0, 6, false);
+  drawBarUni('a_kt', kl, 6, true);
+
+  drawBarUni('t_c1', 0, 6, false); drawBarUni('t_u1', 0, 6, false);
+  drawBarUni('a_c1', 0, 6, true);   // CHUẨN luôn = 0 → thanh luôn rỗng, đây chính là bằng chứng
+  drawBarUni('a_u1', kl, 6, true);
+
+  drawPipe('figQ', false);
+  drawPipe('figA', true);
 }
-function drawVAE(id, z1, z2){
-  var svg = document.getElementById(id); if(!svg) return;
-  function box(x,y,w,txt,col){
-    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="22" rx="5" fill="'+col+'22" stroke="'+col+'" stroke-width="1.4"/>'+
-      '<text x="'+(x+w/2)+'" y="'+(y+15)+'" text-anchor="middle" font-size="10" font-weight="700" fill="'+col+'">'+txt+'</text>';
+
+// Thanh HAI CHIỀU (−max…0…+max, gốc giữa) — dùng cho z (có thể âm).
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(Math.abs(v)/max,1)*50;
+    h += v>0 ? '<div class="fill pos" style="left:50%;width:'+pct+'%"></div>'
+             : '<div class="fill neg" style="right:50%;width:'+pct+'%"></div>';
   }
-  var s='';
-  s+=box(10,20,40,'μ,σ','#0e7490');
-  s+=box(10,54,40,'ε','#7c5cff');
-  s+='<text x="68" y="44" font-size="16" fill="#5b6776">⊕</text>';
-  s+='<line x1="50" y1="31" x2="64" y2="40" stroke="#5b6776" stroke-width="1.2"/>';
-  s+='<line x1="50" y1="65" x2="64" y2="48" stroke="#5b6776" stroke-width="1.2"/>';
-  s+=box(84,33,40,'z','#b45309');
-  s+='<line x1="76" y1="42" x2="84" y2="44" stroke="#5b6776" stroke-width="1.2" marker-end="url(#av)"/>';
-  s+='<defs><marker id="av" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#5b6776"/></marker></defs>';
-  // vùng ẩn N(0,1)
-  var cx=185, cy=80, R=42;
-  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="#0e749010" stroke="#0e7490" stroke-width="1" stroke-dasharray="4 3"/>';
-  s+='<text x="'+cx+'" y="'+(cy-R-4)+'" text-anchor="middle" font-size="8.5" fill="#0e7490">N(0,1)</text>';
-  s+='<line x1="'+(cx-R)+'" y1="'+cy+'" x2="'+(cx+R)+'" y2="'+cy+'" stroke="#cfd6dd" stroke-width="0.8"/>';
-  s+='<line x1="'+cx+'" y1="'+(cy-R)+'" x2="'+cx+'" y2="'+(cy+R)+'" stroke="#cfd6dd" stroke-width="0.8"/>';
-  var zx=cx+Math.max(-2,Math.min(2,z1))*16, zy=cy-Math.max(-2,Math.min(2,z2))*16;
-  s+='<circle cx="'+zx.toFixed(1)+'" cy="'+zy.toFixed(1)+'" r="3.5" fill="#b45309"/>';
-  s+='<text x="'+(zx+6).toFixed(1)+'" y="'+(zy-4).toFixed(1)+'" font-size="9" fill="#b45309" font-weight="700">z</text>';
+  el.innerHTML=h;
+}
+
+// Thanh MỘT CHIỀU (0…max, gốc trái) — dùng cho KL (không bao giờ âm).
+function drawBarUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v>0){
+    var pct = Math.min(v/max,1)*100;
+    h += '<div class="fill pos" style="left:0%;width:'+pct+'%"></div>';
+  }
+  el.innerHTML=h;
+}
+
+// Hộp giá trị của sơ đồ: viền nét đứt + rỗng ở ĐỀ, viền cam liền + số ở ĐÁP ÁN.
+function stageBox(x,y,w,h,val,filled){
+  var ORG='#b45309', INK='#16202e';
+  var stroke = filled?ORG:INK, fill=filled?'#fff8f0':'#fff';
+  var dash = filled?'':' stroke-dasharray="3 2"';
+  var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(filled?1.2:1.4)+'"'+dash+'/>';
+  if(filled) s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="7.6" font-weight="700" fill="#7a3d00">'+val+'</text>';
+  return s;
+}
+
+// Sơ đồ 3 stage: ① z=μ+σε (2 hàng) → ② KL từng chiều (2 hàng) → ③ ΣKL (1 hàng). showAns=false ẩn số (ĐỀ), true lộ số (ĐÁP ÁN).
+function drawPipe(id, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var fT=WB.fmtTrim, f2=WB.fmt2, DIM='#6b7280', INK='#16202e', PUR='#6d28d9';
+
+  var s='<defs><marker id="mk'+id+'" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">'
+       +'<path d="M0 0 L6 3 L0 6 z" fill="'+DIM+'"/></marker></defs>';
+
+  var Ax=6, Aw=224, Bx=254, Bw=190, Cx=468, Cw=78;
+
+  s+='<text x="'+(Ax+Aw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">① z = μ+σε (reparam)</text>';
+  var rows1=[['z₁ ← μ₁+σ₁ε₁', fT(S.z1)], ['z₂ ← μ₂+σ₂ε₂', fT(S.z2)]];
+  rows1.forEach(function(r,i){
+    var ry=24+i*27;
+    s+='<text x="'+(Ax+2)+'" y="'+(ry+11)+'" font-size="7.6" fill="'+PUR+'">'+r[0]+'</text>';
+    s+=stageBox(Ax+Aw-46, ry, 44, 18, r[1], showAns);
+  });
+
+  s+='<line x1="'+(Ax+Aw+1)+'" y1="46" x2="'+(Bx-1)+'" y2="46" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="'+((Ax+Aw+Bx)/2)+'" y="40" text-anchor="middle" font-size="7.4" fill="'+DIM+'">KLᵢ</text>';
+
+  s+='<text x="'+(Bx+Bw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">② KL từng chiều</text>';
+  var rows2=[['KL₁ ← μ₁,σ₁', f2(S.kl1)], ['KL₂ ← μ₂,σ₂', f2(S.kl2)]];
+  rows2.forEach(function(r,i){
+    var ry=24+i*27;
+    s+='<text x="'+(Bx+2)+'" y="'+(ry+11)+'" font-size="7.6" fill="'+DIM+'">'+r[0]+'</text>';
+    s+=stageBox(Bx+Bw-46, ry, 44, 18, r[1], showAns);
+  });
+
+  s+='<line x1="'+(Bx+Bw+1)+'" y1="46" x2="'+(Cx-1)+'" y2="46" stroke="'+DIM+'" stroke-width="1.3" marker-end="url(#mk'+id+')"/>';
+  s+='<text x="'+((Bx+Bw+Cx)/2)+'" y="40" text-anchor="middle" font-size="7.4" fill="'+DIM+'">Σ</text>';
+
+  s+='<text x="'+(Cx+Cw/2)+'" y="12" text-anchor="middle" font-size="9" font-weight="800" fill="'+INK+'">③ ΣKL</text>';
+  s+='<text x="'+(Cx+2)+'" y="49" font-size="7.6" fill="'+DIM+'">KL</text>';
+  s+=stageBox(Cx+Cw-40, 38, 38, 18, f2(S.kl), showAns);
+
   svg.innerHTML=s;
 }
+
 WB.wire(generate);
-generate();
+generate();   // BẮT BUỘC — thiếu dòng này thì lần tải đầu hiện số hardcode
 </script>
 </body>
 </html>

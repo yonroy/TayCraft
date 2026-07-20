@@ -5,18 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F1 — CNN: một bộ lọc tích chập (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.mrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:4px;}
-.mrow .lab{font-family:var(--mono);font-size:12px;font-weight:700;}
+.page .step{margin-top:7px;}
+.mrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
+.mrow .lab{font-family:var(--mono);font-size:11px;font-weight:700;margin-bottom:2px;}
+.mrow .op{font-size:16px;}
+.calc.big .gv{margin:0 1px;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -31,90 +29,139 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nền tảng · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F1</span><h1>CNN — một bộ lọc tích chập <small>— Convolution</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Lớp fully-connected bỏ qua cấu trúc không gian và tốn tham số khủng cho ảnh. Conv khai thác <b>tính cục bộ</b>
-    (đặc trưng nằm trong vùng nhỏ) và <b>chia sẻ trọng số</b> (cùng filter khắp ảnh) → ít tham số, bất biến tịnh tiến.
-    <div class="formula">
-      out(i,j) = Σ<sub>u,v</sub> K(u,v)·X(i+u, j+v) + b &nbsp;&nbsp;(filter trượt theo i, j)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài F1</span>
+    <h1>CNN — một bộ lọc tích chập <small>— Convolution</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Filter như một <b>khuôn dò mẫu</b> (cạnh, góc…). Trượt khắp ảnh, ở đâu vùng ảnh "khớp khuôn" thì cho số lớn → bản đồ đặc trưng sáng ở
-    đó. Cùng một khuôn dùng khắp nơi → học một lần, dùng mọi chỗ.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Conv 2D chỉ là: <b>trượt một khuôn (kernel)</b> khắp ảnh, mỗi vị trí đầu ra = đúng <b>một tích vô hướng</b>
+    (nối Bài A3) giữa kernel và <b>miếng ảnh (patch)</b> nó đang phủ lên. Hãy tự tay tính vài ô rồi hoàn tất cả bản đồ đặc trưng.
+    <div class="formula" style="margin-top:5px">
+      out(i,j) = Σ<sub>u,v</sub> K(u,v)·X(i+u, j+v) + b &nbsp; (kernel trượt theo i, j — stride 1)
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">ảnh 3×3 · kernel 2×2 · b=<span data-q="b">0</span>, stride 1</span></div>
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">b = <span data-q="b">0</span> · stride 1</span></div>
     <div class="mrow">
-      <div><div class="lab">ảnh X</div><div class="mtx c3" id="X" style="--cell:11mm"></div></div>
-      <div><div class="lab" style="color:#7c5cff">kernel K</div><div class="mtx c2" id="K" style="--cell:11mm"></div></div>
+      <div><div class="lab" style="color:#0e7490">ảnh X (4×4)</div><div class="mtx c4" id="X" style="--cell:10mm"></div></div>
+      <div><div class="lab" style="color:#7c5cff">kernel K (3×3)</div><div class="mtx c3" id="K" style="--cell:10mm"></div></div>
     </div>
   </div>
 
   <div class="grid2">
     <!-- BƯỚC 1 -->
     <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Góc trên-trái</h2><span class="tag">cửa sổ · K</span></div>
-      <div class="calc">
-        <span data-q="x11">1</span>·<span data-q="k11">1</span> + <span data-q="x12">2</span>·<span data-q="k12">0</span> + <span data-q="x21">3</span>·<span data-q="k21">0</span> + <span data-q="x22">4</span>·<span data-q="k22">1</span> = <span class="blk" style="min-width:44px"></span>
+      <div class="step-h"><div class="b">1</div><h2>Ô đầu ra (1,1)</h2><span class="tag">patch·kernel</span></div>
+      <div class="calc big">
+        <span class="gv" data-q="x11">1</span>·<span class="gv" data-q="k11">1</span> + <span class="gv" data-q="x12">2</span>·<span class="gv" data-q="k12">0</span> + <span class="gv" data-q="x13">0</span>·<span class="gv" data-q="k13">1</span><br>
+        + <span class="gv" data-q="x21">3</span>·<span class="gv" data-q="k21">0</span> + <span class="gv" data-q="x22">4</span>·<span class="gv" data-q="k22">1</span> + <span class="gv" data-q="x23">1</span>·<span class="gv" data-q="k23">0</span><br>
+        + <span class="gv" data-q="x31">2</span>·<span class="gv" data-q="k31">1</span> + <span class="gv" data-q="x32">0</span>·<span class="gv" data-q="k32">0</span> + <span class="gv" data-q="x33">3</span>·<span class="gv" data-q="k33">1</span>
+        = <span class="wcell" style="min-width:34px"></span>
       </div>
-      <div class="why"><b>Vì sao:</b> đúng một tích vô hướng (Bài 01) giữa khuôn và vùng ảnh tại vị trí đó.</div>
+      <div class="why"><b>Vì sao:</b> đúng một tích vô hướng (Bài A3) — nhân từng cặp rồi cộng, giữa 9 số patch và 9 trọng số kernel.</div>
     </div>
 
     <!-- BƯỚC 2 -->
     <div class="step">
-      <div class="step-h"><div class="b">2</div><h2>Trượt sang phải</h2><span class="tag">stride 1</span></div>
-      <div class="calc">
-        <span data-q="x12">2</span>·<span data-q="k11">1</span> + <span data-q="x13">0</span>·<span data-q="k12">0</span> + <span data-q="x22">4</span>·<span data-q="k21">0</span> + <span data-q="x23">1</span>·<span data-q="k22">1</span> = <span class="blk" style="min-width:44px"></span>
+      <div class="step-h"><div class="b">2</div><h2>Trượt sang phải</h2><span class="tag">cửa sổ dịch 1 cột</span></div>
+      <div class="calc big">
+        <span class="gv" data-q="x12">2</span>·<span class="gv" data-q="k11">1</span> + <span class="gv" data-q="x13">0</span>·<span class="gv" data-q="k12">0</span> + <span class="gv" data-q="x14">4</span>·<span class="gv" data-q="k13">1</span><br>
+        + <span class="gv" data-q="x22">4</span>·<span class="gv" data-q="k21">0</span> + <span class="gv" data-q="x23">1</span>·<span class="gv" data-q="k22">1</span> + <span class="gv" data-q="x24">2</span>·<span class="gv" data-q="k23">0</span><br>
+        + <span class="gv" data-q="x32">0</span>·<span class="gv" data-q="k31">1</span> + <span class="gv" data-q="x33">3</span>·<span class="gv" data-q="k32">0</span> + <span class="gv" data-q="x34">1</span>·<span class="gv" data-q="k33">1</span>
+        = <span class="wcell" style="min-width:34px"></span>
       </div>
-      <div class="hint">dịch cửa sổ 1 ô (stride 1), lặp lại phép chấm điểm.</div>
+      <div class="hint">Cùng kernel, đổi patch — chỉ dịch cửa sổ 1 cột sang phải (stride 1).</div>
     </div>
   </div>
 
   <!-- BƯỚC 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Hoàn tất feature map</h2><span class="tag">→ 2×2</span></div>
+    <div class="step-h"><div class="b">3</div><h2>Hoàn tất feature map</h2><span class="tag">ảnh 4×4, kernel 3×3 → ra 2×2</span></div>
     <div class="mrow">
       <div><div class="lab" style="color:#b45309">feature map (điền nốt hàng dưới)</div>
         <div class="mtx c2" id="fmQ" style="--cell:13mm"></div></div>
-      <div class="note" style="flex:1">Hàng dưới: cửa sổ trái-dưới &amp; phải-dưới của X (dịch xuống 1 hàng).</div>
+      <div class="note" style="flex:1">Hàng dưới: cửa sổ dịch <b>xuống 1 hàng</b> (row offset 1) rồi lặp lại trái→phải như Bước 1–2.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> ảnh 3×3, kernel 2×2 → đầu ra <b>2×2</b> (công thức Bài F2).</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F1 · CNN tích chập</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Chia sẻ trọng số ⇒ tương đương dịch chuyển</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F1</span>
+    <h1>CNN <small>— cùng một kernel, dịch ảnh thì dịch luôn đặc trưng</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM: tương đương dịch chuyển -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — dịch ảnh, patch có đổi không?</h2><span class="tag">translation equivariance</span></div>
+    <div class="note" style="margin-top:0">
+      Dịch cả ảnh X <b>sang phải 1 cột</b> (chèn 0 ở cột đầu, bỏ cột cuối) ⇒ ảnh mới X′. Kernel vẫn <b>y hệt</b> (chia sẻ trọng số) —
+      chỉ đặt cửa sổ ở vị trí (1,2) của X′ (chứ không phải (1,1) nữa):
+    </div>
+    <div class="mrow">
+      <div><div class="lab" style="color:#0e7490">ảnh dịch phải X′ (cột đầu = 0)</div><div class="mtx c4" id="Xp" style="--cell:9mm"></div></div>
+    </div>
+    <div class="calc big" style="margin-top:6px">
+      patch(X′, vị trí 1,2)·K =
+      <span class="gv" data-q="x11">1</span>·<span class="gv" data-q="k11">1</span> + <span class="gv" data-q="x12">2</span>·<span class="gv" data-q="k12">0</span> + <span class="gv" data-q="x13">0</span>·<span class="gv" data-q="k13">1</span><br>
+      + <span class="gv" data-q="x21">3</span>·<span class="gv" data-q="k21">0</span> + <span class="gv" data-q="x22">4</span>·<span class="gv" data-q="k22">1</span> + <span class="gv" data-q="x23">1</span>·<span class="gv" data-q="k23">0</span><br>
+      + <span class="gv" data-q="x31">2</span>·<span class="gv" data-q="k31">1</span> + <span class="gv" data-q="x32">0</span>·<span class="gv" data-q="k32">0</span> + <span class="gv" data-q="x33">3</span>·<span class="gv" data-q="k33">1</span>
+      = <span class="wcell" style="min-width:34px"></span>
+      &nbsp; so với Bước 1: <span class="blk" style="min-width:70px"></span> (giống/khác?)
+    </div>
+    <div class="why"><b>Vì sao:</b> cột 2–4 của X′ CHÍNH LÀ cột 1–3 của X gốc → patch giống hệt Bước 1 → cùng kernel ⇒ ra
+      <b>cùng giá trị y</b>, chỉ <b>đổi vị trí</b> (từ cột 1 sang cột 2). Chia sẻ trọng số ⇒ conv <b>tương đương dịch chuyển</b>:
+      phát hiện đặc trưng bất kể nó nằm ở đâu trong ảnh.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Conv khai thác hai tính chất nào của ảnh? → <span class="blk" style="min-width:170px"></span></li>
-      <li>Ảnh 3×3, kernel 2×2, stride 1 → đầu ra? → <span class="blk" style="min-width:90px"></span></li>
+      <li>Vì sao dịch ảnh 1 cột thì bản đồ đặc trưng cũng dịch 1 cột (y không đổi)? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Vì sao conv có ít tham số hơn hẳn lớp fully-connected? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F1 · CNN tích chập</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:15mm"><span class="lb">✏️ Nháp — nhân patch·kernel, so khớp với Bước 1 ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính patch·kernel</span>
+    <span><span class="ck"></span>Kiểm tương đương dịch chuyển</span>
+    <span class="win">🎉 Bạn vừa thấy vì sao CNN nhận ra vật dù nó dịch chỗ!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F1 · CNN tích chập</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F1</span><h1>CNN — một bộ lọc tích chập <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F1</span><h1>CNN — một bộ lọc tích chập <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
     <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Góc trên-trái</h2></div>
-      <div class="calc ans">= <span class="blk" data-q="o11">5</span></div>
+      <div class="step-h"><div class="b">1</div><h2>Ô đầu ra (1,1)</h2></div>
+      <div class="calc ans">= <span class="wcell ans" data-q="o11">5</span></div>
     </div>
     <div class="step">
       <div class="step-h"><div class="b">2</div><h2>Trượt phải</h2></div>
-      <div class="calc ans">= <span class="blk" data-q="o12">3</span></div>
+      <div class="calc ans">= <span class="wcell ans" data-q="o12">3</span></div>
     </div>
   </div>
 
@@ -128,30 +175,41 @@
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Kernel 2×2 trượt trên ảnh 3×3</h2><span class="tag">weight sharing</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Kernel 3×3 trượt trên ảnh 4×4</h2><span class="tag">weight sharing</span></div>
     <div class="figrow">
-      <svg id="figConv" class="fig" viewBox="0 0 220 120" width="62mm" height="34mm" aria-label="kernel 2x2 trượt trên lưới 3x3 tạo feature map 2x2"></svg>
+      <svg id="figConv" class="fig" viewBox="0 0 260 130" width="74mm" height="37mm" aria-label="kernel 3x3 trượt trên lưới 4x4 tạo feature map 2x2"></svg>
       <div style="flex:1">
-        <div class="note">Chỉ <b>4 trọng số</b> (kernel) dùng cho cả ảnh, bất kể ảnh to. So với FC cần một trọng số cho mỗi cặp pixel → conv tiết kiệm khổng lồ
-          + bất biến tịnh tiến (đặc trưng dịch chỗ vẫn nhận ra).</div>
+        <div class="note">Chỉ <b>9 trọng số + 1 bias = 10 tham số</b> dùng lại cho <b>MỌI</b> vị trí trên ảnh. So với lớp fully-connected
+          (mỗi ô trong 4 ô ra nối riêng tới cả 16 pixel ⇒ ~64 trọng số) → conv gọn hơn hẳn <b>và</b> bất biến tịnh tiến.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — tương đương dịch chuyển</h2></div>
+    <div class="mrow">
+      <div><div class="lab" style="color:#0e7490">ảnh dịch phải X′</div><div class="mtx c4" id="XpK" style="--cell:9mm"></div></div>
+    </div>
+    <div class="calc ans" style="margin-top:6px">patch(X′,1,2)·K = <span class="wcell ans" data-q="op">5</span> = <span class="wcell ans" data-q="o11b">5</span> (Bước 1) → <b>giống hệt</b>, chỉ đổi vị trí.</div>
+    <div class="why"><b>Vì sao:</b> cột 2–4 của X′ = cột 1–3 của X gốc, cùng kernel ⇒ cùng phép tính ⇒ cùng y. Đó chính là
+      <b>tương đương dịch chuyển</b> (translation equivariance) do <b>chia sẻ trọng số</b> mà có.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Hai tính chất? → <span class="qa">Tính cục bộ + chia sẻ trọng số (bất biến tịnh tiến).</span></li>
-      <li>Đầu ra? → <span class="qa">2×2.</span></li>
+      <li>Vì sao dịch ảnh → dịch đặc trưng? → <span class="qa">Chia sẻ trọng số: cùng kernel dùng lại ở mọi vị trí, nên patch giống nhau luôn cho cùng y — chỉ đổi chỗ.</span></li>
+      <li>Vì sao ít tham số hơn FC? → <span class="qa">Một bộ kernel (9 trọng số+1 bias) dùng lại cho mọi vị trí, thay vì mỗi ô ra một bộ trọng số riêng (FC ~64).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Conv = trượt filter + tích vô hướng cục bộ; chia sẻ trọng số → gọn & bất biến tịnh tiến.
+    <b style="color:var(--accent2)">Rút ra.</b> Conv = trượt MỘT kernel khắp ảnh, mỗi vị trí = một tích vô hướng patch·kernel (Bài A3).
+    Chia sẻ trọng số ⇒ <b>tương đương dịch chuyển</b> (dịch ảnh → dịch đặc trưng, y không đổi) và ít tham số hơn hẳn FC.
     Bài tiếp <b style="color:var(--accent2)">F2</b>: kích thước đầu ra theo stride/padding.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F1 · CNN tích chập</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F1 · CNN tích chập</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -161,58 +219,69 @@ function fillG(id, arr){
   var s=''; for(var i=0;i<arr.length;i++) s += '<div class="cell given">'+WB.fmtInt(arr[i])+'</div>';
   el.innerHTML=s;
 }
-function fillAns(id, arr, blankBottom){
+function fillXp(id, Xp){
   var el=document.getElementById(id); if(!el) return;
   var s='';
-  for(var i=0;i<arr.length;i++){
-    var isBottom=(i>=2);
-    if(blankBottom && isBottom) s += '<div class="cell blank"></div>';
-    else s += '<div class="cell'+(blankBottom?' given':' ans')+'">'+WB.fmtInt(arr[i])+'</div>';
+  for(var r=0;r<4;r++) for(var c=0;c<4;c++){
+    var cls = (c===0) ? 'cell blank' : 'cell given';
+    s += '<div class="'+cls+'">'+WB.fmtInt(Xp[r][c])+'</div>';
   }
   el.innerHTML=s;
 }
-function conv(X, K, i, j){
-  return X[i][j]*K[0][0] + X[i][j+1]*K[0][1] + X[i+1][j]*K[1][0] + X[i+1][j+1]*K[1][1];
+function conv3(X, K, i, j){
+  var s=0;
+  for(var u=0;u<3;u++) for(var v=0;v<3;v++) s += X[i+u][j+v]*K[u][v];
+  return s;
 }
 
 function generate(){
   var fI=WB.fmtInt;
-  var X=[]; for(var r=0;r<3;r++){ var row=[]; for(var c=0;c<3;c++) row.push(WB.randInt(0,4)); X.push(row); }
-  var K=[[WB.pick([0,1,2]),WB.pick([0,1])],[WB.pick([0,1]),WB.pick([1,2])]];
+  var X=[]; for(var r=0;r<4;r++){ var row=[]; for(var c=0;c<4;c++) row.push(WB.randInt(0,4)); X.push(row); }
+  var K=[]; for(var u=0;u<3;u++){ var krow=[]; for(var v=0;v<3;v++) krow.push(WB.randInt(0,2)); K.push(krow); }
   var b=0;
-  var o11=conv(X,K,0,0)+b, o12=conv(X,K,0,1)+b, o21=conv(X,K,1,0)+b, o22=conv(X,K,1,1)+b;
+  var o11=conv3(X,K,0,0)+b, o12=conv3(X,K,0,1)+b, o21=conv3(X,K,1,0)+b, o22=conv3(X,K,1,1)+b;
 
-  fillG('X',[X[0][0],X[0][1],X[0][2],X[1][0],X[1][1],X[1][2],X[2][0],X[2][1],X[2][2]]);
-  fillG('K',[K[0][0],K[0][1],K[1][0],K[1][1]]);
-  // feature map ĐỀ: cả 4 ô trống (không lộ đáp án bước 1,2)
+  // ảnh dịch phải 1 cột: cột đầu = 0, bỏ cột cuối (translation equivariance demo)
+  var Xp=[]; for(r=0;r<4;r++){ Xp.push([0, X[r][0], X[r][1], X[r][2]]); }
+  var op = conv3(Xp,K,0,1)+b;   // luôn bằng o11 — chính là điểm "tự kiểm"
+
+  var flat=[]; for(r=0;r<4;r++) for(var c2=0;c2<4;c2++) flat.push(X[r][c2]);
+  fillG('X', flat);
+  var kflat=[]; for(u=0;u<3;u++) for(var v2=0;v2<3;v2++) kflat.push(K[u][v2]);
+  fillG('K', kflat);
+  fillXp('Xp', Xp);
+  fillXp('XpK', Xp);
+
+  // feature map ĐỀ: 4 ô trống
   var elQ=document.getElementById('fmQ'); if(elQ){ elQ.innerHTML='<div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div><div class="cell blank"></div>'; }
-  // ĐÁP ÁN: đầy đủ
+  // feature map ĐÁP ÁN: đầy đủ
   var elK=document.getElementById('fmK'); if(elK){ var s=''; [o11,o12,o21,o22].forEach(function(v){ s+='<div class="cell ans">'+fI(v)+'</div>'; }); elK.innerHTML=s; }
 
-  WB.setAll({
-    b:fI(b),
-    x11:fI(X[0][0]), x12:fI(X[0][1]), x13:fI(X[0][2]),
-    x21:fI(X[1][0]), x22:fI(X[1][1]), x23:fI(X[1][2]),
-    k11:fI(K[0][0]), k12:fI(K[0][1]), k21:fI(K[1][0]), k22:fI(K[1][1]),
-    o11:fI(o11), o12:fI(o12), o21:fI(o21), o22:fI(o22)
-  });
+  var set = { b: fI(b) };
+  for(r=0;r<4;r++) for(var c3=0;c3<4;c3++) set['x'+(r+1)+(c3+1)] = fI(X[r][c3]);
+  for(u=0;u<3;u++) for(var v3=0;v3<3;v3++) set['k'+(u+1)+(v3+1)] = fI(K[u][v3]);
+  set.o11=fI(o11); set.o12=fI(o12); set.o21=fI(o21); set.o22=fI(o22);
+  set.op=fI(op); set.o11b=fI(o11);
+  WB.setAll(set);
   drawConv();
 }
 
 function drawConv(){
   var svg=document.getElementById('figConv'); if(!svg) return;
-  var cell=26, x0=14, y0=18, s='';
-  for(var i=0;i<3;i++) for(var j=0;j<3;j++)
+  var cell=20, x0=14, y0=16, s='';
+  for(var i=0;i<4;i++) for(var j=0;j<4;j++)
     s += '<rect x="'+(x0+j*cell)+'" y="'+(y0+i*cell)+'" width="'+cell+'" height="'+cell+'" fill="#d6ecf6" stroke="#a7d3e3"/>';
-  // kernel highlight ở góc TL
-  s += '<rect x="'+(x0-1)+'" y="'+(y0-1)+'" width="'+(2*cell+2)+'" height="'+(2*cell+2)+'" fill="rgba(124,92,255,.16)" stroke="#7c5cff" stroke-width="2"/>';
-  s += '<text x="'+x0+'" y="'+(y0-4)+'" style="font-size:8px" fill="#0e7490">ảnh 3×3 · khuôn 2×2 trượt</text>';
-  // feature map ra
-  var ox=x0+3*cell+18, oc=22;
+  // kernel window 1 (Bước 1: hàng0-2, cột0-2) — tím
+  s += '<rect x="'+(x0-1)+'" y="'+(y0-1)+'" width="'+(3*cell+2)+'" height="'+(3*cell+2)+'" fill="rgba(124,92,255,.14)" stroke="#7c5cff" stroke-width="2"/>';
+  // kernel window 2 (Bước 2: hàng0-2, cột1-3) — lam nét đứt
+  s += '<rect x="'+(x0+cell-1)+'" y="'+(y0-1)+'" width="'+(3*cell+2)+'" height="'+(3*cell+2)+'" fill="none" stroke="#0e7490" stroke-width="1.6" stroke-dasharray="3 2"/>';
+  s += '<text x="'+x0+'" y="'+(y0-4)+'" style="font-size:8px" fill="#0e7490">ảnh 4×4 · khuôn 3×3 trượt</text>';
+  // feature map ra 2x2
+  var ox=x0+4*cell+18, oc=22;
   for(var a=0;a<2;a++) for(var bb=0;bb<2;bb++)
     s += '<rect x="'+(ox+bb*oc)+'" y="'+(y0+a*oc)+'" width="'+oc+'" height="'+oc+'" fill="#ffe6cc" stroke="#b45309"/>';
   s += '<text x="'+ox+'" y="'+(y0-4)+'" style="font-size:8px" fill="#b45309">ra 2×2</text>';
-  s += '<text x="'+(x0+3*cell+4)+'" y="'+(y0+cell)+'" style="font-size:11px" fill="#9aa3ad">→</text>';
+  s += '<text x="'+(x0+4*cell+4)+'" y="'+(y0+2*cell)+'" style="font-size:11px" fill="#9aa3ad">→</text>';
   svg.innerHTML=s;
 }
 WB.wire(generate);

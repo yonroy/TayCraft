@@ -5,17 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài E2 — Vanishing / Exploding gradient (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pE">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,112 +25,139 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần E</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài E2</span><h1>Vanishing / Exploding gradient <small>— teo / nổ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Gradient qua mạng sâu là <b>tích</b> nhiều thừa số. Nếu mỗi thừa số &lt; 1 → teo về 0 (vanishing):
-    lớp đầu gần như không học; nếu &gt; 1 → nổ (exploding): cập nhật loạn, loss thành NaN. Hiểu nó dẫn tới mọi cách chữa.
-    <div class="formula">
-      ∂L/∂(lớp đầu) = ∏ (đạo hàm cục bộ mỗi lớp) &nbsp;&nbsp; rᴸ → 0 nếu r&lt;1 · → ∞ nếu r&gt;1
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài E2</span>
+    <h1>Vanishing / Exploding <small>— gradient = tích thừa số, teo/nổ theo độ sâu</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Gradient truyền ngược như <b>tiếng vọng qua L căn phòng</b>: mỗi phòng nhân âm lượng với r. r=0.5 qua 10 phòng còn ~0.001
-    (tắt ngấm); r=1.5 thành ~58 (nổ tai). Chỉ r≈1 mới giữ tín hiệu ổn định.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Gradient qua mạng sâu là <b>tích</b> nhiều thừa số. Mỗi thừa số &lt; 1 → teo về 0 (lớp đầu không học); &gt; 1 → nổ (loss thành NaN).
+    Hãy <b>tự tay</b> tính rᴸ cho ba giá trị r. Phần thưởng: nhìn qua <b>log</b> để hiểu vì sao là hàm mũ — và vì sao r = 1 là ranh giới chính xác.
+    <div class="formula" style="margin-top:5px">
+      ∂L/∂(lớp đầu) = ∏ (đạo hàm cục bộ) = rᴸ &nbsp;·&nbsp; rᴸ → 0 nếu r&lt;1 · → ∞ nếu r&gt;1
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag"><span data-q="L">10</span> lớp</span></div>
-    <div class="calc" style="font-size:15px">
-      Mạng <span class="gv" data-q="L">10</span> lớp; mỗi lớp nhân gradient với hệ số r. Xét
-      <b>r = <span class="gv" data-q="r1">0.5</span></b> (vd σ' nhỏ) và <b>r = <span class="gv" data-q="r2">1.5</span></b>.
+    <div class="calc big">
+      Mạng <span class="gv" data-q="L">10</span> lớp; mỗi lớp nhân gradient với hệ số r. Xét <b>r = <span class="gv" data-q="r1">0.5</span></b> và <b>r = <span class="gv" data-q="r2">1.5</span></b>.
     </div>
     <div class="note">Gradient tới lớp đầu = r nhân với chính nó L lần = r<sup>L</sup>.</div>
   </div>
 
   <div class="grid2">
-    <!-- BƯỚC 1 — vanishing -->
+    <!-- STEP 1 -->
     <div class="step">
       <div class="step-h"><div class="b">1</div><h2>Vanishing (r&lt;1)</h2><span class="tag">teo</span></div>
-      <div class="calc">
-        r<sup>L</sup> = <span data-q="r1">0.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" style="min-width:70px"></span>
-      </div>
-      <div class="why"><b>Vì sao:</b> nhân dồn số &lt;1 → teo theo cấp số nhân → lớp đầu <b>học rất chậm</b>.</div>
+      <div class="calc big">r<sup>L</sup> = <span data-q="r1">0.5</span><sup><span data-q="L">10</span></sup> = <span class="wcell" style="min-width:66px"></span></div>
+      <div class="why"><b>Vì sao:</b> nhân dồn số &lt;1 → teo cấp số nhân → lớp đầu học rất chậm.</div>
     </div>
-
-    <!-- BƯỚC 2 — exploding -->
+    <!-- STEP 2 -->
     <div class="step">
       <div class="step-h"><div class="b">2</div><h2>Exploding (r&gt;1)</h2><span class="tag">nổ</span></div>
-      <div class="calc">
-        r<sup>L</sup> = <span data-q="r2">1.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" style="min-width:70px"></span>
-      </div>
+      <div class="calc big">r<sup>L</sup> = <span data-q="r2">1.5</span><sup><span data-q="L">10</span></sup> = <span class="wcell" style="min-width:66px"></span></div>
       <div class="hint">Số &gt;1 nhân dồn → nổ → cập nhật khổng lồ, loss thành NaN.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 3 — vùng an toàn -->
+  <!-- STEP 3 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Vùng an toàn (r≈1)</h2><span class="tag">ổn định</span></div>
-    <div class="calc">
-      r<sup>L</sup> = 1.0<sup><span data-q="L">10</span></sup> = <span class="blk" style="min-width:50px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> muốn gradient sống sót qua nhiều lớp, mỗi lớp phải giữ "độ khuếch đại" ≈ 1.</div>
+    <div class="step-h"><div class="b">3</div><h2>Vùng an toàn (r ≈ 1)</h2><span class="tag">ổn định</span></div>
+    <div class="calc big">r<sup>L</sup> = 1.0<sup><span data-q="L">10</span></sup> = <span class="wcell" style="min-width:44px"></span></div>
+    <div class="why"><b>Vì sao:</b> muốn gradient sống qua nhiều lớp, mỗi lớp phải giữ "độ khuếch đại" ≈ 1.</div>
   </div>
 
-  <!-- BƯỚC 4 — cách chữa -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Nhìn qua log: số mũ tuyến tính theo độ sâu</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài E2</span>
+    <h1>Vanishing / Exploding <small>— vì sao r = 1 là ranh giới chính xác</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN E · CHUẨN HÓA</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: log biến tích thành tổng -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Cách chữa</h2><span class="tag">ReLU / init / norm / skip</span></div>
-    <div class="note">σ' ≤ 0.25 gây vanishing → <b>ReLU</b> (đạo hàm 1); <b>init He</b> (E1) giữ r≈1; <b>BatchNorm/LayerNorm</b> (E6) ổn định;
-      <b>residual</b> (F9) cho đường tắt gradient; <b>clipping</b> (E9) chặn nổ.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — vì sao lại là hàm mũ?</h2><span class="tag">log</span></div>
+    <div class="note" style="margin-top:0">
+      Lấy log biến <b>tích thành tổng</b>: log(rᴸ) = <b>L·log r</b> — số mũ tăng <b>tuyến tính</b> theo độ sâu L. Ví dụ L = 10 (cho log₁₀0.5 = −0.30, log₁₀2 = +0.30):
+    </div>
+    <div class="calc big">
+      r=0.5: log₁₀(0.5¹⁰) = 10·(−0.30) = <span class="wcell" style="min-width:38px"></span> → ‖g‖ ≈ 10<sup>đó</sup> = 0.001<br>
+      r=2: log₁₀(2¹⁰) = 10·(+0.30) = <span class="wcell" style="min-width:38px"></span> → ‖g‖ ≈ 10<sup>đó</sup> = 1000<br>
+      r=1: 10·log₁₀(1) = 10·0 = <span class="wcell" style="min-width:38px"></span>
+      &nbsp;<small style="color:#7a8794">— ranh giới nằm ở đâu?</small>
+    </div>
+    <div class="note">Trên trục log, mỗi đường là <b>đường thẳng</b> dốc = log r. r = 1 cho log r = <b>0</b> → đường nằm ngang: đúng ranh giới giữa teo và nổ. Lệch r một chút → dốc đổi dấu → sau L lớp lệch cả nghìn lần.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Cách chữa</h2><span class="tag">ReLU / init / norm / skip</span></div>
+    <div class="note" style="margin-top:2px">σ′ ≤ 0.25 gây vanishing → <b>ReLU</b> (đạo hàm 1); <b>init He</b> (E1) giữ r≈1; <b>BatchNorm/LayerNorm</b> (E6/E7) ổn định;
+      <b>residual</b> cho đường tắt gradient; <b>clipping</b> (E9) chặn nổ.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>Vì sao sigmoid sâu gây vanishing? → <span class="blk" style="min-width:170px"></span></li>
-      <li>Điều kiện để gradient ổn định qua độ sâu? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Vì sao r = 1 là ranh giới (nhìn log)? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:16mm"><span class="lb">✏️ Nháp — nhân dồn r &amp; nhân L·log r ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính rᴸ</span>
+    <span><span class="ck"></span>Nhìn qua log</span>
+    <span class="win">🎉 Bạn vừa chẩn đoán bệnh của mạng sâu!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài E2</span><h1>Vanishing / Exploding gradient <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài E2</span><h1>Vanishing / Exploding <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
     <div class="step">
       <div class="step-h"><div class="b">1</div><h2>Vanishing</h2></div>
-      <div class="calc ans"><span data-q="r1">0.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" data-q="vanish">0.001</span></div>
+      <div class="calc ans"><span data-q="r1">0.5</span><sup><span data-q="L">10</span></sup> = <span class="wcell ans" data-q="vanish">0.001</span></div>
     </div>
     <div class="step">
       <div class="step-h"><div class="b">2</div><h2>Exploding</h2></div>
-      <div class="calc ans"><span data-q="r2">1.5</span><sup><span data-q="L">10</span></sup> = <span class="blk" data-q="explode">57.7</span></div>
+      <div class="calc ans"><span data-q="r2">1.5</span><sup><span data-q="L">10</span></sup> = <span class="wcell ans" data-q="explode">57.7</span></div>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Vùng an toàn</h2></div>
-    <div class="calc ans">1.0<sup><span data-q="L">10</span></sup> = <span class="blk" data-q="stable">1</span> (giữ nguyên độ lớn)</div>
+    <div class="calc ans">1.0<sup><span data-q="L">10</span></sup> = <span class="wcell ans" data-q="stable">1</span> (giữ nguyên độ lớn)</div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Gradient theo độ sâu (3 giá trị r)</h2><span class="tag">teo / ổn định / nổ</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Log: số mũ tuyến tính theo độ sâu</h2><span class="tag">dốc = log r</span></div>
     <div class="figrow">
-      <svg id="figG" class="fig" viewBox="0 0 230 150" width="74mm" height="46mm" aria-label="gradient theo độ sâu: r nhỏ hơn 1 teo về 0, r bằng 1 ổn định, r lớn hơn 1 nổ"></svg>
+      <svg id="figLog" class="fig" viewBox="0 0 230 150" width="72mm" height="46mm" aria-label="trên trục log, ba đường thẳng: r nhỏ hơn 1 dốc xuống, r bằng 1 nằm ngang, r lớn hơn 1 dốc lên"></svg>
       <div style="flex:1">
-        <div class="note">Đường <b>xám nét đứt</b> = r&lt;1 → teo về 0 (vanishing). <b>Lam</b> = r=1 → ổn định.
-          <b>Cam</b> = r&gt;1 → nổ (exploding). Cùng số lớp, chỉ khác r mà số phận gradient khác hẳn.</div>
+        <div class="calc ans">log(0.5¹⁰) = <span class="wcell ans" data-q="lv">−3</span> · log(2¹⁰) = <span class="wcell ans" data-q="le">3</span> · log(1¹⁰) = <span class="wcell ans" data-q="ls">0</span></div>
+        <div class="note">Trên trục <b>log</b>, mỗi đường thẳng có dốc = log r: <b>xám</b> (r&lt;1) dốc xuống, <b>lam</b> (r=1) nằm ngang (ranh giới), <b>cam</b> (r&gt;1) dốc lên. Số mũ = L·log r.</div>
       </div>
     </div>
   </div>
@@ -143,62 +165,62 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Sigmoid sâu vanishing? → <span class="qa">σ' ≤ 0.25 &lt; 1, nhân dồn qua nhiều lớp → teo về 0.</span></li>
-      <li>Gradient ổn định? → <span class="qa">Hệ số khuếch đại mỗi lớp ≈ 1.</span></li>
+      <li>Sigmoid sâu vanishing? → <span class="qa">σ′ ≤ 0.25 &lt; 1, nhân dồn qua nhiều lớp → teo về 0.</span></li>
+      <li>r=1 là ranh giới? → <span class="qa">log r = 0 → số mũ L·log r = 0 → rᴸ = 1 (không teo/nổ).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Gradient = tích thừa số; r&lt;1 teo, r&gt;1 nổ, cần r≈1. Bài tiếp (E3): một cách kiểm soát
-    độ lớn trọng số — <b style="color:var(--accent2)">L2 regularization</b> (weight decay).
+    <b style="color:var(--accent2)">Rút ra.</b> Gradient = tích thừa số = rᴸ; log rᴸ = L·log r tuyến tính theo độ sâu → r&lt;1 teo, r&gt;1 nổ, r=1 ranh giới.
+    Bài E3: một cách kiểm soát độ lớn trọng số — <b>L2 regularization</b> (weight decay).
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài E2 · Vanishing / Exploding gradient</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  function f3(v){ var r = Math.round(v*1000)/1000; return r.toString(); }
-  function fnum(v){ // gọn: số lớn không thập phân, số nhỏ 3 chữ số
-    if (v >= 10) return (Math.round(v*10)/10).toString();
-    return f3(v);
-  }
+  function f3(v){ return (Math.round(v*1000)/1000).toString(); }
+  function fnum(v){ if (v >= 10) return (Math.round(v*10)/10).toString(); return f3(v); }
   var L  = WB.pick([8, 10, 12]);
-  var r1 = WB.pick([0.5, 0.7, 0.8]);   // vanishing
-  var r2 = WB.pick([1.2, 1.3, 1.5]);   // exploding
+  var r1 = WB.pick([0.5, 0.7, 0.8]);
+  var r2 = WB.pick([1.2, 1.3, 1.5]);
   WB.setAll({
     L: String(L),
     r1: f3(r1), r2: f3(r2),
     vanish: fnum(Math.pow(r1, L)),
     explode: fnum(Math.pow(r2, L)),
-    stable: '1'
+    stable: '1',
+    lv: '−3', le: '3', ls: '0'      // log-linearization cố định (r=0.5,2,1 · L=10)
   });
-  drawGrad('figG', r1, r2, L);
+  drawLog('figLog');
 }
 
-// gradient theo độ sâu: teo (xám đứt), ổn định (lam), nổ (cam)
-function drawGrad(id, r1, r2, L){
+// trục log: 3 đường thẳng dốc = log r (xám xuống, lam ngang, cam lên)
+function drawLog(id){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var x0 = 24, y0 = 122, W = 190, H = 100, N = L + 1;
-  function X(i){ return (x0 + i/(N-1)*W).toFixed(1); }
-  function Y(v){ return (y0 - Math.min(Math.max(v,0),1)*H).toFixed(1); } // v∈[0,1]
-  var s = '<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s += '<line x1="'+x0+'" y1="'+(y0-H)+'" x2="'+x0+'" y2="'+y0+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s += '<text x="'+(x0-2)+'" y="'+(y0-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">∥g∥</text>';
-  s += '<text x="'+(x0+W)+'" y="'+(y0+11)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">lớp</text>';
-  function poly(fn, col, dash){
-    var p = ''; for (var i=0;i<N;i++) p += X(i)+','+Y(fn(i))+' ';
-    return '<polyline points="'+p.trim()+'" fill="none" stroke="'+col+'" stroke-width="2.2"'+(dash?' stroke-dasharray="4 3"':'')+'/>';
+  var x0 = 26, W = 188, zeroY = 74, H = 52;     // zeroY = log 0; ±H cho ±3
+  var N = 10;
+  function X(i){ return (x0 + i/N*W).toFixed(1); }
+  function Y(lg){ return (zeroY - lg/3*H).toFixed(1); }   // lg∈[−3,3]
+  var s = '<line x1="'+x0+'" y1="'+zeroY+'" x2="'+(x0+W)+'" y2="'+zeroY+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<line x1="'+x0+'" y1="'+(zeroY-H)+'" x2="'+x0+'" y2="'+(zeroY+H)+'" stroke="#9aa3ad" stroke-width="1"/>';
+  s += '<text x="'+(x0-2)+'" y="'+(zeroY+3)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">0</text>';
+  s += '<text x="'+(x0-2)+'" y="'+(zeroY-H+4)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">log‖g‖</text>';
+  s += '<text x="'+(x0+W)+'" y="'+(zeroY+H-2)+'" text-anchor="end" style="font-size:7px" fill="#9aa3ad">lớp</text>';
+  function line(slope, col, dash){
+    // lg tại lớp i = i·slope (mỗi lớp cộng slope); slope=0.30·(±1) rồi ×(3/L)? dùng đơn giản slope trên toàn dải
+    var y1 = Y(0), y2 = Y(Math.max(-3, Math.min(3, slope*10)));
+    return '<line x1="'+X(0)+'" y1="'+y1+'" x2="'+X(N)+'" y2="'+y2+'" stroke="'+col+'" stroke-width="2.2"'+(dash?' stroke-dasharray="4 3"':'')+'/>';
   }
-  // bắt đầu cùng điểm 0.55 cho dễ so; nổ khởi điểm thấp để thấy vươn lên
-  s += poly(function(i){ return 0.55*Math.pow(r1, i); }, '#9aa3ad', true);          // teo
-  s += poly(function(){ return 0.55; }, '#0e7490', false);                          // ổn định
-  s += poly(function(i){ return Math.min(1, 0.18*Math.pow(r2, i)); }, '#b45309', false); // nổ
-  s += '<text x="'+X(2.5)+'" y="'+Y(0.16)+'" style="font-size:8px" fill="#9aa3ad">teo (r&lt;1)</text>';
-  s += '<text x="'+X(2.4)+'" y="'+Y(0.62)+'" style="font-size:8px" fill="#0e7490" font-weight="700">ổn định</text>';
-  s += '<text x="'+X(2.6)+'" y="'+Y(0.96)+'" style="font-size:8px" fill="#b45309" font-weight="700">nổ (r&gt;1)</text>';
+  s += line(-0.30, '#9aa3ad', true);    // r=0.5 → −3 tại lớp 10
+  s += line(0, '#0e7490', false);       // r=1 → ngang
+  s += line(0.30, '#b45309', false);    // r=2 → +3
+  s += '<text x="'+X(7)+'" y="'+(Y(-2.2))+'" style="font-size:8px" fill="#9aa3ad">r&lt;1 (dốc −)</text>';
+  s += '<text x="'+X(6)+'" y="'+(zeroY-3)+'" style="font-size:8px" fill="#0e7490" font-weight="700">r=1 (ngang)</text>';
+  s += '<text x="'+X(6.4)+'" y="'+(Y(2.4))+'" style="font-size:8px" fill="#b45309" font-weight="700">r&gt;1 (dốc +)</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);

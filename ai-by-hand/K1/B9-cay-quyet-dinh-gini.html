@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài B9 — Cây quyết định: Gini (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<style>
+.page .step{margin-top:7px;}
+</style>
 </head>
-<body>
+<body class="part pB">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -18,42 +22,38 @@
 <section class="page">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · ML cổ điển (B)</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần B</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài B9</span><h1>Cây quyết định: Gini <small>— Gini impurity (CART)</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Gini đo xác suất "phân loại sai nếu gắn nhãn ngẫu nhiên theo tỉ lệ lớp". Cùng ý với entropy (thuần
-    → 0, lộn xộn → cao) nhưng <b>không có log</b> → rẻ tính, là mặc định của nhiều thư viện cây.
-    <div class="formula">
-      Gini(S) = 1 − Σ pₖ² &nbsp;&nbsp;|&nbsp;&nbsp; Gini_split = Σ (|con|/|cha|)·Gini(con) &nbsp;(chọn split nhỏ nhất)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài B9</span>
+    <h1>Cây quyết định: Gini <small>— độ "bẩn" không cần log (CART)</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Gini = <b>khả năng đoán trật</b> khi rút ngẫu nhiên một mẫu và đoán nhãn theo tỉ lệ lớp. Thuần một lớp → không bao giờ trật
-    → 0. Hai lớp đều nhau → trật nhiều → Gini lớn (tối đa 0.5 với 2 lớp).
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cùng nút cha <b>4 Có / 4 Không</b> như B8, nhưng đo độ "bẩn" bằng <b>Gini</b>
+    (chỉ bình phương, không log). Hãy <b>tự tay</b> tính Gini cha, Gini mỗi nhánh, Gini sau chia.
+    Phần thưởng: chứng minh <b>Gini = 2p(1−p) = 2·phương sai</b> — nối thẳng về bài A17.
   </div>
 
   <!-- BƯỚC 0 -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">8 mẫu</span></div>
-    <div class="calc">
+    <div class="calc" style="line-height:1.9">
       Cha: <b>4 Có / 4 Không</b>. Chia thành: nhánh trái (<span class="gv" data-q="Lco">3</span> Có, <span class="gv" data-q="Lkh">1</span> Không),
       nhánh phải (<span class="gv" data-q="Rco">1</span> Có, <span class="gv" data-q="Rkh">3</span> Không).
     </div>
-    <div class="why" style="margin-top:5px"><b>Vì sao:</b> chỉ cần bình phương tỉ lệ — không cần log → tính nhanh hơn entropy.</div>
+    <div class="why"><b>Vì sao:</b> chỉ cần bình phương tỉ lệ — không cần log → tính nhanh hơn entropy.</div>
   </div>
 
   <div class="grid2">
   <!-- BƯỚC 1 -->
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Gini cha</h2><span class="tag">4:4</span></div>
-    <div class="calc">
-      1 − [(4/8)² + (4/8)²] = 1 − (0.25 + 0.25) = <span class="blk"></span>
+    <div class="calc big">
+      1 − [(4/8)² + (4/8)²]<br>= 1 − (0.25 + 0.25) = <span class="wcell"></span>
     </div>
     <div class="why"><b>Vì sao:</b> 2 lớp cân bằng → Gini cực đại 0.5 (bẩn nhất).</div>
   </div>
@@ -61,9 +61,9 @@
   <!-- BƯỚC 2 -->
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Gini mỗi nhánh</h2><span class="tag">con</span></div>
-    <div class="calc">
-      Gini(trái) = <span class="blk" style="min-width:46px"></span><br>
-      Gini(phải) = <span class="blk" style="min-width:46px"></span>
+    <div class="calc big">
+      Gini(trái) = <span class="wcell" style="min-width:52px"></span><br>
+      Gini(phải) = <span class="wcell" style="min-width:52px"></span>
     </div>
     <div class="hint"><b>Mẹo:</b> nhánh thuần → 0; nhánh (3:1) → 1 − [(3/4)²+(1/4)²].</div>
   </div>
@@ -72,9 +72,9 @@
   <!-- BƯỚC 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Gini sau chia (trọng số)</h2><span class="tag">chọn nhỏ nhất</span></div>
-    <div class="calc">
-      Gini_split = (|trái|/8)·Gini(trái) + (|phải|/8)·Gini(phải) = <span class="blk" style="min-width:60px"></span>
-      &nbsp; (gain = 0.5 − split = <span class="blk" style="min-width:46px"></span>)
+    <div class="calc big">
+      Gini_split = (|trái|/8)·Gini(trái) + (|phải|/8)·Gini(phải) = <span class="wcell" style="min-width:60px"></span>
+      &nbsp; (gain = 0.5 − split = <span class="wcell" style="min-width:52px"></span>)
     </div>
     <div class="why"><b>Vì sao:</b> chọn phép chia có <b>Gini sau nhỏ nhất</b> ⇔ "Gini gain" lớn nhất.</div>
   </div>
@@ -88,16 +88,30 @@
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta">Phiếu in A4 · tính tay<br>Gini — tiếp theo</div>
   </div>
-  <div class="wb-title"><span class="no">Bài B9</span><h1>Gini <small>— so với entropy</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài B9</span>
+    <h1>Gini <small>— Gini = 2·phương sai &amp; so với entropy</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN B · ML CỔ ĐIỂN</span>
+  </div>
 
-  <!-- BƯỚC 4 -->
+  <!-- BƯỚC 4 — TỰ KIỂM: Gini = 2p(1−p) -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>So với entropy</h2><span class="tag">cùng ý</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — Gini = 2·phương sai</h2><span class="tag">đồng nhất thức</span></div>
+    <div class="calc big" style="line-height:2.15">
+      Với 2 lớp, gọi p = tỉ lệ lớp "Có": &nbsp; Gini = 1 − p² − (1−p)² = <span class="wcell" style="min-width:74px"></span> <small style="color:#7a8794">(khai triển)</small><br>
+      Kiểm nhánh trái: p = <span class="blk" style="min-width:40px"></span> → 2·p·(1−p) = <span class="wcell" style="min-width:56px"></span> &nbsp;<small style="color:#7a8794">— phải khớp Gini(trái) Bước 2</small>
+    </div>
+    <div class="note">2p(1−p) chính là <b>2·Var</b> của biến Bernoulli(p) (bài <b>A17</b>: Var = p(1−p)). Vậy Gini = "độ bẩn" = gấp đôi phương sai nhãn: p = 0 hay 1 → 0 (thuần); p = ½ → cực đại 0.5.</div>
+  </div>
+
+  <!-- BƯỚC 5 — HERO: cây -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vẽ cây &amp; điền gain vào nhánh</h2><span class="tag">cha → 2 con</span></div>
     <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 200 130" width="68mm" height="44mm" aria-label="cây nhỏ cha chia hai con, ô gain để trống"></svg>
-      <div style="flex:1">
-        <div class="calc">Điền gain (Bước 3) vào cây: gain = <span class="blk" style="min-width:50px"></span><br>
-          Gini và entropy thường chọn <span class="blk" style="min-width:70px"></span> phép chia; Gini tính <span class="blk" style="min-width:60px"></span> hơn.</div>
+      <svg id="figQ" class="fig" viewBox="0 0 200 130" width="64mm" height="41.6mm" aria-label="cây nhỏ cha chia hai con, ô gain để trống"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc">Điền gain (Bước 3) vào cây: gain = <span class="wcell" style="min-width:52px"></span><br>
+          Gini và entropy thường chọn <span class="blk" style="min-width:64px"></span> phép chia; Gini tính <span class="blk" style="min-width:56px"></span> hơn.</div>
         <div class="why"><b>Vì sao:</b> Gini không cần log (chỉ bình phương) nên rẻ hơn; cả hai = 0 khi nhánh thuần.</div>
       </div>
     </div>
@@ -107,15 +121,21 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Gini của một nhánh thuần bằng bao nhiêu? → <span class="blk" style="min-width:120px"></span></li>
-      <li>Gini khác entropy ở điểm tính toán nào? → <span class="blk" style="min-width:180px"></span></li>
+      <li>Gini của một nhánh thuần bằng bao nhiêu? → <span class="blk" style="min-width:130px"></span></li>
+      <li>Gini (2 lớp) liên hệ phương sai thế nào? → <span class="blk" style="min-width:170px"></span></li>
     </ol>
+  </div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính Gini cha &amp; con</span>
+    <span><span class="ck"></span>Gain &amp; Gini = 2·Var</span>
+    <span class="win">🎉 Bạn vừa hoàn tất Phần B!</span>
   </div>
 
   <div class="wb-foot"><span>Làm toán AI ✍️ — Bài B9 · Gini</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -125,32 +145,42 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Gini cha</h2></div>
-    <div class="calc ans">
-      1 − (0.25 + 0.25) = <span class="blk" data-q="giniCha">0.5</span>
+    <div class="calc ans big">
+      1 − (0.25 + 0.25) = <span class="wcell ans" data-q="giniCha">0.5</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Gini mỗi nhánh</h2></div>
-    <div class="calc ans">
-      Gini(trái): <span data-q="GLexpr">1 − [(3/4)² + (1/4)²]</span> = <span class="blk" data-q="GL">0.375</span><br>
-      Gini(phải): <span data-q="GRexpr">1 − [(1/4)² + (3/4)²]</span> = <span class="blk" data-q="GR">0.375</span>
+    <div class="calc ans big">
+      Gini(trái): <span data-q="GLexpr">1 − [(3/4)² + (1/4)²]</span> = <span class="wcell ans" data-q="GL">0.375</span><br>
+      Gini(phải): <span data-q="GRexpr">1 − [(1/4)² + (3/4)²]</span> = <span class="wcell ans" data-q="GR">0.375</span>
     </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Gini sau chia</h2></div>
-    <div class="calc ans">
+    <div class="calc ans big">
       (<span data-q="nL">4</span>/8)·<span data-q="GL">0.375</span> + (<span data-q="nR">4</span>/8)·<span data-q="GR">0.375</span>
-      = <span class="blk" data-q="giniSplit">0.375</span> &nbsp;|&nbsp; gain = 0.5 − <span data-q="giniSplit">0.375</span> = <span class="blk" data-q="gain">0.125</span>
+      = <span class="wcell ans" data-q="giniSplit">0.375</span> &nbsp;·&nbsp; gain = 0.5 − <span data-q="giniSplit">0.375</span> = <span class="wcell ans" data-q="gain">0.125</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>So với entropy</h2><span class="tag">cùng ý</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — Gini = 2·Var</h2><span class="tag">đồng nhất thức</span></div>
+    <div class="calc ans big">
+      1 − p² − (1−p)² = <span class="wcell ans" data-q="expand">2p(1−p)</span> &nbsp;·&nbsp;
+      nhánh trái: p = <span class="wcell ans" data-q="pL">0.75</span> → 2·<span data-q="pL">0.75</span>·<span data-q="pL1">0.25</span> = <span class="wcell ans" data-q="giniCheck">0.375</span> ✓ = Gini(trái)
+    </div>
+    <div class="why"><b>Vì sao:</b> khai triển (1−p)² = 1 − 2p + p² → 1 − p² − 1 + 2p − p² = 2p − 2p² = 2p(1−p) = 2·Var(Bernoulli). Gini chính là <b>gấp đôi phương sai nhãn</b>; p=0/1 → 0, p=½ → 0.5 (cực đại).</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Hình — cây cha → 2 con</h2></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 200 130" width="68mm" height="44mm" aria-label="cây nhỏ: nút cha chia thành hai nút con với số đếm"></svg>
-      <div style="flex:1">
+      <svg id="figK" class="fig" viewBox="0 0 200 130" width="60mm" height="39mm" aria-label="cây nhỏ: nút cha chia thành hai nút con với số đếm"></svg>
+      <div style="flex:1;min-width:44mm">
+        <div class="calc ans">gain = <span class="wcell ans" data-q="gainf">0.125</span></div>
         <div class="note">Gini và entropy thường chọn <b>cùng phép chia</b>; Gini không cần log nên nhanh hơn. Cả hai = 0 khi nhánh thuần.</div>
       </div>
     </div>
@@ -159,13 +189,13 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Gini nhánh thuần → <span class="qa">0.</span></li>
-      <li>Khác entropy → <span class="qa">Không dùng log (chỉ bình phương) → rẻ hơn.</span></li>
+      <li>Gini nhánh thuần → <span class="qa">0 (không bao giờ đoán trật).</span></li>
+      <li>Liên hệ phương sai → <span class="qa">Gini(2 lớp) = 2p(1−p) = 2·Var(Bernoulli) — bài A17.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Gini = 1 − Σp²; chọn phép chia làm Gini sau nhỏ nhất. Cùng tinh thần entropy nhưng nhanh.
+    <b style="color:var(--accent2)">Rút ra.</b> Gini = 1 − Σp² = 2·phương sai; chọn phép chia làm Gini sau nhỏ nhất. Cùng tinh thần entropy nhưng nhanh.
     Hết Phần B (ML cổ điển); Bài tiếp (B10): lề hình học của <b>SVM</b>.
   </div>
 
@@ -197,13 +227,19 @@ function generate(){
   var GL = gini(L[0],L[1]), GR = gini(R[0],R[1]);
   var split = (nL/8)*GL + (nR/8)*GR;
   var gain = 0.5 - split;
+  // tự kiểm: p của nhánh trái (tỉ lệ lớp "Có")
+  var pL = L[0]/nL;
+  var giniCheck = 2*pL*(1-pL);
 
   WB.setAll({
     Lco: ''+L[0], Lkh: ''+L[1], Rco: ''+R[0], Rkh: ''+R[1],
     giniCha: '0.5',
     GLexpr: gexpr(L[0],L[1]), GL: WB.fmtTrim(GL),
     GRexpr: gexpr(R[0],R[1]), GR: WB.fmtTrim(GR),
-    nL: ''+nL, nR: ''+nR, giniSplit: WB.fmtTrim(split), gain: WB.fmtTrim(gain)
+    nL: ''+nL, nR: ''+nR, giniSplit: WB.fmtTrim(split), gain: WB.fmtTrim(gain),
+    expand: '2p(1−p)',
+    pL: WB.fmtTrim(pL), pL1: WB.fmtTrim(1-pL), giniCheck: WB.fmtTrim(giniCheck),
+    gainf: WB.fmtTrim(gain)
   });
 
   drawTree('figK', L, R, gain);

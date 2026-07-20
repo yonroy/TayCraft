@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài F5 — Pooling (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
+.page .step{margin-top:7px;}
+.page .why{margin-top:4px;}
+.page .hint{margin-top:3px;}
 .page .note{margin-top:4px;}
-.poolrow{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;margin-top:4px;}
-.poolrow .lab{font-family:var(--mono);font-size:12px;font-weight:700;margin-bottom:3px;}
+.poolrow{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-top:4px;}
+.poolrow .lab{font-family:var(--mono);font-size:11.5px;font-weight:700;margin-bottom:3px;}
+.invrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;}
 </style>
 </head>
-<body>
+<body class="part pF">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -31,110 +31,160 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần F</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài F5</span><h1>Pooling <small>— Max / Average pooling</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Sau khi dò đặc trưng, ta không cần biết <b>chính xác từng pixel</b> — chỉ cần "có đặc trưng đó quanh đây".
-    Pooling nén vùng → giảm kích thước, giảm tham số lớp sau, và làm mạng <b>ít nhạy với dịch chuyển nhỏ</b>.
-    <div class="formula">
-      Max pool: out = max(cửa sổ) &nbsp;·&nbsp; Avg pool: out = trung bình(cửa sổ) &nbsp;·&nbsp; (thường 2×2, stride 2)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài F5</span>
+    <h1>Pooling <small>— Max / Average pooling</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Max pooling = "<b>vùng này có thấy đặc trưng mạnh không?</b>" → giữ tín hiệu mạnh nhất, bỏ vị trí chính xác. Average pooling = "<b>trung
-    bình vùng</b>" → mượt hơn. Cả hai <b>thu nhỏ</b> ảnh và làm mạng bền với dịch chuyển nhỏ.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Sau khi dò đặc trưng, mạng không cần biết <b>chính xác từng pixel</b> — chỉ cần "có đặc trưng đó quanh đây".
+    Pooling nén mỗi cửa sổ thành 1 số → giảm kích thước, giảm tính toán lớp sau. Hãy tự tay tính <b>max-pool</b> và <b>avg-pool</b>, rồi
+    khám phá vì sao max-pool <b>không đổi</b> khi ảnh dịch/nhiễu nhẹ trong cửa sổ — đó là lý do CNN dùng nó.
+    <div class="formula" style="margin-top:5px">
+      Max pool: out = max(cửa sổ) &nbsp;·&nbsp; Avg pool: out = trung bình(cửa sổ) &nbsp;·&nbsp; cửa sổ 2×2, stride 2
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4×4 → 2×2 · cửa sổ 2×2, stride 2</span></div>
     <div class="poolrow">
-      <div><div class="lab">FEATURE MAP 4×4</div><div class="mtx c4" id="x" style="--cell:9mm"></div></div>
+      <div><div class="lab">FEATURE MAP 4×4</div><div class="mtx c4" id="x" style="--cell:8mm"></div></div>
+      <div><div class="lab">4 CỬA SỔ (tô màu)</div><svg id="figMap" class="fig" viewBox="0 0 120 120" width="32mm" height="32mm" aria-label="bản đồ 4x4 chia 4 cửa sổ 2x2"></svg></div>
     </div>
+    <div class="note">Mỗi cửa sổ 2×2 gom 4 số thành 1 số ở bản đồ ra 2×2.</div>
   </div>
 
-  <div class="grid2">
-    <!-- BƯỚC 1 -->
-    <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Max pool ô trái-trên</h2><span class="tag">max</span></div>
-      <div class="calc">max(<span class="gv" data-q="w0">1,3,2,0</span>) = <span class="blk" style="min-width:44px"></span></div>
-      <div class="why"><b>Vì sao:</b> giữ phản hồi mạnh nhất → "đặc trưng có ở vùng này".</div>
-    </div>
-
-    <!-- BƯỚC 2 -->
-    <div class="step">
-      <div class="step-h"><div class="b">2</div><h2>Avg pool cùng ô</h2><span class="tag">trung bình</span></div>
-      <div class="calc">(<span class="gv" data-q="w0s">1+3+2+0</span>)/4 = <span class="blk" style="min-width:44px"></span></div>
-      <div class="hint">max nhạy đỉnh, avg mượt nhiễu.</div>
-    </div>
-  </div>
-
-  <!-- BƯỚC 3 -->
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Hoàn tất max pool 2×2</h2><span class="tag">4 cửa sổ</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Max-pool ô trái-trên</h2><span class="tag">max</span></div>
+    <div class="calc">max(<span class="gv" data-q="w0">1,3,2,0</span>) = <span class="wcell" style="min-width:34px"></span></div>
+    <div class="why"><b>Vì sao:</b> giữ phản hồi mạnh nhất trong cửa sổ → "đặc trưng có ở vùng này".</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Hoàn tất Max-pool 2×2</h2><span class="tag">4 cửa sổ</span></div>
     <div class="poolrow">
-      <div><div class="lab" style="color:#b45309">MAX-POOL → 2×2</div><div class="mtx c2" id="mx" style="--cell:11mm"></div></div>
+      <div><div class="lab" style="color:#b45309">MAX-POOL → 2×2</div><div class="mtx c2" id="mxDE" style="--cell:11mm"></div></div>
     </div>
-    <div class="why"><b>Vì sao:</b> ảnh 4×4 → 2×2, giảm ¾ số phần tử mà giữ "điểm nóng" đặc trưng.</div>
+    <div class="why"><b>Vì sao:</b> ảnh 4×4 → 2×2, giảm ¾ số phần tử mà vẫn giữ "điểm nóng" đặc trưng của từng cửa sổ.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Avg-pool &amp; tự kiểm: max-pool có "bền" với dịch nhỏ?</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài F5</span>
+    <h1>Pooling <small>— average pooling &amp; bất biến dịch nhỏ</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN F · CNN</span>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Avg-pool cùng cửa sổ</h2><span class="tag">trung bình</span></div>
+    <div class="calc">(<span class="gv" data-q="w0s">1+3+2+0</span>)/4 = <span class="wcell" style="min-width:34px"></span></div>
+    <div class="poolrow">
+      <div><div class="lab" style="color:#7c5cff">AVG-POOL → 2×2</div><div class="mtx c2" id="avDE" style="--cell:11mm"></div></div>
+    </div>
+    <div class="hint">Max nhạy với đỉnh; avg mượt hơn nhưng đổi theo MỌI phần tử.</div>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: bất biến dịch nhỏ -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — max-pool có đổi khi dịch nhẹ trong cửa sổ?</h2><span class="tag">local invariance</span></div>
+    <div class="note" style="margin-top:0">
+      Cửa sổ trái-trên gốc (bước 1,3): (<span class="gv" data-q="w0">1,3,2,0</span>) → max = <span class="gv" data-q="m0g">3</span>, avg = <span class="gv" data-q="a0g">1.5</span>.
+      Bây giờ đổi 1 giá trị ở <span class="gv" data-q="poslab">vị trí 1</span>: <span class="gv" data-q="orig">1</span> → <span class="gv" data-q="newv">2</span> (vẫn ≤ max, không vượt max).
+    </div>
+    <div class="calc">
+      Cửa sổ mới = (<span class="gv" data-q="w0b">2,3,2,0</span>) &nbsp;·&nbsp;
+      max(cửa sổ mới) = <span class="wcell" style="min-width:32px"></span> &nbsp;·&nbsp;
+      avg(cửa sổ mới) = <span class="wcell" style="min-width:32px"></span>
+    </div>
+    <div class="note">So với bước 1 &amp; 3: max có đổi không? avg có đổi không? Vì sao lại khác nhau?</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Max vs average pooling khác gì? → <span class="blk" style="min-width:180px"></span></li>
-      <li>Pooling có tham số học không? → <span class="blk" style="min-width:120px"></span></li>
+      <li>Vì sao max-pool không đổi khi 1 giá trị trong cửa sổ đổi nhưng vẫn ≤ max? → <span class="blk" style="min-width:200px"></span></li>
+      <li>Tính "bền với dịch nhỏ" này giúp gì khi vật thể trong ảnh xê dịch/nhiễu? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:14mm"><span class="lb">✏️ Nháp — tính max/avg cửa sổ mới ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Max-pool &amp; avg-pool 2×2</span>
+    <span><span class="ck"></span>Kiểm bất biến dịch nhỏ</span>
+    <span class="win">🎉 Bạn vừa thấy vì sao CNN "bền" với dịch chuyển nhẹ!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài F5</span><h1>Pooling <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài F5</span><h1>Pooling <small>— lời giải &amp; kiểm tra</small></h1></div>
 
-  <div class="grid2">
-    <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Max ô TL</h2></div>
-      <div class="calc ans">max = <span class="blk" data-q="m0">3</span></div>
-    </div>
-    <div class="step">
-      <div class="step-h"><div class="b">2</div><h2>Avg ô TL</h2></div>
-      <div class="calc ans">(Σ4)/4 = <span class="blk" data-q="a0">1.5</span></div>
+  <div class="step">
+    <div class="step-h"><div class="b">1</div><h2>Max ô trái-trên</h2></div>
+    <div class="calc ans">max = <span class="wcell ans" data-q="m0">3</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">2</div><h2>Max-pool 2×2</h2></div>
+    <div class="poolrow">
+      <div><div class="lab" style="color:#b45309">MAX-POOL</div><div class="mtx c2" id="mxKey" style="--cell:11mm"></div></div>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Max-pool & Avg-pool 2×2</h2></div>
+    <div class="step-h"><div class="b">3</div><h2>Avg ô trái-trên &amp; Avg-pool 2×2</h2></div>
+    <div class="calc ans">(Σ4)/4 = <span class="wcell ans" data-q="a0">1.5</span></div>
     <div class="poolrow">
-      <div><div class="lab" style="color:#b45309">MAX-POOL</div><div class="mtx c2" id="kmx" style="--cell:11mm"></div></div>
-      <div><div class="lab" style="color:#7c5cff">AVG-POOL</div><div class="mtx c2" id="kav" style="--cell:11mm"></div></div>
-      <svg id="figPool" class="fig" viewBox="0 0 120 120" width="34mm" height="34mm" aria-label="ảnh 4x4 chia 4 cửa sổ pooling"></svg>
+      <div><div class="lab" style="color:#7c5cff">AVG-POOL</div><div class="mtx c2" id="avKey" style="--cell:11mm"></div></div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — max-pool bất biến, avg-pool thì không</h2><span class="tag">local invariance</span></div>
+    <div class="calc ans">max(cửa sổ mới) = <span class="wcell ans" data-q="m0b">3</span> &nbsp;·&nbsp; avg(cửa sổ mới) = <span class="wcell ans" data-q="a0b">1.75</span></div>
+    <div class="invrow">
+      <svg id="figInv" class="fig" viewBox="0 0 220 100" width="62mm" height="28mm" aria-label="cửa sổ gốc và cửa sổ đổi 1 giá trị, max giữ nguyên"></svg>
+      <div class="note" style="margin-top:0;flex:1;min-width:140px"><b>max KHÔNG đổi</b> (=<span data-q="m0c">3</span>) vì phần tử lớn nhất trong cửa sổ vẫn còn nguyên chỗ; <b>avg ĐỔI</b> vì tổng cửa sổ đã thay đổi.</div>
+    </div>
+    <div class="why"><b>Vì sao:</b> max-pool chỉ "nhìn" phần tử lớn nhất → dịch/nhiễu nhỏ (miễn không vượt max) không lọt qua được. Đó là <b>bất biến dịch cục bộ</b> (local invariance) — cùng một đặc trưng "mạnh" dù nằm hơi lệch vị trí trong cửa sổ vẫn cho cùng kết quả. Avg-pool không có tính chất này vì nó cộng gộp mọi phần tử.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Max vs avg? → <span class="qa">Max giữ giá trị mạnh nhất; average lấy trung bình (mượt hơn).</span></li>
-      <li>Tham số học? → <span class="qa">Không — chỉ là phép tóm tắt cố định.</span></li>
+      <li>Vì sao max-pool không đổi? → <span class="qa">Max chỉ phụ thuộc phần tử LỚN NHẤT trong cửa sổ; các phần tử khác đổi (miễn ≤ max) không ảnh hưởng.</span></li>
+      <li>Giúp gì khi ảnh dịch/nhiễu? → <span class="qa">Mạng nhận ra đặc trưng dù nó lệch vài pixel trong cửa sổ — ổn định hơn với biến dạng nhỏ.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Pooling tóm tắt cửa sổ → thu nhỏ + bất biến dịch nhẹ, không tham số (backward max-pool: gradient chỉ
-    về ô đạt max; avg-pool: chia đều). Nhiều mạng hiện đại thay bằng conv stride-2 (học được). Bài tiếp <b style="color:var(--accent2)">F6</b>: tầm
-    nhìn của một nơ-ron sâu — receptive field.
+    <b style="color:var(--accent2)">Rút ra.</b> Pooling tóm tắt cửa sổ → thu nhỏ + không tham số học; max-pool còn <b>bất biến với dịch/nhiễu nhỏ</b> (miễn không vượt max),
+    avg-pool nhạy với mọi thay đổi. Backward: max-pool trả gradient về đúng ô đạt max, avg-pool chia đều. Nhiều mạng hiện đại thay pooling bằng
+    conv stride-2 (học được). Bài tiếp <b style="color:var(--accent2)">F6</b>: tầm nhìn của một nơ-ron sâu — receptive field.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài F5 · Pooling</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -149,30 +199,56 @@ function fillA(id, arr, fmt){
   var s=''; for(var i=0;i<arr.length;i++) s += '<div class="cell ans">'+fmt(arr[i])+'</div>';
   el.innerHTML=s;
 }
+function fillBlank(id, n){
+  var el=document.getElementById(id); if(!el) return;
+  var s=''; for(var k=0;k<n;k++) s+='<div class="cell blank"></div>';
+  el.innerHTML=s;
+}
 function win(g,r,c){ return [g[r][c],g[r][c+1],g[r+1][c],g[r+1][c+1]]; }
+var POS_LABEL = ['vị trí 1 (trái-trên)','vị trí 2 (phải-trên)','vị trí 3 (trái-dưới)','vị trí 4 (phải-dưới)'];
 
 function generate(){
   var fI=WB.fmtInt, fT=WB.fmtTrim;
-  var g=[]; for(var i=0;i<4;i++){ var row=[]; for(var j=0;j<4;j++) row.push(WB.randInt(0,9)); g.push(row); }
+  var g, wins, mx, av, w0, mx0;
+  // đảm bảo cửa sổ trái-trên có ít nhất 1 phần tử KHÔNG bằng max (để đổi giá trị mà max không đổi)
+  do {
+    g=[]; for(var i=0;i<4;i++){ var row=[]; for(var j=0;j<4;j++) row.push(WB.randInt(0,9)); g.push(row); }
+    wins=[win(g,0,0),win(g,0,2),win(g,2,0),win(g,2,2)];
+    mx=wins.map(function(w){return Math.max.apply(null,w);});
+    w0=wins[0]; mx0=mx[0];
+  } while (w0.every(function(v){return v===mx0;}));
+
   var flat=[]; for(var a=0;a<4;a++) for(var b=0;b<4;b++) flat.push(g[a][b]);
-  var wins=[win(g,0,0),win(g,0,2),win(g,2,0),win(g,2,2)];
-  var mx=wins.map(function(w){return Math.max.apply(null,w);});
-  var av=wins.map(function(w){return w.reduce(function(s,v){return s+v;},0)/4;});
-  var w0=wins[0];
+  av=wins.map(function(w){return w.reduce(function(s,v){return s+v;},0)/4;});
+
+  // chọn vị trí đổi: phần tử đầu tiên KHÔNG phải max của cửa sổ trái-trên
+  var changeIdx=0;
+  for (var k=0;k<4;k++){ if (w0[k]!==mx0){ changeIdx=k; break; } }
+  var orig = w0[changeIdx];
+  var delta = WB.randInt(1, mx0-orig);      // 1..(mx0-orig) → newVal luôn ≤ mx0
+  var newv = orig+delta;
+  var w0b = w0.slice(); w0b[changeIdx]=newv;
+  var mx0b = Math.max.apply(null, w0b);
+  var av0b = w0b.reduce(function(s,v){return s+v;},0)/4;
 
   fillG('x',flat,fI);
-  fillA('kmx',mx,fI); fillA('kav',av,fT);
-  // max-pool ĐỀ: bỏ trống để học sinh điền
-  var mxEl=document.getElementById('mx'); if(mxEl){ var s=''; for(var k=0;k<4;k++) s+='<div class="cell blank"></div>'; mxEl.innerHTML=s; }
+  fillA('mxKey',mx,fI); fillA('avKey',av,fT);
+  fillBlank('mxDE',4); fillBlank('avDE',4);
 
   WB.setAll({
     w0: w0.join(','), w0s: w0.join('+'),
-    m0: fI(mx[0]), a0: fT(av[0])
+    m0: fI(mx[0]), a0: fT(av[0]),
+    m0g: fI(mx0), a0g: fT(av[0]),
+    poslab: POS_LABEL[changeIdx],
+    orig: fI(orig), newv: fI(newv),
+    w0b: w0b.join(','),
+    m0b: fI(mx0b), a0b: fT(av0b), m0c: fI(mx0)
   });
-  drawPool('figPool', g);
+  drawMap('figMap', g);
+  drawInv('figInv', w0, w0b, changeIdx, mx0);
 }
 
-function drawPool(id, g){
+function drawMap(id, g){
   var svg=document.getElementById(id); if(!svg) return;
   var cell=24, x0=8, y0=12;
   var winc=['#ffe6cc','#e6f0ff','#e6ffe9','#fff0d6'];
@@ -186,6 +262,29 @@ function drawPool(id, g){
     var cx=x0+(k%2)*2*cell, cy=y0+Math.floor(k/2)*2*cell;
     s += '<rect x="'+cx+'" y="'+cy+'" width="'+(2*cell)+'" height="'+(2*cell)+'" fill="none" stroke="#b45309" stroke-width="1.8"/>';
   }
+  svg.innerHTML=s;
+}
+
+// vẽ cửa sổ gốc và cửa sổ đổi 1 giá trị cạnh nhau, khoanh ô max (cam) và ô vừa đổi (tím)
+function drawInv(id, w0, w0b, changeIdx, mx0){
+  var svg=document.getElementById(id); if(!svg) return;
+  var cell=26;
+  function grid(ox, oy, label, vals){
+    var s='<text x="'+(ox+cell)+'" y="'+(oy-6)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#475569">'+label+'</text>';
+    for (var i=0;i<4;i++){
+      var cx=ox+(i%2)*cell, cy=oy+Math.floor(i/2)*cell;
+      var isMax = vals[i]===mx0;
+      var isChanged = (i===changeIdx);
+      var stroke = isMax? '#b45309' : (isChanged? '#7c5cff' : '#ccc');
+      var sw = (isMax||isChanged)? 2 : 1;
+      s += '<rect x="'+cx+'" y="'+cy+'" width="'+cell+'" height="'+cell+'" fill="#fff" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
+      s += '<text x="'+(cx+cell/2)+'" y="'+(cy+cell/2+4)+'" text-anchor="middle" font-size="12" fill="#333">'+vals[i]+'</text>';
+    }
+    return s;
+  }
+  var s = grid(10, 26, 'Gốc', w0) + grid(122, 26, 'Đổi 1 giá trị (≤ max)', w0b);
+  s += '<line x1="98" y1="45" x2="116" y2="45" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrF5)"/>';
+  s += '<defs><marker id="arrF5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#94a3b8"/></marker></defs>';
   svg.innerHTML=s;
 }
 WB.wire(generate);

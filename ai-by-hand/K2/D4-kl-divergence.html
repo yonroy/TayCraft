@@ -5,20 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D4 — KL Divergence (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 .ltab{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin-top:2px;}
 .ltab td,.ltab th{border:1px solid var(--line);padding:2px 9px;text-align:center;}
 .ltab th{background:var(--given);font-weight:700;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -33,27 +28,25 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: cơ bản · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D4</span><h1>KL Divergence <small>— khoảng cách hai phân phối</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Học = làm phân phối dự đoán Q <b>gần</b> phân phối thật P. KL đo độ "phí thông tin" khi dùng Q thay P.
-    Tối thiểu cross-entropy chính là tối thiểu KL (khi P cố định).
-    <div class="formula">
-      D<sub>KL</sub>(P‖Q) = Σ pᵢ·ln(pᵢ/qᵢ) ≥ 0 &nbsp;&nbsp; = 0 ⇔ P = Q &nbsp;&nbsp; (bất đối xứng)
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài D4</span>
+    <h1>KL Divergence <small>— độ lệch hai phân phối: Q xa P bao nhiêu</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    KL = "<b>ngạc nhiên dư thừa</b>" khi bạn tin vào Q nhưng sự thật là P. Q càng lệch P càng nhiều bất ngờ → KL lớn. Bằng 0 chỉ khi
-    Q trùng P. Lưu ý: <b>không đối xứng</b> — đổi vai P, Q ra số khác.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Học = kéo phân phối dự đoán Q về gần phân phối thật P. KL đo "ngạc nhiên dư thừa" khi tin Q mà sự thật là P.
+    Hãy <b>tự tay</b> tính D<sub>KL</sub>(P‖Q) (tra bảng ln). Phần thưởng: đảo vai P↔Q để thấy KL <b>không đối xứng</b> — nó là "độ lệch", không phải "khoảng cách".
+    <div class="formula" style="margin-top:5px">
+      D<sub>KL</sub>(P‖Q) = Σ<sub>i</sub> p<sub>i</sub>·ln(p<sub>i</sub>/q<sub>i</sub>) ≥ 0 &nbsp;&nbsp; = 0 ⇔ P = Q
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng tra ln</h2><span class="tag">2 lớp</span></div>
-    <div class="calc" style="font-size:14px">
+    <div class="calc big">
       P (thật) = ( <span class="gv" data-q="p1">0.5</span>, <span class="gv" data-q="p2">0.5</span> ) &nbsp;;&nbsp;
       Q (dự đoán) = ( <span class="gv" data-q="q1">0.25</span>, <span class="gv" data-q="q2">0.75</span> )
     </div>
@@ -61,137 +54,185 @@
       <tr><th>r</th><td>2</td><td>1/2</td><td>3/2</td><td>2/3</td></tr>
       <tr><th>ln r</th><td>0.69</td><td>−0.69</td><td>0.405</td><td>−0.405</td></tr>
     </table>
+    <div class="why"><b>Vì sao:</b> KL nhìn <b>tỉ số</b> p/q ở mỗi lớp — Q hụt (r&gt;1) hay dư (r&lt;1) so với P — rồi lấy trung bình có trọng số p.</div>
   </div>
 
-  <!-- BƯỚC 1 — tỉ số -->
+  <div class="grid2">
+  <!-- STEP 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Tỉ số p/q từng lớp</h2><span class="tag">Q hụt hay dư?</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Tỉ số p/q</h2><span class="tag">Q hụt hay dư?</span></div>
     <div class="calc">
-      p₁/q₁ = <span data-q="p1">0.5</span>/<span data-q="q1">0.25</span> = <span class="blk" style="min-width:34px"></span> ;
-      p₂/q₂ = <span data-q="p2">0.5</span>/<span data-q="q2">0.75</span> = <span class="blk" style="min-width:34px"></span>
+      p₁/q₁ = <span data-q="p1">0.5</span>/<span data-q="q1">0.25</span> = <span class="wcell" style="min-width:34px"></span><br>
+      p₂/q₂ = <span data-q="p2">0.5</span>/<span data-q="q2">0.75</span> = <span class="wcell" style="min-width:34px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> KL nhìn <b>tỉ số</b> p/q ở mỗi lớp — Q hụt (r&gt;1) hay dư (r&lt;1) so với P.</div>
   </div>
 
-  <!-- BƯỚC 2 — ln & nhân p -->
+  <!-- STEP 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Lấy ln rồi nhân p</h2><span class="tag">trọng số = p</span></div>
+    <div class="step-h"><div class="b">2</div><h2>ln rồi nhân p</h2><span class="tag">trọng số = p</span></div>
     <div class="calc">
-      p₁·ln(p₁/q₁) = <span data-q="p1">0.5</span>·<span data-q="ln1">0.69</span> = <span class="blk" style="min-width:48px"></span><br>
-      p₂·ln(p₂/q₂) = <span data-q="p2">0.5</span>·<span data-q="ln2">(−0.405)</span> = <span class="blk" style="min-width:48px"></span>
+      p₁·ln(p₁/q₁) = <span data-q="p1">0.5</span>·<span data-q="ln1">0.69</span> = <span class="wcell" style="min-width:46px"></span><br>
+      p₂·ln(p₂/q₂) = <span data-q="p2">0.5</span>·<span data-q="ln2">(−0.405)</span> = <span class="wcell" style="min-width:46px"></span>
     </div>
-    <div class="hint">Trọng số là <b>p</b> (phân phối thật) — lớp nào thật hay xảy ra thì đóng góp nhiều hơn.</div>
   </div>
+  </div><!-- /grid2 -->
 
-  <!-- BƯỚC 3 — cộng -->
+  <!-- STEP 3 -->
   <div class="step">
     <div class="step-h"><div class="b">3</div><h2>Cộng → KL</h2><span class="tag">≥ 0</span></div>
-    <div class="calc">
-      D<sub>KL</sub>(P‖Q) = <span data-q="t1">0.345</span> + <span data-q="t2w">(−0.203)</span> = <span class="blk" style="min-width:48px"></span>
+    <div class="calc big">
+      D<sub>KL</sub>(P‖Q) = <span data-q="t1">0.345</span> + <span data-q="t2w">(−0.203)</span> = <span class="wcell" style="min-width:50px"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> KL luôn ≥ 0; ở đây &gt; 0 vì Q ≠ P (có lệch là có "ngạc nhiên dư").</div>
+    <div class="hint">KL luôn ≥ 0; ở đây &gt; 0 vì Q ≠ P (có lệch là có "ngạc nhiên dư").</div>
   </div>
 
-  <!-- BƯỚC 4 — bất đối xứng & CE -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D4 · KL Divergence</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>KL — bất đối xứng &amp; liên hệ cross-entropy</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D4</span>
+    <h1>KL Divergence <small>— đảo vai P↔Q ra số khác</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 4 — TỰ KIỂM: bất đối xứng -->
   <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Bất đối xứng &amp; liên hệ cross-entropy</h2><span class="tag">CE = H(P) + KL</span></div>
-    <div class="note">Cross-entropy H(P, Q) = H(P) + D<sub>KL</sub>(P‖Q); với P cố định, <b>giảm CE = giảm KL</b>. Đảo vai P ↔ Q cho số khác
-      (KL bất đối xứng). Vì thế cực tiểu hóa cross-entropy đúng là kéo Q về P.</div>
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — KL không đối xứng</h2><span class="tag">KL(Q‖P) ≠ KL(P‖Q)</span></div>
+    <div class="note" style="margin-top:0">
+      Đổi vai: tính D<sub>KL</sub>(Q‖P) = Σ q<sub>i</sub>·ln(q<sub>i</sub>/p<sub>i</sub>). Tỉ số q/p là <b>nghịch đảo</b> của p/q nên ln <b>đổi dấu</b> — vẫn tra cùng bảng:
+    </div>
+    <div class="calc big">
+      q₁·ln(q₁/p₁) = <span data-q="q1">0.25</span>·<span data-q="rln1">(−0.69)</span> = <span class="wcell" style="min-width:46px"></span> &nbsp;·&nbsp;
+      q₂·ln(q₂/p₂) = <span data-q="q2">0.75</span>·<span data-q="rln2">0.405</span> = <span class="wcell" style="min-width:46px"></span><br>
+      D<sub>KL</sub>(Q‖P) = <span class="wcell" style="min-width:50px"></span> &nbsp;<small style="color:#7a8794">— có bằng KL(P‖Q) ở Bước 3 không?</small>
+    </div>
+    <div class="note">Hai số <b>khác nhau</b> → KL là "độ lệch" một chiều, <b>không phải khoảng cách</b> (khoảng cách phải đối xứng). "P‖Q" đọc là "phí khi dùng Q để mã hóa dữ liệu thật P".</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Vì sao giảm cross-entropy = giảm KL</h2><span class="tag">CE = H(P) + KL</span></div>
+    <div class="note" style="margin-top:2px">Cross-entropy H(P,Q) = H(P) + D<sub>KL</sub>(P‖Q), với H(P) = −Σ p·ln p là entropy của dữ liệu thật (<b>cố định</b>, không phụ thuộc mô hình).
+      Vì H(P) hằng, <b>giảm CE ⟺ giảm KL</b> ⟺ kéo Q về P. Và KL ≥ 0 nghĩa là CE ≥ H(P): không mô hình nào "thắng" được entropy thật (Bài D3).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>KL = 0 khi nào? → <span class="blk" style="min-width:100px"></span></li>
-      <li>KL(P‖Q) có bằng KL(Q‖P)? → <span class="blk" style="min-width:110px"></span></li>
+      <li>KL = 0 khi nào? → <span class="blk" style="min-width:110px"></span></li>
+      <li>KL(P‖Q) có bằng KL(Q‖P)? → <span class="blk" style="min-width:120px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D4 · KL Divergence</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — tra ln &amp; nhân trọng số ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính KL(P‖Q)</span>
+    <span><span class="ck"></span>Kiểm bất đối xứng</span>
+    <span class="win">🎉 Bạn vừa đo độ lệch hai phân phối!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D4 · KL Divergence</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D4</span><h1>KL Divergence <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D4</span><h1>KL Divergence <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Tỉ số</h2></div>
-    <div class="calc ans">
-      p₁/q₁ = <span class="blk" data-q="r1">2</span> ; p₂/q₂ = <span class="blk" data-q="r2">2/3</span>
-    </div>
+    <div class="calc ans">p₁/q₁ = <span class="wcell ans" data-q="r1">2</span> &nbsp;·&nbsp; p₂/q₂ = <span class="wcell ans" data-q="r2">2/3</span></div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>ln &amp; nhân p</h2></div>
     <div class="calc ans">
-      <span data-q="p1">0.5</span>·<span data-q="ln1">0.69</span> = <span class="blk" data-q="t1">0.345</span> ;
-      <span data-q="p2">0.5</span>·<span data-q="ln2">(−0.405)</span> = <span class="blk" data-q="t2">−0.203</span>
+      <span data-q="p1">0.5</span>·<span data-q="ln1">0.69</span> = <span class="wcell ans" data-q="t1">0.345</span> &nbsp;·&nbsp;
+      <span data-q="p2">0.5</span>·<span data-q="ln2">(−0.405)</span> = <span class="wcell ans" data-q="t2">−0.203</span>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>KL</h2></div>
+    <div class="step-h"><div class="b">3</div><h2>KL(P‖Q)</h2></div>
     <div class="calc ans">
-      D<sub>KL</sub> = <span data-q="t1">0.345</span> + <span data-q="t2w">(−0.203)</span> = <span class="blk" data-q="kl">0.143</span> (&gt; 0)
+      D<sub>KL</sub>(P‖Q) = <span data-q="t1">0.345</span> + <span data-q="t2w">(−0.203)</span> = <span class="wcell ans" data-q="kl">0.143</span> (&gt; 0)
     </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Hình: P so với Q</h2><span class="tag">lệch → KL</span></div>
+    <div class="step-h"><div class="b">4</div><h2>Bất đối xứng: KL(Q‖P)</h2><span class="tag">≠ KL(P‖Q)</span></div>
     <div class="figrow">
-      <svg id="figK" class="fig" viewBox="0 0 220 140" width="70mm" height="40mm" aria-label="hai cột P và Q cho mỗi lớp, độ lệch sinh ra KL"></svg>
+      <svg id="figK" class="fig" viewBox="0 0 220 140" width="62mm" height="40mm" aria-label="hai cột P và Q cho mỗi lớp, độ lệch sinh ra KL"></svg>
       <div style="flex:1">
-        <div class="note">Cột <b>lam</b> = P (thật), cột <b>cam</b> = Q (dự đoán). Hai cột càng lệch → KL càng lớn. Trùng khít ⇒ KL = 0.</div>
+        <div class="calc ans">
+          <span data-q="q1">0.25</span>·<span data-q="rln1">(−0.69)</span> = <span class="wcell ans" data-q="rt1">−0.173</span> &nbsp;·&nbsp;
+          <span data-q="q2">0.75</span>·<span data-q="rln2">0.405</span> = <span class="wcell ans" data-q="rt2">0.304</span><br>
+          D<sub>KL</sub>(Q‖P) = <span class="wcell ans" data-q="klr">0.131</span> ≠ <span data-q="kl">0.143</span> = KL(P‖Q)
+        </div>
+        <div class="note">Cột <b>lam</b> = P (thật), cột <b>cam</b> = Q. Lệch → KL &gt; 0; trùng khít ⇒ KL = 0. Đổi vai ra số khác ⇒ bất đối xứng.</div>
       </div>
     </div>
+    <div class="why"><b>Vì sao:</b> ln(q/p) = −ln(p/q) nhưng trọng số đổi từ p sang q, nên tổng có trọng số khác đi ⇒ hai chiều KL không bằng nhau.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>KL = 0? → <span class="qa">Khi Q trùng P.</span></li>
-      <li>KL(P‖Q) = KL(Q‖P)? → <span class="qa">Không — KL bất đối xứng.</span></li>
+      <li>KL = 0? → <span class="qa">Khi Q trùng P (không còn ngạc nhiên dư).</span></li>
+      <li>KL(P‖Q) = KL(Q‖P)? → <span class="qa">Không — KL bất đối xứng, là độ lệch chứ không phải khoảng cách.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> KL đo độ lệch P→Q (≥ 0, bất đối xứng); tối thiểu cross-entropy = tối thiểu KL. Bài tiếp (D6): cơ chế <b>học</b> —
-    gradient descent trên hàm 2 biến.
+    <b style="color:var(--accent2)">Rút ra.</b> KL(P‖Q) = <span data-q="kl">0.143</span> đo độ lệch P→Q (≥ 0, bất đối xứng); vì CE = H(P) + KL nên tối thiểu cross-entropy chính là tối thiểu KL.
+    Bài D5: cơ chế <b>giảm</b> loss — một bước gradient trên một tham số.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D4 · KL Divergence</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D4 · KL Divergence</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var f2 = WB.fmt2, ft = WB.fmtTrim;
-  // các cặp (P,Q) có p/q rơi mốc bảng {2,1/2,3/2,2/3}
+  // các cặp (P,Q) có p/q rơi mốc bảng {2, 1/2, 3/2, 2/3}; ln[i] = ln(p_i/q_i)
   var PAIRS = [
-    { p:[0.5,0.5], q:[0.25,0.75], r:['2','2/3'], ln:[0.69,-0.405] },
-    { p:[0.5,0.5], q:[0.75,0.25], r:['2/3','2'], ln:[-0.405,0.69] },
-    { p:[0.6,0.4], q:[0.4,0.6],   r:['3/2','2/3'], ln:[0.405,-0.405] },
-    { p:[0.75,0.25], q:[0.5,0.5], r:['3/2','1/2'], ln:[0.405,-0.69] }
+    { p:[0.5,0.5],   q:[0.25,0.75], r:['2','2/3'],   ln:[0.69,-0.405] },
+    { p:[0.5,0.5],   q:[0.75,0.25], r:['2/3','2'],   ln:[-0.405,0.69] },
+    { p:[0.6,0.4],   q:[0.4,0.6],   r:['3/2','2/3'], ln:[0.405,-0.405] },
+    { p:[0.75,0.25], q:[0.5,0.5],   r:['3/2','1/2'], ln:[0.405,-0.69] }
   ];
   var c = WB.pick(PAIRS);
   function r3(v){ return Math.round(v*1000)/1000; }
-  var t1 = r3(c.p[0]*c.ln[0]), t2 = r3(c.p[1]*c.ln[1]);
-  var kl = r3(t1 + t2);                                    // cộng từ số ĐÃ làm tròn → khớp hiển thị
-
-  function pf(v){ return v.toFixed(2).replace(/0$/,''); }   // 0.5 / 0.25 / 0.75
-  function f3(v){ var s = (Math.round(v*1000)/1000).toString(); return s.replace('-', '−'); }
+  function f3(v){ return (Math.round(v*1000)/1000).toString().replace('-', '−'); }
   function wf(v){ var s = f3(v); return /^−/.test(s) ? '(' + s + ')' : s; }   // bọc ngoặc số âm
+  function pf(v){ return v.toFixed(2).replace(/0$/,''); }                     // 0.5 / 0.25 / 0.75
+
+  // KL(P‖Q) — cộng từ số ĐÃ làm tròn để khớp hiển thị
+  var t1 = r3(c.p[0]*c.ln[0]), t2 = r3(c.p[1]*c.ln[1]);
+  var kl = r3(t1 + t2);
+
+  // KL(Q‖P): ln(q/p) = −ln(p/q); trọng số = q
+  var rln = [ -c.ln[0], -c.ln[1] ];
+  var rt1 = r3(c.q[0]*rln[0]), rt2 = r3(c.q[1]*rln[1]);
+  var klr = r3(rt1 + rt2);
 
   WB.setAll({
     p1: pf(c.p[0]), p2: pf(c.p[1]), q1: pf(c.q[0]), q2: pf(c.q[1]),
     r1: c.r[0], r2: c.r[1],
     ln1: wf(c.ln[0]), ln2: wf(c.ln[1]),
-    t1: f3(t1), t2: f3(t2), t2w: wf(t2), kl: f3(kl)
+    t1: f3(t1), t2: f3(t2), t2w: wf(t2), kl: f3(kl),
+    rln1: wf(rln[0]), rln2: wf(rln[1]),
+    rt1: f3(rt1), rt2: f3(rt2), klr: f3(klr)
   });
   drawPQ('figK', c.p, c.q);
 }

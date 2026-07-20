@@ -5,17 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài G4 — LSTM một ô nhớ (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
-.tanhtab{font-family:var(--mono);font-size:12px;background:var(--given);border:1px solid var(--givenline);border-radius:5px;padding:3px 8px;display:inline-block;}
+.page .step{margin-top:7px;}
+.tanhtab{font-family:var(--mono);font-size:12px;background:var(--given);border:1px solid var(--givenline);border-radius:5px;padding:3px 8px;display:inline-block;margin-top:6px;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -30,81 +26,135 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM — một ô nhớ <small>— Long Short-Term Memory</small></h1></div>
+  <div class="wb-title">
+    <span class="no">Bài G4</span>
+    <h1>LSTM — một ô nhớ <small>— Long Short-Term Memory</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
   <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> RNN trơn quên nhanh (gradient teo). LSTM cho <b>đường ô nhớ c gần như tuyến tính</b> (cổng quên ≈ 1 → giữ nguyên)
-    → gradient chảy xa không teo, nhớ phụ thuộc dài hạn. Thống trị NLP/seq trước Transformer.
-    <div class="formula">
-      f, i, o = σ(…) (cổng quên/vào/ra) · c̃ = tanh(…) (ứng viên) · c<sub>t</sub> = f⊙c<sub>t−1</sub> + i⊙c̃ · h<sub>t</sub> = o⊙tanh(c<sub>t</sub>)
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> RNN thường (bài G3) quên nhanh vì gradient bị nhân lặp qua tanh′·W → teo dần. LSTM thêm một <b>đường ô nhớ c</b> chạy gần-tuyến-tính,
+    có <b>cổng quên f</b> điều khiển giữ/xả ký ức. Hãy tự tay cập nhật c<sub>t</sub>, h<sub>t</sub> — rồi tự kiểm vì sao đường cộng này chống vanishing.
+    <div class="formula" style="margin-top:5px">
+      c<sub>t</sub> = f⊙c<sub>t−1</sub> + i⊙g &nbsp; (g = ứng viên) &nbsp;·&nbsp; h<sub>t</sub> = o⊙tanh(c<sub>t</sub>)
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Ô nhớ c như <b>băng ghi nhớ chạy thẳng</b>. Cổng <b>quên f</b> quyết bôi bao nhiêu băng cũ; cổng <b>vào i</b> quyết ghi thêm bao nhiêu cái mới;
-    cổng <b>ra o</b> quyết đọc ra bao nhiêu cho trạng thái h. f≈1, i≈0 → giữ trí nhớ nguyên vẹn qua nhiều bước.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 ô · scalar (cổng đã tính)</span></div>
-    <div class="calc" style="font-size:14px">
-      cổng f = <span class="gv" data-q="f">0.7</span> (quên), i = <span class="gv" data-q="i">0.6</span> (vào), o = <span class="gv" data-q="o">0.8</span> (ra); ứng viên c̃ = <span class="gv" data-q="ctil">0.5</span>; ô nhớ cũ c<sub>prev</sub> = <span class="gv" data-q="cprev">0.4</span>.
+    <div class="calc big">
+      f = <span class="gv" data-q="f">0.7</span> (quên) · i = <span class="gv" data-q="i">0.5</span> (vào) · o = <span class="gv" data-q="o">0.8</span> (ra) ·
+      g = <span class="gv" data-q="ctil">0.5</span> (ứng viên) · c<sub>t−1</sub> = <span class="gv" data-q="cprev">0.4</span>
     </div>
-    <div class="tanhtab">Bảng: tanh(c<sub>t</sub>) = <span data-q="tanhc">0.52</span> (cho c<sub>t</sub> tính ở bước 1)</div>
+    <div class="note" style="margin-top:2px">f, i, o đã qua sigmoid (∈[0,1]); g đã qua tanh (ứng viên nhớ mới).</div>
+    <div class="tanhtab">Bảng tra: tanh(c<sub>t</sub>) = <span data-q="tanhc">0.52</span> &nbsp;<small style="color:var(--dim)">(dùng cho Bước 2, không cần bấm máy)</small></div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Cập nhật ô nhớ</h2><span class="tag">c = f·c_prev + i·c̃</span></div>
-    <div class="calc">
-      c<sub>t</sub> = f·c<sub>prev</sub> + i·c̃ = <span data-q="f">0.7</span>·<span data-q="cprev">0.4</span> + <span data-q="i">0.6</span>·<span data-q="ctil">0.5</span> = <span data-q="t1">0.28</span> + <span data-q="t2">0.30</span> = <span class="blk" style="min-width:50px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Cập nhật ô nhớ</h2><span class="tag">c<sub>t</sub> = f·c<sub>t−1</sub> + i·g</span></div>
+    <div class="calc big">
+      f·c<sub>t−1</sub> = <span class="wcell" style="min-width:15mm"></span> &nbsp;+&nbsp; i·g = <span class="wcell" style="min-width:15mm"></span>
+      &nbsp;=&nbsp; c<sub>t</sub> = <span class="wcell" style="min-width:17mm"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> trộn "giữ băng cũ" (f) với "ghi cái mới" (i) — <b>cộng</b> chứ không ghi đè → trí nhớ tích lũy.</div>
+    <div class="why"><b>Vì sao:</b> trộn "giữ băng cũ" (f·c<sub>t−1</sub>) với "ghi cái mới" (i·g) bằng phép <b>cộng</b> chứ không ghi đè → ký ức tích lũy dần.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trạng thái ẩn</h2><span class="tag">h = o·tanh(c)</span></div>
-    <div class="calc">h<sub>t</sub> = o·tanh(c<sub>t</sub>) = <span data-q="o">0.8</span>·<span data-q="tanhc">0.52</span> = <span class="blk" style="min-width:50px"></span></div>
-    <div class="hint">cổng ra o lọc xem <b>đọc</b> bao nhiêu ô nhớ ra ngoài thành h.</div>
+    <div class="step-h"><div class="b">2</div><h2>Trạng thái ẩn</h2><span class="tag">h<sub>t</sub> = o·tanh(c<sub>t</sub>)</span></div>
+    <div class="calc big">
+      h<sub>t</sub> = o·tanh(c<sub>t</sub>) = <span data-q="o">0.8</span>·<span data-q="tanhc">0.52</span> = <span class="wcell" style="min-width:17mm"></span>
+    </div>
+    <div class="hint">cổng ra o lọc xem <b>đọc</b> bao nhiêu ô nhớ ra ngoài thành h<sub>t</sub> (c<sub>t</sub> vẫn giữ nguyên bên trong để truyền tiếp).</div>
   </div>
 
-  <!-- BƯỚC 3 -->
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Vì sao đường ô nhớ chống teo gradient</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G4</span>
+    <h1>LSTM <small>— cổng quên f và "băng chuyền lỗi" không teo</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
+
+  <!-- BƯỚC 3 — TỰ KIỂM LÕI -->
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Giữ trí nhớ dài</h2><span class="tag">f≈1, i≈0</span></div>
-    <div class="note">Nếu f≈1, i≈0 thì c<sub>t</sub> ≈ c<sub>prev</sub> → ô nhớ <b>không đổi</b> qua nhiều bước. Đường c gần như cộng/đồng nhất → gradient không teo (khác RNN thường) → <b>nhớ xa</b>.</div>
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — đường ô nhớ có chống vanishing?</h2><span class="tag">∂c<sub>t</sub>/∂c<sub>t−1</sub> = f</span></div>
+    <div class="note" style="margin-top:0">
+      c<sub>t</sub> = f·c<sub>t−1</sub> + i·g là phép <b>cộng tuyến tính</b> theo c<sub>t−1</sub> (f, i, g coi như cố định tại 1 bước) → đạo hàm
+      <b>∂c<sub>t</sub>/∂c<sub>t−1</sub> = f</b>, KHÔNG nhân qua hàm phi tuyến nào — khác RNN thường (G3) vốn nhân thêm tanh′·W mỗi bước.
+    </div>
+    <div class="calc big" style="margin-top:6px">
+      (a) Nếu f=1, i=0 → c<sub>t</sub> = 1·c<sub>t−1</sub> + 0·g = <span class="wcell" style="min-width:17mm"></span> &nbsp;<small style="color:#7a8794">(so với c<sub>t−1</sub> ở Bước 0)</small>
+    </div>
+    <div class="calc big">
+      (b) Qua <span data-q="L">3</span> bước liên tiếp, gradient tích lũy = f<sup>L</sup>. f cao = <span class="gv" data-q="fhi">0.9</span> (gần 1):
+      <span data-q="fhi">0.9</span><sup>3</sup> = <span class="wcell" style="min-width:19mm"></span>
+    </div>
+    <div class="calc big">
+      f thấp = <span class="gv" data-q="flo">0.1</span>: <span data-q="flo">0.1</span><sup>3</sup> = <span class="wcell" style="min-width:19mm"></span>
+      &nbsp;<small style="color:#7a8794">— so 2 kết quả, f càng gần 1 gradient càng giữ hay teo?</small>
+    </div>
+    <div class="why"><b>Vì sao:</b> f≈1 → tích f·f·…·f ≈ 1 (không đổi) = "constant error carousel" → nhớ xa. f nhỏ → tích co theo lũy thừa, teo nhanh giống RNN thường.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Cổng quên f ≈ 1 nghĩa là gì? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Vì sao LSTM chống vanishing? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Nếu f≈1, i≈0 thì c<sub>t</sub> so với c<sub>t−1</sub> thế nào? → <span class="blk" style="min-width:160px"></span></li>
+      <li>Vì sao đường ô nhớ cộng giúp gradient không teo qua nhiều bước? → <span class="blk" style="min-width:160px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:22mm"><span class="lb">✏️ Nháp — tính f·c_prev, i·g, f³, f_thấp³ ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Cập nhật c<sub>t</sub>, h<sub>t</sub></span>
+    <span><span class="ck"></span>Kiểm f≈1 chống teo</span>
+    <span class="win">🎉 Bạn vừa thấy "constant error carousel"!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM — một ô nhớ <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G4</span><h1>LSTM — một ô nhớ <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Cập nhật ô nhớ</h2></div>
-    <div class="calc ans">c<sub>t</sub> = <span data-q="t1">0.28</span> + <span data-q="t2">0.30</span> = <span class="blk" data-q="c">0.58</span></div>
+    <div class="calc ans">
+      f·c<sub>t−1</sub> = <span class="wcell ans" data-q="t1">0.28</span> + i·g = <span class="wcell ans" data-q="t2">0.25</span>
+      = c<sub>t</sub> = <span class="wcell ans" data-q="c">0.53</span>
+    </div>
   </div>
 
   <div class="step">
     <div class="step-h"><div class="b">2</div><h2>Trạng thái ẩn</h2></div>
-    <div class="calc ans">h<sub>t</sub> = <span data-q="o">0.8</span>·tanh(<span data-q="c">0.58</span>) = <span data-q="o">0.8</span>·<span data-q="tanhc">0.52</span> = <span class="blk" data-q="h">0.42</span></div>
+    <div class="calc ans">h<sub>t</sub> = <span data-q="o">0.8</span>·tanh(<span data-q="c">0.53</span>) = <span data-q="o">0.8</span>·<span data-q="tanhc">0.49</span> = <span class="wcell ans" data-q="h">0.39</span></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Tự kiểm — f≈1 giữ ký ức, f nhỏ thì teo</h2></div>
+    <div class="calc ans">
+      (a) f=1,i=0 → c<sub>t</sub> = <span class="wcell ans" data-q="calt">0.4</span> (= chính c<sub>t−1</sub> — ô nhớ <b>giữ nguyên</b>)<br>
+      (b) f cao <span data-q="fhi">0.9</span>³ = <span class="wcell ans" data-q="fhi3">0.729</span> (gần 1 → gradient gần như không teo)<br>
+      f thấp <span data-q="flo">0.1</span>³ = <span class="wcell ans" data-q="flo3">0.001</span> (teo cực nhanh, giống RNN thường)
+    </div>
+    <div class="why"><b>Vì sao:</b> ∂c<sub>t</sub>/∂c<sub>t−1</sub> = f không qua phi tuyến → tích lũy L bước = f<sup>L</sup>. f≈1: 0.9³≈0.73 vẫn còn "sống"; f=0.1: 0.1³=0.001 gần như biến mất — đúng cơ chế vanishing của RNN thường (G3) mà LSTM tránh được khi f≈1.</div>
   </div>
 
   <!-- SƠ ĐỒ -->
@@ -113,8 +163,8 @@
     <div class="figrow">
       <svg id="figLSTM" class="fig" viewBox="0 0 240 110" width="76mm" height="35mm" aria-label="ô LSTM với băng ô nhớ chạy ngang và ba cổng quên vào ra"></svg>
       <div style="flex:1">
-        <div class="note">Băng c chạy ngang gần như tuyến tính (f điều tiết giữ/bôi). LSTM tách <b>c (nhớ)</b> và <b>h (đầu ra)</b>, 3 cổng; GRU gộp lại, 2 cổng → gọn hơn
-          (Bài G5).</div>
+        <div class="note">Băng c chạy ngang gần như tuyến tính (f điều tiết giữ/bôi) — đây chính là "đường cộng" ở Bước 3 giúp gradient không teo.
+          LSTM tách <b>c (nhớ)</b> và <b>h (đầu ra)</b>, 3 cổng; GRU gộp lại còn 2 cổng, gọn hơn (Bài G5).</div>
       </div>
     </div>
   </div>
@@ -122,17 +172,17 @@
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>f ≈ 1? → <span class="qa">Giữ gần như nguyên ô nhớ cũ → nhớ lâu.</span></li>
-      <li>Vì sao chống vanishing? → <span class="qa">Đường ô nhớ c gần tuyến tính → gradient chảy xa không teo.</span></li>
+      <li>f≈1, i≈0? → <span class="qa">c<sub>t</sub> ≈ c<sub>t−1</sub> — ô nhớ giữ gần như nguyên vẹn.</span></li>
+      <li>Vì sao chống vanishing? → <span class="qa">∂c<sub>t</sub>/∂c<sub>t−1</sub>=f không qua phi tuyến; f≈1 → tích lũy nhiều bước ≈1, không teo (constant error carousel).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> LSTM = ô nhớ c + 3 cổng; f≈1 giữ trí nhớ dài, chống vanishing.
-    Bài tiếp <b style="color:var(--accent2)">G5</b>: GRU — phiên bản gọn 2 cổng.
+    <b style="color:var(--accent2)">Rút ra.</b> LSTM = ô nhớ c (đường cộng) + 3 cổng f,i,o. Cổng quên f≈1 giữ ký ức xa và giữ gradient ≈1 qua nhiều bước
+    (constant error carousel), khác RNN thường (G3) nhân tanh′·W mỗi bước nên teo nhanh. Bài tiếp <b style="color:var(--accent2)">G5</b>: GRU — phiên bản gọn 2 cổng.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G4 · LSTM một ô nhớ</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -140,13 +190,22 @@
 function generate(){
   var f2=WB.fmt2, fT=WB.fmtTrim;
   function r2(v){ return Math.round(v*100)/100; }
+  function f3(v){ var r=Math.round(v*1000)/1000; if(r===0) return '0'; var s=r.toFixed(3).replace(/0+$/,'').replace(/\.$/,''); return s; }
+
   var f=WB.pick([0.6,0.7,0.8]), i=WB.pick([0.4,0.5,0.6]), o=WB.pick([0.7,0.8,0.9]);
   var ctil=WB.pick([0.4,0.5,0.6]), cprev=WB.pick([0.3,0.4,0.5]);
   var t1=r2(f*cprev), t2=r2(i*ctil), c=r2(t1+t2);
   var tanhc=r2(Math.tanh(c)), h=r2(o*tanhc);
+
+  // Tự kiểm lõi: hằng số minh hoạ (không đổi theo 🎲) — vẫn qua data-q, không hardcode trong HTML.
+  var fhi=0.9, flo=0.1, L=3;
+  var fhi3=Math.pow(fhi,L), flo3=Math.pow(flo,L);
+
   WB.setAll({
     f:fT(f), i:fT(i), o:fT(o), ctil:fT(ctil), cprev:fT(cprev),
-    t1:f2(t1), t2:f2(t2), c:f2(c), tanhc:f2(tanhc), h:f2(h)
+    t1:f2(t1), t2:f2(t2), c:f2(c), tanhc:f2(tanhc), h:f2(h),
+    calt:fT(cprev), L:String(L), fhi:fT(fhi), flo:fT(flo),
+    fhi3:f3(fhi3), flo3:f3(flo3)
   });
   drawLSTM();
 }
@@ -155,9 +214,9 @@ function drawLSTM(){
   var svg=document.getElementById('figLSTM'); if(!svg) return;
   var defs='<defs><marker id="aLS" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#777"/></marker></defs>';
   var s='';
-  // băng c chạy ngang (trên)
+  // băng c chạy ngang (trên) — đường cộng gần-tuyến-tính
   s += '<line x1="14" y1="30" x2="226" y2="30" stroke="#0a8a3a" stroke-width="3"/>';
-  s += '<text x="20" y="24" style="font-size:8px" fill="#0a8a3a">băng ô nhớ c (chạy thẳng)</text>';
+  s += '<text x="20" y="24" style="font-size:8px" fill="#0a8a3a">băng ô nhớ c (đường cộng, gần tuyến tính)</text>';
   // ô LSTM
   s += '<rect x="80" y="44" width="80" height="40" rx="6" fill="#ece2ff" stroke="#7c5cff"/>';
   // 3 cổng
@@ -174,7 +233,7 @@ function drawLSTM(){
   // h ra
   s += '<text x="196" y="84" style="font-size:9px" fill="#7c5cff">h_t</text>';
   s += '<line x1="160" y1="74" x2="194" y2="80" stroke="#7c5cff" stroke-width="1.3" marker-end="url(#aLS)"/>';
-  s += '<text x="120" y="100" text-anchor="middle" style="font-size:8px" fill="#6b7280">3 cổng f·i·o điều tiết băng c & đầu ra h</text>';
+  s += '<text x="120" y="100" text-anchor="middle" style="font-size:8px" fill="#6b7280">f≈1 → gradient dọc băng ≈1 (không teo)</text>';
   svg.innerHTML=defs+s;
 }
 WB.wire(generate);

@@ -5,16 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài G5 — GRU một ô (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
+.page .quiz{margin-top:8px;}
 </style>
 </head>
-<body>
+<body class="part pG">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,105 +26,159 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần G</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài G5</span><h1>GRU một ô <small>— Gated Recurrent Unit</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> RNN thường quên nhanh (vanishing). GRU dùng <b>cổng cập nhật z</b> để <b>giữ nguyên</b> trạng thái cũ qua nhiều
-    bước (đường gradient ~1) → nhớ lâu hơn, ít tham số hơn LSTM. Cốt lõi của nhiều mô hình chuỗi trước Transformer.
-    <div class="formula">
-      z = σ(…) (cổng cập nhật) · r = σ(…) (cổng đặt lại) · h̃ = tanh(W·x + U·(r⊙h<sub>prev</sub>)) · h = (1−z)⊙h<sub>prev</sub> + z⊙h̃
-    </div>
+  <div class="wb-title">
+    <span class="no">Bài G5</span>
+    <h1>GRU một ô <small>— Gated Recurrent Unit</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
   </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hai <b>núm vặn</b>: cổng đặt lại r quyết định "quên bao nhiêu quá khứ khi tính ý mới"; cổng cập nhật z quyết định "thay trạng thái cũ
-    bằng ý mới bao nhiêu". z≈0 → <b>giữ nguyên</b> trí nhớ (nhớ lâu); z≈1 → <b>thay mới</b> hoàn toàn.
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> RNN trơn quên nhanh (gradient teo). GRU dùng <b>một cổng cập nhật z</b> để quyết định "giữ ký ức cũ" hay "thay bằng ứng viên mới" —
+    gộp vai trò cổng quên + cổng vào của LSTM (bài G4) thành một, ít tham số hơn mà vẫn chống vanishing. Hãy <b>tự tay</b> trộn h<sub>prev</sub> với h̃ theo z,
+    rồi xem hai đầu z=0 / z=1 dẫn tới đâu.
+    <div class="formula" style="margin-top:5px">
+      z = σ(…) (cổng cập nhật) · r = σ(…) (cổng đặt lại) · h̃ = tanh(W·x + U·(r⊙h<sub>prev</sub>)) &nbsp;·&nbsp; h<sub>t</sub> = (1−z)·h<sub>prev</sub> + z·h̃
+    </div>
   </div>
 
   <!-- GIVEN -->
   <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 ô · scalar (đã qua σ/tanh)</span></div>
-    <div class="calc" style="font-size:14px">
-      Trạng thái cũ h<sub>prev</sub> = <span class="gv" data-q="hp">0.2</span> &nbsp;·&nbsp; z = <span class="gv" data-q="z">0.7</span> (cập nhật) &nbsp;·&nbsp; r = <span class="gv" data-q="r">0.4</span> (đặt lại) &nbsp;·&nbsp; ứng viên h̃ = <span class="gv" data-q="htil">0.5</span>.
+    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 ô · scalar (cổng đã qua σ/tanh)</span></div>
+    <div class="calc big">
+      h<sub>prev</sub> = <span class="gv" data-q="hp">0.3</span> &nbsp;·&nbsp;
+      z = <span class="gv" data-q="z">0.6</span> (cập nhật) &nbsp;·&nbsp;
+      r = <span class="gv" data-q="r">0.4</span> (đặt lại) &nbsp;·&nbsp;
+      h̃ = <span class="gv" data-q="htil">0.7</span>
     </div>
-    <div class="note">z = <span class="gv" data-q="z">0.7</span> → thay <span data-q="zpct">70</span>% bằng cái mới; r = <span class="gv" data-q="r">0.4</span> → chỉ dùng <span data-q="rpct">40</span>% quá khứ khi tạo h̃. Cổng là <b>xác suất mềm</b> σ∈(0,1) điều tiết luồng thông tin.</div>
+    <div class="note">z = <span class="gv" data-q="z">0.6</span> → thay <span data-q="zpct">60</span>% bằng ứng viên mới; r = <span class="gv" data-q="r">0.4</span> → chỉ dùng <span data-q="rpct">40</span>% quá khứ khi <i>tạo ra</i> h̃ (không dùng r trong bước trộn dưới đây, r chỉ tác động lúc tính h̃). Cổng là <b>xác suất mềm</b> σ∈(0,1).</div>
   </div>
 
   <!-- BƯỚC 1 -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Trạng thái mới</h2><span class="tag">trộn lồi theo z</span></div>
-    <div class="calc">
-      h = (1−z)·h<sub>prev</sub> + z·h̃ = (1−<span data-q="z">0.7</span>)·<span data-q="hp">0.2</span> + <span data-q="z">0.7</span>·<span data-q="htil">0.5</span> = <span data-q="termA">0.06</span> + <span data-q="termB">0.35</span> = <span class="blk" style="min-width:50px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Phần giữ ký ức</h2><span class="tag">(1−z)·h_prev</span></div>
+    <div class="calc big">
+      1 − z = 1 − <span data-q="z">0.6</span> = <span data-q="omz">0.4</span> &nbsp;·&nbsp;
+      (1−z)·h<sub>prev</sub> = <span data-q="omz">0.4</span>·<span data-q="hp">0.3</span> = <span class="wcell" style="min-width:24mm"></span>
     </div>
-    <div class="hint">trộn <b>lồi</b> (convex) giữa cũ và mới theo z: tổng trọng số (1−z) + z = 1.</div>
+    <div class="why"><b>Vì sao:</b> phần này giữ lại bao nhiêu <b>ký ức cũ</b> — càng nhiều (1−z) thì càng ít quên.</div>
   </div>
 
   <!-- BƯỚC 2 -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Trường hợp z → 0</h2><span class="tag">giữ trí nhớ</span></div>
-    <div class="calc">
-      nếu z = 0: h = 1·h<sub>prev</sub> + 0·h̃ = <span class="blk" style="min-width:50px"></span> (giữ nguyên)
+    <div class="step-h"><div class="b">2</div><h2>Phần thêm ứng viên</h2><span class="tag">z·h̃</span></div>
+    <div class="calc big">
+      z·h̃ = <span data-q="z">0.6</span>·<span data-q="htil">0.7</span> = <span class="wcell" style="min-width:24mm"></span>
     </div>
-    <div class="why"><b>Vì sao:</b> z nhỏ tạo <b>đường tắt trí nhớ</b> (giống residual F9) → gradient không teo → nhớ lâu qua nhiều bước.</div>
+    <div class="why"><b>Vì sao:</b> phần này bơm bao nhiêu <b>ý mới</b> h̃ vào trạng thái — z càng lớn càng "ghi đè" mạnh.</div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G5 · GRU một ô</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Cổng cập nhật = nội suy lồi giữa giữ và cập nhật</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài G5</span>
+    <h1>GRU một ô <small>— trộn lồi &amp; hai cực z</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN G · CHUỖI</span>
+  </div>
+
+  <!-- BƯỚC 3 -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Trạng thái mới</h2><span class="tag">h_t = giữ + cập nhật</span></div>
+    <div class="calc big">
+      h<sub>t</sub> = (1−z)·h<sub>prev</sub> + z·h̃ = <span class="blk" style="min-width:70px"></span>
+    </div>
+    <div class="hint">tổng trọng số (1−z) + z = <b>1</b> → h<sub>t</sub> luôn nằm <b>giữa</b> h<sub>prev</sub> và h̃ (trộn lồi, không thể vượt ra ngoài).</div>
+  </div>
+
+  <!-- BƯỚC 4 — TỰ KIỂM lõi -->
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Tự kiểm — cổng z là nội suy lồi</h2><span class="tag">2 cực z=0 / z=1</span></div>
+    <div class="note" style="margin-top:0">Giữ nguyên h<sub>prev</sub> = <span class="gv" data-q="hp">0.3</span>, h̃ = <span class="gv" data-q="htil">0.7</span>, chỉ đổi z về hai cực:</div>
+    <div class="calc big">
+      z = 0: h<sub>t</sub> = 1·h<sub>prev</sub> + 0·h̃ = <span class="wcell" style="min-width:24mm"></span> &nbsp;<small style="color:#7a8794">(giữ nguyên?)</small><br>
+      z = 1: h<sub>t</sub> = 0·h<sub>prev</sub> + 1·h̃ = <span class="wcell" style="min-width:24mm"></span> &nbsp;<small style="color:#7a8794">(thay hẳn?)</small>
+    </div>
+    <div class="note">Vì z là trọng số nội suy nên h<sub>t</sub> không bao giờ ra ngoài đoạn [h<sub>prev</sub>, h̃]. z nhỏ → gradient qua ô ≈1 → nhớ xa
+      (giống cổng quên f≈1 của LSTM, bài G4) — nhưng GRU chỉ cần <b>một</b> cổng z thay vì hai cổng (f, i) riêng.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Cổng cập nhật z ≈ 0 nghĩa là gì? → <span class="blk" style="min-width:170px"></span></li>
-      <li>GRU khác LSTM ở đâu? → <span class="blk" style="min-width:170px"></span></li>
+      <li>z ≈ 0 thì h_t xử sự thế nào? → <span class="blk" style="min-width:150px"></span></li>
+      <li>GRU khác LSTM (bài G4) ở điểm nào? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G5 · GRU một ô</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:14mm"><span class="lb">✏️ Nháp — tính (1−z), rồi nhân + cộng ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Tính 2 phần giữ/cập nhật</span>
+    <span><span class="ck"></span>Kiểm hai cực z=0, z=1</span>
+    <span class="win">🎉 Bạn vừa nội suy một trạng thái GRU!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G5 · GRU một ô</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài G5</span><h1>GRU một ô <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài G5</span><h1>GRU một ô <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Trạng thái mới</h2></div>
-    <div class="calc ans">h = (1−<span data-q="z">0.7</span>)·<span data-q="hp">0.2</span> + <span data-q="z">0.7</span>·<span data-q="htil">0.5</span> = <span data-q="termA">0.06</span> + <span data-q="termB">0.35</span> = <span class="blk" data-q="h">0.41</span></div>
+    <div class="step-h"><div class="b">1</div><h2>Phần giữ ký ức</h2></div>
+    <div class="calc ans">1−z = <span class="wcell ans" data-q="omz">0.4</span> &nbsp;·&nbsp; (1−z)·h<sub>prev</sub> = <span class="wcell ans" data-q="termA">0.12</span></div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>z → 0</h2></div>
-    <div class="calc ans">h = 1·h<sub>prev</sub> + 0 = <span class="blk" data-q="hkeep">0.2</span> (giữ nguyên trạng thái cũ)</div>
+    <div class="step-h"><div class="b">2</div><h2>Phần thêm ứng viên</h2></div>
+    <div class="calc ans">z·h̃ = <span class="wcell ans" data-q="termB">0.42</span></div>
   </div>
 
   <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Cổng z trộn cũ ↔ mới</h2><span class="tag">(1−z)·cũ + z·mới</span></div>
+    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Trạng thái mới &amp; đường nội suy</h2><span class="tag">h_t = (1−z)·h_prev + z·h̃</span></div>
     <div class="figrow">
-      <svg id="figGRU" class="fig" viewBox="0 0 200 120" width="64mm" height="38mm" aria-label="ô GRU trộn h cũ và ứng viên theo cổng z"></svg>
+      <svg id="figGRU" class="fig" viewBox="0 0 220 110" width="76mm" height="38mm" aria-label="thanh nội suy từ h_prev tới h̃ với con trượt z đánh dấu h_t"></svg>
       <div style="flex:1">
-        <div class="note">Cổng đặt lại r tạo ứng viên: h̃ = tanh(Wx + U(r⊙h<sub>prev</sub>)); r=0 → ứng viên "quên" quá khứ. GRU gộp cell &amp; hidden, chỉ
-          <b>2 cổng</b> (LSTM 3 cổng + ô nhớ riêng) → ít tham số, train nhanh, hiệu năng tương đương nhiều bài.</div>
+        <div class="calc ans">h<sub>t</sub> = <span class="wcell ans" data-q="termA">0.12</span> + <span class="wcell ans" data-q="termB">0.42</span> = <span class="wcell ans" data-q="h">0.54</span></div>
+        <div class="note">Vị trí h<sub>t</sub> trên thanh <b>đúng bằng tỉ lệ z</b> tính từ h<sub>prev</sub> sang h̃ — z là "con trượt" nội suy, không phải phép chọn rời rạc.</div>
       </div>
     </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="b">4</div><h2>Hai cực z=0 / z=1</h2></div>
+    <div class="calc ans">z=0: h<sub>t</sub> = <span class="wcell ans" data-q="hkeep">0.3</span> (= h<sub>prev</sub>, giữ nguyên) &nbsp;·&nbsp; z=1: h<sub>t</sub> = <span class="wcell ans" data-q="hupd">0.7</span> (= h̃, thay hẳn)</div>
+    <div class="why"><b>Vì sao:</b> h<sub>t</sub> là <b>tổ hợp lồi</b> của h<sub>prev</sub> và h̃ với trọng số (1−z), z (tổng = 1) → luôn nằm giữa hai cực, không thể vượt ra ngoài.
+      Một cổng z làm việc của cả cổng quên + cổng vào ở LSTM (bài G4) → "rò rỉ có điều khiển" (leaky integration), ít tham số hơn.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>z ≈ 0? → <span class="qa">Giữ gần như nguyên trạng thái cũ (nhớ lâu).</span></li>
-      <li>GRU khác LSTM? → <span class="qa">Ít cổng hơn (2 vs 3), không tách ô nhớ riêng → gọn hơn.</span></li>
+      <li>z ≈ 0? → <span class="qa">h_t ≈ h_prev — gần như giữ nguyên trạng thái cũ (nhớ lâu).</span></li>
+      <li>Khác LSTM? → <span class="qa">Một cổng z nội suy (gộp quên+vào), không tách ô nhớ riêng → ít tham số, gọn hơn.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> GRU = trộn lồi cũ/mới theo cổng z; z nhỏ giữ trí nhớ (chống vanishing), gọn hơn LSTM.
+    <b style="color:var(--accent2)">Rút ra.</b> GRU = trộn lồi h_prev/h̃ theo cổng z; z nhỏ giữ trí nhớ (chống vanishing), một cổng thay hai cổng của LSTM → gọn hơn.
     Bài tiếp <b style="color:var(--accent2)">G6</b>: đọc chuỗi <b>hai chiều</b> — Bi-RNN.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G5 · GRU một ô</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài G5 · GRU một ô</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
@@ -135,32 +186,43 @@
 function generate(){
   var fT=WB.fmtTrim;
   function r2(v){ return Math.round(v*100)/100; }
-  var z=WB.pick([0.5,0.6,0.7,0.8]);
-  var hp=WB.pick([0.2,0.3,0.4,0.5]);
-  var htil=WB.pick([0.4,0.5,0.6,0.8]);
-  var r=WB.pick([0.3,0.4,0.5,0.6]);
-  var termA=r2((1-z)*hp), termB=r2(z*htil);
-  var h=r2(termA+termB);
+  var z    = WB.pick([0.2,0.4,0.5,0.6,0.8]);
+  var hp   = WB.pick([0.1,0.2,0.3,0.4,0.5]);
+  var htil = WB.pick([0.5,0.6,0.7,0.8,0.9]);
+  var r    = WB.pick([0.2,0.3,0.4,0.5,0.6]);
+  var omz  = r2(1-z);
+  var termA = r2(omz*hp);
+  var termB = r2(z*htil);
+  var h = r2(termA+termB);
   WB.setAll({
     hp:fT(hp), z:fT(z), r:fT(r), htil:fT(htil),
     zpct:String(Math.round(z*100)), rpct:String(Math.round(r*100)),
-    termA:fT(termA), termB:fT(termB), h:fT(h), hkeep:fT(hp)
+    omz:fT(omz), termA:fT(termA), termB:fT(termB), h:fT(h),
+    hkeep:fT(hp), hupd:fT(htil)
   });
-  drawGRU('figGRU', z);
+  drawInterp('figGRU', hp, htil, z, h);
 }
 
-function drawGRU(id, z){
+// thanh nội suy: h_prev (trái, z=0) —— h_t (con trượt tại tỉ lệ z) —— h̃ (phải, z=1)
+function drawInterp(id, hp, htil, z, h){
   var svg=document.getElementById(id); if(!svg) return;
+  var x0=22, x1=198, y=58;
+  var xt = x0 + z*(x1-x0);
   var s='';
-  s += '<rect x="14" y="32" width="34" height="18" rx="3" fill="#fdecd2" stroke="#e3c489"/><text x="31" y="44" text-anchor="middle" font-size="9" font-weight="700">h_cũ</text>';
-  s += '<rect x="14" y="70" width="34" height="18" rx="3" fill="#ece2ff" stroke="#7c5cff"/><text x="31" y="82" text-anchor="middle" font-size="9" font-weight="700">h̃ mới</text>';
-  // blend node
-  s += '<circle cx="108" cy="60" r="18" fill="#fff3b0" stroke="#e6cf6a" stroke-width="1.4"/><text x="108" y="57" text-anchor="middle" style="font-size:8px">trộn</text><text x="108" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#8a6d00">z</text>';
-  s += '<line x1="48" y1="41" x2="92" y2="55" stroke="#b45309" stroke-width="1.4"/><text x="56" y="40" style="font-size:8px" fill="#b45309">×(1−z)</text>';
-  s += '<line x1="48" y1="79" x2="92" y2="66" stroke="#7c5cff" stroke-width="1.4"/><text x="58" y="86" style="font-size:8px" fill="#5b3fd6">×z</text>';
-  s += '<rect x="150" y="51" width="38" height="18" rx="3" fill="#d6ecf6" stroke="#0e7490"/><text x="169" y="63" text-anchor="middle" font-size="9" font-weight="700" fill="#0c4a5e">h mới</text>';
-  s += '<line x1="126" y1="60" x2="149" y2="60" stroke="#888" stroke-width="1.4"/>';
-  s += '<text x="100" y="18" text-anchor="middle" style="font-size:8px" fill="#6b7280">GRU: cổng z trộn cũ ↔ mới</text>';
+  s += '<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="#c2ccd8" stroke-width="3" stroke-linecap="round"/>';
+  // đầu trái: h_prev (giữ, z=0)
+  s += '<circle cx="'+x0+'" cy="'+y+'" r="9" fill="#d6ecf6" stroke="#0e7490" stroke-width="1.6"/>';
+  s += '<text x="'+x0+'" y="'+(y+26)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#0c4a5e">h_prev</text>';
+  s += '<text x="'+x0+'" y="'+(y-16)+'" text-anchor="middle" font-size="8" fill="#6b7280">z=0 (giữ)</text>';
+  // đầu phải: h̃ (cập nhật, z=1)
+  s += '<circle cx="'+x1+'" cy="'+y+'" r="9" fill="#ece2ff" stroke="#7c5cff" stroke-width="1.6"/>';
+  s += '<text x="'+x1+'" y="'+(y+26)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#4a3a8f">h̃</text>';
+  s += '<text x="'+x1+'" y="'+(y-16)+'" text-anchor="middle" font-size="8" fill="#6b7280">z=1 (mới)</text>';
+  // con trượt h_t tại tỉ lệ z
+  s += '<line x1="'+xt+'" y1="'+(y-16)+'" x2="'+xt+'" y2="'+(y+16)+'" stroke="#b45309" stroke-width="2"/>';
+  s += '<circle cx="'+xt+'" cy="'+y+'" r="8" fill="#fff3b0" stroke="#b45309" stroke-width="1.8"/>';
+  s += '<text x="'+xt+'" y="'+(y-20)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#8a4a00">h_t</text>';
+  s += '<text x="100" y="14" text-anchor="middle" font-size="8" fill="#6b7280">con trượt z quyết định vị trí h_t trên đoạn [h_prev, h̃]</text>';
   svg.innerHTML=s;
 }
 WB.wire(generate);

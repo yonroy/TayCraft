@@ -1,0 +1,163 @@
+/* ============================================================================
+   wb-dashboard.css — style DASHBOARD (bảng điều khiển)
+   A4 dọc · panel + bảng số + THANH GIÁ TRỊ người học tự tô.
+
+   Tách ra từ K3/G1-embedding-vitri.html (phiếu dashboard đầu tiên, chốt 2026-07-17)
+   theo tiền lệ wb-canvas.css. Dùng cho phiếu dashboard thứ 2 trở đi.
+
+   ⚠️ HỆ CLASS RIÊNG — KHÔNG link kèm wb.css.
+      `.page` / `.cell` / `.why` ở đây trùng tên nhưng KHÁC nghĩa với wb.css;
+      link cả hai → đè nhau, vỡ layout.
+
+   ⚠️ FONT: Segoe UI / Consolas. KHÔNG dùng Georgia — thiếu Latin Extended
+      Additional → vỡ dấu tiếng Việt ("tắt" → "tă´t"), kể cả khi in.
+
+   ⚠️ Quy tắc bất biến của form này:
+      - Thanh giá trị (.track) ở trang ĐỀ phải để TRỐNG (chỉ vạch 0 + mốc).
+        Vẽ sẵn fill = lộ đáp án. Người học tự tô mới cảm được dấu & độ lớn.
+      - Trang ĐÁP ÁN phải có class `.key` (tools/check-de-key.mjs dò bằng `.page.key`).
+   ========================================================================== */
+
+:root{
+  --ink:#16202e; --dim:#6b7280; --line:#d7dde5; --line2:#eef1f5;
+  --blue:#0e7490; --orange:#b45309; --purple:#6d28d9; --teal:#0f766e;
+  --panel:#fff; --head:#f4f7f9;
+  --sans:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:'Consolas','JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#e8ecf1;font-family:var(--sans);color:var(--ink)}
+
+/* ===== thanh công cụ (ẩn khi in) ===== */
+.toolbar{max-width:210mm;margin:12px auto;display:flex;gap:10px;justify-content:flex-end;padding:0 6px;align-items:center}
+.toolbar .tb-note{margin-right:auto;font-size:12px;font-weight:600;color:var(--teal);max-width:250px;line-height:1.25}
+.toolbar button{font:700 13px var(--sans);padding:8px 15px;border-radius:6px;border:1.5px solid var(--teal);
+  background:#fff;color:var(--teal);cursor:pointer}
+.toolbar button:hover{background:#eefaf8}
+@media print{ .toolbar{display:none} }
+
+/* ===== khung trang A4 ===== */
+/* overflow:hidden → nội dung tràn bị CẮT ÂM THẦM. Luôn đo bằng tools/check.mjs. */
+.page{width:210mm;height:297mm;overflow:hidden;background:var(--panel);
+  margin:16px auto;padding:10mm 12mm 8mm;position:relative;box-shadow:0 3px 20px rgba(0,0,0,.18)}
+@media print{
+  .page{margin:0;box-shadow:none;page-break-after:always}
+  .page:last-of-type{page-break-after:auto}
+  body{background:#fff}
+  @page{size:A4;margin:0}
+}
+
+/* ===== đầu trang ===== */
+.top{display:flex;align-items:center;gap:8px;border-bottom:2.4px solid var(--ink);padding-bottom:1.8mm}
+.top .no{font:800 10px var(--mono);letter-spacing:.06em;color:#fff;background:var(--ink);padding:1.2mm 2.4mm;border-radius:3px}
+.top h1{font-size:18.5px;margin:0;font-weight:800;letter-spacing:-.01em}
+.top h1 small{font-size:11.5px;font-weight:500;color:var(--dim)}
+.chip{margin-left:auto;font:800 8.4px var(--sans);letter-spacing:.11em;color:#fff;background:var(--teal);
+  padding:1.3mm 2.6mm;border-radius:3px}
+.key-chip{background:var(--orange)}
+.subbar{display:flex;gap:12px;font-size:8.6px;color:var(--dim);padding:1.4mm 0 0;letter-spacing:.03em}
+.subbar u{text-decoration:none;border-bottom:.8px solid var(--line);display:inline-block;min-width:22mm}
+.subbar .lg{margin-left:auto;display:flex;gap:7px;align-items:center}
+.sw{display:inline-block;width:7px;height:7px;border-radius:2px;vertical-align:-1px;margin-right:2px}
+
+/* ===== khối nhiệm vụ ===== */
+.mission{margin-top:2.2mm;border-left:3px solid var(--teal);background:#eefaf8;padding:1.8mm 3mm;
+  font-size:10.2px;line-height:1.5}
+.mission b{color:var(--teal)}
+
+/* ===== panel ===== */
+.panel{border:1px solid var(--line);border-radius:5px;margin-top:1.9mm;overflow:hidden}
+.ph{display:flex;align-items:center;gap:6px;background:var(--head);border-bottom:1px solid var(--line);padding:1.2mm 2.6mm}
+.ph .t{font:800 9.2px var(--sans);letter-spacing:.09em;text-transform:uppercase}
+.ph .f{margin-left:auto;font:400 9px var(--mono);color:var(--dim)}
+.pb{padding:1.7mm 2.6mm}
+.split{display:grid;grid-template-columns:1fr 1px 1fr;gap:0}
+.split .rule-v{background:var(--line)}
+.split > div{padding:1.7mm 2.6mm}
+
+/* ===== ma trận / bảng số ===== */
+.mx{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;width:max-content}
+.mx.c1{grid-template-columns:repeat(1,var(--cw,9.5mm))}
+.mx.c2{grid-template-columns:repeat(2,var(--cw,9.5mm))}
+.mx.c3{grid-template-columns:repeat(3,var(--cw,9.5mm))}
+.mx.c4{grid-template-columns:repeat(4,var(--cw,9.5mm))}
+.mx.c5{grid-template-columns:repeat(5,var(--cw,9.5mm))}
+.mx.c6{grid-template-columns:repeat(6,var(--cw,9.5mm))}
+.mx.c8{grid-template-columns:repeat(8,var(--cw,9.5mm))}
+.mx > div{background:#fff;height:var(--ch,6.4mm);display:flex;align-items:center;justify-content:center;
+  font:700 10.5px var(--mono);font-variant-numeric:tabular-nums}
+.mx .gv{background:#eaf4f6;color:var(--blue)}        /* cho sẵn (lam) */
+.mx .pe{background:#fff5e9;color:var(--orange)}      /* tham số/vị trí (cam) */
+.mx .pv{background:#f5f1fe;color:var(--purple)}      /* thành phần thứ ba (tím) */
+.mx .hot{background:#dff0f3;box-shadow:inset 0 0 0 1.4px var(--blue)}   /* đang chọn */
+.mx .blank{background:#fff;box-shadow:inset 0 0 0 1.4px var(--ink)}     /* ô để điền */
+.mx .ansc{background:#fff8f0;color:#7a3d00;font-weight:800;box-shadow:inset 0 0 0 1.4px var(--orange)}
+/* ⚠️ .rowlab span là flex → khoảng trắng giữa các flex item BỊ NUỐT ("hàng3").
+   Trong HTML phải dùng &nbsp; khi cần khoảng trắng: <span>e₀ ← hàng&nbsp;<span>0</span></span> */
+.rowlab{display:flex;flex-direction:column;gap:1px;font:700 8px var(--mono);color:var(--dim);
+  justify-content:space-around;padding-right:1.6mm;text-align:right}
+.rowlab span{height:var(--ch,6.4mm);display:flex;align-items:center;justify-content:flex-end}
+.mxwrap{display:flex;align-items:center}
+.cap{font:400 8.4px var(--sans);color:var(--dim);margin-top:1mm;line-height:1.4}
+.cap b{color:var(--ink)}
+
+/* ===== chip token ===== */
+.tok{display:inline-flex;align-items:center;gap:4px;border:1.4px solid var(--blue);background:#eaf4f6;
+  border-radius:999px;padding:.9mm 2.4mm;font:800 10px var(--sans);color:var(--blue);margin-right:4px}
+.tok i{font-style:normal;font-weight:700;font-size:8px;color:var(--dim);background:#fff;border-radius:999px;padding:.2mm 1.4mm}
+
+/* ===== bảng tính theo hàng ===== */
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font:700 7.6px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);
+  text-align:center;padding:0 0 1mm;border-bottom:1px solid var(--line)}
+th.l{text-align:left}
+td{padding:1mm 0;border-bottom:1px solid var(--line2);font:700 10px var(--mono);text-align:center}
+tr:last-child td{border-bottom:none}
+td.l{text-align:left;color:var(--dim);font-size:9px}
+.cellb{display:inline-block;width:12mm;height:6.2mm;border:1.5px solid var(--ink);border-radius:2.5px;background:#fff;vertical-align:middle}
+.cellb.ans{border-color:var(--orange);background:#fff8f0;color:#7a3d00;font-weight:800;
+  text-align:center;line-height:6mm;font-size:10.5px}
+.gvt{color:var(--orange);font-weight:800}
+.evt{color:var(--blue);font-weight:800}
+
+/* ===== THANH GIÁ TRỊ — đặc sản của form dashboard =====
+   ĐỀ: chỉ .zero + .tick (để trống, người học tự tô).
+   ĐÁP ÁN: thêm .fill.pos (lam, chạy phải) hoặc .fill.neg (cam, chạy trái). */
+.track{position:relative;height:5.4mm;background:#fafbfc;border:1px solid var(--line);border-radius:3px;width:24mm;margin:0 auto}
+.track .zero{position:absolute;left:50%;top:-1px;bottom:-1px;width:1.3px;background:#9aa5b1}
+.track .tick{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.track .fill{position:absolute;top:.9mm;bottom:.9mm;border-radius:2px}
+.track .fill.pos{background:var(--blue)}
+.track .fill.neg{background:var(--orange)}
+/* thanh một chiều (0…max, không có phần âm) — gốc trái */
+.track.uni .zero{left:0}
+
+/* ===== ô điền trên dòng công thức ===== */
+.slot{display:inline-block;min-width:13mm;border-bottom:1.5px solid var(--ink);text-align:center;
+  font:700 10px var(--mono);padding:0 1mm}
+.slot.sm{min-width:9mm}
+.slot.ans{border-color:var(--orange);color:var(--orange)}
+.qa{color:var(--orange);font-weight:700}
+.eq{font:400 9.8px var(--mono);line-height:2}
+
+/* ===== nháp ===== */
+.scratch{margin-top:2mm;border:1px dashed #c3ccd6;border-radius:4px;position:relative;
+  background-image:radial-gradient(#dde3ea 1px,transparent 1px);background-size:4mm 4mm}
+.scratch .lb{position:absolute;top:1.1mm;left:2.4mm;font:600 8px var(--sans);color:#9aa5b1}
+
+/* ===== hàng checklist cuối ĐỀ ===== */
+.done{display:flex;align-items:center;gap:9px;margin-top:1.9mm;font-size:9.2px;color:var(--dim)}
+.ck{display:inline-block;width:3.3mm;height:3.3mm;border:1.4px solid var(--dim);border-radius:2px;vertical-align:-.5mm;margin-right:1.3mm}
+.win{margin-left:auto;font-weight:800;color:var(--teal)}
+
+/* ===== khối giảng "vì sao" ===== */
+.why{margin-top:1.8mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.6mm 2.6mm;font-size:9.6px;line-height:1.5}
+.why b{color:var(--blue)}
+.why.p{border-left-color:var(--purple);background:#f8f6fd}
+.why.p b{color:var(--purple)}
+.why.t{border-left-color:var(--teal);background:#eefaf8}
+.why.t b{color:var(--teal)}
+
+/* ===== chân trang ===== */
+.foot{position:absolute;left:12mm;right:12mm;bottom:4mm;display:flex;justify-content:space-between;
+  font-size:8px;color:var(--dim);border-top:1px solid var(--line);padding-top:1.3mm}

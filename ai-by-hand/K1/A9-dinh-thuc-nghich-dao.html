@@ -5,19 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A9 — Định thức &amp; nghịch đảo 2×2 (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" nằm cuối wb.css -->
 <style>
-/* siết nhẹ chiều cao (additive, không đụng wb.css) */
-.page .step{margin-top:5px;}
-.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
-.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:4px;}
-.page .note{margin-top:3px;}
-.page .cell{height:8mm;}
-.page .mtx{--cell:11mm;}
+.page .step{margin-top:6px;}
 </style>
 </head>
-<body>
+<body class="part pA">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -32,25 +25,20 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài A9</span><h1>Định thức &amp; nghịch đảo 2×2 <small>— Determinant &amp; inverse</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài A9</span>
+    <h1>Định thức &amp; nghịch đảo 2×2 <small>— khi nào đảo ngược được?</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Khi nào một biến đổi tuyến tính có thể <b>hoàn tác</b>? Khi nó không làm "bẹp" không gian — tức
-    <b>det ≠ 0</b>. Định thức cho biết điều đó; nghịch đảo là phép đảo ngược, dùng để <b>giải hệ</b> Ax = b, đổi cơ sở, ổn định số học.
-    <div class="formula">
-      A = [[a, b], [c, d]] &nbsp;⇒&nbsp; det A = ad − bc<br>
-      A⁻¹ = (1/det) · [[ d, −b], [−c, a]] &nbsp;&nbsp;(khi det ≠ 0)
-    </div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Hai <b>cột</b> của A căng ra một hình bình hành; <b>det = diện tích (có dấu)</b> của nó.
+    Hãy tính det rồi <b>điền diện tích vào ô trong hình</b>, dựng ma trận nghịch đảo A⁻¹, rồi (Trang 2) <b>nhân thử A·A⁻¹ = I</b>
+    và kiểm tính chất det(A⁻¹) = 1/det. det ≠ 0 ⇒ đảo ngược được — nền của giải hệ Ax = b.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hai <b>cột</b> của A là hai mũi tên; chúng căng ra một <b>hình bình hành</b>. <b>Định thức = diện tích</b> hình đó (có dấu).
-    Nếu hai cột thẳng hàng → diện tích 0 → không gian bị ép phẳng → <b>không đảo ngược được</b>.
-  </div>
-
-  <!-- GIVEN -->
+  <!-- BƯỚC 0 — GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn ma trận A</h2><span class="tag">2×2</span></div>
     <div class="row">
@@ -59,72 +47,100 @@
           <div class="cell given" data-q="a">2</div><div class="cell given" data-q="b">1</div>
           <div class="cell given" data-q="c">1</div><div class="cell given" data-q="d">1</div>
         </div></div>
-      <div class="note" style="max-width:74mm">Ký hiệu: a = trái-trên, b = phải-trên, c = trái-dưới, d = phải-dưới.</div>
+      <div class="note" style="max-width:62mm">Ký hiệu: a = trái-trên, b = phải-trên, c = trái-dưới, d = phải-dưới.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 — định thức -->
+  <!-- BƯỚC 1 — HERO: det = diện tích -->
   <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Định thức = ad − bc</h2><span class="tag">chéo chính − chéo phụ</span></div>
-    <div class="calc">
-      det = <span data-q="a">2</span>·<span data-q="d">1</span> − <span data-q="b">1</span>·<span data-q="c">1</span>
-      = <span class="blk" style="min-width:46px"></span>
+    <div class="step-h"><div class="b">1</div><h2>Định thức = ad − bc → điền diện tích vào hình</h2><span class="tag">hero · chéo chính − chéo phụ</span></div>
+    <div class="figrow">
+      <svg id="figQ" class="fig" viewBox="0 0 176 150" width="56mm" height="47.7mm" aria-label="hai cột của A căng hình bình hành; ô để điền diện tích = |det|"></svg>
+      <div style="flex:1;min-width:52mm">
+        <div class="calc big" style="margin:0">det = <span data-q="a">2</span>·<span data-q="d">1</span> − <span data-q="b">1</span>·<span data-q="c">1</span> = <span class="wcell"></span></div>
+        <div class="note" style="margin-top:8px">Hai mũi tên = hai <b>cột</b> của A: lam (a, c) và cam (b, d).
+          <b>Điền |det| = diện tích vùng tô vào ô ✍ trong hình.</b> Hai cột thẳng hàng ⇒ diện tích 0 ⇒ det 0 ⇒ không đảo được.</div>
+      </div>
     </div>
-    <div class="why"><b>Vì sao:</b> ad − bc đo diện tích (có dấu) hình bình hành hai cột; det ≠ 0 ⇒ khả nghịch.</div>
   </div>
 
-  <!-- BƯỚC 2 — phụ hợp -->
+  <!-- BƯỚC 2 — adj & A⁻¹ -->
   <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Ma trận phụ hợp — đổi chéo, đổi dấu lệch</h2><span class="tag">adj</span></div>
+    <div class="step-h"><div class="b">2</div><h2>Phụ hợp &amp; nghịch đảo — điền hai ma trận</h2><span class="tag">"đổi chéo, đổi dấu lệch"</span></div>
     <div class="row">
       <div class="mwrap"><div class="mlabel">adj <s>[[d,−b],[−c,a]]</s></div>
         <div class="mtx c2">
           <div class="cell blank"></div><div class="cell blank"></div>
           <div class="cell blank"></div><div class="cell blank"></div>
         </div></div>
-      <div class="note" style="max-width:74mm">Đổi chỗ a↔d (đường chéo chính); đổi dấu b và c (đường chéo phụ).</div>
-    </div>
-    <div class="hint">Nhớ: "<b>đổi chéo, đổi dấu lệch</b>".</div>
-  </div>
-
-  <!-- BƯỚC 3 — chia det -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chia cho det → A⁻¹</h2><span class="tag">nghịch đảo</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">A⁻¹ <s>(1/<span data-q="det">1</span>)·adj</s></div>
+      <div class="mwrap"><div class="mlabel">A⁻¹ = (1/<span data-q="det">1</span>)·adj</div>
         <div class="mtx c2">
           <div class="cell blank"></div><div class="cell blank"></div>
           <div class="cell blank"></div><div class="cell blank"></div>
         </div></div>
-      <div class="why" style="max-width:74mm"><b>Vì sao:</b> chia cho det để A·A⁻¹ ra đúng ma trận đơn vị (phóng đại × thu nhỏ = 1).</div>
+      <div class="note" style="max-width:52mm">Đổi chỗ a↔d (chéo chính); đổi dấu b, c (chéo phụ). Rồi chia mọi ô cho det.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 4 — kiểm A·A⁻¹ -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Kiểm: A·A⁻¹ = I</h2><span class="tag">xác nhận</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">A·A⁻¹</div>
-        <div class="mtx c2">
-          <div class="cell blank"></div><div class="cell blank"></div>
-          <div class="cell blank"></div><div class="cell blank"></div>
-        </div></div>
-      <div class="note" style="max-width:74mm">Nhân thử để ra [[1,0],[0,1]]. Nếu det = 0 thì bước ③ chia cho 0 ⇒ <b>không có nghịch đảo</b> (ma trận suy biến).</div>
-    </div>
+  <div class="scratch" style="height:26mm"><span class="lb">✏️ Nháp — tính det, dựng adj rồi chia det ra A⁻¹</span></div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A9 · Định thức &amp; nghịch đảo</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (tiếp) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
   </div>
+  <div class="wb-title">
+    <span class="no">Bài A9</span>
+    <h1>Định thức &amp; nghịch đảo <small>— nhân thử A·A⁻¹ = I</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+  </div>
+
+  <div class="mission">
+    🎯 <b>Tiếp.</b> A⁻¹ đúng thì <b>A·A⁻¹ phải ra ma trận đơn vị I</b>. Hãy nhân thử từng ô (mỗi ô = hàng của A · cột của A⁻¹),
+    rồi kiểm một tính chất đẹp: <b>det(A⁻¹) = 1/det(A)</b>.
+  </div>
+
+  <!-- BƯỚC 3 — kiểm A·A⁻¹ = I + det(A⁻¹) -->
+  <div class="step">
+    <div class="step-h"><div class="b">3</div><h2>Nhân thử A·A⁻¹ &amp; kiểm det(A⁻¹) = 1/det</h2><span class="tag">xác nhận = I</span></div>
+    <div class="calc big">
+      (A·A⁻¹)₁₁ = <span data-q="a">2</span>·(A⁻¹)₁₁ + <span data-q="b">1</span>·(A⁻¹)₂₁ = <span class="wcell"></span> &nbsp;
+      (A·A⁻¹)₁₂ = <span data-q="a">2</span>·(A⁻¹)₁₂ + <span data-q="b">1</span>·(A⁻¹)₂₂ = <span class="wcell"></span><br>
+      (A·A⁻¹)₂₁ = <span data-q="c">1</span>·(A⁻¹)₁₁ + <span data-q="d">1</span>·(A⁻¹)₂₁ = <span class="wcell"></span> &nbsp;
+      (A·A⁻¹)₂₂ = <span data-q="c">1</span>·(A⁻¹)₁₂ + <span data-q="d">1</span>·(A⁻¹)₂₂ = <span class="wcell"></span><br>
+      <small style="color:#7a8794">→ phải ra [[1, 0],[0, 1]] = I ✓</small><br>
+      <span class="lead">tính chất</span>: det(A⁻¹) = 1 / det(A) = 1/<span data-q="det">1</span> = <span class="wcell"></span>
+        <small style="color:#7a8794">(nên det(A)·det(A⁻¹) = 1)</small>
+    </div>
+    <div class="note">Nếu det = 0 thì bước ② chia cho 0 ⇒ <b>không có nghịch đảo</b> (ma trận suy biến): biến đổi ép mặt phẳng thành đường, không lùi lại được.</div>
+  </div>
+
+  <div class="scratch" style="height:34mm"><span class="lb">✏️ Nháp — nhân 4 ô A·A⁻¹ ở đây</span></div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
       <li>det A = 0 nghĩa là gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Về hình học, |det| là gì? → <span class="blk" style="min-width:150px"></span></li>
+      <li>Về hình học, |det| là gì? → <span class="blk" style="min-width:140px"></span></li>
+      <li>det(A⁻¹) liên hệ det(A) thế nào? → <span class="blk" style="min-width:90px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A9 · Định thức &amp; nghịch đảo</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="done-row">
+    <span><span class="ck"></span>Xong det + diện tích</span>
+    <span><span class="ck"></span>Dựng A⁻¹</span>
+    <span><span class="ck"></span>Nhân thử = I</span>
+    <span class="win">🎉 Bạn vừa đảo ngược một ma trận!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A9 · Định thức &amp; nghịch đảo</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
@@ -134,10 +150,11 @@
 
   <div class="step">
     <div class="step-h"><div class="b">1</div><h2>Định thức</h2></div>
-    <div class="calc ans">
-      det = <span data-q="a">2</span>·<span data-q="d">1</span> − <span data-q="b">1</span>·<span data-q="c">1</span>
-      = <span class="blk" data-q="det">1</span>
+    <div class="calc ans big">
+      det = <span data-q="a">2</span>·<span data-q="d">1</span> − <span data-q="b">1</span>·<span data-q="c">1</span> = <span class="wcell ans" data-q="det">1</span>
+      &nbsp;→&nbsp; |det| = diện tích = <span class="blk" data-q="absdet">1</span>
     </div>
+    <div class="why"><b>Vì sao:</b> ad − bc đo diện tích (có dấu) hình bình hành hai cột; det ≠ 0 ⇒ không bị ép phẳng ⇒ khả nghịch.</div>
   </div>
 
   <div class="step">
@@ -153,28 +170,22 @@
           <div class="cell ans" data-q="i11">1</div><div class="cell ans" data-q="i12">−1</div>
           <div class="cell ans" data-q="i21">−1</div><div class="cell ans" data-q="i22">2</div>
         </div></div>
+      <div class="note" style="max-width:44mm">"Đổi chéo, đổi dấu lệch" rồi chia det.</div>
     </div>
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Kiểm A·A⁻¹ = I</h2></div>
-    <div class="mwrap"><div class="mlabel">A·A⁻¹</div>
-      <div class="mtx c2">
-        <div class="cell ans" data-q="p11">1</div><div class="cell ans" data-q="p12">0</div>
-        <div class="cell ans" data-q="p21">0</div><div class="cell ans" data-q="p22">1</div>
-      </div></div>
-  </div>
-
-  <!-- SƠ ĐỒ ở trang 2 cho cân chiều cao -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Sơ đồ: det = diện tích hình bình hành hai cột</h2><span class="tag">minh họa</span></div>
-    <div class="figrow">
-      <svg id="figD" class="fig" viewBox="0 0 180 150" width="56mm" height="46mm" aria-label="hai cột của A căng thành hình bình hành, diện tích bằng định thức"></svg>
-      <div style="flex:1">
-        <div class="note">Hai mũi tên = hai <b>cột</b> của A: lam (a, c) và cam (b, d). Diện tích vùng tô = <b>|det| = <span data-q="absdet">1</span></b>.
-          Hai cột thẳng hàng ⇒ diện tích 0 ⇒ det 0 ⇒ không nghịch đảo được.</div>
-      </div>
+    <div class="step-h"><div class="b">3</div><h2>Nhân thử A·A⁻¹ = I &amp; det(A⁻¹)</h2></div>
+    <div class="calc ans big">
+      (A·A⁻¹)₁₁ = <span data-q="p11e">2·1 + 1·(−1)</span> = <span class="wcell ans" data-q="p11">1</span> &nbsp;
+      (A·A⁻¹)₁₂ = <span data-q="p12e">2·(−1) + 1·2</span> = <span class="wcell ans" data-q="p12">0</span><br>
+      (A·A⁻¹)₂₁ = <span data-q="p21e">1·1 + 1·(−1)</span> = <span class="wcell ans" data-q="p21">0</span> &nbsp;
+      (A·A⁻¹)₂₂ = <span data-q="p22e">1·(−1) + 1·2</span> = <span class="wcell ans" data-q="p22">1</span><br>
+      → A·A⁻¹ = [[1, 0],[0, 1]] = I ✓ &nbsp;·&nbsp;
+      det(A⁻¹) = 1/<span data-q="det">1</span> = <span class="wcell ans" data-q="detinv">1</span>
     </div>
+    <div class="why"><b>Vì sao:</b> chia cho det để phóng-đại × thu-nhỏ triệt tiêu, A·A⁻¹ ra đúng I. Và det(A)·det(A⁻¹) = det(A·A⁻¹) = det(I) = 1
+      nên det(A⁻¹) = 1/det(A).</div>
   </div>
 
   <div class="quiz">
@@ -182,53 +193,60 @@
     <ol>
       <li>det A = 0? → <span class="qa">A suy biến — không khả nghịch (hai cột phụ thuộc).</span></li>
       <li>|det| là gì? → <span class="qa">Diện tích hình bình hành do hai cột tạo ra (hệ số phóng đại diện tích).</span></li>
+      <li>det(A⁻¹) vs det(A)? → <span class="qa">Nghịch đảo: det(A⁻¹) = 1/det(A).</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> det cho biết biến đổi có <b>đảo ngược</b> được không; A⁻¹ là phép đảo. Hai khái niệm này đứng sau việc
+    <b style="color:var(--accent2)">Rút ra.</b> det cho biết biến đổi có <b>đảo ngược</b> được không; A⁻¹ là phép đảo, và det(A⁻¹)=1/det(A). Hai khái niệm này đứng sau việc
     <b>giải hệ phương trình</b>. Bài tiếp (A10): giải Ax = b cỡ 2×2 bằng khử Gauss.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A9 · Định thức &amp; nghịch đảo</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A9 · Định thức &amp; nghịch đảo</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
+var STATE = {a:2,b:1,c:1,d:1};
+
 function generate(){
-  var f = WB.fmtInt;
-  // A 2×2 có det = ±1 để A⁻¹ nguyên; các số nhỏ để vẽ hình bình hành gọn
+  var f = WB.fmtInt, w = WB.wrap;
   var a, b, c, d, det;
   do {
     a = WB.randInt(-2, 3); b = WB.randInt(-2, 3);
     c = WB.randInt(-2, 3); d = WB.randInt(-2, 3);
     det = a*d - b*c;
   } while (Math.abs(det) !== 1 || (Math.abs(a)+Math.abs(b)+Math.abs(c)+Math.abs(d)) < 2);
+  STATE = {a:a, b:b, c:c, d:d};
 
-  // phụ hợp [[d,−b],[−c,a]]; nghịch đảo = adj/det
   var adj = [[d, -b], [-c, a]];
   var inv = [[adj[0][0]/det, adj[0][1]/det], [adj[1][0]/det, adj[1][1]/det]];
-  // tích A·A⁻¹ (kỳ vọng I)
   var p = [
     [a*inv[0][0] + b*inv[1][0], a*inv[0][1] + b*inv[1][1]],
     [c*inv[0][0] + d*inv[1][0], c*inv[0][1] + d*inv[1][1]]
   ];
+  var detinv = 1/det;   // det = ±1 ⇒ nguyên
+  // biểu thức nhân hiện số (chỉ ở ĐÁP ÁN)
+  function pe(r1, r2, i1, i2){ return f(r1)+'·'+w(f(i1))+' + '+f(r2)+'·'+w(f(i2)); }
 
   WB.setAll({
     a: f(a), b: f(b), c: f(c), d: f(d),
-    det: f(det), absdet: f(Math.abs(det)),
+    det: f(det), absdet: f(Math.abs(det)), detinv: f(detinv),
     adj11: f(adj[0][0]), adj12: f(adj[0][1]), adj21: f(adj[1][0]), adj22: f(adj[1][1]),
     i11: f(inv[0][0]), i12: f(inv[0][1]), i21: f(inv[1][0]), i22: f(inv[1][1]),
-    p11: f(p[0][0]), p12: f(p[0][1]), p21: f(p[1][0]), p22: f(p[1][1])
+    p11: f(p[0][0]), p12: f(p[0][1]), p21: f(p[1][0]), p22: f(p[1][1]),
+    p11e: pe(a, b, inv[0][0], inv[1][0]), p12e: pe(a, b, inv[0][1], inv[1][1]),
+    p21e: pe(c, d, inv[0][0], inv[1][0]), p22e: pe(c, d, inv[0][1], inv[1][1])
   });
-  drawDet('figD', a, b, c, d);
+  drawDet('figQ', a, b, c, d, false);
+  drawDet('figA', a, b, c, d, true); // an toàn nếu có figA (không có thì bỏ qua)
 }
 
-// hình bình hành căng bởi hai cột (a,c) [lam] và (b,d) [cam]
-function drawDet(id, a, b, c, d){
+// hình bình hành căng bởi hai cột (a,c) [lam] và (b,d) [cam]; ô điền |det| = diện tích.
+function drawDet(id, a, b, c, d, showAns){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var O = {x: 90, y: 78}, u = 17;
+  var O = {x: 88, y: 84}, u = 16;
   function X(v){ return (O.x + v*u).toFixed(1); }
   function Y(v){ return (O.y - v*u).toFixed(1); }
   var s = '<defs>'
@@ -236,25 +254,27 @@ function drawDet(id, a, b, c, d){
     + '<marker id="d2'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#b45309"/></marker>'
     + '<marker id="d0'+id+'" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L5.5,3 L0,6 Z" fill="#9aa3ad"/></marker>'
     + '</defs>';
-  // lưới mờ
   for (var g = -4; g <= 4; g++){
     s += '<line x1="'+X(g)+'" y1="'+Y(-4)+'" x2="'+X(g)+'" y2="'+Y(4)+'" stroke="#eef0f2" stroke-width="1"/>';
     s += '<line x1="'+X(-4)+'" y1="'+Y(g)+'" x2="'+X(4)+'" y2="'+Y(g)+'" stroke="#eef0f2" stroke-width="1"/>';
   }
-  // trục
   s += '<line x1="'+X(-4)+'" y1="'+Y(0)+'" x2="'+X(4)+'" y2="'+Y(0)+'" stroke="#9aa3ad" stroke-width="1" marker-end="url(#d0'+id+')"/>';
   s += '<line x1="'+X(0)+'" y1="'+Y(-4)+'" x2="'+X(0)+'" y2="'+Y(4)+'" stroke="#9aa3ad" stroke-width="1" marker-end="url(#d0'+id+')"/>';
-  // hình bình hành 0 → col1 → col1+col2 → col2
   var p1 = [a, c], p2 = [b, d];
   s += '<polygon points="'+X(0)+','+Y(0)+' '+X(p1[0])+','+Y(p1[1])+' '+X(p1[0]+p2[0])+','+Y(p1[1]+p2[1])+' '+X(p2[0])+','+Y(p2[1])
     + '" fill="#0e749022" stroke="#0e7490" stroke-width="0.8"/>';
-  // cột 1 (lam) = (a,c)
   s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(p1[0])+'" y2="'+Y(p1[1])+'" stroke="#0e7490" stroke-width="2.4" marker-end="url(#d1'+id+')"/>';
-  // cột 2 (cam) = (b,d)
   s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(p2[0])+'" y2="'+Y(p2[1])+'" stroke="#b45309" stroke-width="2.4" marker-end="url(#d2'+id+')"/>';
+  // ô điền |det| = diện tích, góc trên-trái
+  var det = a*d - b*c, bx = 6, by = 6;
+  s += '<rect x="'+bx+'" y="'+by+'" width="60" height="26" rx="7" fill="'+(showAns?'#eef6fa':'#fff')+'" stroke="'+(showAns?'#8fbfd0':'#0e7490')+'" stroke-width="1.6"/>';
+  s += '<text x="'+bx+'" y="'+(by-3)+'" style="font-size:8.5px" fill="#0e7490" font-weight="700">diện tích |det| ✍</text>';
+  if (showAns) s += '<text x="'+(bx+30)+'" y="'+(by+18)+'" text-anchor="middle" style="font-size:14px" fill="#0e5566" font-weight="700">'+WB.fmtInt(Math.abs(det))+'</text>';
+  else s += '<text x="'+(bx+30)+'" y="'+(by+17)+'" text-anchor="middle" style="font-size:12px" fill="#c3ccd6">?</text>';
   svg.innerHTML = s;
 }
 WB.wire(generate);
+drawDet('figQ', STATE.a, STATE.b, STATE.c, STATE.d, false);
 generate();
 </script>
 </body>

@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài D5 — Gradient: một bước học (A4 in được)</title>
 <link rel="stylesheet" href="../wb.css">
+<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.8;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.page .step{margin-top:7px;}
 </style>
 </head>
-<body>
+<body class="part pD">
 
 <div class="toolbar">
   <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
@@ -29,168 +25,218 @@
     <div class="meta">Phiếu in A4 · tính tay<br>Mức: nền tảng · Phần D</div>
   </div>
 
-  <div class="wb-title"><span class="no">Bài D5</span><h1>Gradient — một bước học <small>— Gradient step</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="wb-title">
+    <span class="no">Bài D5</span>
+    <h1>Gradient — một bước học <small>— dự đoán → sai số → gradient → cập nhật</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~14 phút</span></div>
 
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mọi mạng học bằng cách lặp <b>đúng một động tác</b> này trên hàng triệu tham số. Làm tay một tham số cho thấy
-    toàn bộ cơ chế: sai số đẩy gradient, gradient đẩy cập nhật.
-    <div class="formula">
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Mọi mạng học bằng cách lặp <b>đúng một động tác</b> này trên hàng triệu tham số. Làm tay <b>một</b> tham số để thấy trọn cơ chế:
+    sai số đẩy gradient, gradient đẩy cập nhật. Phần thưởng: <b>kiểm gradient bằng sai phân số</b> — cách người ta dò lỗi backprop trong thực tế.
+    <div class="formula" style="margin-top:5px">
       ŷ = w·x &nbsp;·&nbsp; L = ½(ŷ − y)² &nbsp;·&nbsp; ∂L/∂w = (ŷ − y)·x &nbsp;·&nbsp; w ← w − η·∂L/∂w
     </div>
-  </div>
-
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Gradient là <b>mũi tên chỉ "sai theo hướng nào"</b> của một tham số. Đi <b>ngược</b> mũi tên một đoạn η → loss giảm. Lặp đủ nhiều bước
-    nhỏ → trượt tới đáy.
   </div>
 
   <!-- GIVEN -->
   <div class="step">
     <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 tham số</span></div>
-    <div class="calc" style="font-size:15px">x = <span class="gv" data-q="x">2</span> · nhãn y = <span class="gv" data-q="y">3</span> · trọng số w = <span class="gv" data-q="w">1</span> · tốc độ học η = <span class="gv" data-q="eta">0.1</span>.</div>
+    <div class="calc big">x = <span class="gv" data-q="x">2</span> · nhãn y = <span class="gv" data-q="y">3</span> · trọng số w = <span class="gv" data-q="w">1</span> · tốc độ học η = <span class="gv" data-q="eta">0.1</span></div>
+    <div class="why"><b>Vì sao:</b> sai số (ŷ−y) là gốc của tín hiệu học — đoán lệch bao nhiêu, sửa bấy nhiêu.</div>
   </div>
 
   <div class="grid2">
-    <!-- BƯỚC 1 -->
+    <!-- STEP 1 -->
     <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Dự đoán & sai số</h2><span class="tag">ŷ − y</span></div>
-      <div class="calc">ŷ = w·x = <span data-q="w">1</span>·<span data-q="x">2</span> = <span class="blk" style="min-width:36px"></span> · ŷ−y = <span class="blk" style="min-width:50px"></span></div>
-      <div class="why"><b>Vì sao:</b> sai số (ŷ−y) là gốc của tín hiệu học — đoán lệch bao nhiêu, sửa bấy nhiêu.</div>
+      <div class="step-h"><div class="b">1</div><h2>Dự đoán &amp; sai số</h2><span class="tag">ŷ − y</span></div>
+      <div class="calc">ŷ = w·x = <span data-q="w">1</span>·<span data-q="x">2</span> = <span class="wcell" style="min-width:34px"></span><br>ŷ − y = <span class="wcell" style="min-width:48px"></span></div>
     </div>
 
-    <!-- BƯỚC 2 -->
+    <!-- STEP 2 -->
     <div class="step">
       <div class="step-h"><div class="b">2</div><h2>Gradient</h2><span class="tag">(ŷ−y)·x</span></div>
-      <div class="calc">∂L/∂w = (ŷ−y)·x = <span class="blk" style="min-width:80px"></span></div>
+      <div class="calc">∂L/∂w = (ŷ−y)·x = <span class="wcell" style="min-width:76px"></span></div>
       <div class="hint">quy tắc chuỗi: đạo hàm loss × đạo hàm ŷ theo w (= x).</div>
     </div>
 
-    <!-- BƯỚC 3 -->
+    <!-- STEP 3 -->
     <div class="step">
       <div class="step-h"><div class="b">3</div><h2>Cập nhật</h2><span class="tag">w − η·grad</span></div>
-      <div class="calc">w ← <span data-q="w">1</span> − <span data-q="eta">0.1</span>·(<span class="blk" style="min-width:44px"></span>) = <span class="blk" style="min-width:44px"></span></div>
-      <div class="why"><b>Vì sao:</b> gradient âm → w <b>tăng</b> (đi ngược gradient) → ŷ tiến gần y hơn.</div>
+      <div class="calc">w ← <span data-q="w">1</span> − <span data-q="eta">0.1</span>·(<span class="blk" style="min-width:40px"></span>) = <span class="wcell" style="min-width:44px"></span></div>
+      <div class="why"><b>Vì sao:</b> gradient âm → w <b>tăng</b> (đi ngược gradient) → ŷ tiến gần y.</div>
     </div>
 
-    <!-- BƯỚC 4 -->
+    <!-- STEP 4 -->
     <div class="step">
-      <div class="step-h"><div class="b">4</div><h2>Kiểm tiến bộ</h2><span class="tag">loss giảm</span></div>
-      <div class="calc">ŷ<sub>mới</sub> = w<sub>mới</sub>·x = <span class="blk" style="min-width:48px"></span> → gần <span data-q="y">3</span> hơn</div>
-      <div class="note">lặp bước này = gradient descent; nhiều tham số → gradient là vectơ (A14), tính bằng backprop (D7).</div>
+      <div class="step-h"><div class="b">4</div><h2>Kiểm tiến bộ</h2><span class="tag">ŷ gần y hơn</span></div>
+      <div class="calc">ŷ<sub>mới</sub> = w<sub>mới</sub>·x = <span class="wcell" style="min-width:44px"></span> → gần <span data-q="y">3</span> hơn</div>
     </div>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D5 · Gradient</span><span>Trang 1/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 2 — ĐỀ (TIẾP) ============ -->
+<section class="page">
+  <div class="wb-head">
+    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
+    <div class="meta">Phiếu in A4 · tính tay<br>Gradient — kiểm bằng sai phân số</div>
+  </div>
+  <div class="wb-title">
+    <span class="no">Bài D5</span>
+    <h1>Gradient — một bước học <small>— sai phân trung tâm ≈ đạo hàm</small></h1>
+    <span class="part-chip" style="margin-left:auto">PHẦN D · HUẤN LUYỆN</span>
+  </div>
+
+  <!-- STEP 5 — TỰ KIỂM: sai phân số -->
+  <div class="step">
+    <div class="step-h"><div class="b">5</div><h2>Tự kiểm — kiểm gradient bằng sai phân</h2><span class="tag">nhích w ± h · h = 1</span></div>
+    <div class="note" style="margin-top:0">
+      Không cần công thức đạo hàm: cứ nhích w lên/xuống một chút <b>h = 1</b> rồi đo loss thay đổi.
+      Sai phân <b>trung tâm</b>: <span class="frac" style="font-size:13px"><span class="n">L(w+h) − L(w−h)</span><span class="d">2h</span></span> phải ≈ gradient ở Bước 2. Với L = ½(w·x − y)²:
+    </div>
+    <div class="calc big">
+      L(w+1) = ½(<span data-q="wp1x">6</span>−<span data-q="y">3</span>)² = <span class="wcell" style="min-width:44px"></span> &nbsp;·&nbsp;
+      L(w−1) = ½(<span data-q="wm1x">2</span>−<span data-q="y">3</span>)² = <span class="wcell" style="min-width:44px"></span><br>
+      <span class="frac" style="font-size:13px"><span class="n">L(w+1) − L(w−1)</span><span class="d">2</span></span> = <span class="wcell" style="min-width:56px"></span>
+      &nbsp;<small style="color:#7a8794">— có khớp gradient Bước 2 không?</small>
+    </div>
+    <div class="note">Bằng đúng gradient! Với parabol, sai phân trung tâm cho <b>chính xác</b> đạo hàm. Đây là <b>gradient checking</b>: nếu backprop tính sai, con số này sẽ lệch → lộ bug.</div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step">
+    <div class="step-h"><div class="b">6</div><h2>Vai trò tốc độ học η</h2><span class="tag">quá lớn / quá nhỏ</span></div>
+    <div class="note" style="margin-top:2px">η nhỏ → bước ngắn, hội tụ chậm nhưng chắc. η quá lớn → <b>vọt qua</b> đáy, loss dao động hoặc phân kỳ.
+      Càng gần đáy gradient càng nhỏ → bước tự ngắn lại (không cần đổi η). Nhiều tham số → gradient là vectơ (A14), tính bằng backprop (D7).</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra</div>
     <ol>
-      <li>Vì sao trừ gradient (không cộng)? → <span class="blk" style="min-width:170px"></span></li>
+      <li>Vì sao <b>trừ</b> gradient (không cộng)? → <span class="blk" style="min-width:160px"></span></li>
       <li>Nếu η quá lớn? → <span class="blk" style="min-width:150px"></span></li>
     </ol>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D5 · Gradient</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:20mm"><span class="lb">✏️ Nháp — tính L(w±1) &amp; sai phân ở đây</span></div>
+
+  <div class="done-row">
+    <span><span class="ck"></span>Chạy một bước học</span>
+    <span><span class="ck"></span>Kiểm gradient sai phân</span>
+    <span class="win">🎉 Bạn vừa chạy một bước gradient descent!</span>
+  </div>
+
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D5 · Gradient</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 3 — ĐÁP ÁN ============ -->
 <section class="page key">
   <div class="wb-head">
     <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
     <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
   </div>
-  <div class="wb-title"><span class="no">Bài D5</span><h1>Gradient — một bước học <small>— lời giải</small></h1></div>
+  <div class="wb-title"><span class="no">Bài D5</span><h1>Gradient — một bước học <small>— lời giải &amp; kiểm tra</small></h1></div>
 
   <div class="grid2">
     <div class="step">
-      <div class="step-h"><div class="b">1</div><h2>Dự đoán & sai số</h2></div>
-      <div class="calc ans">ŷ = <span data-q="w">1</span>·<span data-q="x">2</span> = <span class="blk" data-q="yhat">2</span> · ŷ−y = <span data-q="yhat">2</span>−<span data-q="y">3</span> = <span class="blk" data-q="err">−1</span></div>
+      <div class="step-h"><div class="b">1</div><h2>Dự đoán &amp; sai số</h2></div>
+      <div class="calc ans">ŷ = <span data-q="w">1</span>·<span data-q="x">2</span> = <span class="wcell ans" data-q="yhat">2</span><br>ŷ−y = <span data-q="yhat">2</span>−<span data-q="y">3</span> = <span class="wcell ans" data-q="err">−1</span></div>
     </div>
     <div class="step">
       <div class="step-h"><div class="b">2</div><h2>Gradient</h2></div>
-      <div class="calc ans">∂L/∂w = <span data-q="errw">(−1)</span>·<span data-q="x">2</span> = <span class="blk" data-q="grad">−2</span></div>
+      <div class="calc ans">∂L/∂w = <span data-q="errw">(−1)</span>·<span data-q="x">2</span> = <span class="wcell ans" data-q="grad">−2</span></div>
     </div>
     <div class="step">
       <div class="step-h"><div class="b">3</div><h2>Cập nhật</h2></div>
-      <div class="calc ans">w ← <span data-q="w">1</span> − <span data-q="eta">0.1</span>·<span data-q="gradw">(−2)</span> = <span class="blk" data-q="wnew">1.2</span></div>
+      <div class="calc ans">w ← <span data-q="w">1</span> − <span data-q="eta">0.1</span>·<span data-q="gradw">(−2)</span> = <span class="wcell ans" data-q="wnew">1.2</span></div>
     </div>
     <div class="step">
       <div class="step-h"><div class="b">4</div><h2>Tiến bộ</h2></div>
-      <div class="calc ans">ŷ<sub>mới</sub> = <span data-q="wnew">1.2</span>·<span data-q="x">2</span> = <span class="blk" data-q="yhatNew">2.4</span> (gần <span data-q="y">3</span> hơn 2)</div>
+      <div class="calc ans">ŷ<sub>mới</sub> = <span data-q="wnew">1.2</span>·<span data-q="x">2</span> = <span class="wcell ans" data-q="yhatNew">2.4</span> (gần <span data-q="y">3</span> hơn)</div>
     </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
   <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Loss L(w) — trượt một bước xuống đáy</h2><span class="tag">đáy tại w*=y/x</span></div>
+    <div class="step-h"><div class="b">5</div><h2>Kiểm gradient bằng sai phân</h2><span class="tag">= gradient chính xác</span></div>
     <div class="figrow">
-      <svg id="figGD" class="fig" viewBox="0 0 220 120" width="70mm" height="38mm" aria-label="parabol loss theo w, một bước trượt từ w xuống gần đáy"></svg>
+      <svg id="figGD" class="fig" viewBox="0 0 220 120" width="62mm" height="36mm" aria-label="parabol loss theo w, một bước trượt từ w xuống gần đáy"></svg>
       <div style="flex:1">
-        <div class="note">Parabol L(w) = ½(w·x−y)² có đáy tại w* = y/x. Một bước η·gradient kéo w về phía đáy. Càng gần đáy gradient càng nhỏ → bước càng ngắn,
-          hội tụ mượt. η quá lớn → vọt qua đáy, dao động/phân kỳ.</div>
+        <div class="calc ans">
+          L(w+1) = <span class="wcell ans" data-q="Lp">0.5</span> · L(w−1) = <span class="wcell ans" data-q="Lm">4.5</span><br>
+          (<span data-q="Lp">0.5</span> − <span data-q="Lm">4.5</span>)/2 = <span class="wcell ans" data-q="fd">−2</span> = gradient ✓
+        </div>
+        <div class="note">Parabol L(w) đáy tại w* = y/x. Sai phân trung tâm khớp <b>đúng</b> gradient (−2) → công thức đạo hàm đã đúng.</div>
       </div>
     </div>
+    <div class="why"><b>Vì sao:</b> với parabol, [L(w+h)−L(w−h)]/(2h) triệt tiêu số hạng bậc cao, còn lại đúng (ŷ−y)·x. Nếu backprop cho số khác ⇒ có bug.</div>
   </div>
 
   <div class="quiz">
     <div class="qh">✎ Tự kiểm tra — đáp án</div>
     <ol>
-      <li>Trừ gradient? → <span class="qa">Để đi xuống — giảm loss (ngược hướng tăng).</span></li>
-      <li>η quá lớn? → <span class="qa">Vọt qua đáy, dao động/phân kỳ.</span></li>
+      <li>Trừ gradient? → <span class="qa">Để đi xuống — giảm loss (ngược hướng loss tăng).</span></li>
+      <li>η quá lớn? → <span class="qa">Vọt qua đáy, loss dao động hoặc phân kỳ.</span></li>
     </ol>
   </div>
 
   <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Một bước học = dự đoán → sai số → gradient → trừ η·gradient.
-    Bài tiếp <b style="color:var(--accent2)">D7</b>: tính gradient cho <b>mạng nhiều lớp</b> bằng backpropagation.
+    <b style="color:var(--accent2)">Rút ra.</b> Một bước học = dự đoán → sai số → gradient (ŷ−y)·x → trừ η·gradient; kiểm nhanh bằng sai phân trung tâm.
+    Bài D6: chạy gradient descent trên hàm <b>2 biến</b>; Bài D7: gradient cho mạng nhiều lớp bằng backpropagation.
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D5 · Gradient</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài D5 · Gradient</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
 
 <script src="../wb-random.js"></script>
 <script>
 function generate(){
-  var fT=WB.fmtTrim;
-  var x=WB.pick([2,3]), w=WB.pick([1,2]), y=WB.pick([4,5,6,7]);
-  var eta=0.1;
-  var yhat=w*x, err=yhat-y, grad=err*x;
-  var wnew=Math.round((w-eta*grad)*100)/100, yhatNew=Math.round(wnew*x*100)/100;
+  var fT = WB.fmtTrim;
+  var x = WB.pick([2,3]), w = WB.pick([1,2]), y = WB.pick([4,5,6,7]);
+  var eta = 0.1;
+  var yhat = w*x, err = yhat - y, grad = err*x;
+  var wnew = Math.round((w - eta*grad)*100)/100, yhatNew = Math.round(wnew*x*100)/100;
+
+  // tự kiểm sai phân trung tâm, h = 1
+  var wp1x = (w+1)*x, wm1x = (w-1)*x;
+  var Lp = 0.5*Math.pow(wp1x - y, 2), Lm = 0.5*Math.pow(wm1x - y, 2);
+  var fd = (Lp - Lm)/2;                               // = grad chính xác
+
   WB.setAll({
-    x:fT(x), y:fT(y), w:fT(w), eta:fT(eta),
-    yhat:fT(yhat), err:fT(err), errw:WB.wrap(err), grad:fT(grad), gradw:WB.wrap(grad),
-    wnew:fT(wnew), yhatNew:fT(yhatNew)
+    x: fT(x), y: fT(y), w: fT(w), eta: fT(eta),
+    yhat: fT(yhat), err: fT(err), errw: WB.wrap(err), grad: fT(grad), gradw: WB.wrap(grad),
+    wnew: fT(wnew), yhatNew: fT(yhatNew),
+    wp1x: fT(wp1x), wm1x: fT(wm1x),
+    Lp: fT(Lp), Lm: fT(Lm), fd: fT(fd)
   });
   drawGD(x, y, w, wnew);
 }
 
 function drawGD(x, y, w, wnew){
-  var svg=document.getElementById('figGD'); if(!svg) return;
-  var wstar=y/x;                      // đáy
-  // vẽ L(w)=0.5*(w*x-y)^2 trên trục w ∈ [wstar-2, wstar+2]
-  var wmin=wstar-2.2, wmax=wstar+2.2;
+  var svg = document.getElementById('figGD'); if(!svg) return;
+  var wstar = y/x;
+  var wmin = wstar-2.2, wmax = wstar+2.2;
   function Lf(ww){ return 0.5*Math.pow(ww*x-y,2); }
-  var Lmax=Math.max(Lf(wmin),Lf(wmax));
-  var ox=18, oy=104, W=184, H=88;
+  var Lmax = Math.max(Lf(wmin), Lf(wmax));
+  var ox = 18, oy = 104, W = 184, H = 88;
   function X(ww){ return ox + (ww-wmin)/(wmax-wmin)*W; }
   function Y(L){ return oy - Math.min(L,Lmax)/Lmax*H; }
-  var s='<defs><marker id="agd" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#b45309"/></marker></defs>';
+  var s = '<defs><marker id="agd" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#b45309"/></marker></defs>';
   s += '<line x1="'+ox+'" y1="'+oy+'" x2="'+(ox+W)+'" y2="'+oy+'" stroke="#c2ccd8" stroke-width="1"/>';
-  var path='';
-  for(var i=0;i<=60;i++){ var ww=wmin+(wmax-wmin)*i/60; var Xv=X(ww), Yv=Y(Lf(ww)); path+=(i===0?'M':'L')+Xv.toFixed(1)+','+Yv.toFixed(1)+' '; }
+  var path = '';
+  for(var i=0;i<=60;i++){ var ww=wmin+(wmax-wmin)*i/60; path += (i===0?'M':'L')+X(ww).toFixed(1)+','+Y(Lf(ww)).toFixed(1)+' '; }
   s += '<path d="'+path+'" fill="none" stroke="#0e7490" stroke-width="1.8"/>';
-  // đáy
   s += '<line x1="'+X(wstar).toFixed(1)+'" y1="'+(oy-H)+'" x2="'+X(wstar).toFixed(1)+'" y2="'+oy+'" stroke="#9aa3ad" stroke-width="0.8" stroke-dasharray="2 2"/>';
   s += '<text x="'+X(wstar).toFixed(1)+'" y="'+(oy+10)+'" text-anchor="middle" style="font-size:8px" fill="#5b6776">w*='+(Math.round(wstar*100)/100)+'</text>';
-  // điểm w và wnew
   s += '<circle cx="'+X(w).toFixed(1)+'" cy="'+Y(Lf(w)).toFixed(1)+'" r="3" fill="#b45309"/>';
   s += '<text x="'+X(w).toFixed(1)+'" y="'+(Y(Lf(w))-4).toFixed(1)+'" text-anchor="middle" style="font-size:8px" fill="#b45309">w</text>';
   s += '<circle cx="'+X(wnew).toFixed(1)+'" cy="'+Y(Lf(wnew)).toFixed(1)+'" r="3" fill="#0a8a3a"/>';
   s += '<text x="'+X(wnew).toFixed(1)+'" y="'+(Y(Lf(wnew))-4).toFixed(1)+'" text-anchor="middle" style="font-size:8px" fill="#0a8a3a">w′</text>';
   s += '<path d="M'+X(w).toFixed(1)+','+Y(Lf(w)).toFixed(1)+' Q'+((X(w)+X(wnew))/2).toFixed(1)+','+(Y(Lf(w))+8).toFixed(1)+' '+X(wnew).toFixed(1)+','+Y(Lf(wnew)).toFixed(1)+'" fill="none" stroke="#b45309" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#agd)"/>';
-  s += '<text x="'+(ox+W)+'" y="'+(oy+10)+'" text-anchor="end" style="font-size:8px" fill="#9aa3ad">w</text>';
   s += '<text x="'+(ox+W/2)+'" y="14" text-anchor="middle" style="font-size:8px" fill="#6b7280">L(w) — một bước trượt xuống đáy</text>';
-  svg.innerHTML=s;
+  svg.innerHTML = s;
 }
 WB.wire(generate);
 generate();

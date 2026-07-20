@@ -1,193 +1,339 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài L5 — Top-k accuracy (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài L5 — Top-k accuracy (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.7mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--dim);font-weight:800;font-size:8.4px}
+.tbl-disc td.sc{color:var(--blue);font-weight:800}
+.tbl-disc td.tr{color:var(--orange);font-weight:800;background:#fff8f0}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.tk{color:var(--purple);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.storybox b{color:var(--ink)}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple);background:#f8f6fd} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange);background:#fff8f0} .why2.o b{color:var(--orange)}
+.accrow{display:flex;align-items:center;gap:3mm;margin:1.2mm 0;font:400 9.6px var(--mono)}
+.accrow .nm{width:16mm;font-weight:800}
+.accrow .track{margin:0}
+.accrow .track.uni{width:34mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Top-k accuracy <small>— nhãn thật có nằm trong <i>k</i> hạng đầu? · <i>Top-k accuracy</i></small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~13 phút · Bài L5</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>điểm các lớp</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>nhãn thật</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>ranh giới top-k</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài L5</span><h1>Top-k accuracy <small>— nhãn thật trong k hạng đầu</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Với 1000 lớp (ImageNet), bắt mô hình trúng <b>chính xác hạng 1</b> quá khắt khe khi nhiều lớp na ná. Top-5
-    accuracy đo "câu trả lời đúng có nằm trong vài ứng viên hàng đầu không" — sát cách dùng thực tế (gợi ý k lựa chọn).
-    <div class="formula">Top-k đúng ⇔ nhãn thật ∈ {k lớp có xác suất lớn nhất}</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Có <span data-q="N">5</span> mẫu, mỗi mẫu mô hình chấm điểm <b>4 lớp</b> A–D. Với từng mẫu: <b>xếp hạng</b> điểm → tìm <b>hạng của nhãn thật</b> → mẫu đó <b>đúng ở mức Top-k</b> nếu hạng ≤ k. Rồi tính <b>Top-1 / Top-2 / Top-3 accuracy</b> trên cả <span data-q="N">5</span> mẫu, và tự chứng minh <b>Top-1 ≤ Top-2 ≤ Top-3</b> (nới k không bao giờ làm tệ đi).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Top-1 = "đoán trúng phóc". Top-k = "đáp án nằm trong <b>k tấm vé hàng đầu</b>". k lớn → dễ đúng hơn (top-k accuracy ≥ top-1). Hữu ích khi
-    mô hình phân vân giữa vài lớp hợp lý.
-  </div>
+  <div class="why2 p"><b>💡 Trực giác.</b> Top-1 = "đoán <i>trúng phóc</i>" (đúng hạng 1). Top-k = "đáp án nằm trong <b>k tấm vé hàng đầu</b>". Với bài 1000 lớp (ImageNet) nhiều lớp na ná nhau, bắt trúng chính xác hạng 1 quá khắt khe — nên người ta báo cả <b>Top-5 accuracy</b>. Điểm mấu chốt: top-k <b>chỉ xét THỨ HẠNG</b> của nhãn thật, không xét giá trị điểm tuyệt đối.</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 lớp</span></div>
-    <div class="calc" style="font-size:14px">
-      xác suất: A = <span class="gv" data-q="pA">0.4</span>, B = <span class="gv" data-q="pB">0.3</span>,
-      C = <span class="gv" data-q="pC">0.2</span>, D = <span class="gv" data-q="pD">0.1</span> ;
-      nhãn thật = <b data-q="trueCls">C</b>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — điểm 4 lớp cho <span data-q="N">5</span> mẫu</span><span class="f">nhãn thật = lớp phải đoán</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th class="l" style="width:14mm">mẫu</th><th>A</th><th>B</th><th>C</th><th>D</th><th style="width:16mm">nhãn thật</th></tr></thead>
+        <tbody>
+          <tr><td class="l">#1</td><td class="sc" data-q="sA1">7</td><td class="sc" data-q="sB1">3</td><td class="sc" data-q="sC1">9</td><td class="sc" data-q="sD1">5</td><td class="tr" data-q="t1">C</td></tr>
+          <tr><td class="l">#2</td><td class="sc" data-q="sA2">8</td><td class="sc" data-q="sB2">6</td><td class="sc" data-q="sC2">4</td><td class="sc" data-q="sD2">2</td><td class="tr" data-q="t2">A</td></tr>
+          <tr><td class="l">#3</td><td class="sc" data-q="sA3">5</td><td class="sc" data-q="sB3">9</td><td class="sc" data-q="sC3">6</td><td class="sc" data-q="sD3">3</td><td class="tr" data-q="t3">C</td></tr>
+          <tr><td class="l">#4</td><td class="sc" data-q="sA4">6</td><td class="sc" data-q="sB4">8</td><td class="sc" data-q="sC4">4</td><td class="sc" data-q="sD4">9</td><td class="tr" data-q="t4">A</td></tr>
+          <tr><td class="l">#5</td><td class="sc" data-q="sA5">9</td><td class="sc" data-q="sB5">5</td><td class="sc" data-q="sC5">7</td><td class="sc" data-q="sD5">3</td><td class="tr" data-q="t5">B</td></tr>
+        </tbody>
+      </table>
+      <div class="cap">Điểm càng cao → mô hình càng "tin". <b>Hạng 1</b> = điểm lớn nhất trong hàng. Điểm mỗi hàng đều khác nhau → thứ hạng rõ ràng, không hòa.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Xếp hạng</h2><span class="tag">giảm dần</span></div>
-    <div class="calc">
-      A &gt; B &gt; C &gt; D → nhãn thật <b data-q="trueCls">C</b> ở <b>hạng <span class="blk" style="min-width:28px"></span></b>
-    </div>
-    <div class="why"><b>Vì sao:</b> top-k chỉ quan tâm <b>thứ hạng</b> của nhãn thật, không quan tâm giá trị tuyệt đối.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Top-1</h2><span class="tag">argmax</span></div>
-    <div class="calc">
-      dự đoán hạng 1 = <b data-q="top1Cls">A</b> ; có bằng nhãn thật không? → <span class="blk" style="min-width:60px"></span>
-    </div>
-    <div class="hint">Top-1 chính là argmax (lớp xác suất cao nhất).</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Top-3</h2><span class="tag">3 hạng đầu</span></div>
-    <div class="calc">
-      {hạng 1,2,3} = {<span data-q="top3Set">A, B, C</span>} ; chứa nhãn thật <b data-q="trueCls">C</b>? → <span class="blk" style="min-width:60px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> nới k lên thì nhãn thật dễ lọt vào → tính đúng.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Đọc &amp; dùng</h2><span class="tag">k tăng → dễ đúng</span></div>
-    <div class="note">Top-k accuracy luôn ≥ top-1; báo cáo thường ghi cả hai (vd top-1 76%, top-5 93%). Hợp bài nhiều lớp gần nhau hoặc giao diện gợi ý k đáp án.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Top-k đúng khi nào? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Quan hệ top-k và top-1? → <span class="blk" style="min-width:130px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L5 · Top-k accuracy</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài L5</span><h1>Top-k accuracy <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Hạng nhãn thật</h2></div>
-    <div class="calc ans">nhãn thật <b data-q="trueCls">C</b> ở hạng <span class="blk" data-q="rank">3</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Top-1</h2></div>
-    <div class="calc ans">hạng 1 = <b data-q="top1Cls">A</b> ≠ <b data-q="trueCls">C</b> → <span class="blk" data-q="top1">SAI</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Top-3</h2></div>
-    <div class="calc ans">{<span data-q="top3Set">A, B, C</span>} chứa <b data-q="trueCls">C</b>? → <span class="blk" data-q="top3">ĐÚNG</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Cột xác suất + ngưỡng top-3</h2><span class="tag">hạng</span></div>
-    <div class="figrow">
-      <svg id="figT" class="fig" viewBox="0 0 250 120" width="82mm" height="39mm" aria-label="cột xác suất 4 lớp, đánh dấu nhãn thật và ranh giới top-3"></svg>
-      <div style="flex:1">
-        <div class="note">4 cột xác suất giảm dần. Cột nhãn thật viền <b style="color:#b45309">cam</b>. Đường đứt = ranh giới top-3: nhãn thật nằm trong 3 cột đầu → top-3 ĐÚNG (dù top-1 SAI).</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Mẫu #1 phóng to — xếp hạng bằng mắt</span><span class="f">cột cam ★ = nhãn thật</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figBars" viewBox="0 0 250 122" width="80mm" height="39mm" aria-label="bốn cột điểm của mẫu 1, nhãn thật tô cam"></svg>
+      <div class="storybox"><b>Đọc hình:</b> 4 cột = điểm 4 lớp của mẫu #1 (theo thứ tự A·B·C·D). Cột <b style="color:#b45309">cam ★</b> là <i>nhãn thật</i>. Muốn biết hạng của nó, đếm xem <b>bao nhiêu cột CAO HƠN</b> nó, rồi +1.
+        <div class="cap" style="margin-top:1.2mm">Ở trang ĐÁP ÁN, hình sẽ được <b>xếp lại theo hạng</b> và kẻ <b class="tk">ranh giới top-3</b>.</div>
       </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Xếp hạng — nhãn thật ở hạng mấy?</span><span class="f">hạng = (số lớp điểm cao hơn) + 1</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th class="l" style="width:14mm">mẫu</th><th>nhãn thật</th><th>điểm nhãn thật</th><th style="width:22mm">hạng của nhãn thật</th></tr></thead>
+        <tbody>
+          <tr><td class="l">#1</td><td class="tr" data-q="t1">C</td><td class="sc"><span data-q="ts1">9</span></td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">#2</td><td class="tr" data-q="t2">A</td><td class="sc"><span data-q="ts2">8</span></td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">#3</td><td class="tr" data-q="t3">C</td><td class="sc"><span data-q="ts3">6</span></td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">#4</td><td class="tr" data-q="t4">A</td><td class="sc"><span data-q="ts4">6</span></td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">#5</td><td class="tr" data-q="t5">B</td><td class="sc"><span data-q="ts5">5</span></td><td><span class="cellb"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="why2"><b>Vì sao chỉ cần hạng?</b> Top-k không quan tâm điểm là 9 hay 900 — chỉ hỏi "nhãn thật đứng thứ mấy?". Đó là lý do top-k ổn định trước mọi phép co giãn điểm (softmax hay không softmax vẫn giữ nguyên thứ hạng).</div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Top-k đúng khi nào? → <span class="qa">Khi nhãn thật nằm trong k lớp xác suất cao nhất.</span></li>
-      <li>Quan hệ? → <span class="qa">Top-k accuracy ≥ top-1 (k lớn dễ đúng hơn).</span></li>
-    </ol>
-  </div>
-
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Top-k accuracy = nhãn thật trong k hạng đầu; nới khắt khe cho bài nhiều lớp. Bài tiếp (L6): độ tin cậy có
-    khớp độ chính xác không — <b style="color:var(--accent2)">calibration</b>.
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L5 · Top-k accuracy</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="scratch" style="height:22mm"><span class="lb">Nháp — đếm số lớp cao hơn nhãn thật ở mỗi mẫu</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L5 · Top-k accuracy</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Top-k accuracy <small>— đúng nếu hạng ≤ k · tính accuracy · Top-1 ≤ Top-2 ≤ Top-3</small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Đúng ở mức Top-k? — điền ✓ nếu hạng ≤ k</span><span class="f">✓ = đúng · ✗ = sai</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th class="l" style="width:14mm">mẫu</th><th>hạng</th><th>Top-1 (hạng≤1)</th><th>Top-2 (hạng≤2)</th><th>Top-3 (hạng≤3)</th></tr></thead>
+        <tbody>
+          <tr><td class="l">#1</td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td></tr>
+          <tr><td class="l">#2</td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td></tr>
+          <tr><td class="l">#3</td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td></tr>
+          <tr><td class="l">#4</td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td></tr>
+          <tr><td class="l">#5</td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td><td><span class="cellb" style="width:9mm"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="cap">Với mỗi mẫu, một dấu ✗ chỉ có thể "biến thành" ✓ khi k tăng — <b>không bao giờ ngược lại</b>. Đây là hạt giống cho phần tự kiểm bên dưới.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Top-k accuracy — tỉ lệ mẫu đúng ở mỗi mức k</span><span class="f">(số mẫu hạng≤k) / <span data-q="N">5</span></span></div>
+    <div class="pb">
+      <div class="accrow"><span class="nm tk">Top-1 =</span><span class="slot ans sm"></span>/<span data-q="N">5</span> = <span class="slot ans sm"></span><span class="track uni" id="tr1"></span></div>
+      <div class="accrow"><span class="nm tk">Top-2 =</span><span class="slot ans sm"></span>/<span data-q="N">5</span> = <span class="slot ans sm"></span><span class="track uni" id="tr2"></span></div>
+      <div class="accrow"><span class="nm tk">Top-3 =</span><span class="slot ans sm"></span>/<span data-q="N">5</span> = <span class="slot ans sm"></span><span class="track uni" id="tr3"></span></div>
+      <div class="cap" style="margin-top:.4mm">Thang thanh: 0 … 0.5 … 1 (đại lượng chỉ dương). Tô dài theo độ lớn accuracy. <b>Ba thanh phải càng lúc càng DÀI</b> — nếu bạn tô thanh sau ngắn hơn thanh trước, chắc chắn có chỗ sai.</div>
+      <div class="why2 o"><b>Đọc con số thế nào?</b> Top-1 accuracy nói mô hình đoán <i>trúng phóc hạng 1</i> bao nhiêu phần; Top-3 nới lỏng "đáp án nằm trong 3 gợi ý đầu". Báo cáo thực tế ghi <b>cả hai</b> (ví dụ ResNet trên ImageNet: top-1 ≈ 76%, top-5 ≈ 93%) để người đọc thấy mô hình "sai hẳn" hay chỉ "phân vân giữa vài lớp hợp lý".</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — đẩy k tới SỐ LỚP thì luôn đúng</div>
+    <div style="font-size:9px;line-height:1.45">Bài có <b>4 lớp</b>. Nếu lấy <b>Top-4</b>, tập "4 hạng đầu" chính là <b>toàn bộ 4 lớp</b> → nhãn thật <i>chắc chắn</i> nằm trong đó, mọi mẫu đều đúng. Điền:</div>
+    <div class="eq" style="margin-top:.4mm">Top-4 accuracy = <span class="slot ans sm"></span>/<span data-q="N">5</span> = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Top-k khi <b>k = số lớp</b> luôn = <b>1.00</b> (vô nghĩa để đánh giá). Vì thế k hữu ích phải <b>nhỏ hơn hẳn số lớp</b> (top-5 trên 1000 lớp), đủ nới lỏng mà vẫn phân biệt được mô hình tốt/xấu.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — vì sao Top-1 ≤ Top-2 ≤ Top-3 (không bao giờ giảm)</div>
+    <div style="font-size:9px;line-height:1.45">Gọi n<sub>k</sub> = <b>số mẫu đúng ở mức Top-k</b>. Vì "hạng ≤ 1" <b>kéo theo</b> "hạng ≤ 2" (một mẫu đúng ở Top-1 thì đương nhiên đúng ở Top-2), tập mẫu-đúng <b>lồng nhau</b>: {đúng Top-1} ⊆ {đúng Top-2} ⊆ {đúng Top-3}. Đếm từ bảng ② và điền:</div>
+    <div class="eq" style="margin-top:.4mm">n₁ = <span class="slot ans sm"></span> &nbsp;≤&nbsp; n₂ = <span class="slot ans sm"></span> &nbsp;≤&nbsp; n₃ = <span class="slot ans sm"></span> &nbsp;→ chia cho <span data-q="N">5</span>: Top-1 ≤ Top-2 ≤ Top-3</div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Nới k <b>chỉ có thể THÊM</b> mẫu đúng, không bao giờ bớt. Bấm 🎲 đổi số bao nhiêu lần, bất đẳng thức này <b>luôn đúng</b> — chính sự "luôn đúng" đó là bằng chứng, không phải may rủi.</div>
+  </div>
+
+  <div class="scratch" style="height:40mm"><span class="lb">Nháp — đếm n₁, n₂, n₃ · tính accuracy · kiểm đơn điệu</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Xếp hạng 5 mẫu</span>
+    <span><span class="ck"></span>Điền ✓/✗ Top-1/2/3</span>
+    <span><span class="ck"></span>Tính 3 accuracy</span>
+    <span><span class="ck"></span>Chứng minh đơn điệu</span>
+    <span class="win">🎉 Xong Bài L5!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L5 · Top-k accuracy</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Top-k accuracy <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② — hạng &amp; đúng/sai từng mẫu</span><span class="f">✓ khi hạng ≤ k</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th class="l" style="width:14mm">mẫu</th><th>nhãn thật</th><th>hạng</th><th>Top-1</th><th>Top-2</th><th>Top-3</th></tr></thead>
+        <tbody>
+          <tr><td class="l">#1</td><td class="tr" data-q="t1">C</td><td class="an" data-q="r1">1</td><td class="an" data-q="ok1_1">✓</td><td class="an" data-q="ok1_2">✓</td><td class="an" data-q="ok1_3">✓</td></tr>
+          <tr><td class="l">#2</td><td class="tr" data-q="t2">A</td><td class="an" data-q="r2">2</td><td class="an" data-q="ok2_1">✗</td><td class="an" data-q="ok2_2">✓</td><td class="an" data-q="ok2_3">✓</td></tr>
+          <tr><td class="l">#3</td><td class="tr" data-q="t3">C</td><td class="an" data-q="r3">3</td><td class="an" data-q="ok3_1">✗</td><td class="an" data-q="ok3_2">✗</td><td class="an" data-q="ok3_3">✓</td></tr>
+          <tr><td class="l">#4</td><td class="tr" data-q="t4">A</td><td class="an" data-q="r4">4</td><td class="an" data-q="ok4_1">✗</td><td class="an" data-q="ok4_2">✗</td><td class="an" data-q="ok4_3">✗</td></tr>
+          <tr><td class="l">#5</td><td class="tr" data-q="t5">B</td><td class="an" data-q="r5">2</td><td class="an" data-q="ok5_1">✗</td><td class="an" data-q="ok5_2">✓</td><td class="an" data-q="ok5_3">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Top-k accuracy — đáp án</span><span class="f">n₁=<span data-q="n1">1</span> · n₂=<span data-q="n2">3</span> · n₃=<span data-q="n3">4</span></span></div>
+    <div class="pb">
+      <div class="accrow"><span class="nm tk">Top-1 =</span><span data-q="n1">1</span>/<span data-q="N">5</span> = <span class="qa" data-q="acc1">0.20</span><span class="track uni" id="tr1a"></span></div>
+      <div class="accrow"><span class="nm tk">Top-2 =</span><span data-q="n2">3</span>/<span data-q="N">5</span> = <span class="qa" data-q="acc2">0.60</span><span class="track uni" id="tr2a"></span></div>
+      <div class="accrow"><span class="nm tk">Top-3 =</span><span data-q="n3">4</span>/<span data-q="N">5</span> = <span class="qa" data-q="acc3">0.80</span><span class="track uni" id="tr3a"></span></div>
+      <div class="cap" style="margin-top:.4mm">Ba thanh dài dần → Top-1 ≤ Top-2 ≤ Top-3, đúng như tính chất đơn điệu.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Mẫu #1 đã xếp hạng — ranh giới top-3</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figBarsA" viewBox="0 0 250 122" width="80mm" height="39mm" aria-label="mẫu 1 xếp hạng, ranh giới top-3"></svg>
+      <div class="storybox">Cột xếp theo <b>hạng giảm dần</b>. Cột <b style="color:#b45309">cam ★</b> (nhãn thật) nằm <b>bên trái</b> đường <b class="tk">tím đứt</b> (ranh giới top-3) → mẫu #1 đúng ở Top-3. Nếu nó rơi sang phải đường → Top-3 SAI.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Top-4 (k = số lớp) — đáp án</div>
+    <div class="eq">Top-4 accuracy = <b><span data-q="N">5</span></b>/<span data-q="N">5</span> = <b>1.00</b></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">Tập "4 hạng đầu" = toàn bộ 4 lớp → nhãn thật luôn ở trong → mọi mẫu đúng. Top-k với k = số lớp <b>vô dụng</b>; k phải nhỏ hơn hẳn số lớp mới đo được gì.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Đơn điệu Top-1 ≤ Top-2 ≤ Top-3 — đáp án</div>
+    <div class="eq">n₁ = <b data-q="n1">1</b> ≤ n₂ = <b data-q="n2">3</b> ≤ n₃ = <b data-q="n3">4</b></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">Vì "hạng ≤ 1 ⟹ hạng ≤ 2 ⟹ hạng ≤ 3", tập mẫu-đúng <b>lồng nhau</b> {Top-1} ⊆ {Top-2} ⊆ {Top-3}, nên số đếm chỉ tăng hoặc giữ nguyên. Chia cùng mẫu số <span data-q="N">5</span> → accuracy đơn điệu không giảm. Đúng với <b>mọi</b> bộ số (bấm 🎲 kiểm chứng).</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Xét giá trị điểm thay vì thứ hạng:</b> top-k chỉ hỏi nhãn thật đứng <b>hạng mấy</b>, không quan tâm điểm 9 hay 90.</li>
+        <li><b>Đếm nhầm hạng:</b> hạng = (số lớp có điểm <b>cao hơn</b> nhãn thật) + 1, không phải thứ tự cột A·B·C·D.</li>
+        <li><b>Tưởng Top-k có thể tệ hơn Top-1:</b> nới k chỉ thêm mẫu đúng → Top-k <b>luôn ≥</b> Top-1.</li>
+        <li><b>Khoe Top-k với k lớn:</b> Top-k khi k = số lớp = 1.00, chẳng chứng minh mô hình giỏi; phải nêu k.</li>
+        <li><b>Nhầm Top-k với ngưỡng xác suất:</b> top-k lấy <b>đúng k lớp đầu</b> theo hạng, không phải "các lớp có xác suất &gt; ngưỡng".</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Top-k accuracy = tỉ lệ mẫu có <b>nhãn thật trong k hạng đầu</b>; chỉ xét thứ hạng nên bất biến trước co giãn điểm, và <b>Top-1 ≤ Top-2 ≤ … ≤ Top-(số lớp)=1</b> vì các tập mẫu-đúng lồng nhau. Báo cáo thực tế ghi cả top-1 lẫn top-5. Bài tiếp <b>L6 · Calibration</b>: mô hình tự tin 90% thì có đúng 90% số lần không — độ tin cậy có <i>khớp</i> độ chính xác?
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L5 · Top-k accuracy</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var d = WB.pick([[0.4,0.3,0.2,0.1],[0.5,0.25,0.15,0.1],[0.45,0.3,0.15,0.1]]);
-  var cls = ['A','B','C','D'];
-  // true class at rank 2,3, or 4 (so top-1 SAI, top-3 varies)
-  var rank = WB.pick([2,3,4]);
-  var trueCls = cls[rank-1];
-  var top1 = (rank===1) ? 'ĐÚNG' : 'SAI';
-  var top3 = (rank<=3) ? 'ĐÚNG' : 'SAI';
-  WB.setAll({
-    pA:f(d[0]), pB:f(d[1]), pC:f(d[2]), pD:f(d[3]),
-    trueCls:trueCls, top1Cls:'A', top3Set:'A, B, C',
-    rank:String(rank), top1:top1, top3:top3
-  });
-  drawTopk('figT', d, rank);
-}
-function drawTopk(id, d, rank){
-  var svg = document.getElementById(id); if(!svg) return;
-  var cls=['A','B','C','D'];
-  var x0=28, base=98, H=78, gap=52, bw=30, maxv=Math.max.apply(null,d);
-  var s='<line x1="'+(x0-6)+'" y1="'+base+'" x2="'+(x0+4*gap-14)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  for(var k=0;k<4;k++){
-    var bx=x0+k*gap;
-    var h=d[k]/maxv*H;
-    var isTrue=(k===rank-1);
+var CLS=['A','B','C','D'];
+function drawBars(id, sc, trueIdx, showAns){
+  var svg=document.getElementById(id); if(!svg) return;
+  var order; // vị trí vẽ trái→phải
+  if(showAns){ order=[0,1,2,3].slice().sort(function(a,b){return sc[b]-sc[a];}); }
+  else { order=[0,1,2,3]; }
+  var maxv=Math.max(sc[0],sc[1],sc[2],sc[3]);
+  var x0=30, base=92, H=64, gap=50, bw=30;
+  var s='';
+  s+='<line x1="'+(x0-8)+'" y1="'+base+'" x2="'+(x0+4*gap-16)+'" y2="'+base+'" stroke="#9aa5b1" stroke-width="1"/>';
+  for(var pos=0;pos<4;pos++){
+    var ci=order[pos];
+    var bx=x0+pos*gap;
+    var h=sc[ci]/maxv*H;
+    var isTrue=(ci===trueIdx);
     var col=isTrue?'#b45309':'#0e7490';
-    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+col+'22" stroke="'+col+'" stroke-width="'+(isTrue?2:1.2)+'"/>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-4).toFixed(1)+'" text-anchor="middle" font-size="8" fill="'+col+'">'+WB.fmtTrim(d[k])+'</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base+12)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">'+cls[k]+'</text>';
+    var fill=isTrue?'#fff5e9':'#eaf4f6';
+    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+fill+'" stroke="'+col+'" stroke-width="'+(isTrue?2.2:1.3)+'"/>';
+    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-3).toFixed(1)+'" text-anchor="middle" font-size="8" font-weight="700" fill="'+col+'">'+sc[ci]+'</text>';
+    s+='<text x="'+(bx+bw/2)+'" y="'+(base+11)+'" text-anchor="middle" font-size="9.5" font-weight="800" fill="'+col+'">'+CLS[ci]+(isTrue?' ★':'')+'</text>';
+    if(showAns){
+      s+='<text x="'+(bx+bw/2)+'" y="'+(base+21)+'" text-anchor="middle" font-size="7" fill="#6b7280">hạng '+(pos+1)+'</text>';
+    }
   }
-  // top-3 boundary line after 3rd bar
-  var bx3 = x0 + 3*gap - 11;
-  s+='<line x1="'+bx3+'" y1="14" x2="'+bx3+'" y2="'+base+'" stroke="#16a34a" stroke-width="1.3" stroke-dasharray="3 3"/>';
-  s+='<text x="'+(bx3-2)+'" y="12" text-anchor="end" font-size="8" fill="#16a34a">top-3</text>';
+  if(showAns){
+    var bxL=x0+3*gap-10;
+    s+='<line x1="'+bxL+'" y1="6" x2="'+bxL+'" y2="'+(base+3)+'" stroke="#6d28d9" stroke-width="1.6" stroke-dasharray="4 3"/>';
+    s+='<text x="'+(bxL-3)+'" y="12" text-anchor="end" font-size="7.6" font-weight="800" fill="#6d28d9">ranh giới top-3</text>';
+  }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function drawTrack(id, v, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div>';
+  if(fill){ var pct=Math.min(Math.max(v,0),1)*100; h+='<div class="fill pos" style="left:0;width:'+pct.toFixed(1)+'%"></div>'; }
+  el.innerHTML=h;
+}
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+function gen(){
+  var N=5, K=4;
+  // hạng nhãn thật mỗi mẫu: nền {1,2,3,4} + 1 mẫu thêm ngẫu nhiên → luôn n1<n2<n3, có hạng 4
+  var X=WB.randInt(1,4);
+  var ranks=shuffle([1,2,3,4,X]);
+  var out={ N:String(N) };
+  for(var i=0;i<N;i++){
+    // 4 điểm phân biệt, giảm dần v[0]>v[1]>v[2]>v[3]
+    var vals=WB.pickDistinct([9,8,7,6,5,4,3,2], 4).sort(function(a,b){return b-a;});
+    var rank=ranks[i];
+    var truePos=rank-1;                       // vị trí điểm của nhãn thật (0=cao nhất)
+    var trueIdx=WB.randInt(0,3);              // nhãn thật là lớp nào (A–D)
+    var otherCls=[0,1,2,3].filter(function(c){return c!==trueIdx;});
+    var otherPos=[0,1,2,3].filter(function(p){return p!==truePos;});
+    shuffle(otherPos);
+    var sc=[0,0,0,0];
+    sc[trueIdx]=vals[truePos];
+    for(var j=0;j<otherCls.length;j++){ sc[otherCls[j]]=vals[otherPos[j]]; }
+    out['sA'+(i+1)]=String(sc[0]); out['sB'+(i+1)]=String(sc[1]);
+    out['sC'+(i+1)]=String(sc[2]); out['sD'+(i+1)]=String(sc[3]);
+    out['t'+(i+1)]=CLS[trueIdx];
+    out['ts'+(i+1)]=String(vals[truePos]);   // điểm của nhãn thật
+    out['r'+(i+1)]=String(rank);
+    for(var k=1;k<=3;k++){ out['ok'+(i+1)+'_'+k]=(rank<=k?'✓':'✗'); }
+    if(i===0){ window.__s1=sc; window.__t1=trueIdx; }   // giữ mẫu #1 để vẽ
+  }
+  var n1=ranks.filter(function(r){return r<=1;}).length;
+  var n2=ranks.filter(function(r){return r<=2;}).length;
+  var n3=ranks.filter(function(r){return r<=3;}).length;
+  out.n1=String(n1); out.n2=String(n2); out.n3=String(n3);
+  out.acc1=WB.fmt2(n1/N); out.acc2=WB.fmt2(n2/N); out.acc3=WB.fmt2(n3/N);
+  WB.setAll(out);
+
+  drawBars('figBars', window.__s1, window.__t1, false);
+  drawBars('figBarsA', window.__s1, window.__t1, true);
+  // thanh ĐỀ để TRỐNG; thanh ĐÁP ÁN tô đầy
+  drawTrack('tr1', 0, false); drawTrack('tr2', 0, false); drawTrack('tr3', 0, false);
+  drawTrack('tr1a', n1/N, true); drawTrack('tr2a', n2/N, true); drawTrack('tr3a', n3/N, true);
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

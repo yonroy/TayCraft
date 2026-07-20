@@ -1,199 +1,416 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài L6 — Calibration (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài L6 — Calibration / ECE (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.8mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.tbl-disc td .track{margin:0 auto}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--orange);font-weight:800}
+.pk{color:var(--blue);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Calibration (ECE) <small>— "nói chắc 90%" thì có đúng 90% thật không? · <i>Expected Calibration Error</i></small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~14 phút · Bài L6</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>độ chính xác thực</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>độ tự tin / lý tưởng</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>độ lệch (gap)</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài L6</span><h1>Calibration <small>— độ tin cậy có khớp độ chính xác?</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Mô hình thường <b>quá tự tin</b> (nói 99% nhưng chỉ đúng 90%). Trong y tế, tài chính, độ tin cậy phải
-    <b>đáng tin</b> để ra quyết định. Calibration đo điều đó; mô hình lệch thì cần hiệu chỉnh (temperature scaling).
-    <div class="formula">Chia theo bin độ tin cậy. &nbsp; ECE = Σ (nₘ/N)·| conf(bin m) − acc(bin m) |</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Gom dự đoán thành <b>4 nhóm theo độ tự tin</b>, tự tính <b>độ chính xác thực</b> từng nhóm, đo <b>độ lệch</b> |tự tin − chính xác|, rồi cộng có trọng số thành <b>ECE</b>. Cuối phiếu bạn tự chứng minh được: mô hình hiệu chỉnh hoàn hảo ⟹ mọi nhóm nằm <b>đúng đường chéo</b> ⟹ ECE = 0, và ECE là trung bình <b>CÓ TRỌNG SỐ</b> — nhóm đông ảnh hưởng nhiều hơn.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Gom dự đoán theo "mức tự tin" rồi kiểm: trong nhóm "tự tin 90%", có đúng <b>90%</b> thật không? Nếu chỉ đúng 80% → <b>quá tự tin</b> ở nhóm
-    đó. ECE = trung bình (có trọng số) độ lệch "nói vs làm" trên mọi nhóm.
-  </div>
+  <div class="why2 o"><b>💡 Trực giác.</b> Một dự báo viên thời tiết nói "70% có mưa". Muốn biết ông ta <i>đáng tin</i> hay không, đừng xét từng ngày — hãy gom <b>mọi ngày ông nói 70%</b> lại: nếu mưa đúng ~70% số ngày đó thì ông <b>hiệu chỉnh tốt</b>; nếu chỉ mưa 50% thì ông <b>quá tự tin</b>. Mô hình AI cũng vậy: độ tự tin (softmax) là một <i>lời hứa</i>, độ chính xác thực là <i>kết quả</i>. ECE đo khoảng cách trung bình giữa lời hứa và kết quả.</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 bin · <span data-q="N">10</span> mẫu</span></div>
-    <div class="calc" style="font-size:14px">
-      bin 1 — độ tin cậy <span class="gv" data-q="conf1">0.9</span>, đúng <span class="gv" data-q="n1ok">4</span>/<span data-q="n1">5</span> ;
-      bin 2 — độ tin cậy <span class="gv" data-q="conf2">0.6</span>, đúng <span class="gv" data-q="n2ok">3</span>/<span data-q="n2">5</span>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — 4 nhóm độ tự tin</span><span class="f">tổng N = <span data-q="N">50</span> mẫu</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th style="width:22mm">nhóm (bin)</th><th>độ tự tin trung bình <span class="rw">conf</span></th><th>số mẫu <span class="pk">n</span></th><th>số đoán đúng</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Nhóm 1 — hơi ngờ</td><td class="gvt" data-q="conf1">0.6</td><td class="evt" data-q="n1">10</td><td class="evt" data-q="ok1">6</td></tr>
+          <tr><td class="l">Nhóm 2 — khá chắc</td><td class="gvt" data-q="conf2">0.75</td><td class="evt" data-q="n2">10</td><td class="evt" data-q="ok2">7</td></tr>
+          <tr><td class="l">Nhóm 3 — chắc</td><td class="gvt" data-q="conf3">0.8</td><td class="evt" data-q="n3">20</td><td class="evt" data-q="ok3">16</td></tr>
+          <tr><td class="l">Nhóm 4 — rất chắc</td><td class="gvt" data-q="conf4">0.95</td><td class="evt" data-q="n4">10</td><td class="evt" data-q="ok4">7</td></tr>
+        </tbody>
+      </table>
+      <div class="cap">Mỗi mẫu được xếp vào nhóm theo <b>độ tự tin của lớp mô hình chọn</b> (max softmax). ECE = Σ (nᵢ/N)·|confᵢ − accᵢ| với accᵢ = số đúng / nᵢ.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Accuracy mỗi bin</h2><span class="tag">đúng / số mẫu</span></div>
-    <div class="calc">
-      bin1: <span data-q="n1ok">4</span>/<span data-q="n1">5</span> = <span class="blk" style="min-width:40px"></span> ;
-      bin2: <span data-q="n2ok">3</span>/<span data-q="n2">5</span> = <span class="blk" style="min-width:40px"></span>
+  <div class="panel">
+    <div class="ph"><span class="t">Bản đồ hiệu chỉnh — vẽ nốt vào (reliability diagram)</span><span class="f">chéo cam = hoàn hảo</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figRel" viewBox="0 0 290 180" width="86mm" height="53mm" aria-label="reliability diagram để điền"></svg>
+      <div class="storybox"><b>Cách vẽ.</b> Trục ngang = độ tự tin đã cho, trục dọc = <b class="pk">tỉ lệ đúng thực tế</b>. Với mỗi nhóm: tính accᵢ ở bước ①, rồi <b>tô cột lam</b> cao đúng bằng accᵢ tại vạch confᵢ (cột đứt sẵn).
+        <div class="cap" style="margin-top:1.2mm"><b class="rw">Chấm cam</b> nằm trên đường chéo = mức "đáng lẽ phải đúng". Khoảng hở giữa đỉnh cột và chấm cam chính là <b class="gk">độ lệch</b>. Đỉnh cột <b>thấp hơn</b> chéo ⇒ <b>quá tự tin</b>; <b>cao hơn</b> chéo ⇒ <b>quá dè dặt</b>.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① Độ chính xác thực mỗi nhóm</span><span class="f">accᵢ = số đúng / nᵢ</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th style="width:22mm">nhóm</th><th>phép chia</th><th>accᵢ</th><th>nhóm</th><th>phép chia</th><th>accᵢ</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Nhóm 1</td><td><span data-q="ok1">6</span> / <span data-q="n1">10</span></td><td><span class="cellb"></span></td>
+              <td class="l">Nhóm 2</td><td><span data-q="ok2">7</span> / <span data-q="n2">10</span></td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">Nhóm 3</td><td><span data-q="ok3">16</span> / <span data-q="n3">20</span></td><td><span class="cellb"></span></td>
+              <td class="l">Nhóm 4</td><td><span data-q="ok4">7</span> / <span data-q="n4">10</span></td><td><span class="cellb"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="why2"><b>Đọc gì?</b> Đây là <i>sự thật</i> của từng nhóm — mô hình nói gì không quan trọng, nhóm này thực sự đúng bao nhiêu phần. Chép 4 số này lên bản đồ phía trên (đỉnh cột lam) rồi mới sang bước ②.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> so độ chính xác thật với độ tin cậy mô hình tuyên bố.</div>
   </div>
 
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Độ lệch mỗi bin</h2><span class="tag">|conf − acc|</span></div>
-    <div class="calc">
-      |<span data-q="conf1">0.9</span> − <span data-q="acc1">0.8</span>| = <span class="blk" style="min-width:36px"></span> ;
-      |<span data-q="conf2">0.6</span> − <span data-q="acc2">0.6</span>| = <span class="blk" style="min-width:36px"></span>
-    </div>
-    <div class="hint">Bin lệch dương = "nói cao hơn làm" → quá tự tin ở bin đó.</div>
-  </div>
+  <div class="why2 p"><b>🔮 Dự đoán trước khi tính.</b> Nhìn bảng cho sẵn: nhóm nào <b>hứa nhiều nhất mà làm được ít nhất</b>? Nhóm nào khớp gần như hoàn hảo? Và nếu nhóm đông (n lớn) khớp tốt còn nhóm nhỏ lệch mạnh thì ECE sẽ <b>to hay nhỏ</b>? Ghi phỏng đoán vào nháp rồi kiểm ở trang sau.</div>
 
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>ECE (trọng số theo số mẫu)</h2><span class="tag">Σ (nₘ/N)·lệch</span></div>
-    <div class="calc">
-      ECE = (<span data-q="n1">5</span>/<span data-q="N">10</span>)·<span data-q="gap1">0.1</span> + (<span data-q="n2">5</span>/<span data-q="N">10</span>)·<span data-q="gap2">0</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> ECE nhỏ → mô hình đáng tin về độ tự tin; lớn → cần hiệu chỉnh.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Hiệu chỉnh</h2><span class="tag">temperature scaling</span></div>
-    <div class="note">Chia logits cho T &gt; 1 làm softmax <b>bớt nhọn</b> → hạ độ tự tin về khớp accuracy. Vẽ <b>reliability diagram</b> (conf vs acc) để thấy lệch.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Mô hình "quá tự tin" nghĩa là gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>ECE = 0 nghĩa là gì? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L6 · Calibration</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:26mm"><span class="lb">Nháp — bốn phép chia acc &amp; ghi phỏng đoán</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L6 · Calibration (ECE)</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài L6</span><h1>Calibration <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Accuracy mỗi bin</h2></div>
-    <div class="calc ans">acc₁ = <span class="blk" data-q="acc1">0.8</span> ; acc₂ = <span class="blk" data-q="acc2">0.6</span></div>
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Calibration (ECE) <small>— độ lệch từng nhóm · cộng có trọng số · quá tự tin</small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Độ lệch</h2></div>
-    <div class="calc ans">lệch₁ = <span class="blk" data-q="gap1">0.1</span> ; lệch₂ = <span class="blk" data-q="gap2">0</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">② Độ lệch mỗi nhóm — gapᵢ = |confᵢ − accᵢ|</span><span class="f">tô thanh: 0 … 0.4</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th style="width:18mm">nhóm</th><th>confᵢ (cho sẵn)</th><th>accᵢ (chép từ ①)</th><th>gapᵢ = |conf − acc|</th><th style="width:28mm">tô độ lớn gapᵢ</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Nhóm 1</td><td class="gvt" data-q="conf1">0.6</td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td><td><div class="track uni" id="bar1"></div></td></tr>
+          <tr><td class="l">Nhóm 2</td><td class="gvt" data-q="conf2">0.75</td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td><td><div class="track uni" id="bar2"></div></td></tr>
+          <tr><td class="l">Nhóm 3</td><td class="gvt" data-q="conf3">0.8</td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td><td><div class="track uni" id="bar3"></div></td></tr>
+          <tr><td class="l">Nhóm 4</td><td class="gvt" data-q="conf4">0.95</td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td><td><div class="track uni" id="bar4"></div></td></tr>
+        </tbody>
+      </table>
+      <div class="cap">Thang thanh: <b>0 … 0.4</b> (gốc trái). Lấy <b>trị tuyệt đối</b> — quá tự tin hay quá dè dặt đều bị tính là lệch; ECE không phân biệt chiều lệch, nó chỉ đo <i>khoảng cách</i> tới đường chéo.</div>
+    </div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>ECE</h2></div>
-    <div class="calc ans">ECE = 0.5·<span data-q="gap1">0.1</span> + 0.5·<span data-q="gap2">0</span> = <span class="blk" data-q="ece">0.05</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">③ ECE — trung bình CÓ TRỌNG SỐ của các độ lệch</span><span class="f">ECE = Σ (nᵢ/N)·gapᵢ</span></div>
+    <div class="pb">
+      <svg id="figWeight" viewBox="0 0 272 60" width="84mm" height="18.5mm" aria-label="thanh chia tỉ trọng bốn nhóm"></svg>
+      <table class="tbl-disc" style="margin-top:.6mm">
+        <thead><tr><th style="width:18mm">nhóm</th><th>nᵢ</th><th>tỉ trọng nᵢ/N</th><th>gapᵢ (từ ②)</th><th>tích (nᵢ/N)·gapᵢ</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Nhóm 1</td><td class="evt" data-q="n1">10</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td></tr>
+          <tr><td class="l">Nhóm 2</td><td class="evt" data-q="n2">10</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td></tr>
+          <tr><td class="l">Nhóm 3</td><td class="evt" data-q="n3">20</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td></tr>
+          <tr><td class="l">Nhóm 4</td><td class="evt" data-q="n4">10</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb ans"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="eq" style="margin-top:.4mm">ECE = cộng 4 tích = <span class="slot ans"></span> &nbsp;→ tô độ lớn (thang 0 … 0.2): <span style="display:inline-block;vertical-align:middle"><div class="track uni" id="barE"></div></span></div>
+      <div class="why2"><b>Vì sao chia tỉ trọng?</b> Một nhóm chỉ có 2 mẫu mà lệch 0.5 <i>không</i> nói lên nhiều bằng một nhóm 200 mẫu lệch 0.5. Nhân với nᵢ/N để mỗi <b>mẫu</b> có tiếng nói ngang nhau — ECE chính là <b>độ lệch trung bình trên mỗi mẫu</b>, luôn nằm giữa 0 và 1.</div>
+    </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Reliability diagram (conf vs acc)</h2><span class="tag">lệch chéo</span></div>
-    <div class="figrow">
-      <svg id="figR" class="fig" viewBox="0 0 250 120" width="74mm" height="39mm" aria-label="reliability diagram: đường chéo lý tưởng, cột acc mỗi bin lệch khỏi chéo"></svg>
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — mạng sâu QUÁ TỰ TIN &amp; nhiệt độ T làm mềm</div>
+    <div class="figwrap" style="align-items:flex-start">
+      <svg id="figTemp" viewBox="0 0 200 110" width="53mm" height="29mm" aria-label="hạ độ tự tin bằng nhiệt độ T"></svg>
       <div style="flex:1">
-        <div class="note">Đường chéo (cam) = lý tưởng "conf = acc". Cột (lam) cao bằng acc thật ở vị trí conf. Cột <b>dưới</b> chéo = quá tự tin; khoảng hở giữa cột và chéo = độ lệch của bin.</div>
+        <div style="font-size:9px;line-height:1.45">Một mạng sâu (ResNet) ở nhóm "rất chắc" tuyên bố <b>conf = 0.95</b> nhưng chỉ đúng <b>acc = 0.80</b>. Chia logits cho <b>nhiệt độ T = 2</b> làm softmax <i>bớt nhọn</i>, độ tự tin tụt còn <b>0.85</b> — <b>acc KHÔNG đổi</b> (thứ tự lớp không đổi, dự đoán y hệt). Điền độ lệch:</div>
+        <table class="tbl-disc" style="margin-top:.8mm">
+          <thead><tr><th>trạng thái</th><th>conf</th><th>acc</th><th>gap = |conf − acc|</th></tr></thead>
+          <tbody>
+            <tr><td class="l">Trước (T = 1)</td><td class="gvt">0.95</td><td class="evt">0.80</td><td><span class="cellb ans"></span></td></tr>
+            <tr><td class="l">Sau (T = 2)</td><td class="gvt">0.85</td><td class="evt">0.80</td><td><span class="cellb ans"></span></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ ECE giảm mạnh mà <b>accuracy không nhúc nhích</b>: hiệu chỉnh không làm mô hình "giỏi hơn", chỉ làm nó <b>thành thật hơn</b> về mức chắc chắn của mình. Đó là lý do temperature scaling chỉ cần <b>một tham số T</b> học trên tập validation.</div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>"Quá tự tin"? → <span class="qa">Độ tin cậy tuyên bố cao hơn độ chính xác thực tế.</span></li>
-      <li>ECE = 0? → <span class="qa">Độ tin cậy khớp hoàn toàn độ chính xác ở mọi bin.</span></li>
-    </ol>
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — chéo ⇒ gap 0 ⇒ ECE 0 · và trọng số quyết định độ lớn ECE</div>
+    <div style="font-size:9px;line-height:1.45"><b>(a) Hiệu chỉnh hoàn hảo.</b> Mô hình X: nhóm A conf 0.5, 20 mẫu đúng 10; nhóm B conf 0.8, 30 mẫu đúng 24. Tính:</div>
+    <div class="eq">acc(A) = 10/20 = <span class="slot ans sm"></span>, gap(A) = <span class="slot ans sm"></span> · acc(B) = 24/30 = <span class="slot ans sm"></span>, gap(B) = <span class="slot ans sm"></span> · ECE = 0.4·__ + 0.6·__ = <span class="slot ans sm"></span></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:.6mm"><b>(b) Cùng độ lệch, khác cỡ nhóm.</b> Hai mô hình đều có một nhóm lệch <b>0.4</b> và một nhóm lệch <b>0</b>, tổng N = 50. Chỉ khác cỡ nhóm:</div>
+    <div class="eq">Mô hình P (nhóm lệch có <b>10</b> mẫu): ECE = (10/50)·0.4 = <span class="slot ans sm"></span> · Mô hình Q (nhóm lệch có <b>40</b> mẫu): ECE = (40/50)·0.4 = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ (a) Mọi nhóm rơi <b>đúng lên đường chéo</b> nên mọi gap = 0, và tổng có trọng số của toàn số 0 vẫn là <b>0</b>: ECE = 0 ⟺ hiệu chỉnh hoàn hảo ở mọi nhóm. (b) Cùng "một chỗ lệch 0.4" mà ECE chênh <b>4 lần</b> — vì ECE cân theo <b>số mẫu</b>, không phải theo số nhóm.</div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Calibration: "nói X% thì đúng X%"; ECE đo lệch, temperature scaling hiệu chỉnh. Bài tiếp (L7): đếm chi phí tính
-    toán — <b style="color:var(--accent2)">FLOPs</b>.
+  <div class="scratch" style="height:14mm"><span class="lb">Nháp — gap, tích, ECE, tự kiểm</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Tính 4 acc</span>
+    <span><span class="ck"></span>Vẽ bản đồ</span>
+    <span><span class="ck"></span>Tính 4 gap</span>
+    <span><span class="ck"></span>Cộng ra ECE</span>
+    <span class="win">🎉 Xong Bài L6!</span>
   </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L6 · Calibration</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L6 · Calibration (ECE)</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Calibration (ECE) <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — ba bước (đáp án)</span><span class="f">N = <span data-q="N">50</span></span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th style="width:16mm">nhóm</th><th>conf</th><th>① acc = đúng/n</th><th>② gap = |conf − acc|</th><th>tỉ trọng n/N</th><th>③ tích</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Nhóm 1</td><td class="gvt" data-q="conf1">0.6</td><td class="an"><span data-q="ok1">6</span>/<span data-q="n1">10</span> = <span data-q="acc1">0.6</span></td><td class="an" data-q="gap1">0</td><td class="pt" data-q="w1">0.2</td><td class="an" data-q="p1">0</td></tr>
+          <tr><td class="l">Nhóm 2</td><td class="gvt" data-q="conf2">0.75</td><td class="an"><span data-q="ok2">7</span>/<span data-q="n2">10</span> = <span data-q="acc2">0.7</span></td><td class="an" data-q="gap2">0.05</td><td class="pt" data-q="w2">0.2</td><td class="an" data-q="p2">0.01</td></tr>
+          <tr><td class="l">Nhóm 3</td><td class="gvt" data-q="conf3">0.8</td><td class="an"><span data-q="ok3">16</span>/<span data-q="n3">20</span> = <span data-q="acc3">0.8</span></td><td class="an" data-q="gap3">0</td><td class="pt" data-q="w3">0.4</td><td class="an" data-q="p3">0</td></tr>
+          <tr><td class="l">Nhóm 4</td><td class="gvt" data-q="conf4">0.95</td><td class="an"><span data-q="ok4">7</span>/<span data-q="n4">10</span> = <span data-q="acc4">0.7</span></td><td class="an" data-q="gap4">0.25</td><td class="pt" data-q="w4">0.2</td><td class="an" data-q="p4">0.05</td></tr>
+        </tbody>
+      </table>
+      <div class="eq" style="margin-top:.4mm">③ ECE = <span data-q="p1">0</span> + <span data-q="p2">0.01</span> + <span data-q="p3">0</span> + <span data-q="p4">0.05</span> = <span class="qa" data-q="ece">0.06</span> &nbsp;<span style="display:inline-block;vertical-align:middle"><div class="track uni" id="barEa"></div></span></div>
+      <div class="why"><b>Vì sao ra số đó.</b> Nhóm 3 <b>đông nhất</b> (<span data-q="n3">20</span>/<span data-q="N">50</span> mẫu) lại <b>khớp hoàn hảo</b> (gap 0) nên kéo ECE xuống mạnh; nhóm 4 hứa <span data-q="conf4">0.95</span> mà chỉ làm được <span data-q="acc4">0.7</span> — lệch <span data-q="gap4">0.25</span> — là nguồn sai lớn nhất, nhưng chỉ chiếm <span data-q="w4">0.2</span> tỉ trọng nên đóng góp <span data-q="p4">0.05</span>. ECE ≈ <span data-q="ece">0.06</span> nghĩa là: <b>trung bình mỗi mẫu, lời hứa lệch sự thật khoảng <span data-q="ece">0.06</span></b>.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Bản đồ hiệu chỉnh đã vẽ xong</span><span class="f">khe hở tím = gap</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figRelA" viewBox="0 0 290 180" width="86mm" height="53mm" aria-label="reliability diagram đã tô"></svg>
+      <div class="storybox">Cột <b class="pk">lam</b> = tỉ lệ đúng thực tế; <b class="rw">chấm cam</b> trên chéo = mức lẽ ra phải đạt. Cột <b>dưới</b> chấm ⇒ <b>quá tự tin</b> (mô hình nói quá); cột <b>trên</b> chấm ⇒ quá dè dặt. Khe hở <b class="gk">tím</b> chính là gapᵢ.
+        <div class="cap" style="margin-top:1.2mm">Mạng nơ-ron sâu hiện đại gần như <b>luôn nằm dưới chéo</b> ở vùng tự tin cao — huấn luyện bằng cross-entropy đẩy softmax về gần 1 lâu sau khi phân loại đã đúng.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Quá tự tin &amp; nhiệt độ T — đáp án</div>
+    <table class="tbl-disc">
+      <thead><tr><th>trạng thái</th><th>conf</th><th>acc</th><th>gap</th><th>nhận xét</th></tr></thead>
+      <tbody>
+        <tr><td class="l">Trước (T = 1)</td><td class="gvt">0.95</td><td class="evt">0.80</td><td class="an">0.15</td><td style="text-align:left;font-size:8.6px">quá tự tin nặng</td></tr>
+        <tr><td class="l">Sau (T = 2)</td><td class="gvt">0.85</td><td class="evt">0.80</td><td class="an">0.05</td><td style="text-align:left;font-size:8.6px">gần chéo, acc giữ nguyên</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">Gap tụt <b>0.15 → 0.05</b> (giảm 3 lần) mà accuracy vẫn 0.80. T &gt; 1 chia đều logits nên <b>không đổi thứ hạng lớp</b> ⇒ mọi chỉ số dựa trên nhãn dự đoán (Acc, F1, ma trận nhầm lẫn ở L1) <b>không đổi</b>; chỉ độ tự tin — và ECE — thay đổi.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — đáp án</div>
+    <div class="eq">(a) acc(A) = 10/20 = <b>0.5</b> = conf(A) → gap(A) = <b>0</b> · acc(B) = 24/30 = <b>0.8</b> = conf(B) → gap(B) = <b>0</b> · ECE = 0.4·0 + 0.6·0 = <b>0</b></div>
+    <div class="eq">(b) Mô hình P: (10/50)·0.4 = <b>0.08</b> &nbsp;·&nbsp; Mô hình Q: (40/50)·0.4 = <b>0.32</b></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm"><b>(a)</b> Cả hai nhóm rơi <b>đúng lên đường chéo</b> (conf = acc) ⇒ mọi gap = 0 ⇒ dù trọng số là bao nhiêu, tổng vẫn 0. Đây là <b>định nghĩa</b> hiệu chỉnh hoàn hảo: ECE = 0 ⟺ mọi nhóm nằm trên chéo. Chú ý chiều ngược lại cũng đúng — ECE = 0 buộc <i>từng</i> gap phải bằng 0 vì mọi số hạng đều không âm. <b>(b)</b> Cùng một "vết lệch 0.4" mà ECE chênh <b>4 lần</b> (0.08 vs 0.32): ECE cân theo <b>số mẫu</b>, nên một nhóm đông lệch nhẹ có thể tệ hơn một nhóm nhỏ lệch nặng.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Lấy trung bình cộng của các gap:</b> (g₁+g₂+g₃+g₄)/4 <b>sai</b> — phải nhân tỉ trọng nᵢ/N, nếu không nhóm 2 mẫu nặng ngang nhóm 200 mẫu.</li>
+        <li><b>Quên trị tuyệt đối:</b> để dấu thì nhóm quá tự tin (+) và quá dè dặt (−) <b>triệt tiêu nhau</b>, ra ECE ≈ 0 cho một mô hình lệch tứ tung.</li>
+        <li><b>Tưởng accuracy cao ⇒ hiệu chỉnh tốt:</b> hai chuyện khác nhau — mô hình đúng 90% mà luôn nói "99%" vẫn có ECE lớn; ngược lại mô hình yếu nhưng biết mình yếu có thể ECE ≈ 0.</li>
+        <li><b>Chia bin quá nhỏ:</b> mỗi bin còn vài mẫu thì accᵢ nhiễu nặng (0 hoặc 1), ECE bị thổi phồng. Thường dùng 10–15 bin và đủ mẫu mỗi bin.</li>
+        <li><b>Tưởng temperature scaling làm mô hình giỏi hơn:</b> nó không đổi nhãn dự đoán nên Acc/F1 giữ nguyên — chỉ sửa <i>độ tự tin</i>. Và phải học T trên tập <b>validation</b>, không phải test.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Gom theo nhóm tự tin → <b>accᵢ = đúng/nᵢ</b>, <b>gapᵢ = |confᵢ − accᵢ|</b>, <b>ECE = Σ (nᵢ/N)·gapᵢ</b>: nằm trên chéo ⇒ gap 0 ⇒ ECE 0; ECE là trung bình <b>có trọng số theo số mẫu</b>; mạng sâu thường quá tự tin và temperature T &gt; 1 kéo nó về chéo mà không đổi accuracy. Bài tiếp <b>L7 · FLOPs</b>: sau khi biết mô hình <i>đúng</i> và <i>đáng tin</i> đến đâu, đếm xem nó <b>tốn bao nhiêu phép tính</b>.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L6 · Calibration (ECE)</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var n1=5, n2=5, N=n1+n2;
-  var conf1 = WB.pick([0.9, 0.8]);
-  var conf2 = WB.pick([0.6, 0.5, 0.7]);
-  var n1ok = WB.randInt(3,5);             // acc1 = n1ok/5
-  var n2ok = Math.round(conf2*5);          // bin2 well-calibrated → gap2 = 0 (mostly)
-  var acc1 = Math.round(n1ok/n1*100)/100;
-  var acc2 = Math.round(n2ok/n2*100)/100;
-  var gap1 = Math.round(Math.abs(conf1-acc1)*100)/100;
-  var gap2 = Math.round(Math.abs(conf2-acc2)*100)/100;
-  var ece = Math.round((n1/N*gap1 + n2/N*gap2)*1000)/1000;
-  WB.setAll({
-    N:String(N), n1:String(n1), n2:String(n2), conf1:f(conf1), conf2:f(conf2),
-    n1ok:String(n1ok), n2ok:String(n2ok),
-    acc1:f(acc1), acc2:f(acc2), gap1:f(gap1), gap2:f(gap2), ece:f(ece)
-  });
-  drawRel('figR', conf1, acc1, conf2, acc2);
-}
-function drawRel(id, c1, a1, c2, a2){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=30, y0=12, S=92, base=y0+S;
-  function X(v){ return x0 + v*S; }
-  function Y(v){ return base - v*S; }
-  var s='';
-  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+S)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+S)+'" y2="'+y0+'" stroke="#b45309" stroke-width="1.3" stroke-dasharray="3 3"/>';
-  var bins=[[c1,a1],[c2,a2]];
-  for(var k=0;k<2;k++){
-    var c=bins[k][0], a=bins[k][1];
-    var bx=X(c)-9;
-    s+='<rect x="'+bx.toFixed(1)+'" y="'+Y(a).toFixed(1)+'" width="18" height="'+(a*S).toFixed(1)+'" fill="#0e749022" stroke="#0e7490" stroke-width="1.2"/>';
-    // ideal marker on diagonal
-    s+='<circle cx="'+X(c).toFixed(1)+'" cy="'+Y(c).toFixed(1)+'" r="2.6" fill="#b45309"/>';
-    s+='<text x="'+X(c).toFixed(1)+'" y="'+(base+11)+'" text-anchor="middle" font-size="7.5" fill="#5b6776">'+WB.fmtTrim(c)+'</text>';
+var CACC='#0e7490', CCONF='#b45309', CGAP='#7c5cff';
+
+function drawBar(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v>0){
+    var pct=Math.min(Math.abs(v)/max,1)*100;
+    h+='<div class="fill pos" style="left:0;width:'+pct+'%"></div>';
   }
-  s+='<text x="'+(x0+S/2)+'" y="'+(base+18)+'" text-anchor="middle" font-size="8" fill="#5b6776">conf →</text>';
-  s+='<text x="'+(x0-4)+'" y="'+(y0+2)+'" text-anchor="end" font-size="8" fill="#5b6776">acc</text>';
+  el.innerHTML=h;
+}
+
+/* reliability diagram — show=false: cột để trống cho người học tô */
+function drawRel(id, bins, show){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=34, y0=14, S=132, base=y0+S;
+  function X(v){ return x0+v*S; } function Y(v){ return base-v*S; }
+  var s='';
+  /* lưới + trục */
+  for(var g=0; g<=1.0001; g+=0.25){
+    s+='<line x1="'+X(g).toFixed(1)+'" y1="'+y0+'" x2="'+X(g).toFixed(1)+'" y2="'+base+'" stroke="#eef1f5" stroke-width="1"/>';
+    s+='<line x1="'+x0+'" y1="'+Y(g).toFixed(1)+'" x2="'+(x0+S)+'" y2="'+Y(g).toFixed(1)+'" stroke="#eef1f5" stroke-width="1"/>';
+    s+='<text x="'+(x0-4)+'" y="'+(Y(g)+2.6).toFixed(1)+'" text-anchor="end" font-size="6.6" fill="#6b7280">'+WB.fmtTrim(Math.round(g*100)/100)+'</text>';
+    s+='<text x="'+X(g).toFixed(1)+'" y="'+(base+9)+'" text-anchor="middle" font-size="6.6" fill="#6b7280">'+WB.fmtTrim(Math.round(g*100)/100)+'</text>';
+  }
+  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+S)+'" y2="'+base+'" stroke="#9aa5b1" stroke-width="1.2"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+base+'" stroke="#9aa5b1" stroke-width="1.2"/>';
+  /* đường chéo hoàn hảo */
+  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+S)+'" y2="'+y0+'" stroke="'+CCONF+'" stroke-width="1.5" stroke-dasharray="4 3"/>';
+  /* nhãn trục */
+  s+='<text x="'+(x0+S/2)+'" y="'+(base+19)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#16202e">độ tự tin conf →</text>';
+  s+='<text x="10" y="'+(y0+S/2)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#16202e" transform="rotate(-90 10 '+(y0+S/2)+')">tỉ lệ đúng thực tế</text>';
+  var W=10;
+  for(var k=0;k<bins.length;k++){
+    var c=bins[k].conf, a=bins[k].acc, bx=X(c)-W/2;
+    if(show){
+      s+='<rect x="'+bx.toFixed(1)+'" y="'+Y(a).toFixed(1)+'" width="'+W+'" height="'+(a*S).toFixed(1)+'" fill="#dff0f3" stroke="'+CACC+'" stroke-width="1.4"/>';
+      if(Math.abs(c-a)>0.001){   /* khe hở tím = gap giữa acc và chéo */
+        var yh=Math.min(Y(a),Y(c)), hh=Math.abs(Y(a)-Y(c));
+        s+='<rect x="'+bx.toFixed(1)+'" y="'+yh.toFixed(1)+'" width="'+W+'" height="'+hh.toFixed(1)+'" fill="#efeafc" stroke="'+CGAP+'" stroke-width="1.2" stroke-dasharray="2.5 2"/>';
+      }
+    }else{
+      s+='<rect x="'+bx.toFixed(1)+'" y="'+y0+'" width="'+W+'" height="'+(base-y0)+'" fill="#fbfcfd" stroke="#c3ccd6" stroke-width="1" stroke-dasharray="3 2.5"/>';
+      s+='<text x="'+X(c).toFixed(1)+'" y="'+(y0+S/2)+'" text-anchor="middle" font-size="7" font-weight="800" fill="#c3ccd6">?</text>';
+    }
+    /* chấm cam lý tưởng trên chéo + nhãn nhóm (vẽ SAU cột để không bị che) */
+    s+='<circle cx="'+X(c).toFixed(1)+'" cy="'+Y(c).toFixed(1)+'" r="2.6" fill="'+CCONF+'"/>';
+    s+='<text x="'+X(c).toFixed(1)+'" y="'+(y0-4)+'" text-anchor="middle" font-size="6.4" font-weight="800" fill="#6b7280">N'+(k+1)+'</text>';
+  }
+  s+='<text x="'+(x0+24)+'" y="'+(base-4)+'" text-anchor="start" font-size="6.6" font-weight="800" fill="'+CCONF+'">chéo = hoàn hảo</text>';
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+
+/* thanh tỉ trọng: N mẫu chia thành 4 khúc theo nᵢ */
+function drawWeight(id, ns, N){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=8, W=256, y=8, H=22, s='', x=x0;
+  var fills=['#eaf4f6','#fff5e9','#f5f1fe','#eefaf8'];
+  var strokes=[CACC,CCONF,CGAP,'#0f766e'];
+  for(var k=0;k<ns.length;k++){
+    var w=W*ns[k]/N;
+    s+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+w.toFixed(1)+'" height="'+H+'" fill="'+fills[k]+'" stroke="'+strokes[k]+'" stroke-width="1.4"/>';
+    s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+9)+'" text-anchor="middle" font-size="7" font-weight="800" fill="'+strokes[k]+'">Nhóm '+(k+1)+'</text>';
+    s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+19)+'" text-anchor="middle" font-size="7.6" font-weight="800" fill="#16202e" font-family="Consolas,monospace">'+WB.fmtInt(ns[k])+'</text>';
+    s+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+H+12)+'" text-anchor="middle" font-size="6.8" fill="#6b7280">'+WB.fmtInt(ns[k])+'/'+WB.fmtInt(N)+'</text>';
+    x+=w;
+  }
+  s+='<text x="'+x0+'" y="'+(y+H+24)+'" font-size="7" font-weight="700" fill="#16202e">Bề rộng mỗi khúc = tỉ trọng nhóm đó trong ECE · tổng N = '+WB.fmtInt(N)+' mẫu</text>';
+  svg.innerHTML=s;
+}
+
+/* minh hoạ temperature scaling (kịch bản cố định của khối Khám phá) */
+function drawTemp(id){
+  var svg=document.getElementById(id); if(!svg) return;
+  var base=74, top=8, H=base-top, s='', ya=base-H*0.8;
+  function bar(x,v,lab){
+    var h=H*v;
+    s+='<rect x="'+x+'" y="'+(base-h).toFixed(1)+'" width="34" height="'+h.toFixed(1)+'" fill="#fff5e9" stroke="'+CCONF+'" stroke-width="1.4"/>';
+    s+='<text x="'+(x+17)+'" y="'+(base-h-3).toFixed(1)+'" text-anchor="middle" font-size="7" font-weight="800" fill="'+CCONF+'">'+lab+'</text>';
+  }
+  /* mức acc thực = 0.80 (không đổi khi hạ nhiệt độ) */
+  s+='<line x1="10" y1="'+ya.toFixed(1)+'" x2="128" y2="'+ya.toFixed(1)+'" stroke="'+CACC+'" stroke-width="1.4" stroke-dasharray="4 3"/>';
+  s+='<text x="132" y="'+(ya+2.4).toFixed(1)+'" text-anchor="start" font-size="6.8" font-weight="800" fill="'+CACC+'">acc thực = 0.80</text>';
+  bar(18,0.95,'0.95');
+  bar(88,0.85,'0.85');
+  s+='<line x1="10" y1="'+base+'" x2="128" y2="'+base+'" stroke="#9aa5b1" stroke-width="1.2"/>';
+  s+='<text x="35" y="'+(base+10)+'" text-anchor="middle" font-size="7" font-weight="700" fill="#16202e">T = 1</text>';
+  s+='<text x="105" y="'+(base+10)+'" text-anchor="middle" font-size="7" font-weight="700" fill="#16202e">T = 2</text>';
+  s+='<text x="10" y="'+(base+22)+'" font-size="6.8" font-weight="700" fill="'+CGAP+'">chia logits cho T ⇒ cột cam thấp xuống,</text>';
+  s+='<text x="10" y="'+(base+31)+'" font-size="6.8" font-weight="700" fill="'+CGAP+'">vạch lam (acc) đứng yên</text>';
+  svg.innerHTML=s;
+}
+
+function gen(){
+  var F=WB.fmtTrim, r2=function(x){return Math.round(x*100)/100;}, r3=function(x){return Math.round(x*1000)/1000;};
+  var n1=10, n2=10, n3=20, n4=10, N=n1+n2+n3+n4;
+  var conf1, conf2, conf3, conf4, ok1, ok2, ok3, ok4;
+  var acc1, acc2, acc3, acc4, gap1, gap2, gap3, gap4, p1, p2, p3, p4, ece;
+  var guard=0;
+  do{
+    conf1=WB.pick([0.5,0.55]);
+    conf2=WB.pick([0.6,0.65]);
+    conf3=WB.pick([0.75,0.8]);
+    conf4=WB.pick([0.9,0.95]);
+    ok1=WB.randInt(4,6);
+    ok2=WB.randInt(5,7);
+    ok3=Math.round(conf3*n3);          // nhóm đông LUÔN khớp → gap3 = 0 (điểm tựa tự kiểm)
+    ok4=WB.randInt(6,8);
+    acc1=r2(ok1/n1); acc2=r2(ok2/n2); acc3=r2(ok3/n3); acc4=r2(ok4/n4);
+    gap1=r2(Math.abs(conf1-acc1)); gap2=r2(Math.abs(conf2-acc2));
+    gap3=r2(Math.abs(conf3-acc3)); gap4=r2(Math.abs(conf4-acc4));
+    p1=r3(n1/N*gap1); p2=r3(n2/N*gap2); p3=r3(n3/N*gap3); p4=r3(n4/N*gap4);
+    ece=r3(p1+p2+p3+p4);
+    guard++;
+  }while(guard<60 && (gap3!==0 || gap4<0.15 || ece<=0.02 || ece>0.12
+        || conf2-conf1<0.0999 || conf3-conf2<0.0999 || conf4-conf3<0.0999));
+
+  WB.setAll({
+    N:WB.fmtInt(N), n1:WB.fmtInt(n1), n2:WB.fmtInt(n2), n3:WB.fmtInt(n3), n4:WB.fmtInt(n4),
+    ok1:WB.fmtInt(ok1), ok2:WB.fmtInt(ok2), ok3:WB.fmtInt(ok3), ok4:WB.fmtInt(ok4),
+    conf1:F(conf1), conf2:F(conf2), conf3:F(conf3), conf4:F(conf4),
+    acc1:F(acc1), acc2:F(acc2), acc3:F(acc3), acc4:F(acc4),
+    gap1:F(gap1), gap2:F(gap2), gap3:F(gap3), gap4:F(gap4),
+    w1:F(r2(n1/N)), w2:F(r2(n2/N)), w3:F(r2(n3/N)), w4:F(r2(n4/N)),
+    p1:F(p1), p2:F(p2), p3:F(p3), p4:F(p4), ece:F(ece)
+  });
+
+  var bins=[{conf:conf1,acc:acc1},{conf:conf2,acc:acc2},{conf:conf3,acc:acc3},{conf:conf4,acc:acc4}];
+  drawRel('figRel', bins, false);
+  drawRel('figRelA', bins, true);
+  drawWeight('figWeight', [n1,n2,n3,n4], N);
+  drawTemp('figTemp');
+  drawBar('bar1', gap1, 0.4, false);
+  drawBar('bar2', gap2, 0.4, false);
+  drawBar('bar3', gap3, 0.4, false);
+  drawBar('bar4', gap4, 0.4, false);
+  drawBar('barE', ece, 0.2, false);
+  drawBar('barEa', ece, 0.2, true);
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

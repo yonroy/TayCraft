@@ -1,204 +1,373 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài L2 — ROC &amp; AUC (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài L2 — ROC &amp; AUC (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple);background:#f8f6fd} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc th.l{text-align:left}
+.tbl-disc td{padding:1.6mm .5mm;border-bottom:1px solid var(--line2);font:700 9.4px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;font:700 9px var(--sans);color:var(--ink)}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.evt{color:var(--blue);font-weight:800}
+.gvt{color:var(--orange);font-weight:800}
+.pk{color:var(--purple);font-weight:800}
+.cellb{display:inline-block;width:16mm;height:6mm;border:1.5px solid var(--ink);border-radius:2.5px;background:#fff;vertical-align:middle}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>ROC &amp; AUC <small>— xếp hạng độc lập ngưỡng · <i>ROC &amp; AUC</i></small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~13 phút · Bài L2</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>dương +</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>âm −</span>
+      <span><span class="sw" style="background:#f1ecfb;border:1px solid var(--purple)"></span>ROC / AUC</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài L2</span><h1>ROC &amp; AUC <small>— xếp hạng độc lập ngưỡng</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Một mô hình cho <b>điểm số</b>, ta chọn ngưỡng để quyết. ROC tóm tắt chất lượng ở <b>mọi ngưỡng</b>; AUC = một số
-    duy nhất so sánh mô hình mà không cần cố định ngưỡng. AUC = xác suất xếp một dương ngẫu nhiên trên một âm ngẫu nhiên.
-    <div class="formula">TPR = TP/(TP+FN) &nbsp; FPR = FP/(FP+TN) &nbsp; AUC = P( điểm(dương) &gt; điểm(âm) )</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Từ <b>điểm số</b> của 4 mẫu và nhãn thật (+/−), tự đếm số <b>cặp (dương, âm)</b>, đếm cặp <b>xếp đúng</b> (điểm dương &gt; điểm âm), rồi tính <b>AUC = cặp đúng / tổng cặp</b>. Cuối phiếu bạn tự chứng minh được: AUC = xác suất mô hình cho một dương điểm cao hơn một âm, <b>độc lập ngưỡng</b>; AUC = 1 là xếp hạng hoàn hảo, 0.5 là đoán mò.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Hạ ngưỡng → bắt được nhiều dương hơn (TPR ↑) nhưng cũng báo nhầm nhiều âm hơn (FPR ↑). ROC là quỹ đạo đánh đổi đó. AUC = 1: xếp hạng
-    hoàn hảo (mọi dương điểm cao hơn mọi âm); AUC = 0.5: đoán mò (đường chéo).
+  <div class="why2 p"><b>💡 Trực giác.</b> Mô hình chỉ cho ra <b>điểm số</b>; ta chọn một <b>ngưỡng</b> để cắt thành dương/âm. Hạ ngưỡng → bắt được nhiều dương hơn (<b>TPR ↑</b>) nhưng cũng báo nhầm nhiều âm hơn (<b>FPR ↑</b>). <b>ROC</b> là quỹ đạo của đánh đổi đó khi quét mọi ngưỡng; <b>AUC</b> (diện tích dưới đường) gói toàn bộ chất lượng thành <b>một số</b> — không cần cố định ngưỡng.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — điểm &amp; nhãn của 4 mẫu</span><span class="f">giảm dần theo điểm</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figScores" viewBox="0 0 270 104" width="90mm" height="35mm" aria-label="trục điểm số 0 đến 1 với các chấm dương và âm"></svg>
+      <div class="storybox">
+        Điểm &amp; nhãn: <b class="evt" data-q="s0">0.9</b>(<span data-q="l0">+</span>) ·
+        <b class="gvt" data-q="s1">0.6</b>(<span data-q="l1">−</span>) ·
+        <b class="evt" data-q="s2">0.5</b>(<span data-q="l2">+</span>) ·
+        <b class="gvt" data-q="s3">0.2</b>(<span data-q="l3">−</span>)
+        <div class="cap" style="margin-top:1.2mm"><b>Đọc trục:</b> chấm <b class="evt">lam</b> = mẫu <i>dương</i>, chấm <b class="gvt">cam</b> = mẫu <i>âm</i>; càng sang <b>phải</b> = điểm càng cao. Xếp hạng tốt ⇔ mọi chấm lam nằm bên phải mọi chấm cam.</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">4 mẫu</span></div>
-    <div class="calc" style="font-size:14px">
-      điểm &amp; nhãn (giảm dần): <span class="gv" data-q="s0">0.9</span>(<span data-q="l0">+</span>),
-      <span class="gv" data-q="s1">0.6</span>(<span data-q="l1">−</span>), <span class="gv" data-q="s2">0.5</span>(<span data-q="l2">+</span>),
-      <span class="gv" data-q="s3">0.2</span>(<span data-q="l3">−</span>)
+  <div class="panel">
+    <div class="ph"><span class="t">① Đếm số cặp (dương, âm)</span><span class="f">#dương × #âm</span></div>
+    <div class="pb">
+      <div class="eq">Số cặp = <span data-q="nPos">2</span> dương × <span data-q="nNeg">2</span> âm = <span class="slot ans"></span> cặp</div>
+      <div class="why2"><b>Vì sao?</b> AUC nhìn <b>mọi cách ghép</b> một mẫu dương với một mẫu âm. Với mỗi cặp ta hỏi: mô hình có cho <b>dương điểm cao hơn âm</b> không? AUC = tỉ lệ cặp trả lời "có".</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Đếm cặp (dương, âm)</h2><span class="tag">#dương · #âm</span></div>
-    <div class="calc">
-      <span data-q="nPos">2</span> dương × <span data-q="nNeg">2</span> âm = <span class="blk" style="min-width:40px"></span> cặp
+  <div class="why2 o"><b>🔮 Dự đoán trước khi tính.</b> Nhìn trục điểm ở trên: có chấm <b>cam (âm)</b> nào nằm bên <b>phải</b> một chấm <b>lam (dương)</b> không? Mỗi lần như vậy là <b>một cặp xếp sai</b>. Đếm nhẩm số cặp sai rồi kiểm ngay ở bước ② bên dưới.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Đếm cặp xếp ĐÚNG (điểm dương &gt; điểm âm)</span><span class="f">✓ đúng · ✗ sai</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th class="l">Cặp — dương ↔ âm</th><th>điểm dương &gt; điểm âm ?</th><th>✓ / ✗</th></tr></thead>
+        <tbody>
+          <tr><td class="l">dương <b class="evt" data-q="pp0">0.9</b> so với âm <b class="gvt" data-q="pn0">0.6</b></td><td>___ &gt; ___ ?</td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">dương <b class="evt" data-q="pp1">0.9</b> so với âm <b class="gvt" data-q="pn1">0.2</b></td><td>___ &gt; ___ ?</td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">dương <b class="evt" data-q="pp2">0.5</b> so với âm <b class="gvt" data-q="pn2">0.6</b></td><td>___ &gt; ___ ?</td><td><span class="cellb"></span></td></tr>
+          <tr><td class="l">dương <b class="evt" data-q="pp3">0.5</b> so với âm <b class="gvt" data-q="pn3">0.2</b></td><td>___ &gt; ___ ?</td><td><span class="cellb"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="eq" style="margin-top:.6mm">Số cặp xếp đúng = <span class="slot ans"></span> / <span data-q="nPairs">4</span></div>
+      <div class="why2"><b>Mẹo.</b> Cặp <b>sai</b> là khi một mẫu <i>âm</i> có điểm <b>cao hơn</b> một mẫu <i>dương</i> (một nghịch đảo trên trục điểm). Không có nghịch đảo nào ⇒ mọi cặp đúng.</div>
     </div>
-    <div class="why"><b>Vì sao:</b> AUC đếm tỉ lệ cặp được <b>xếp đúng</b> (dương có điểm &gt; âm).</div>
   </div>
 
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cặp xếp đúng</h2><span class="tag">dương &gt; âm</span></div>
-    <div class="calc">
-      số cặp mà điểm(dương) &gt; điểm(âm) = <span class="blk" style="min-width:40px"></span> / <span data-q="nPairs">4</span>
-    </div>
-    <div class="hint">Cặp <b>sai</b> là khi một âm có điểm <b>cao hơn</b> một dương.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>AUC</h2><span class="tag">đúng / tổng</span></div>
-    <div class="calc">
-      AUC = <span data-q="nCorrect">3</span>/<span data-q="nPairs">4</span> = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> khả năng mô hình cho dương điểm cao hơn âm; &gt; 0.5 là xếp hạng tốt hơn đoán mò.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>ROC &amp; chọn ngưỡng</h2><span class="tag">TPR vs FPR</span></div>
-    <div class="note">Mỗi ngưỡng cho một điểm (FPR, TPR) trên ROC; chọn ngưỡng theo nhu cầu (ưu tiên ít báo nhầm → FPR thấp). AUC độc lập ngưỡng.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>AUC = 0.5 nghĩa là gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>ROC vẽ hai trục nào? → <span class="blk" style="min-width:150px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L2 · ROC &amp; AUC</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:32mm"><span class="lb">Nháp — đếm cặp &amp; số cặp sai (khoanh nghịch đảo trên trục điểm)</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L2 · ROC &amp; AUC</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài L2</span><h1>ROC &amp; AUC <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Số cặp</h2></div>
-    <div class="calc ans"><span data-q="nPos">2</span>×<span data-q="nNeg">2</span> = <span class="blk" data-q="nPairs">4</span> cặp</div>
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>ROC &amp; AUC <small>— cặp xếp đúng · AUC · đường ROC</small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cặp xếp đúng</h2></div>
-    <div class="calc ans"><span class="blk" data-q="nCorrect">3</span> / <span data-q="nPairs">4</span> &nbsp;<span class="note" style="display:inline" data-q="pairNote">(0.9+,0.5+ đều cao hơn các âm trừ 0.5+ vs 0.6−)</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>AUC</h2></div>
-    <div class="calc ans">AUC = <span data-q="nCorrect">3</span>/<span data-q="nPairs">4</span> = <span class="blk" data-q="auc">0.75</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Đường ROC (bậc thang) vs đường chéo 0.5</h2><span class="tag">AUC</span></div>
-    <div class="figrow">
-      <svg id="figR" class="fig" viewBox="0 0 250 130" width="74mm" height="42mm" aria-label="đường ROC bậc thang trên đường chéo, diện tích dưới là AUC"></svg>
-      <div style="flex:1">
-        <div class="note">Quét ngưỡng từ cao xuống: gặp dương → bước <b>lên</b> (TPR↑), gặp âm → bước <b>sang phải</b> (FPR↑). Đường càng phình về góc trên-trái → AUC càng lớn; đường chéo = đoán mò (0.5).</div>
+  <div class="panel">
+    <div class="ph"><span class="t">③ AUC = cặp đúng / tổng cặp</span><span class="f">một số ∈ [0, 1]</span></div>
+    <div class="pb">
+      <div class="figwrap" style="align-items:center">
+        <div style="flex:1">
+          <div class="eq">AUC = <span data-q="nCorrect">3</span> / <span data-q="nPairs">4</span> = <span class="slot ans"></span></div>
+          <div class="why2 p"><b>Vì sao là "xác suất"?</b> Bốc ngẫu nhiên 1 dương và 1 âm: xác suất mô hình cho dương điểm cao hơn chính là <b>tỉ lệ cặp đúng</b> = AUC. &gt; 0.5 là xếp hạng tốt hơn đoán mò.</div>
+        </div>
+        <div style="text-align:center;flex:0 0 auto">
+          <div class="track uni" id="barAUCq"><div class="zero"></div><div class="tick" style="left:50%"></div></div>
+          <div class="cap" style="text-align:center;margin-top:1mm">Tự tô độ dài = AUC<br>Thang: 0 &nbsp;·&nbsp; 0.5 &nbsp;·&nbsp; 1</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>AUC = 0.5? → <span class="qa">Mô hình xếp hạng như đoán mò (đường chéo).</span></li>
-      <li>Hai trục ROC? → <span class="qa">TPR (trục dọc) vs FPR (trục ngang) khi quét ngưỡng.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">④ Đường ROC &amp; chọn ngưỡng</span><span class="f">TPR (dọc) vs FPR (ngang)</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figROC" viewBox="0 0 250 130" width="74mm" height="42mm" aria-label="lưới ROC trống với đường chéo đoán mò để tự vẽ bậc thang"></svg>
+      <div class="storybox">
+        <b>Tự vẽ bậc thang:</b> quét ngưỡng từ điểm cao xuống, gặp mẫu <b class="evt">dương</b> → bước <b>lên</b> (TPR↑), gặp mẫu <b class="gvt">âm</b> → bước <b>sang phải</b> (FPR↑). Bắt đầu ở (0,0), kết ở (1,1).
+        <div class="cap" style="margin-top:1mm">Đường càng phình về góc <b>trên-trái</b> → AUC càng lớn. Đường chéo <b class="gvt">cam đứt</b> = đoán mò (AUC 0.5). Chọn ngưỡng theo nhu cầu: sợ báo nhầm → lấy điểm có <b>FPR thấp</b>. AUC <b>độc lập ngưỡng</b>.</div>
+      </div>
+    </div></div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> ROC = đánh đổi TPR/FPR theo ngưỡng; AUC = xác suất xếp dương trên âm, độc lập ngưỡng. Bài tiếp (L3): đo
-    chất lượng embedding bằng <b style="color:var(--accent2)">cosine</b>.
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — hạ ngưỡng thì CẢ TPR lẫn FPR cùng tăng</div>
+    <div style="font-size:9px;line-height:1.45">Bộ khác: 5 mẫu giảm dần <b>0.9(+), 0.7(−), 0.6(+), 0.4(+), 0.3(−)</b> — có <b>3 dương, 2 âm</b>. Hạ ngưỡng τ dần: mọi mẫu điểm ≥ τ bị "báo dương". Điền TPR = TP/3 và FPR = FP/2:</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th class="l">Ngưỡng τ (báo dương nếu điểm ≥ τ)</th><th>TP</th><th>FP</th><th>TPR = TP/3</th><th>FPR = FP/2</th></tr></thead>
+      <tbody>
+        <tr><td class="l">τ giữa 0.9–0.7 (chỉ 0.9)</td><td>1</td><td>0</td><td><span class="cellb" style="width:14mm"></span></td><td><span class="cellb" style="width:14mm"></span></td></tr>
+        <tr><td class="l">τ giữa 0.6–0.4 (0.9, 0.7, 0.6)</td><td>2</td><td>1</td><td><span class="cellb" style="width:14mm"></span></td><td><span class="cellb" style="width:14mm"></span></td></tr>
+        <tr><td class="l">τ dưới 0.3 (cả 5 mẫu)</td><td>3</td><td>2</td><td><span class="cellb" style="width:14mm"></span></td><td><span class="cellb" style="width:14mm"></span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Ba dòng cho ba <b>điểm (FPR, TPR)</b> đi từ (0,0) lên (1,1): đó chính là các bậc của <b>đường ROC</b>. Không thể chỉ tăng TPR mà giữ FPR — phải trả giá bằng báo nhầm.</div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L2 · ROC &amp; AUC</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — AUC = 1 khi xếp hạng hoàn hảo, = 0.5 khi đoán mò</div>
+    <div style="font-size:9px;line-height:1.45">Vẫn 2 dương &amp; 2 âm ⇒ <b>4 cặp</b>. Đếm cặp đúng cho 3 tình huống:</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th class="l">Tình huống xếp hạng</th><th>cặp đúng / 4</th><th>AUC</th></tr></thead>
+      <tbody>
+        <tr><td class="l">HOÀN HẢO — 2 dương đều điểm cao hơn 2 âm</td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:14mm"></span></td></tr>
+        <tr><td class="l">DỞ NHẤT — 2 dương đều thấp hơn 2 âm</td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:14mm"></span></td></tr>
+        <tr><td class="l">ĐOÁN MÒ — xếp ngẫu nhiên (trung bình)</td><td>≈ 2 / 4</td><td><span class="cellb" style="width:14mm"></span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ AUC luôn nằm trong <b>[0, 1]</b>: đúng bằng <b>1</b> chỉ khi <i>mọi</i> dương vượt <i>mọi</i> âm; <b>0.5</b> nghĩa là ngang tung đồng xu; dưới 0.5 là xếp <b>ngược</b>. AUC đo <i>thứ tự xếp hạng</i>, chứng minh được chỉ bằng cách đếm cặp — không cần ngưỡng nào.</div>
+  </div>
+
+  <div class="scratch" style="height:28mm"><span class="lb">Nháp — cặp đúng · AUC · bậc thang ROC · quét ngưỡng</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Đếm cặp</span>
+    <span><span class="ck"></span>Cặp xếp đúng</span>
+    <span><span class="ck"></span>Tính AUC</span>
+    <span><span class="ck"></span>Vẽ ROC</span>
+    <span class="win">🎉 Xong Bài L2!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L2 · ROC &amp; AUC</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>ROC &amp; AUC <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — đếm cặp, cặp đúng, AUC (đáp án)</span><span class="f">cặp: <span data-q="pm0">✓</span><span data-q="pm1">✓</span><span data-q="pm2">✗</span><span data-q="pm3">✓</span></span></div>
+    <div class="pb"><div class="figwrap" style="align-items:center">
+      <div style="flex:1">
+        <div class="eq">① Số cặp = <span data-q="nPos">2</span> × <span data-q="nNeg">2</span> = <span class="qa" data-q="nPairs">4</span></div>
+        <div class="eq">② Cặp đúng = <span class="qa" data-q="nCorrect">3</span> / <span data-q="nPairs">4</span> &nbsp;<span class="cap" style="display:inline" data-q="pairNote">Cặp sai: một dương điểm thấp bị một âm điểm cao vượt qua → 3/4 đúng.</span></div>
+        <div class="eq">③ AUC = <span data-q="nCorrect">3</span> / <span data-q="nPairs">4</span> = <span class="qa" data-q="auc">0.75</span></div>
+      </div>
+      <div style="text-align:center;flex:0 0 auto">
+        <div class="track uni" id="barAUC"></div>
+        <div class="cap" style="text-align:center;margin-top:1mm">AUC trên thang 0 … 1</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Trục điểm — cặp SAI lộ ra (nghịch đảo)</span><span class="f">cung đỏ = âm vượt dương</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figScoresA" viewBox="0 0 270 104" width="100mm" height="39mm" aria-label="trục điểm với cung đỏ nối các cặp nghịch đảo"></svg>
+      <div class="storybox">Mỗi <b style="color:#c0392b">cung đỏ ✗</b> nối một mẫu <b class="gvt">âm</b> nằm <i>bên phải</i> (điểm cao hơn) một mẫu <b class="evt">dương</b> — đó là một <b>cặp xếp sai</b>. Đếm số cung đỏ = số cặp sai; phần còn lại là cặp đúng. Không có cung đỏ ⇒ AUC = 1.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Đường ROC đã vẽ — diện tích dưới = AUC</span><span class="f">quét ngưỡng</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figROCA" viewBox="0 0 250 130" width="82mm" height="46mm" aria-label="đường ROC bậc thang tím, vùng dưới tô nhạt là AUC"></svg>
+      <div class="storybox">Bậc thang <b class="pk">tím</b>: mỗi mẫu <b class="evt">dương</b> đẩy đường <b>lên</b>, mỗi mẫu <b class="gvt">âm</b> đẩy <b>sang phải</b>. <b>Diện tích dưới đường</b> (vùng tím nhạt) chính bằng <b>AUC</b>. Càng phình về góc trên-trái → AUC càng gần 1; nằm trên đường chéo cam = tốt hơn đoán mò.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">📐 Công thức chốt</span><span class="f">TP đúng-dương · FP báo-nhầm · FN bỏ-sót · TN đúng-âm</span></div>
+    <div class="pb">
+      <div class="eq">TPR = TP / (TP + FN) &nbsp;·&nbsp; FPR = FP / (FP + TN) &nbsp;·&nbsp; AUC = P( điểm(dương) &gt; điểm(âm) ) = cặp đúng / tổng cặp</div>
+      <div class="cap" style="margin-top:.4mm">TPR = tỉ lệ dương bắt được (Recall) · FPR = tỉ lệ âm bị báo nhầm · mỗi ngưỡng cho một điểm (FPR, TPR) trên ROC · AUC = diện tích dưới toàn bộ đường.</div>
+    </div>
+  </div>
+
+  <div class="why"><b>🔬 Khám phá — đáp án.</b> Ba ngưỡng cho: (TPR, FPR) = (1/3, 0) → (2/3, 1/2) → (1, 1). Cả hai chỉ số <b>cùng tăng</b> khi hạ ngưỡng — đó là ba bậc của đường ROC. Muốn bắt thêm dương (TPR↑) luôn phải chịu thêm báo nhầm (FPR↑): không có bữa trưa miễn phí.</div>
+
+  <div class="why t"><b>🔎 Tự kiểm — đáp án.</b> HOÀN HẢO: <b>4/4 → AUC = 1</b>. DỞ NHẤT: <b>0/4 → AUC = 0</b> (xếp ngược hoàn toàn). ĐOÁN MÒ: ≈ 2/4 → <b>AUC ≈ 0.5</b>. Vậy AUC ∈ [0,1], = 1 chỉ khi mọi dương vượt mọi âm, = 0.5 là mức đoán mò — tất cả kiểm được bằng cách <b>đếm cặp</b>, không cần chọn ngưỡng.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Nhầm AUC với Accuracy:</b> AUC đo <b>xếp hạng</b> trên mọi ngưỡng; Accuracy chỉ đúng/sai tại <b>một</b> ngưỡng đã chọn.</li>
+        <li><b>Tưởng AUC đổi theo ngưỡng:</b> AUC dùng toàn bộ điểm số nên <b>độc lập ngưỡng</b> — đổi ngưỡng không đổi AUC.</li>
+        <li><b>Vẽ ngược trục ROC:</b> <b>TPR trục dọc</b>, <b>FPR trục ngang</b>; đảo lại thì đường sai hoàn toàn.</li>
+        <li><b>Quên mốc 0.5:</b> AUC = 0.5 là đoán mò; <b>dưới 0.5</b> là tệ hơn tung đồng xu (mô hình xếp ngược — nên lật nhãn).</li>
+        <li><b>Đếm cặp sai kiểu khác:</b> cặp sai = một <b>âm điểm cao hơn</b> một dương (nghịch đảo), không phải mọi cặp khác dấu.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> <b>AUC = cặp đúng / tổng cặp = P(điểm dương &gt; điểm âm)</b>, độc lập ngưỡng: 1 = xếp hạng hoàn hảo, 0.5 = đoán mò. <b>ROC</b> vẽ TPR–FPR khi quét ngưỡng; diện tích dưới đường = AUC. Bài tiếp <b>L3 · Cosine similarity</b>: đo chất lượng embedding bằng độ tương đồng góc.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L2 · ROC &amp; AUC</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  // 4 distinct scores sorted desc
-  var pool = [0.9,0.8,0.7,0.6,0.5,0.3,0.2];
-  var picks = WB.pickDistinct(pool, 4).sort(function(a,b){return b-a;});
-  // label pattern: top is positive; choose AUC 0.75 or 1.0
-  var pat = WB.pick(['+-+-','++--']);
-  var labels = pat.split('');
-  var pos=[], neg=[];
-  for(var i=0;i<4;i++){ (labels[i]==='+'?pos:neg).push(picks[i]); }
-  var nPos=pos.length, nNeg=neg.length, nPairs=nPos*nNeg;
-  var nCorrect=0;
-  for(var p=0;p<pos.length;p++) for(var q=0;q<neg.length;q++) if(pos[p]>neg[q]) nCorrect++;
-  var auc = Math.round(nCorrect/nPairs*100)/100;
-  var note = pat==='++--' ? '(mọi dương đều cao hơn mọi âm → AUC = 1)'
-                          : '(chỉ cặp dương thấp vs âm cao bị sai → 3/4)';
-  WB.setAll({
-    s0:f(picks[0]), s1:f(picks[1]), s2:f(picks[2]), s3:f(picks[3]),
-    l0:labels[0]==='+'?'+':'−', l1:labels[1]==='+'?'+':'−', l2:labels[2]==='+'?'+':'−', l3:labels[3]==='+'?'+':'−',
-    nPos:String(nPos), nNeg:String(nNeg), nPairs:String(nPairs), nCorrect:String(nCorrect), auc:f(auc),
-    pairNote: note
-  });
-  drawROC('figR', picks, labels);
-}
-function drawROC(id, scores, labels){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=34, y0=14, W=92, H=92, base=y0+H;
-  var nPos=0,nNeg=0; for(var i=0;i<4;i++){ if(labels[i]==='+')nPos++; else nNeg++; }
+var F = null;
+function drawScores(id, scores, labels, reveal){
+  var svg=document.getElementById(id); if(!svg) return;
+  var f=WB.fmtTrim;
+  var ax0=28, ax1=252, span=ax1-ax0;
+  var axisY=54, posY=30, negY=86;
   var s='';
-  // axes
-  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+W)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>';
-  // walk
-  var tp=0, fp=0, pts='';
-  pts += x0+','+base+' ';
-  for(var k=0;k<4;k++){
-    if(labels[k]==='+') tp++; else fp++;
-    var X = x0 + (nNeg? fp/nNeg:0)*W;
-    var Y = base - (nPos? tp/nPos:0)*H;
-    pts += X.toFixed(1)+','+Y.toFixed(1)+' ';
+  s+='<line x1="'+ax0+'" y1="'+axisY+'" x2="'+ax1+'" y2="'+axisY+'" stroke="#9aa5b1" stroke-width="1.2"/>';
+  [0,0.5,1].forEach(function(t){
+    var tx=ax0+t*span;
+    s+='<line x1="'+tx+'" y1="'+(axisY-3)+'" x2="'+tx+'" y2="'+(axisY+3)+'" stroke="#9aa5b1" stroke-width="1"/>';
+    s+='<text x="'+tx+'" y="'+(axisY+13)+'" text-anchor="middle" font-size="7" fill="#6b7280">'+t+'</text>';
+  });
+  s+='<text x="'+ax1+'" y="'+(axisY-5)+'" text-anchor="end" font-size="7.5" fill="#6b7280">điểm số →</text>';
+  s+='<text x="'+ax0+'" y="'+(posY-9)+'" text-anchor="start" font-size="7" fill="#0e7490">● dương (trên)</text>';
+  s+='<text x="'+ax0+'" y="'+(negY+13)+'" text-anchor="start" font-size="7" fill="#b45309">● âm (dưới)</text>';
+  var P=[],N=[],i;
+  for(i=0;i<scores.length;i++){
+    var x=ax0+scores[i]*span;
+    if(labels[i]==='+'){ P.push({x:x,v:scores[i]});
+      s+='<circle cx="'+x.toFixed(1)+'" cy="'+posY+'" r="4.6" fill="#0e7490"/>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(posY-6)+'" text-anchor="middle" font-size="8" font-weight="800" fill="#0e7490">'+f(scores[i])+'</text>';
+    } else { N.push({x:x,v:scores[i]});
+      s+='<circle cx="'+x.toFixed(1)+'" cy="'+negY+'" r="4.6" fill="#b45309"/>';
+      s+='<text x="'+x.toFixed(1)+'" y="'+(negY+12)+'" text-anchor="middle" font-size="8" font-weight="800" fill="#b45309">'+f(scores[i])+'</text>';
+    }
   }
-  s+='<polyline points="'+pts.trim()+'" fill="none" stroke="#0e7490" stroke-width="2"/>';
-  s+='<text x="'+(x0+W/2)+'" y="'+(base+14)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">FPR →</text>';
-  s+='<text x="'+(x0-6)+'" y="'+(y0+2)+'" text-anchor="end" font-size="8.5" fill="#5b6776">TPR</text>';
+  if(reveal){
+    P.forEach(function(p){ N.forEach(function(n){
+      if(p.v < n.v){
+        var mx=(p.x+n.x)/2, my=(posY+negY)/2;
+        s+='<path d="M '+p.x.toFixed(1)+' '+posY+' Q '+mx.toFixed(1)+' '+my+' '+n.x.toFixed(1)+' '+negY+'" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3 2"/>';
+        s+='<text x="'+mx.toFixed(1)+'" y="'+(my+3)+'" text-anchor="middle" font-size="9" font-weight="800" fill="#c0392b">✗</text>';
+      }
+    });});
+  }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function drawROC(id, scores, labels, reveal){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=32, y0=12, W=96, H=96, base=y0+H, i;
+  var nPos=0,nNeg=0;
+  for(i=0;i<labels.length;i++){ if(labels[i]==='+')nPos++; else nNeg++; }
+  var s='';
+  s+='<line x1="'+(x0+0.5*W)+'" y1="'+y0+'" x2="'+(x0+0.5*W)+'" y2="'+base+'" stroke="#eef1f5" stroke-width="1"/>';
+  s+='<line x1="'+x0+'" y1="'+(base-0.5*H)+'" x2="'+(x0+W)+'" y2="'+(base-0.5*H)+'" stroke="#eef1f5" stroke-width="1"/>';
+  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+W)+'" y2="'+y0+'" stroke="#b45309" stroke-width="1.3" stroke-dasharray="3 3"/>';
+  s+='<text x="'+(x0+W-2)+'" y="'+(y0+10)+'" text-anchor="end" font-size="6.8" fill="#b45309">0.5 đoán mò</text>';
+  s+='<line x1="'+x0+'" y1="'+base+'" x2="'+(x0+W)+'" y2="'+base+'" stroke="#16202e" stroke-width="1.3"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+base+'" stroke="#16202e" stroke-width="1.3"/>';
+  s+='<text x="'+x0+'" y="'+(base+11)+'" text-anchor="middle" font-size="7" fill="#6b7280">0</text>';
+  s+='<text x="'+(x0+W)+'" y="'+(base+11)+'" text-anchor="middle" font-size="7" fill="#6b7280">1</text>';
+  s+='<text x="'+(x0-5)+'" y="'+(base+2)+'" text-anchor="end" font-size="7" fill="#6b7280">0</text>';
+  s+='<text x="'+(x0-5)+'" y="'+(y0+4)+'" text-anchor="end" font-size="7" fill="#6b7280">1</text>';
+  s+='<text x="'+(x0+W/2)+'" y="'+(base+21)+'" text-anchor="middle" font-size="8" font-weight="700" fill="#6b7280">FPR (báo nhầm) →</text>';
+  s+='<text x="'+(x0-8)+'" y="'+(y0-3)+'" text-anchor="start" font-size="8" font-weight="700" fill="#6b7280">TPR ↑</text>';
+  if(reveal){
+    var tp=0,fp=0, pts=[[x0,base]];
+    for(i=0;i<scores.length;i++){
+      if(labels[i]==='+') tp++; else fp++;
+      pts.push([x0+(fp/nNeg)*W, base-(tp/nPos)*H]);
+    }
+    var poly=pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+    var last=pts[pts.length-1];
+    s+='<polygon points="'+poly+' '+last[0].toFixed(1)+','+base+' '+x0+','+base+'" fill="#6d28d9" fill-opacity="0.12"/>';
+    s+='<polyline points="'+poly+'" fill="none" stroke="#6d28d9" stroke-width="2.4"/>';
+    pts.forEach(function(p){ s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.4" fill="#6d28d9"/>'; });
+  }
+  svg.innerHTML=s;
+}
+function drawBar(id, v, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:50%"></div>';
+  if(fill){ var pct=Math.min(Math.max(v,0),1)*100; h+='<div class="fill pos" style="left:0;width:'+pct.toFixed(1)+'%"></div>'; }
+  el.innerHTML=h;
+}
+function gen(){
+  var f=WB.fmtTrim;
+  var pool=[0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1];
+  var picks=WB.pickDistinct(pool,4).sort(function(a,b){return b-a;});
+  var pat=WB.pick(['+-+-','++--']);
+  var labels=pat.split('');
+  var pos=[],neg=[],i;
+  for(i=0;i<4;i++){ (labels[i]==='+'?pos:neg).push(picks[i]); }
+  var nPos=pos.length, nNeg=neg.length, nPairs=nPos*nNeg;
+  var extra={}, nCorrect=0, k=0, a, b;
+  for(a=0;a<pos.length;a++)for(b=0;b<neg.length;b++){
+    var correct=pos[a]>neg[b];
+    if(correct) nCorrect++;
+    extra['pp'+k]=f(pos[a]); extra['pn'+k]=f(neg[b]); extra['pm'+k]=correct?'✓':'✗'; k++;
+  }
+  var auc=Math.round(nCorrect/nPairs*100)/100;
+  var pairNote = pat==='++--'
+    ? 'Mọi dương đều điểm cao hơn mọi âm → cả 4 cặp đúng → AUC = 1.'
+    : 'Cặp sai: một dương điểm thấp bị một âm điểm cao vượt qua → 3/4 đúng.';
+  var map={
+    s0:f(picks[0]), s1:f(picks[1]), s2:f(picks[2]), s3:f(picks[3]),
+    l0:labels[0]==='+'?'+':'−', l1:labels[1]==='+'?'+':'−', l2:labels[2]==='+'?'+':'−', l3:labels[3]==='+'?'+':'−',
+    nPos:String(nPos), nNeg:String(nNeg), nPairs:String(nPairs), nCorrect:String(nCorrect),
+    auc:f(auc), pairNote:pairNote
+  };
+  Object.keys(extra).forEach(function(kk){ map[kk]=extra[kk]; });
+  WB.setAll(map);
+  drawScores('figScores', picks, labels, false);
+  drawScores('figScoresA', picks, labels, true);
+  drawROC('figROC', picks, labels, false);
+  drawROC('figROCA', picks, labels, true);
+  drawBar('barAUC', auc, true);
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

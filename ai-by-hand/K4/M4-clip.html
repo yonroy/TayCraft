@@ -1,189 +1,450 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài M4 — CLIP đa phương thức (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài M4 — Multi-modal · CLIP (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.7mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.im{color:var(--blue);font-weight:800}
+.tx{color:var(--orange);font-weight:800}
+.dg{color:var(--purple);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
+.why2.t{border-left-color:var(--teal);background:#eefaf8} .why2.t b{color:var(--teal)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần M</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Multi-modal · CLIP <small>— ảnh ↔ chữ trong <i>một</i> không gian · cosine · zero-shot</small></h1>
+    <span class="chip">PHẦN M · NÂNG CAO</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~15 phút · Bài M4</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>ảnh (hàng)</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>chữ (cột)</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>đường chéo = cặp đúng</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài M4</span><h1>CLIP <small>— căn chỉnh ảnh ↔ chữ</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nối <b>hai phương thức</b> (ảnh ↔ chữ) cho phép tìm ảnh bằng câu mô tả, phân loại <b>zero-shot</b> (không cần
-    huấn luyện lớp mới — chỉ cần mô tả chữ). Nền của tìm kiếm đa phương thức và mô hình sinh ảnh có điều kiện.
-    <div class="formula">S[i][j] = cos(ảnhᵢ, chữⱼ)/τ &nbsp; loss = CE theo hàng + CE theo cột (đường chéo là cặp đúng)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho 2 vectơ <b>ảnh</b> và 2 vectơ <b>chữ</b> do hai bộ mã hóa nhả ra: tự tính <b>cosine từng cặp</b> → dựng <b>ma trận điểm</b> S (hàng = ảnh, cột = chữ) → chia <b>nhiệt độ τ</b> → <b>softmax theo hàng</b> → chọn cột điểm cao nhất, đó chính là <b>phân loại zero-shot</b>. Cuối phiếu bạn tự chứng minh: ma trận lý tưởng của CLIP là <b>ma trận đơn vị</b>, và loss <b>đối xứng hai chiều</b> (hàng ↔ cột).
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Xếp một <b>lô ảnh</b> và <b>lô caption</b> thành ma trận điểm tương đồng. Cặp đúng nằm trên <b>đường chéo</b>. CLIP ép mỗi ảnh chọn đúng
-    caption của mình (softmax theo hàng) và ngược lại (theo cột) → kéo cặp đúng sáng nhất.
+  <div class="why2 p"><b>💡 Trực giác.</b> Ảnh và chữ vốn là hai thế giới khác nhau. CLIP dùng <b>hai bộ mã hóa riêng</b> (ảnh: CNN/ViT · chữ: Transformer) nhưng ép chúng nhả ra vectơ trong <b>CÙNG MỘT không gian</b>. Khi đã cùng một không gian, "ảnh này có khớp câu này không?" trở thành một phép đo hình học tầm thường: <b>cosine</b> — chỉ quan tâm <i>hướng</i>, không quan tâm độ dài. Ảnh con mèo và câu "một con mèo đang ngủ" phải chỉ về <b>cùng một hướng</b>.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — hai bộ mã hóa, một không gian</span><span class="f">mọi vectơ đều dài 5 · τ = <span data-q="tau">0.2</span></span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figEnc" viewBox="0 0 300 148" width="82mm" height="40mm" aria-label="hai nhánh mã hóa ảnh và chữ gặp nhau ở không gian chung"></svg>
+      <div style="flex:1">
+        <table class="tbl-disc">
+          <thead><tr><th class="l" style="text-align:left">phần tử</th><th>vectơ (3 chiều)</th><th>độ dài</th></tr></thead>
+          <tbody>
+            <tr><td class="l"><b class="im">a₁</b> — ảnh con mèo</td><td class="im" data-q="vi1">(4, 3, 0)</td><td data-q="n">5</td></tr>
+            <tr><td class="l"><b class="im">a₂</b> — ảnh xe đạp</td><td class="im" data-q="vi2">(0, 3, 4)</td><td data-q="n">5</td></tr>
+            <tr><td class="l"><b class="tx">c₁</b> — "một con mèo đang ngủ"</td><td class="tx" data-q="vt1">(5, 0, 0)</td><td data-q="n">5</td></tr>
+            <tr><td class="l"><b class="tx">c₂</b> — "chiếc xe đạp bên đường"</td><td class="tx" data-q="vt2">(0, 0, 5)</td><td data-q="n">5</td></tr>
+          </tbody>
+        </table>
+        <div class="cap">Cặp <b>đúng</b> là (a₁,c₁) và (a₂,c₂) — chúng nằm trên <b class="dg">đường chéo</b> của ma trận điểm. Vectơ chữ đã được đưa về các <i>trục ý niệm</i> cho dễ tính tay.</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn + bảng eˣ</h2><span class="tag">2 ảnh, 2 chữ · τ=1</span></div>
-    <div class="calc" style="font-size:14px">
-      S = [ [<span class="gv" data-q="s11">2</span>, <span class="gv" data-q="s12">0</span>], [<span class="gv" data-q="s21">1</span>, <span class="gv" data-q="s22">3</span>] ] (hàng=ảnh, cột=chữ)
-      &nbsp;·&nbsp; e⁰=1, e¹=2.72, e²=7.39, e³=20.1
+  <div class="panel">
+    <div class="ph"><span class="t">① Cosine từng cặp ảnh–chữ</span><span class="f">cos = (u·v)/(‖u‖‖v‖) = tích vô hướng / 25</span></div>
+    <div class="pb">
+      <div class="eq">cos(a₁,c₁) = <span class="slot sm"></span>/(<span data-q="n">5</span>·<span data-q="n">5</span>) = <span class="slot ans sm"></span> &nbsp;·&nbsp; cos(a₁,c₂) = <span class="slot sm"></span>/25 = <span class="slot ans sm"></span></div>
+      <div class="eq">cos(a₂,c₁) = <span class="slot sm"></span>/(<span data-q="n">5</span>·<span data-q="n">5</span>) = <span class="slot ans sm"></span> &nbsp;·&nbsp; cos(a₂,c₂) = <span class="slot sm"></span>/25 = <span class="slot ans sm"></span></div>
+      <div class="why2"><b>Cách tính nhanh.</b> Tích vô hướng = nhân từng tọa độ rồi cộng: (4,3,0)·(5,0,0) = 4·5 + 3·0 + 0·0 = 20. Mọi vectơ ở đây dài 5 nên mẫu số luôn là 5·5 = <b>25</b> — cosine chỉ còn là "tích vô hướng chia 25". Cosine nằm trong [−1, 1]: <b>1</b> = cùng hướng (khớp hoàn hảo), <b>0</b> = vuông góc (không liên quan), <b>số âm</b> = ngược hướng (mâu thuẫn).</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Softmax hàng ảnh 1</h2><span class="tag">chéo = chữ 1</span></div>
-    <div class="calc">
-      e<sup><span data-q="s11">2</span></sup>=<span data-q="e11">7.39</span>, e<sup><span data-q="s12">0</span></sup>=<span data-q="e12">1</span>, Σ=<span data-q="sum1">8.39</span> → p = ( <span class="blk" style="min-width:36px"></span> , <span class="blk" style="min-width:36px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> ảnh 1 nên khớp chữ 1 (đường chéo) → p[0] cao là tốt.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">② Ma trận điểm S và nhiệt độ τ</span><span class="f">z<sub>ij</sub> = cos(aᵢ,cⱼ)/τ = cos × <span data-q="invtau">5</span></span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figMatQ" viewBox="0 0 300 152" width="80mm" height="41mm" aria-label="ma trận điểm ảnh nhân chữ, các ô để trống cho người học điền"></svg>
+      <div style="flex:1">
+        <div class="storybox">Điền <b>4 giá trị cosine</b> vào ma trận bên trái (hàng = <b class="im">ảnh</b>, cột = <b class="tx">chữ</b>). Hai ô viền <b class="dg">tím</b> là <b>đường chéo</b> — cặp ảnh–caption đúng.</div>
+        <div class="eq" style="margin-top:.6mm">z₁₁=<span class="slot sm"></span> z₁₂=<span class="slot sm"></span> &nbsp; z₂₁=<span class="slot sm"></span> z₂₂=<span class="slot sm"></span></div>
+        <div class="cap">Chia cho τ = <span data-q="tau">0.2</span> tức <b>nhân 5</b>. τ nhỏ → điểm bị kéo giãn → phân phối gắt hơn. CLIP <b>học</b> luôn τ.</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax hàng ảnh 2</h2><span class="tag">chéo = chữ 2</span></div>
-    <div class="calc">
-      e<sup><span data-q="s21">1</span></sup>=<span data-q="e21">2.72</span>, e<sup><span data-q="s22">3</span></sup>=<span data-q="e22">20.1</span>, Σ=<span data-q="sum2">22.82</span> → p = ( <span class="blk" style="min-width:36px"></span> , <span class="blk" style="min-width:36px"></span> )
-    </div>
-    <div class="hint">Ảnh 2 khớp chữ 2 (chéo) → p[1] cao.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Thang cosine — tự đánh dấu 4 giá trị vừa tính</span><span class="f">thang: −1 … 0 … +1</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figScale" viewBox="0 0 300 62" width="88mm" height="18mm" aria-label="thang cosine từ trừ một tới cộng một để người học tự đánh dấu"></svg>
+      <div class="storybox" style="flex:1">Đánh dấu ✕ vị trí của <b class="dg">cos(a₁,c₁)</b>, <b class="dg">cos(a₂,c₂)</b> (chéo) và <b>cos(a₁,c₂)</b>, <b>cos(a₂,c₁)</b> (ngoài chéo) lên thang. Hai dấu chéo phải nằm <b>bên phải</b> hai dấu kia — đó là điều huấn luyện CLIP tạo ra.</div>
+    </div></div>
   </div>
 
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Loss (chéo là nhãn)</h2><span class="tag">−ln p_chéo</span></div>
-    <div class="calc">
-      L_ảnh1 = −ln(<span data-q="p11">0.88</span>) ; L_ảnh2 = −ln(<span data-q="p22">0.88</span>) → trung bình = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> loss nhỏ khi đường chéo sáng → ảnh–caption khớp đúng.</div>
-  </div>
+  <div class="why2 o"><b>🔮 Dự đoán trước khi tính.</b> Nhìn 4 số cosine vừa tính: ô nào lớn nhất trên <b>hàng 1</b>? Ô nào lớn nhất trên <b>cột 1</b>? Ghi phỏng đoán "ảnh 1 sẽ chọn chữ mấy" rồi kiểm bằng softmax ở trang sau.</div>
 
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Zero-shot</h2><span class="tag">phân loại bằng chữ</span></div>
-    <div class="note">Để phân loại ảnh, tạo caption "ảnh con {mèo/chó/…}", chọn caption cosine cao nhất → <b>không cần huấn luyện lớp</b>.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Cặp ảnh–chữ đúng nằm ở đâu? → <span class="blk" style="min-width:120px"></span></li>
-      <li>"Zero-shot" của CLIP nghĩa là gì? → <span class="blk" style="min-width:140px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M4 · CLIP</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="scratch" style="height:30mm"><span class="lb">Nháp — tích vô hướng, cosine, z = cos × 5</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài M4 · CLIP</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài M4</span><h1>CLIP <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Softmax ảnh 1</h2></div>
-    <div class="calc ans">p = ( <span class="blk" data-q="p11">0.88</span> , <span class="blk" data-q="p12">0.12</span> )</div>
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Multi-modal · CLIP <small>— softmax theo hàng · loss đối lập · zero-shot</small></h1>
+    <span class="chip">PHẦN M · NÂNG CAO</span>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Softmax ảnh 2</h2></div>
-    <div class="calc ans">p = ( <span class="blk" data-q="p21">0.12</span> , <span class="blk" data-q="p22">0.88</span> )</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Bảng tra cho sẵn — eˣ và −ln p</span><span class="f">dùng cho bước ③ và ④</span></div>
+    <div class="pb">
+      <table class="tbl-disc">
+        <thead><tr><th class="l" style="text-align:left;width:16mm">eˣ</th><th>e⁰</th><th>e¹</th><th>e²</th><th>e³</th><th>e⁴</th></tr></thead>
+        <tbody><tr><td class="l">giá trị</td><td>1.00</td><td>2.72</td><td>7.39</td><td>20.09</td><td>54.60</td></tr></tbody>
+      </table>
+      <table class="tbl-disc" style="margin-top:.8mm">
+        <thead><tr><th class="l" style="text-align:left;width:16mm">−ln p</th><th>p=0.98</th><th>p=0.95</th><th>p=0.88</th><th>p=0.73</th><th>p=0.50</th><th>p=0.27</th></tr></thead>
+        <tbody><tr><td class="l">giá trị</td><td>0.02</td><td>0.05</td><td>0.13</td><td>0.31</td><td>0.69</td><td>1.31</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Loss trung bình</h2></div>
-    <div class="calc ans">L = (−ln <span data-q="p11">0.88</span> − ln <span data-q="p22">0.88</span>)/2 = <span class="blk" data-q="loss">0.13</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">③ Softmax theo hàng — mỗi ảnh chọn chữ nào?</span><span class="f">pᵢⱼ = e^zᵢⱼ / Σ hàng</span></div>
+    <div class="pb">
+      <div class="eq"><b class="im">Hàng ảnh a₁:</b> e^z₁₁ = <span class="slot sm"></span> · e^z₁₂ = <span class="slot sm"></span> · Σ₁ = <span class="slot sm"></span> → p₁ = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+      <div class="eq"><b class="im">Hàng ảnh a₂:</b> e^z₂₁ = <span class="slot sm"></span> · e^z₂₂ = <span class="slot sm"></span> · Σ₂ = <span class="slot sm"></span> → p₂ = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+      <div class="why2"><b>Đọc gì?</b> Mỗi hàng là một <b>phân phối xác suất</b> trên các caption: "nếu phải chọn, ảnh này khớp câu nào nhất?". Huấn luyện CLIP chính là ép <b class="dg">ô chéo</b> của mỗi hàng tiến về 1 — nghĩa là ảnh phải nhận ra caption <i>của chính nó</i> giữa cả lô caption khác (nên gọi là học <b>đối lập</b>, contrastive).</div>
+    </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Ma trận tương đồng — chéo sáng</h2><span class="tag">cặp đúng</span></div>
-    <div class="figrow">
-      <svg id="figM" class="fig" viewBox="0 0 250 130" width="70mm" height="42mm" aria-label="ma trận 2x2 ảnh chữ, ô đường chéo tô sáng là cặp đúng"></svg>
-      <div style="flex:1">
-        <div class="note">Ô càng đậm = tương đồng càng cao. CLIP ép <b>đường chéo</b> (cặp ảnh–caption đúng) sáng nhất theo cả hàng &amp; cột → ảnh khớp đúng mô tả của nó.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">④ Loss đối lập &amp; phân loại zero-shot</span><span class="f">L = −ln p(ô chéo)</span></div>
+    <div class="pb">
+      <div class="eq">L₁ = −ln p₁₁ = <span class="slot ans sm"></span> &nbsp;·&nbsp; L₂ = −ln p₂₂ = <span class="slot ans sm"></span> &nbsp;·&nbsp; L = (L₁+L₂)/2 = <span class="slot ans"></span></div>
+      <div class="eq"><b>Zero-shot:</b> ảnh a₁ được gán nhãn = caption có điểm cao nhất hàng 1 → <b>chữ số</b> <span class="slot ans sm"></span> &nbsp;·&nbsp; ảnh a₂ → <b>chữ số</b> <span class="slot ans sm"></span></div>
+      <div class="why2 o"><b>Vì sao đây là "zero-shot".</b> Không hề có lớp <i>mèo</i>/<i>xe đạp</i> nào được huấn luyện. Ta chỉ <b>viết câu mô tả</b>, cho qua bộ mã hóa chữ, rồi so cosine. Muốn phân loại 1000 lớp mới thì viết 1000 câu — <b>không đụng một trọng số nào</b>.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — thêm nhãn MỚI mà không huấn luyện lại</div>
+    <div style="font-size:9px;line-height:1.45">Sếp yêu cầu thêm nhãn thứ ba: <b>c₃ = "bản vẽ kỹ thuật đen trắng"</b> → bộ mã hóa chữ cho vectơ <b class="tx" data-q="vt3">(0, −5, 0)</b> (dài <span data-q="n">5</span>). Chỉ cần <b>thêm một cột</b> vào ma trận. Tính:</div>
+    <table class="tbl-disc" style="margin-top:1mm">
+      <thead><tr><th>cos(a₁, c₃)</th><th>cos(a₂, c₃)</th><th>ảnh a₁ vẫn chọn nhãn nào?</th></tr></thead>
+      <tbody><tr><td><span class="cellb" style="width:19mm"></span></td><td><span class="cellb" style="width:19mm"></span></td><td><span class="cellb" style="width:24mm"></span></td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Cosine <b>âm</b> nghĩa là vectơ chữ chỉ <b>ngược hướng</b> ảnh: nhãn mới không những không thắng mà còn bị đẩy xuống đáy phân phối. Điểm cốt lõi: tập nhãn là <b>mở</b> — thêm/bớt cột tùy ý, mô hình đứng yên.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — CLIP hoàn hảo ⟹ ma trận ĐƠN VỊ, và loss ĐỐI XỨNG hai chiều</div>
+    <div style="font-size:9px;line-height:1.45"><b>(a) Đích của huấn luyện.</b> Nếu CLIP học hoàn hảo, mỗi hàng softmax phải dồn hết xác suất vào <b>đúng cột cùng chỉ số</b>. Viết ma trận p lý tưởng (2×2) và loss của nó:</div>
+    <div class="eq">p lý tưởng = [ ( <span class="slot sm"></span> , <span class="slot sm"></span> ) ; ( <span class="slot sm"></span> , <span class="slot sm"></span> ) ] → tên gọi ma trận này: <span class="slot"></span> → L = −ln <span class="slot sm"></span> = <span class="slot ans sm"></span></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:.6mm"><b>(b) Đổi vai trò.</b> Loss thật của CLIP tính <b>cả theo cột</b> (chữ → ảnh), không chỉ theo hàng. Dùng lại đúng các e^z ở bước ③ nhưng cộng <b>theo cột</b> rồi điền vào hình; ô thắng có còn nằm trên đường chéo không?</div>
+    <div class="figwrap" style="margin-top:.8mm">
+      <svg id="figSymQ" viewBox="0 0 300 150" width="78mm" height="39mm" aria-label="ma trận với ô điền xác suất theo hàng và theo cột"></svg>
+      <div class="storybox" style="flex:1">Mỗi ô có <b>hai</b> chỗ điền: <b class="im">p</b> = softmax theo <b>hàng</b> (ảnh chọn chữ) và <b class="tx">q</b> = softmax theo <b>cột</b> (chữ chọn ảnh).
+        <div class="cap" style="margin-top:1mm">Cột 1: q₁₁ = e^z₁₁/(e^z₁₁+e^z₂₁) · Cột 2: q₂₂ = e^z₂₂/(e^z₁₂+e^z₂₂). Kết luận cần rút: cả <b class="im">p</b> lẫn <b class="tx">q</b> đều đạt cực đại trên <b class="dg">cùng một ô chéo</b> → hai chiều đồng thuận.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Cặp đúng ở đâu? → <span class="qa">Đường chéo.</span></li>
-      <li>Zero-shot? → <span class="qa">Phân loại bằng mô tả chữ, không cần huấn luyện lớp mới.</span></li>
-    </ol>
+  <div class="scratch" style="height:16mm"><span class="lb">Nháp — softmax hàng · softmax cột · loss</span></div>
+  <div class="done">
+    <span><span class="ck"></span>4 cosine</span>
+    <span><span class="ck"></span>Ma trận S &amp; z</span>
+    <span><span class="ck"></span>Softmax hàng</span>
+    <span><span class="ck"></span>Loss &amp; zero-shot</span>
+    <span><span class="ck"></span>Đối xứng cột</span>
+    <span class="win">🎉 Xong Bài M4!</span>
   </div>
-
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> CLIP = không gian chung ảnh–chữ; contrastive ép đường chéo sáng; cho zero-shot. Bài tiếp (M5): truyền tri thức
-    từ thầy sang trò — <b style="color:var(--accent2)">distillation</b>.
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M4 · CLIP</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài M4 · CLIP</span><span>Trang 2/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Multi-modal · CLIP <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② — cosine, ma trận điểm S, z = cos/τ</span><span class="f">mẫu số luôn 5·5 = 25</span></div>
+    <div class="pb">
+      <div class="eq">cos(a₁,c₁) = <span data-q="d11">20</span>/25 = <span class="qa" data-q="c11">0.80</span> &nbsp;·&nbsp; cos(a₁,c₂) = <span data-q="d12">15</span>/25 = <span class="qa" data-q="c12">0.60</span> &nbsp;·&nbsp; cos(a₂,c₁) = <span data-q="d21">0</span>/25 = <span class="qa" data-q="c21">0.00</span> &nbsp;·&nbsp; cos(a₂,c₂) = <span data-q="d22">20</span>/25 = <span class="qa" data-q="c22">0.80</span></div>
+      <div class="eq">z = cos × <span data-q="invtau">5</span>: &nbsp; z₁₁ = <span class="qa" data-q="z11">4</span> · z₁₂ = <span class="qa" data-q="z12">3</span> · z₂₁ = <span class="qa" data-q="z21">0</span> · z₂₂ = <span class="qa" data-q="z22">4</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Ma trận đã điền — chéo tím thắng cả hàng lẫn cột</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figMatA" viewBox="0 0 300 152" width="80mm" height="41mm" aria-label="ma trận điểm đã điền, đường chéo được tô"></svg>
+      <div class="storybox" style="flex:1">Hai ô <b class="dg">tím</b> (a₁c₁ và a₂c₂) là cặp ảnh–caption đúng và chúng <b>lớn nhất trên hàng của mình</b>. Ô ngoài chéo là "caption của ảnh khác" — vai trò <b>mẫu âm</b>, bị đẩy xuống. Đó là toàn bộ ý tưởng học <b>đối lập</b>: không cần nhãn thủ công, chỉ cần biết cặp nào đi với nhau trong lô.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ ④ — softmax theo hàng, loss, zero-shot</span><span class="f">tra bảng eˣ và −ln</span></div>
+    <div class="pb">
+      <div class="eq">Hàng a₁: e^<span data-q="z11">4</span>=<span data-q="e11">54.60</span> · e^<span data-q="z12">3</span>=<span data-q="e12">20.09</span> · Σ₁=<span class="qa" data-q="sum1">74.69</span> → p₁ = ( <span class="qa" data-q="p11">0.73</span> , <span class="qa" data-q="p12">0.27</span> )</div>
+      <div class="eq">Hàng a₂: e^<span data-q="z21">0</span>=<span data-q="e21">1.00</span> · e^<span data-q="z22">4</span>=<span data-q="e22">54.60</span> · Σ₂=<span class="qa" data-q="sum2">55.60</span> → p₂ = ( <span class="qa" data-q="p21">0.02</span> , <span class="qa" data-q="p22">0.98</span> )</div>
+      <div class="eq">L₁ = −ln <span data-q="p11">0.73</span> = <span class="qa" data-q="L1">0.31</span> · L₂ = −ln <span data-q="p22">0.98</span> = <span class="qa" data-q="L2">0.02</span> · L = <span class="qa" data-q="loss">0.17</span> · zero-shot: a₁ → chữ <span class="qa">1</span>, a₂ → chữ <span class="qa">2</span></div>
+      <div class="why2"><b>Vì sao loss lại nhỏ?</b> Vì xác suất ở <b class="dg">ô chéo</b> đã cao. Loss = −ln p(ô chéo): p → 1 thì loss → 0; p → 0 thì loss → ∞. Gradient sẽ <b>kéo</b> vectơ ảnh về phía caption đúng và <b>đẩy</b> nó ra xa các caption khác trong lô cùng lúc.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Nhãn mới c₃ <span data-q="vt3">(0, −5, 0)</span> — đáp án</div>
+    <table class="tbl-disc">
+      <thead><tr><th>cos(a₁, c₃)</th><th>cos(a₂, c₃)</th><th>ảnh a₁ vẫn chọn</th></tr></thead>
+      <tbody><tr><td class="an" data-q="c13">0.00</td><td class="an" data-q="c23">−0.60</td><td class="an">chữ 1 (điểm <span data-q="c11">0.80</span> cao nhất)</td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> Thêm nhãn = thêm <b>một cột</b> điểm; trọng số của cả hai bộ mã hóa <b>không đổi một chút nào</b>. Đây là lý do CLIP phân loại được lớp chưa từng thấy — nhưng cũng là giới hạn: <b>chất lượng câu mô tả quyết định tất cả</b> ("một bức ảnh chụp con mèo" thường tốt hơn chỉ "mèo").</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — đáp án: ma trận ĐƠN VỊ và tính ĐỐI XỨNG</div>
+    <div class="eq">(a) p lý tưởng = [ (1, 0) ; (0, 1) ] = <b>ma trận đơn vị I</b> → L = −ln 1 = <b>0</b></div>
+    <div style="font-size:9px;line-height:1.45">Huấn luyện CLIP = đẩy ma trận softmax về <b>I</b>. Nói cách khác: <b>đường chéo cao nhất mỗi hàng</b> không phải mẹo trình bày — nó chính là <i>mục tiêu</i> của hàm mất mát.</div>
+    <div class="figwrap" style="margin-top:.8mm">
+      <svg id="figSymA" viewBox="0 0 300 150" width="78mm" height="39mm" aria-label="ma trận đã điền xác suất theo hàng và theo cột"></svg>
+      <div class="storybox" style="flex:1">(b) Theo cột: q₁₁ = <span data-q="e11">54.60</span>/<span data-q="csum1">55.60</span> = <b data-q="q11">0.98</b>, q₂₂ = <span data-q="e22">54.60</span>/<span data-q="csum2">74.69</span> = <b data-q="q22">0.73</b>.
+        <div class="cap" style="margin-top:1mm">Số <b>khác</b> phân phối theo hàng, nhưng <b>ô thắng vẫn là ô chéo</b>. Vì vậy loss thật của CLIP = trung bình của CE-theo-hàng (ảnh→chữ) và CE-theo-cột (chữ→ảnh): tìm ảnh bằng chữ và tìm chữ bằng ảnh là <b>một</b> bài toán.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên chuẩn hóa:</b> dùng thẳng tích vô hướng thay cho cosine → ảnh có vectơ "dài" luôn thắng, dù chẳng liên quan. Phải chia cho ‖u‖·‖v‖.</li>
+        <li><b>Softmax nhầm chiều:</b> cộng theo cột rồi gọi đó là "ảnh chọn chữ". Ảnh→chữ cộng theo <b>hàng</b>; chữ→ảnh cộng theo <b>cột</b>.</li>
+        <li><b>Bỏ nhiệt độ τ:</b> cosine chỉ nằm trong [−1,1] nên nếu không chia τ, softmax gần như phẳng và mô hình gần như không học được.</li>
+        <li><b>Tưởng chéo cao là tự nhiên:</b> lúc khởi tạo ma trận gần như ngẫu nhiên; <b>chéo cao là kết quả</b> của huấn luyện, không phải giả thiết.</li>
+        <li><b>Nghĩ zero-shot = không cần dữ liệu:</b> vẫn cần hàng trăm triệu cặp ảnh–chữ lúc tiền huấn luyện; "zero-shot" chỉ là <b>không cần dữ liệu của lớp mới</b>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> CLIP = <b>một không gian chung</b> cho ảnh và chữ; ma trận điểm S = cosine từng cặp chia τ; softmax theo hàng <b>và</b> theo cột đều phải chọn <b>đường chéo</b> (ma trận lý tưởng = <b>đơn vị</b>); nhờ đó phân loại <b>zero-shot</b> chỉ bằng cách viết thêm câu mô tả. Bài tiếp <b>M5 · Knowledge Distillation</b>: thay vì ép hai phương thức gặp nhau, ta ép một mô hình <i>trò</i> nhỏ bắt chước phân phối mềm của mô hình <i>thầy</i> lớn.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài M4 · CLIP</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-var EXP = {0:1, 1:2.72, 2:7.39, 3:20.1};
-function generate(){
-  var f = WB.fmtTrim;
-  var Ms = [[[2,0],[1,3]], [[3,1],[0,2]], [[2,1],[0,3]], [[3,0],[1,2]]];
-  var S = WB.pick(Ms);
-  var e11=EXP[S[0][0]], e12=EXP[S[0][1]], e21=EXP[S[1][0]], e22=EXP[S[1][1]];
-  var sum1=Math.round((e11+e12)*100)/100, sum2=Math.round((e21+e22)*100)/100;
-  var p11=Math.round(e11/sum1*100)/100, p12=Math.round(e12/sum1*100)/100;
-  var p21=Math.round(e21/sum2*100)/100, p22=Math.round(e22/sum2*100)/100;
-  var loss=Math.round((( -Math.log(p11) - Math.log(p22) )/2)*100)/100;
-  WB.setAll({
-    s11:String(S[0][0]), s12:String(S[0][1]), s21:String(S[1][0]), s22:String(S[1][1]),
-    e11:f(e11), e12:f(e12), e21:f(e21), e22:f(e22), sum1:f(sum1), sum2:f(sum2),
-    p11:f(p11), p12:f(p12), p21:f(p21), p22:f(p22), loss:f(loss)
-  });
-  drawMat('figM', S);
-}
-function drawMat(id, S){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=58, y0=24, cs=44, maxv=3;
+var CIMG='#0e7490', CTXT='#b45309', CDIAG='#6d28d9', CINK='#16202e', CDIM='#6b7280';
+
+/* ---- sơ đồ hai nhánh mã hóa gặp nhau ở không gian chung ---- */
+function drawEnc(id, vi1, vi2, vt1, vt2){
+  var svg=document.getElementById(id); if(!svg) return;
   var s='';
-  s+='<text x="'+(x0+cs)+'" y="14" text-anchor="middle" font-size="8.5" fill="#5b6776">chữ →</text>';
-  s+='<text x="'+(x0-30)+'" y="'+(y0+cs)+'" text-anchor="middle" font-size="8.5" fill="#5b6776" transform="rotate(-90 '+(x0-30)+' '+(y0+cs)+')">ảnh ↓</text>';
-  for(var i=0;i<2;i++) for(var j=0;j<2;j++){
-    var v=S[i][j], cx=x0+j*cs, cy=y0+i*cs;
-    var op=(0.12+v/maxv*0.7).toFixed(2);
-    var diag=(i===j);
-    s+='<rect x="'+cx+'" y="'+cy+'" width="'+cs+'" height="'+cs+'" fill="#0e7490" fill-opacity="'+op+'" stroke="'+(diag?'#b45309':'#9aa3ad')+'" stroke-width="'+(diag?2.2:1)+'"/>';
-    s+='<text x="'+(cx+cs/2)+'" y="'+(cy+cs/2+4)+'" text-anchor="middle" font-size="11" fill="'+(v>=2?'#fff':'#1f2937')+'" font-weight="700">'+v+'</text>';
+  function box(x,y,w,h,txt,col,bg,fs){
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+bg+'" stroke="'+col+'" stroke-width="1.4"/>';
+    s+='<text x="'+(x+w/2)+'" y="'+(y+h/2+3)+'" text-anchor="middle" font-size="'+(fs||7.6)+'" font-weight="700" fill="'+col+'">'+txt+'</text>';
   }
-  s+='<text x="'+(x0+2*cs+6)+'" y="'+(y0+cs+4)+'" font-size="8" fill="#b45309">▦ chéo = cặp đúng</text>';
+  function arrow(x1,y1,x2,y2,col){
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="1.4" marker-end="url(#ar'+id+')"/>';
+  }
+  s+='<defs><marker id="ar'+id+'" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">'
+   + '<path d="M0,0 L6,3 L0,6 z" fill="'+CDIM+'"/></marker></defs>';
+  // nhánh ảnh (trái trên)
+  box(4,10,52,17,'ảnh a₁',CIMG,'#eaf4f6');
+  box(4,32,52,17,'ảnh a₂',CIMG,'#eaf4f6');
+  box(66,16,60,27,'Bộ mã hóa ẢNH',CIMG,'#fff');
+  arrow(57,19,64,26,CIMG); arrow(57,41,64,34,CIMG);
+  // nhánh chữ (trái dưới)
+  box(4,100,52,17,'chữ c₁',CTXT,'#fff5e9');
+  box(4,122,52,17,'chữ c₂',CTXT,'#fff5e9');
+  box(66,110,60,27,'Bộ mã hóa CHỮ',CTXT,'#fff');
+  arrow(57,109,64,120,CTXT); arrow(57,131,64,127,CTXT);
+  // không gian chung
+  s+='<ellipse cx="212" cy="74" rx="80" ry="60" fill="#f8f6fd" stroke="'+CDIAG+'" stroke-width="1.6" stroke-dasharray="4 3"/>';
+  s+='<text x="212" y="22" text-anchor="middle" font-size="7.8" font-weight="800" fill="'+CDIAG+'">KHÔNG GIAN CHUNG (3 chiều)</text>';
+  arrow(128,32,150,58,CIMG); arrow(128,122,150,92,CTXT);
+  // các điểm vectơ
+  function pt(x,y,lab,val,col,anchor){
+    s+='<circle cx="'+x+'" cy="'+y+'" r="3.2" fill="'+col+'"/>';
+    s+='<text x="'+(x+(anchor==='end'?-6:6))+'" y="'+(y+3)+'" text-anchor="'+anchor+'" font-size="7" font-weight="800" fill="'+col+'">'+lab+'</text>';
+    s+='<text x="'+(x+(anchor==='end'?-6:6))+'" y="'+(y+11)+'" text-anchor="'+anchor+'" font-size="6.4" fill="'+CDIM+'" font-family="Consolas,monospace">'+val+'</text>';
+  }
+  pt(178,50,'a₁',vi1,CIMG,'end');
+  pt(190,58,'c₁',vt1,CTXT,'start');
+  pt(196,104,'a₂',vi2,CIMG,'end');
+  pt(208,112,'c₂',vt2,CTXT,'start');
+  s+='<path d="M178,50 L190,58" stroke="'+CDIAG+'" stroke-width="1.3"/>';
+  s+='<path d="M196,104 L208,112" stroke="'+CDIAG+'" stroke-width="1.3"/>';
+  s+='<text x="212" y="140" text-anchor="middle" font-size="7" font-weight="700" fill="'+CDIAG+'">gần nhau ⇔ cosine lớn ⇔ cặp đúng</text>';
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+
+/* ---- ma trận điểm ảnh × chữ (blank ở ĐỀ, có số ở ĐÁP ÁN) ---- */
+function drawMat(id, C, show){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=66, y0=40, cw=94, ch=44, s='';
+  s+='<text x="'+(x0+cw)+'" y="14" text-anchor="middle" font-size="8.2" font-weight="800" fill="'+CTXT+'">chữ (caption) →</text>';
+  s+='<text x="'+(x0+cw/2)+'" y="30" text-anchor="middle" font-size="7.6" font-weight="700" fill="'+CTXT+'">c₁</text>';
+  s+='<text x="'+(x0+cw+cw/2)+'" y="30" text-anchor="middle" font-size="7.6" font-weight="700" fill="'+CTXT+'">c₂</text>';
+  s+='<text x="14" y="'+(y0+ch)+'" font-size="8.2" font-weight="800" fill="'+CIMG+'" transform="rotate(-90 14 '+(y0+ch)+')">ảnh ↓</text>';
+  s+='<text x="52" y="'+(y0+ch/2+3)+'" text-anchor="end" font-size="7.6" font-weight="700" fill="'+CIMG+'">a₁</text>';
+  s+='<text x="52" y="'+(y0+ch+ch/2+3)+'" text-anchor="end" font-size="7.6" font-weight="700" fill="'+CIMG+'">a₂</text>';
+  for(var i=0;i<2;i++) for(var j=0;j<2;j++){
+    var x=x0+j*cw, y=y0+i*ch, diag=(i===j), v=C[i][j];
+    var bg = show ? (diag?'#f5f1fe':'#fafbfc') : '#fff';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="'+bg+'" stroke="'+(diag?CDIAG:'#9aa5b1')+'" stroke-width="'+(diag?2.4:1.2)+'"/>';
+    if(show){
+      s+='<text x="'+(x+cw/2)+'" y="'+(y+ch/2+5)+'" text-anchor="middle" font-size="13" font-weight="800" font-family="Consolas,monospace" fill="'+(diag?CDIAG:CINK)+'">'+v+'</text>';
+    }else{
+      s+='<text x="'+(x+cw/2)+'" y="'+(y+ch/2+4)+'" text-anchor="middle" font-size="7" fill="#b8c0ca">cos(a'+(i+1)+',c'+(j+1)+')</text>';
+    }
+  }
+  s+='<text x="'+x0+'" y="'+(y0+2*ch+13)+'" font-size="7.2" font-weight="800" fill="'+CDIAG+'">■ ô chéo = cặp ảnh–caption ĐÚNG</text>';
+  s+='<text x="'+x0+'" y="'+(y0+2*ch+23)+'" font-size="7.2" fill="'+CDIM+'">ô ngoài chéo = mẫu âm (caption của ảnh khác)</text>';
+  svg.innerHTML=s;
+}
+
+/* ---- ma trận đối xứng: p theo hàng + q theo cột ---- */
+function drawSym(id, P, Q, show){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=60, y0=38, cw=98, ch=46, s='';
+  s+='<text x="'+(x0+cw)+'" y="13" text-anchor="middle" font-size="7.8" font-weight="800" fill="'+CTXT+'">c₁ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; c₂</text>';
+  s+='<text x="12" y="'+(y0+ch)+'" font-size="7.8" font-weight="800" fill="'+CIMG+'" transform="rotate(-90 12 '+(y0+ch)+')">a₁ / a₂</text>';
+  s+='<text x="'+x0+'" y="26" font-size="7" font-weight="700" fill="'+CIMG+'">→ p: softmax theo HÀNG</text>';
+  s+='<text x="'+(x0+2*cw+4)+'" y="'+(y0+2*ch+13)+'" text-anchor="end" font-size="7" font-weight="700" fill="'+CTXT+'">↓ q: softmax theo CỘT</text>';
+  for(var i=0;i<2;i++) for(var j=0;j<2;j++){
+    var x=x0+j*cw, y=y0+i*ch, diag=(i===j);
+    s+='<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" fill="'+(show&&diag?'#f5f1fe':'#fff')+'" stroke="'+(diag?CDIAG:'#9aa5b1')+'" stroke-width="'+(diag?2.4:1.2)+'"/>';
+    s+='<text x="'+(x+7)+'" y="'+(y+17)+'" font-size="7.6" font-weight="800" fill="'+CIMG+'">p</text>';
+    s+='<text x="'+(x+7)+'" y="'+(y+37)+'" font-size="7.6" font-weight="800" fill="'+CTXT+'">q</text>';
+    if(show){
+      s+='<text x="'+(x+cw-8)+'" y="'+(y+17)+'" text-anchor="end" font-size="10.5" font-weight="800" font-family="Consolas,monospace" fill="'+CIMG+'">'+P[i][j]+'</text>';
+      s+='<text x="'+(x+cw-8)+'" y="'+(y+37)+'" text-anchor="end" font-size="10.5" font-weight="800" font-family="Consolas,monospace" fill="'+CTXT+'">'+Q[i][j]+'</text>';
+    }else{
+      s+='<line x1="'+(x+20)+'" y1="'+(y+18)+'" x2="'+(x+cw-8)+'" y2="'+(y+18)+'" stroke="'+CINK+'" stroke-width="1.1"/>';
+      s+='<line x1="'+(x+20)+'" y1="'+(y+38)+'" x2="'+(x+cw-8)+'" y2="'+(y+38)+'" stroke="'+CINK+'" stroke-width="1.1"/>';
+    }
+  }
+  svg.innerHTML=s;
+}
+
+/* ---- thang cosine −1 … +1, người học tự đánh dấu ---- */
+function drawScale(id){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=22, x1=282, y=34, s='';
+  s+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+CINK+'" stroke-width="1.6"/>';
+  var labs=[-1,-0.5,0,0.5,1];
+  for(var i=0;i<labs.length;i++){
+    var x=x0+(labs[i]+1)/2*(x1-x0), big=(labs[i]===0);
+    s+='<line x1="'+x+'" y1="'+(y-(big?10:6))+'" x2="'+x+'" y2="'+(y+(big?10:6))+'" stroke="'+(big?CINK:'#9aa5b1')+'" stroke-width="'+(big?1.6:1.1)+'"/>';
+    s+='<text x="'+x+'" y="'+(y+22)+'" text-anchor="middle" font-size="7.4" font-weight="700" font-family="Consolas,monospace" fill="'+CDIM+'">'+WB.fmtTrim(labs[i])+'</text>';
+  }
+  s+='<text x="'+x0+'" y="'+(y-16)+'" font-size="7" font-weight="700" fill="'+CTXT+'">ngược hướng</text>';
+  s+='<text x="'+((x0+x1)/2)+'" y="'+(y-16)+'" text-anchor="middle" font-size="7" font-weight="700" fill="'+CDIM+'">vuông góc</text>';
+  s+='<text x="'+x1+'" y="'+(y-16)+'" text-anchor="end" font-size="7" font-weight="700" fill="'+CIMG+'">cùng hướng</text>';
+  s+='<text x="'+((x0+x1)/2)+'" y="'+(y+34)+'" text-anchor="middle" font-size="7" fill="'+CDIM+'">đánh dấu ✕ cho 4 giá trị cosine ở bước ①</text>';
+  svg.innerHTML=s;
+}
+
+var EXP={0:1.00, 1:2.72, 2:7.39, 3:20.09, 4:54.60};
+var AX=[[5,0,0],[0,5,0],[0,0,5]];
+var IMGS=[[4,3,0],[4,0,3],[3,4,0],[0,4,3],[3,0,4],[0,3,4]];
+function dot(u,v){ return u[0]*v[0]+u[1]*v[1]+u[2]*v[2]; }
+function vs(v){ return '(' + v.map(WB.fmtInt).join(', ') + ')'; }
+
+function gen(){
+  var f2=WB.fmt2, fi=WB.fmtInt;
+  // ---- chọn vectơ: chéo phải THẬT SỰ cao nhất mọi hàng & mọi cột ----
+  var a1,a2,k,t1,t2,i1,i2,ok=false,guard=0;
+  while(!ok && guard<900){
+    guard++;
+    var ax=WB.pickDistinct([0,1,2],2); a1=ax[0]; a2=ax[1];
+    k=[0,1,2].filter(function(x){ return x!==a1 && x!==a2; })[0];
+    var im=WB.pickDistinct(IMGS,2); i1=im[0]; i2=im[1];
+    // chéo = 20/25 = 0.80 (cao nhất cả hàng lẫn cột); ngoài chéo = 15/25 hoặc 0
+    ok = i1[a1]===4 && i2[a2]===4 &&
+         ((i1[a2]===3 && i2[a1]===0) || (i1[a2]===0 && i2[a1]===3));
+  }
+  if(!ok){ a1=0; a2=2; k=1; i1=[4,0,3]; i2=[0,3,4]; }
+  t1=AX[a1]; t2=AX[a2];
+  var t3=[0,0,0]; t3[k]=-5;                     // nhãn MỚI cho phần khám phá
+
+  var d=[[dot(i1,t1),dot(i1,t2)],[dot(i2,t1),dot(i2,t2)]];
+  var C=[[d[0][0]/25,d[0][1]/25],[d[1][0]/25,d[1][1]/25]];
+  var Z=[[d[0][0]/5,d[0][1]/5],[d[1][0]/5,d[1][1]/5]];
+  var E=[[EXP[Z[0][0]],EXP[Z[0][1]]],[EXP[Z[1][0]],EXP[Z[1][1]]]];
+  var r2=function(x){ return Math.round(x*100)/100; };
+  var s1=r2(E[0][0]+E[0][1]), s2=r2(E[1][0]+E[1][1]);
+  var P=[[r2(E[0][0]/s1),r2(E[0][1]/s1)],[r2(E[1][0]/s2),r2(E[1][1]/s2)]];
+  var cs1=r2(E[0][0]+E[1][0]), cs2=r2(E[0][1]+E[1][1]);
+  var Q=[[r2(E[0][0]/cs1),r2(E[0][1]/cs2)],[r2(E[1][0]/cs1),r2(E[1][1]/cs2)]];
+  var L1=r2(-Math.log(P[0][0])), L2=r2(-Math.log(P[1][1])), loss=r2((L1+L2)/2);
+  var c13=dot(i1,t3)/25, c23=dot(i2,t3)/25;
+
+  WB.setAll({
+    n:'5', tau:'0.2', invtau:'5',
+    vi1:vs(i1), vi2:vs(i2), vt1:vs(t1), vt2:vs(t2), vt3:vs(t3),
+    d11:fi(d[0][0]), d12:fi(d[0][1]), d21:fi(d[1][0]), d22:fi(d[1][1]),
+    c11:f2(C[0][0]), c12:f2(C[0][1]), c21:f2(C[1][0]), c22:f2(C[1][1]),
+    z11:fi(Z[0][0]), z12:fi(Z[0][1]), z21:fi(Z[1][0]), z22:fi(Z[1][1]),
+    e11:f2(E[0][0]), e12:f2(E[0][1]), e21:f2(E[1][0]), e22:f2(E[1][1]),
+    sum1:f2(s1), sum2:f2(s2), csum1:f2(cs1), csum2:f2(cs2),
+    p11:f2(P[0][0]), p12:f2(P[0][1]), p21:f2(P[1][0]), p22:f2(P[1][1]),
+    q11:f2(Q[0][0]), q22:f2(Q[1][1]),
+    L1:f2(L1), L2:f2(L2), loss:f2(loss),
+    c13:f2(c13), c23:f2(c23)
+  });
+
+  var Cs=[[f2(C[0][0]),f2(C[0][1])],[f2(C[1][0]),f2(C[1][1])]];
+  var Ps=[[f2(P[0][0]),f2(P[0][1])],[f2(P[1][0]),f2(P[1][1])]];
+  var Qs=[[f2(Q[0][0]),f2(Q[0][1])],[f2(Q[1][0]),f2(Q[1][1])]];
+  drawEnc('figEnc', vs(i1), vs(i2), vs(t1), vs(t2));
+  drawScale('figScale');
+  drawMat('figMatQ', Cs, false);
+  drawMat('figMatA', Cs, true);
+  drawSym('figSymQ', Ps, Qs, false);
+  drawSym('figSymA', Ps, Qs, true);
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){ return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight); }).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

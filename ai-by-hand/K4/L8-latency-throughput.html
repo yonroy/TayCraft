@@ -1,186 +1,416 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài L8 — Độ trễ &amp; thông lượng (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài L8 — Độ trễ &amp; thông lượng (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.7mm .5mm;border-bottom:1px solid var(--line2);font:700 9.4px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.bk{color:var(--blue);font-weight:800}
+.ok{color:var(--orange);font-weight:800}
+.gk{color:var(--purple);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple);background:#f8f6fd} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange);background:#fff8f0} .why2.o b{color:var(--orange)}
+.track .fill.ob{background:var(--orange)}
+.track .fill.pu{background:var(--purple)}
+.tbar td{padding:1.3mm .5mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Độ trễ &amp; thông lượng <small>— latency = FLOPs ÷ tốc độ · throughput = 1 ÷ latency · <i>Latency &amp; throughput</i></small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~13 phút · Bài L8</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>cho sẵn / cấu hình A</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>đáp án / cấu hình B</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>độ trễ (latency)</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài L8</span><h1>Độ trễ &amp; thông lượng <small>— latency vs throughput</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Người dùng cảm nhận <b>độ trễ</b> (chờ bao lâu); hệ thống quan tâm <b>thông lượng</b> (phục vụ bao nhiêu/giây =
-    chi phí). Gom batch lớn tăng thông lượng nhưng tăng độ trễ từng yêu cầu — kỹ sư phải cân theo nhu cầu.
-    <div class="formula">throughput = batch / thời_gian_xử_lý &nbsp;&nbsp; latency ≈ thời gian để một yêu cầu xong</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Bài L7 đếm được <b>FLOPs</b> — số phép tính. Bài này <b>chia FLOPs cho tốc độ phần cứng</b> (FLOP/s) để ra <b>độ trễ</b> thật tính bằng mili-giây, rồi lấy <b>nghịch đảo</b> ra <b>thông lượng</b> (yêu cầu/giây). Cuối phiếu tự chứng minh <b>latency × throughput = số yêu cầu đang xử lý</b> — nên cải thiện cái này tất yếu phải đổi cái kia; và thấy vì sao <b>gom mẻ (batch)</b> nâng thông lượng nhưng làm mỗi người chờ lâu hơn.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    <b>Độ trễ</b> = "tôi chờ bao lâu cho <b>món của tôi</b>". <b>Thông lượng</b> = "bếp ra <b>bao nhiêu món/giờ</b>". Nấu theo mẻ lớn (batch) →
-    tổng món/giờ tăng (throughput ↑) nhưng mỗi người chờ lâu hơn (latency ↑). Đánh đổi kinh điển.
-  </div>
+  <div class="why2 p"><b>💡 Trực giác — quán phở.</b> <b>Độ trễ</b> = "tô phở <i>của tôi</i> bao lâu thì ra". <b>Thông lượng</b> = "bếp ra <b>bao nhiêu tô mỗi giờ</b>". Khách chỉ cảm nhận độ trễ; chủ quán sống bằng thông lượng. Nấu <b>từng tô</b> → ai cũng nhanh nhưng bếp ra ít. Nấu <b>cả nồi 32 tô</b> → bếp ra nhiều hơn hẳn, nhưng bạn phải <i>đợi đủ nồi</i> mới được ăn. Không có cách nào vừa nhanh nhất cho từng người vừa nhiều nhất cho cả quán — đó là <b>đánh đổi</b> mọi hệ thống AI phải chọn.</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2 cấu hình</span></div>
-    <div class="calc" style="font-size:14px">
-      A — batch <span class="gv" data-q="batchA">1</span>, xử lý <span class="gv" data-q="tA">5</span> ms/yêu cầu ;
-      B — batch <span class="gv" data-q="batchB">32</span>, xử lý <span class="gv" data-q="tB">80</span> ms/mẻ
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Thông lượng A</h2><span class="tag">batch / thời gian</span></div>
-    <div class="calc">
-      thrA = <span data-q="batchA">1</span> / <span data-q="tAs">0.005</span> s = <span class="blk" style="min-width:60px"></span> yêu cầu/giây
-    </div>
-    <div class="why"><b>Vì sao:</b> xử lý từng cái → độ trễ thấp (<span data-q="tA">5</span> ms) nhưng phí cố định mỗi lần.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Thông lượng B</h2><span class="tag">mẻ lớn</span></div>
-    <div class="calc">
-      thrB = <span data-q="batchB">32</span> / <span data-q="tBs">0.08</span> s = <span class="blk" style="min-width:60px"></span> yêu cầu/giây
-    </div>
-    <div class="hint">Gom mẻ chia sẻ chi phí → throughput cao hơn A.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Độ trễ B</h2><span class="tag">chờ đủ mẻ</span></div>
-    <div class="calc">
-      một yêu cầu phải <b>chờ đủ mẻ</b> + <span data-q="tB">80</span> ms xử lý → latency <b>cao hơn</b> A (<span data-q="tA">5</span> ms)
-    </div>
-    <div class="why"><b>Vì sao:</b> batch lớn = throughput ↑ nhưng latency ↑ → đánh đổi.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Chọn theo nhu cầu</h2><span class="tag">chat vs lô</span></div>
-    <div class="note">Chat trực tuyến → ưu tiên <b>latency thấp</b> (batch nhỏ); xử lý hàng loạt ban đêm → ưu tiên <b>throughput</b> (batch lớn). KV cache (H10), quantization (I6) cải thiện cả hai.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Tăng batch ảnh hưởng latency &amp; throughput ra sao? → <span class="blk" style="min-width:140px"></span></li>
-      <li>Chat trực tuyến nên ưu tiên gì? → <span class="blk" style="min-width:120px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L8 · Độ trễ &amp; thông lượng</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài L8</span><h1>Độ trễ &amp; thông lượng <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Thông lượng A</h2></div>
-    <div class="calc ans">thrA = <span data-q="batchA">1</span>/<span data-q="tAs">0.005</span> = <span class="blk" data-q="thrA">200</span> yêu cầu/giây &nbsp;<span class="note" style="display:inline">(latency <span data-q="tA">5</span> ms)</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Thông lượng B</h2></div>
-    <div class="calc ans">thrB = <span data-q="batchB">32</span>/<span data-q="tBs">0.08</span> = <span class="blk" data-q="thrB">400</span> yêu cầu/giây</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>So sánh</h2></div>
-    <div class="calc ans">thrB <span data-q="cmp">&gt;</span> thrA nhưng latency B &gt; A → <span class="blk" data-q="verdict">đánh đổi</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Throughput A vs B (ghi chú latency)</h2><span class="tag">đánh đổi</span></div>
-    <div class="figrow">
-      <svg id="figT" class="fig" viewBox="0 0 250 120" width="78mm" height="39mm" aria-label="hai cột throughput A và B, B cao hơn nhưng latency B lớn hơn"></svg>
-      <div style="flex:1">
-        <div class="note">Cột B (throughput) cao hơn A, nhưng nhãn latency cho thấy B chờ lâu hơn. Không có cấu hình "thắng cả hai" — chọn theo bài toán.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — mô hình &amp; phần cứng</span><span class="f">1 yêu cầu = 1 lượt suy luận</span></div>
+    <div class="pb"><div class="split">
+      <div>
+        <div style="font:800 8.6px var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--blue);margin-bottom:1mm">Việc phải làm · từ Bài L7</div>
+        <div class="eq" style="line-height:1.8">F = <span class="bk" data-q="F">20</span> GFLOP / yêu cầu</div>
+        <div class="cap">Đếm theo L7: FLOP = 2 × (số đầu ra) × (chiều cộng dồn), cộng mọi lớp lại. 1 GFLOP = 10⁹ FLOP.</div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div style="font:800 8.6px var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--orange);margin-bottom:1mm">Sức làm · phần cứng</div>
+        <div class="eq" style="line-height:1.8">R = <span class="ok" data-q="R">4</span> TFLOP/s</div>
+        <div class="cap">Tốc độ GPU thực đạt được. 1 TFLOP/s = 10¹² FLOP mỗi giây = <b>1000 GFLOP/s</b>.</div>
       </div>
     </div>
+    <div class="cap" style="margin-top:0"><b>Cấu hình gom mẻ</b> (dùng ở bước ③): cỡ mẻ B = <span class="ok" data-q="Bn">16</span> yêu cầu · khi chạy cả mẻ, GPU no việc hơn nên tốc độ thực đạt <b>tăng ×<span class="ok" data-q="g">2</span></b> (từ <span data-q="R">4</span> lên <span data-q="Rg">8</span> TFLOP/s).</div>
+    </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Tăng batch? → <span class="qa">Throughput ↑ nhưng latency ↑ (đánh đổi).</span></li>
-      <li>Chat trực tuyến? → <span class="qa">Độ trễ thấp (latency).</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">① Độ trễ — chia việc phải làm cho sức làm</span><span class="f">latency = F ÷ R</span></div>
+    <div class="pb">
+      <div class="eq">latency = F / R = <span data-q="F">20</span> GFLOP / <span data-q="R">4</span> TFLOP/s = <span data-q="F">20</span> / (<span data-q="R">4</span>×1000) giây = <span class="slot ans"></span> giây = <span class="slot ans"></span> ms</div>
+      <div class="why2"><b>Vì sao chia?</b> FLOPs là <i>lượng việc</i>, FLOP/s là <i>tốc độ làm việc</i> — hệt như quãng đường ÷ vận tốc = thời gian. Mẹo đơn vị: <b>GFLOP ÷ TFLOP/s = mili-giây</b> (vì 1 T = 1000 G), nên chỉ cần lấy <b>F ÷ R</b> là ra thẳng số <b>ms</b>, không phải đổi đơn vị.</div>
+      <div class="why2 o"><b>Đây là "trần" lý thuyết.</b> Thực tế còn cộng nạp trọng số, mạng, hàng đợi… nên latency đo được luôn <b>lớn hơn</b> F/R.</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> throughput = batch/thời gian; batch lớn tăng throughput nhưng tăng latency → chọn theo nhu cầu. <b>Hết Phần L.</b>
-    Tiếp Phần M — Bài tiếp (M1): <b style="color:var(--accent2)">GNN message passing</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">Bảng tra — đổi độ trễ ra thông lượng</span><span class="f">throughput = 1000 ÷ latency(ms)</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.8px">
+        <thead><tr><th style="width:30mm">Độ trễ mỗi yêu cầu</th><th>1 ms</th><th>4 ms</th><th>5 ms</th><th>10 ms</th><th>20 ms</th><th>25 ms</th><th>100 ms</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Thông lượng (yc/giây)</td><td class="pt">1000</td><td class="pt">250</td><td class="pt">200</td><td class="pt">100</td><td class="pt">50</td><td class="pt">40</td><td class="pt">10</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.7mm">Đọc ngang: độ trễ <b>gấp đôi</b> thì thông lượng <b>giảm một nửa</b> — hai hàng là <b>nghịch đảo</b> của nhau. Đây là bảng dành cho máy chạy <i>từng yêu cầu một</i>; khi gom mẻ thì quan hệ đổi khác (bước ③).</div>
+      <div class="why2 p"><b>🔮 Dự đoán trước khi tính.</b> Nếu gom <span data-q="Bn">16</span> yêu cầu thành một mẻ: thông lượng tăng mấy lần? Mỗi người phải chờ lâu hơn mấy lần? Ghi phỏng đoán vào nháp rồi kiểm ở trang sau.</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L8 · Độ trễ &amp; thông lượng</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="panel">
+    <div class="ph"><span class="t">Ví dụ đã giải — làm mẫu một lượt trước khi tự tính</span><span class="f">mô hình 60 GFLOP · GPU 30 TFLOP/s</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.6px">
+        <thead><tr><th style="width:26mm">Bước</th><th style="width:56mm">Đặt phép tính</th><th>Kết quả &amp; đọc thành lời</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Độ trễ</td><td>60 ÷ 30</td><td class="an">2 ms — một yêu cầu xong sau 2 phần nghìn giây</td></tr>
+          <tr><td class="l">Đổi ra giây</td><td>2 ÷ 1000</td><td class="an">0.002 s — chia 1000 vì mili = một phần nghìn</td></tr>
+          <tr><td class="l">Thông lượng</td><td>1 ÷ 0.002</td><td class="an">500 yc/giây — một giây nhét vừa 500 lượt 2 ms</td></tr>
+          <tr><td class="l">Kiểm tra ngược</td><td>0.002 × 500</td><td class="an">1 — đúng bằng số yêu cầu chạy cùng lúc</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.7mm">Đây đúng là khuôn bạn lặp lại với F, R của mình ở bước ①②. Dòng cuối là <b>phép thử tự kiểm</b>: nhân ngược phải ra 1 — bắt ngay lỗi lệch 1000 lần.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Muốn nhanh hơn thì vặn nút nào?</span><span class="f">latency = F ÷ R — chỉ có tử và mẫu</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.5px">
+        <thead><tr><th style="width:34mm">Cách làm</th><th style="width:20mm">Tác động</th><th>Vì sao — và học ở bài nào</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Lượng tử hóa xuống 8-bit</td><td class="pt">R tăng</td><td style="text-align:left">nhân số nguyên nhanh hơn số thực, nạp bộ nhớ cũng nhẹ hơn (I6)</td></tr>
+          <tr><td class="l">Đệm KV cache</td><td class="pt">F giảm</td><td style="text-align:left">không tính lại phần câu đã sinh — bỏ hẳn việc thừa (H10)</td></tr>
+          <tr><td class="l">Cắt tỉa / mô hình nhỏ hơn</td><td class="pt">F giảm</td><td style="text-align:left">ít lớp, ít chiều → ít FLOP theo đúng công thức L7</td></tr>
+          <tr><td class="l">Gom mẻ lớn hơn</td><td class="pt">R tăng, <b>latency tăng</b></td><td style="text-align:left">nút <b>đánh đổi</b> — nâng thông lượng, hại độ trễ (bước ③)</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.7mm">Ba dòng đầu cải thiện <b>cả hai</b> chỉ số cùng lúc (latency giảm thì throughput = 1/latency tự tăng). Chỉ dòng cuối là <b>đánh đổi</b>.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:15mm"><span class="lb">Nháp — đổi đơn vị, latency = F/R, ghi phỏng đoán về batch</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L8 · Độ trễ &amp; thông lượng</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Thông lượng &amp; gom mẻ <small>— nghịch đảo · batch nâng throughput, đội latency</small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Thông lượng — đếm xem một giây làm được bao nhiêu</span><span class="f">throughput = 1 ÷ latency</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figLat" viewBox="0 0 300 118" width="94mm" height="37mm" aria-label="băng thời gian 100 ms chia thành các ô, mỗi ô là một yêu cầu, để trống cho học sinh tô"></svg>
+      <div class="storybox">
+        <div class="eq" style="line-height:1.9">trong 100 ms xếp được <span class="slot ans sm"></span> yêu cầu<br>
+        ⇒ trong 1000 ms: ×10 = <span class="slot ans sm"></span> yc/giây<br>
+        thử lại: 1 / <span class="slot sm"></span> s = <span class="slot ans sm"></span> yc/giây</div>
+        <div class="cap" style="margin-top:.6mm"><b>Tô nốt</b> các ô còn trống trên băng (mỗi ô rộng đúng <span data-q="tA">5</span> ms), rồi <b>đếm số ô</b>. Ô càng hẹp (latency nhỏ) → càng nhiều ô lọt vào một giây → thông lượng càng cao.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Gom mẻ B yêu cầu — chạy chung một lượt</span><span class="f">latency mẻ = B·F ÷ (R·g)</span></div>
+    <div class="pb">
+      <div class="eq">việc của cả mẻ = B·F = <span data-q="Bn">16</span>·<span data-q="F">20</span> = <span class="slot sm"></span> GFLOP &nbsp;·&nbsp; tốc độ khi no việc = R·g = <span data-q="R">4</span>·<span data-q="g">2</span> = <span class="slot sm"></span> TFLOP/s</div>
+      <div class="eq">latency mẻ = <span class="slot sm"></span> / <span class="slot sm"></span> = <span class="slot ans"></span> ms &nbsp;⇒&nbsp; throughput = B / latency mẻ = <span data-q="Bn">16</span> / <span class="slot sm"></span> s = <span class="slot ans"></span> yc/giây</div>
+      <div class="why2 o"><b>Vì sao gom mẻ lại nhanh hơn tính trên đầu người?</b> Trọng số phải nạp từ bộ nhớ về nhân tính <i>một lần</i> rồi dùng cho <b>cả mẻ</b>. Chạy lẻ từng yêu cầu, GPU nạp xong ngồi chờ — chỉ dùng hết một phần công suất. Mẻ càng lớn, tốc độ thực đạt càng tiến gần đỉnh (ở đây ×<span data-q="g">2</span>).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Tô hai cặp thanh — thấy ngay ai được, ai mất</span><span class="f">A = chạy lẻ · B = gom mẻ</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figTrade" viewBox="0 0 200 140" width="60mm" height="42mm" aria-label="hai cột thông lượng A và B để trống cho học sinh tô"></svg>
+      <div style="flex:1">
+        <table class="tbl-disc tbar" style="font-size:8.6px">
+          <thead><tr><th style="width:26mm">Đại lượng</th><th style="width:17mm">Giá trị</th><th>Tô thanh</th></tr></thead>
+          <tbody>
+            <tr><td class="l">Thông lượng A</td><td><span class="cellb"></span></td><td><div class="track uni" id="barTA"></div></td></tr>
+            <tr><td class="l">Thông lượng B</td><td><span class="cellb"></span></td><td><div class="track uni" id="barTB"></div></td></tr>
+            <tr><td class="l">Độ trễ A</td><td><span class="cellb"></span></td><td><div class="track uni" id="barLA"></div></td></tr>
+            <tr><td class="l">Độ trễ B</td><td><span class="cellb"></span></td><td><div class="track uni" id="barLB"></div></td></tr>
+          </tbody>
+        </table>
+        <div class="cap" style="margin-top:.6mm">Thang thanh thông lượng: 0 … <span data-q="thrB">400</span> yc/giây. Thang thanh độ trễ: 0 … <span data-q="latB">40</span> ms. Tô từ mép trái. Cột SVG bên trái: tô cao theo thông lượng.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — cái được và cái mất khi gom mẻ</div>
+    <div style="font-size:9px;line-height:1.45">Điền hai cột rồi lấy tỉ số so với chạy lẻ (A):</div>
+    <table class="tbl-disc" style="margin-top:.8mm;font-size:8.6px">
+      <thead><tr><th style="width:30mm">Chỉ số</th><th>A · chạy lẻ</th><th>B · mẻ <span data-q="Bn">16</span></th><th>B gấp A mấy lần?</th></tr></thead>
+      <tbody>
+        <tr><td class="l">Thông lượng (yc/s)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+        <tr><td class="l">Độ trễ (ms)</td><td><span class="cellb"></span></td><td><span class="cellb"></span></td><td><span class="cellb"></span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.9px;line-height:1.45;margin-top:1mm">Chọn cấu hình cho từng việc (ghi <b>A</b> hoặc <b>B</b>): chatbot trả lời người dùng đang ngồi chờ → <span class="slot sm"></span> &nbsp;·&nbsp; dịch 1 triệu tài liệu chạy đêm → <span class="slot sm"></span>. Vì sao? <span class="slot" style="min-width:52mm"></span></div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — độ trễ × thông lượng = số yêu cầu đang chạy (bấm 🎲 vẫn y nguyên)</div>
+    <div style="font-size:9px;line-height:1.45">Nhân <b>độ trễ tính bằng GIÂY</b> với <b>thông lượng</b> của chính cấu hình đó:</div>
+    <div class="eq" style="margin-top:.4mm;line-height:1.95">A: <span data-q="tAs">0.005</span> s × <span class="slot sm"></span> yc/s = <span class="slot ans sm"></span><br>
+    B: <span data-q="latBs">0.04</span> s × <span class="slot sm"></span> yc/s = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.9px;line-height:1.45;margin-top:1mm">Đổi bộ số bằng 🎲 rồi tính lại: hai kết quả <b>không đổi</b> — A luôn ra <b>1</b>, B luôn ra đúng <b>cỡ mẻ B</b>. Vì throughput được định nghĩa là (số yêu cầu)/(thời gian), nên tích của nó với thời gian <b>bắt buộc</b> trả về số yêu cầu. Chạy lẻ = trong máy luôn có đúng <b>1</b> yêu cầu → latency và throughput là <b>nghịch đảo cứng</b> của nhau: muốn thông lượng gấp đôi thì độ trễ phải giảm một nửa, không có đường nào khác ngoài việc <b>tăng số yêu cầu chạy song song</b> (chính là gom mẻ).</div>
+  </div>
+
+  <div class="scratch" style="height:14mm"><span class="lb">Nháp — nghịch đảo · latency mẻ · tỉ số</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Latency = F/R</span>
+    <span><span class="ck"></span>Throughput = 1/latency</span>
+    <span><span class="ck"></span>Gom mẻ</span>
+    <span><span class="ck"></span>Tích = số yc</span>
+    <span class="win">🎉 Xong Bài L8 — hết Phần L!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L8 · Độ trễ &amp; thông lượng</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Độ trễ &amp; thông lượng — đáp án <small>— và tổng kết Phần L</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — đáp số</span><span class="f">F=<span data-q="F">20</span> GFLOP · R=<span data-q="R">4</span> TFLOP/s · B=<span data-q="Bn">16</span> · g=<span data-q="g">2</span></span></div>
+    <div class="pb">
+      <div class="eq">① latency = <span data-q="F">20</span>/<span data-q="R">4</span> = <span class="qa" data-q="tA">5</span> ms = <span class="qa" data-q="tAs">0.005</span> giây</div>
+      <div class="eq">② throughput = 1/<span data-q="tAs">0.005</span> = <span class="qa" data-q="thrA">200</span> yc/giây &nbsp;(băng 100 ms xếp được <span class="qa" data-q="slots">20</span> ô, ×10 = <span data-q="thrA">200</span>)</div>
+      <div class="eq">③ mẻ: B·F = <span class="qa" data-q="FB">320</span> GFLOP · R·g = <span class="qa" data-q="Rg">8</span> TFLOP/s → latency mẻ = <span class="qa" data-q="latB">40</span> ms = <span class="qa" data-q="latBs">0.04</span> s → throughput = <span data-q="Bn">16</span>/<span data-q="latBs">0.04</span> = <span class="qa" data-q="thrB">400</span> yc/giây</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Hai hình đã tô</span><span class="f">băng 100 ms · hai cột thông lượng</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figLatA" viewBox="0 0 300 118" width="76mm" height="30mm" aria-label="băng thời gian đã tô đủ ô"></svg>
+      <svg id="figTradeA" viewBox="0 0 200 140" width="44mm" height="31mm" aria-label="hai cột thông lượng đã tô"></svg>
+      <div class="storybox">Băng 100 ms chứa <b class="bk" data-q="slots">20</b> ô, mỗi ô <span data-q="tA">5</span> ms → nhân 10 ra <b class="bk" data-q="thrA">200</b> yc/giây. Cột B cao gấp <b class="ok" data-q="g">2</b> lần cột A vì tốc độ thực đạt tăng ×<span data-q="g">2</span> — <b>không</b> gấp <span data-q="Bn">16</span> lần: gom mẻ chỉ thu được phần công suất GPU đang bỏ phí, không tạo ra sức tính từ hư không.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Bảng thanh đã tô</span><span class="f">thang thông lượng 0…<span data-q="thrB">400</span> · độ trễ 0…<span data-q="latB">40</span> ms</span></div>
+    <div class="pb">
+      <table class="tbl-disc tbar" style="font-size:8.6px">
+        <thead><tr><th style="width:30mm">Đại lượng</th><th style="width:18mm">Giá trị</th><th>Thanh</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Thông lượng A</td><td class="an" data-q="thrA">200</td><td><div class="track uni" id="barTAk"></div></td></tr>
+          <tr><td class="l">Thông lượng B</td><td class="an" data-q="thrB">400</td><td><div class="track uni" id="barTBk"></div></td></tr>
+          <tr><td class="l">Độ trễ A</td><td class="an" data-q="tA">5</td><td><div class="track uni" id="barLAk"></div></td></tr>
+          <tr><td class="l">Độ trễ B</td><td class="an" data-q="latB">40</td><td><div class="track uni" id="barLBk"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Được gì – mất gì khi gom mẻ — đáp án</div>
+    <table class="tbl-disc" style="font-size:8.6px">
+      <thead><tr><th style="width:30mm">Chỉ số</th><th>A · chạy lẻ</th><th>B · mẻ <span data-q="Bn">16</span></th><th>Tỉ số B/A</th></tr></thead>
+      <tbody>
+        <tr><td class="l">Thông lượng (yc/s)</td><td class="an" data-q="thrA">200</td><td class="an" data-q="thrB">400</td><td class="pt">×<span data-q="g">2</span> (được)</td></tr>
+        <tr><td class="l">Độ trễ (ms)</td><td class="an" data-q="tA">5</td><td class="an" data-q="latB">40</td><td class="pt">×<span data-q="ratLat">8</span> (mất)</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.9px;line-height:1.45;margin-top:1mm">Chatbot → <b>A</b> (người dùng ngồi chờ, <span data-q="tA">5</span> ms so với <span data-q="latB">40</span> ms là khác biệt cảm nhận được). Dịch 1 triệu tài liệu chạy đêm → <b>B</b> (không ai ngồi chờ, chỉ cần xong sớm và rẻ — thông lượng gấp <span data-q="g">2</span> nghĩa là <b>tiền thuê GPU giảm một nửa</b>). Quy tắc: <b>có người đang chờ thì tối ưu độ trễ; máy chờ máy thì tối ưu thông lượng.</b> Thực tế người ta chọn mẻ <i>vừa đủ</i> để độ trễ còn nằm dưới ngưỡng cam kết (SLA), chứ không lấy mẻ lớn nhất có thể.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Độ trễ × thông lượng = số yêu cầu đang chạy — đáp án</div>
+    <div class="eq">A: <span data-q="tAs">0.005</span> × <span data-q="thrA">200</span> = <b>1</b> &nbsp;·&nbsp; B: <span data-q="latBs">0.04</span> × <span data-q="thrB">400</span> = <b class="gk" data-q="Bn">16</b> &nbsp;(= đúng cỡ mẻ)</div>
+    <div style="font-size:8.9px;line-height:1.45;margin-top:1mm">Đổi F, R, B, g kiểu gì hai tích này cũng <b>không nhúc nhích</b> — vì chúng chỉ là định nghĩa viết ngược: throughput = (số yêu cầu)/(thời gian) ⟹ thời gian × throughput = số yêu cầu. Hệ quả: khi máy xử lý <b>một</b> yêu cầu tại một thời điểm, throughput = 1/latency đúng nghĩa <b>nghịch đảo</b> — không thể vừa hạ độ trễ vừa nâng thông lượng bằng cùng một mẹo, muốn cả hai thì phải <b>chạy nhiều yêu cầu song song</b> (tăng vế phải). Đây chính là định luật Little của lý thuyết hàng đợi, và là lý do mọi máy chủ suy luận đều xoay quanh một nút vặn duy nhất: <b>cỡ mẻ</b>.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên đổi đơn vị:</b> GFLOP ÷ TFLOP/s ra <b>mili-giây</b>, không phải giây. Chia thẳng F/R rồi ghi "giây" là sai <b>1000 lần</b>.</li>
+        <li><b>Tưởng mẻ B lần thì nhanh gấp B lần:</b> thông lượng chỉ tăng ×<b>g</b> (phần công suất trước đó bỏ phí), không phải ×B. Gom mẻ không tạo thêm FLOP/s.</li>
+        <li><b>Báo cáo mỗi thông lượng:</b> "phục vụ <span data-q="thrB">400</span> yc/giây" nghe rất giỏi nhưng người dùng có thể đang chờ <span data-q="latB">40</span> ms mỗi lượt — phải nói <b>cả hai</b> con số.</li>
+        <li><b>Lấy F/R làm latency thật:</b> đó mới là trần lý thuyết; còn cộng nạp bộ nhớ, hàng đợi, mạng. Đo thật luôn chậm hơn.</li>
+        <li><b>Nghĩ tăng batch mãi vẫn tốt:</b> qua một ngưỡng, GPU đã no việc nên g ngừng tăng, chỉ còn latency phình ra — mẻ lớn thêm là <b>mất không</b>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra — hết Phần L.</b> <b>latency = FLOPs ÷ tốc độ</b>, <b>throughput = số yêu cầu ÷ thời gian</b>, và <b>latency × throughput = số yêu cầu chạy song song</b> (chạy lẻ ⇒ đúng nghịch đảo). Gom mẻ đổi <b>độ trễ lấy thông lượng</b> — chọn theo việc có ai đang ngồi chờ hay không. Cả Phần L đi trọn một vòng: <b>L1</b> ma trận nhầm lẫn → <b>L2</b> ROC/AUC → <b>L3–L4</b> chia dữ liệu &amp; kiểm chéo → <b>L5–L6</b> quá khớp, chệch–phương sai → <b>L7</b> FLOPs → <b>L8</b> chi phí vận hành thật: <i>mô hình đúng chưa, và chạy nổi không</i>. Bài tiếp <b>Phần M · Nâng cao — M1 · GNN message passing</b>: rời dữ liệu bảng/ảnh/chuỗi để học trên <b>đồ thị</b>, mỗi đỉnh gom tin từ hàng xóm.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L8 · Độ trễ &amp; thông lượng</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var batchA = 1;
-  var tA = WB.pick([5,4,10]);                      // ms
-  var Bcfg = WB.pick([[32,80],[16,40],[32,64],[16,32]]);
-  var batchB = Bcfg[0], tB = Bcfg[1];
-  var tAs = tA/1000, tBs = tB/1000;
-  var thrA = Math.round(batchA/tAs);
-  var thrB = Math.round(batchB/tBs);
-  WB.setAll({
-    batchA:String(batchA), tA:String(tA), batchB:String(batchB), tB:String(tB),
-    tAs:f(tAs), tBs:f(tBs), thrA:String(thrA), thrB:String(thrB),
-    cmp:'>', verdict:'đánh đổi'
-  });
-  drawThr('figT', thrA, thrB, tA, tB);
-}
-function drawThr(id, thrA, thrB, tA, tB){
-  var svg = document.getElementById(id); if(!svg) return;
-  var x0=46, base=98, H=78, gap=86, bw=44, maxv=Math.max(thrA,thrB);
-  var s='<line x1="'+(x0-10)+'" y1="'+base+'" x2="'+(x0+2*gap)+'" y2="'+base+'" stroke="#9aa3ad" stroke-width="1"/>';
-  var data=[['A',thrA,tA,'#0e7490'],['B',thrB,tB,'#b45309']];
-  for(var k=0;k<2;k++){
-    var bx=x0+k*gap, h=data[k][1]/maxv*H;
-    s+='<rect x="'+bx+'" y="'+(base-h).toFixed(1)+'" width="'+bw+'" height="'+h.toFixed(1)+'" fill="'+data[k][3]+'22" stroke="'+data[k][3]+'" stroke-width="1.3"/>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base-h-4).toFixed(1)+'" text-anchor="middle" font-size="9" fill="'+data[k][3]+'">'+data[k][1]+'/s</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base+12)+'" text-anchor="middle" font-size="8.5" fill="#5b6776">'+data[k][0]+'</text>';
-    s+='<text x="'+(bx+bw/2)+'" y="'+(base+23)+'" text-anchor="middle" font-size="7.5" fill="#9aa3ad">lat '+data[k][2]+'ms</text>';
+var CA='#0e7490', CB='#b45309', CL='#6d28d9';
+var FA='#eaf4f6', FB='#fff5e9', FL='#f5f1fe';
+
+/* băng thời gian 100 ms — mỗi ô = 1 yêu cầu (rộng tA ms) */
+function drawLat(id, tA, slots, ans){
+  var svg=document.getElementById(id); if(!svg) return;
+  var x0=22, x1=284, y=44, h=30, w=(x1-x0)/slots;
+  var s='';
+  s+='<text x="150" y="16" text-anchor="middle" font-size="8.6" font-weight="800" fill="#16202e">Băng thời gian 100 ms — mỗi ô là MỘT yêu cầu, rộng '+tA+' ms</text>';
+  for(var i=0;i<slots;i++){
+    var x=x0+i*w;
+    if(ans || i===0){
+      s+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+(w-1).toFixed(1)+'" height="'+h+'" fill="'+FA+'" stroke="'+CA+'" stroke-width="1.2"/>';
+    }else{
+      s+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+(w-1).toFixed(1)+'" height="'+h+'" fill="#fff" stroke="'+CA+'" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.75"/>';
+    }
+  }
+  s+='<line x1="'+x0+'" y1="'+(y+h+7)+'" x2="'+x1+'" y2="'+(y+h+7)+'" stroke="#9aa5b1" stroke-width="1"/>';
+  s+='<text x="'+x0+'" y="'+(y+h+19)+'" text-anchor="start" font-size="7.6" fill="#9aa5b1">0 ms</text>';
+  s+='<text x="'+x1+'" y="'+(y+h+19)+'" text-anchor="end" font-size="7.6" fill="#9aa5b1">100 ms</text>';
+  s+='<text x="'+(x0+w/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="7.4" font-weight="800" fill="'+CA+'">yc 1</text>';
+  if(ans){
+    s+='<text x="150" y="'+(y+h+31)+'" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+CB+'">'+slots+' ô trong 100 ms  ⇒  ×10 = '+(slots*10)+' yêu cầu/giây</text>';
+  }else{
+    s+='<text x="150" y="'+(y+h+31)+'" text-anchor="middle" font-size="8.2" fill="#9aa5b1">tô nốt các ô đứt nét rồi đếm — được bao nhiêu ô?</text>';
   }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+
+/* hai cột thông lượng A vs B, kèm nhãn độ trễ */
+function drawTrade(id, thrA, thrB, tA, latB, ans){
+  var svg=document.getElementById(id); if(!svg) return;
+  var base=104, top=28, Hmax=base-top, mx=Math.max(thrA,thrB);
+  var w=44, x1=38, x2=112;
+  var s='';
+  s+='<text x="100" y="15" text-anchor="middle" font-size="8.4" font-weight="800" fill="#16202e">Thông lượng (yc/giây)</text>';
+  s+='<line x1="22" y1="'+base+'" x2="180" y2="'+base+'" stroke="#9aa5b1" stroke-width="1"/>';
+  s+='<text x="18" y="'+base+'" text-anchor="end" font-size="7" fill="#9aa5b1">0</text>';
+  function bar(x,val,lat,col,fill,label){
+    var hh = mx ? val/mx*Hmax : 0, t='';
+    t+='<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+Hmax+'" fill="none" stroke="'+col+'" stroke-width="0.9" stroke-dasharray="2 2" opacity="0.5"/>';
+    if(ans){
+      t+='<rect x="'+x+'" y="'+(base-hh).toFixed(1)+'" width="'+w+'" height="'+hh.toFixed(1)+'" fill="'+fill+'" stroke="'+col+'" stroke-width="1.3"/>';
+      t+='<text x="'+(x+w/2)+'" y="'+(base-hh-3).toFixed(1)+'" text-anchor="middle" font-size="8.2" font-weight="800" fill="'+col+'">'+val+'</text>';
+    }
+    t+='<text x="'+(x+w/2)+'" y="'+(base+11)+'" text-anchor="middle" font-size="8" font-weight="800" fill="'+col+'">'+label+'</text>';
+    t+='<text x="'+(x+w/2)+'" y="'+(base+22)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="'+CL+'">trễ '+(ans?lat+' ms':'? ms')+'</text>';
+    return t;
+  }
+  s+=bar(x1,thrA,tA,CA,FA,'A lẻ');
+  s+=bar(x2,thrB,latB,CB,FB,'B mẻ');
+  s+='<text x="100" y="'+(base+34)+'" text-anchor="middle" font-size="7.4" fill="#9aa5b1">'+(ans?'thang 0 … '+mx:'tô cao theo thông lượng · thang 0 … lớn nhất')+'</text>';
+  svg.innerHTML=s;
+}
+
+/* thanh giá trị một chiều: ĐỀ để trống, ĐÁP ÁN tô */
+function drawBar(id, v, max, cls, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="zero"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && max>0){
+    var pct=Math.min(v/max,1)*100;
+    h+='<div class="fill '+cls+'" style="left:0;width:'+pct.toFixed(1)+'%"></div>';
+  }
+  el.innerHTML=h;
+}
+
+function gen(){
+  var R  = WB.pick([2,4,5,8]);          // TFLOP/s
+  var tA = WB.pick([5,10,20,25]);       // ms — chia hết 100 → băng thời gian đẹp
+  var Bn = WB.pick([8,16,32]);          // cỡ mẻ
+  var g  = WB.pick([2,4]);              // hệ số tốc độ tăng khi no việc
+  var F  = R*tA;                        // GFLOP/yêu cầu  (⇒ latency = F/R = tA ms chẵn)
+  var thrA = 1000/tA;                   // yc/giây
+  var Rg   = R*g;
+  var FBt  = Bn*F;                      // GFLOP cả mẻ
+  var latB = Bn*tA/g;                   // ms
+  var thrB = 1000*g/tA;                 // = g × thrA
+  var slots= 100/tA;
+  var ratLat = latB/tA;                 // = Bn/g
+
+  WB.setAll({
+    F:String(F), R:String(R), Bn:String(Bn), g:String(g), Rg:String(Rg),
+    tA:String(tA), tAs:String(tA/1000), thrA:String(thrA), slots:String(slots),
+    FB:String(FBt), latB:String(latB), latBs:String(latB/1000), thrB:String(thrB),
+    ratLat:String(ratLat)
+  });
+
+  drawLat('figLat', tA, slots, false);
+  drawLat('figLatA', tA, slots, true);
+  drawTrade('figTrade', thrA, thrB, tA, latB, false);
+  drawTrade('figTradeA', thrA, thrB, tA, latB, true);
+
+  drawBar('barTA', thrA, thrB, 'pos', false);
+  drawBar('barTB', thrB, thrB, 'ob',  false);
+  drawBar('barLA', tA,   latB, 'pu',  false);
+  drawBar('barLB', latB, latB, 'pu',  false);
+  drawBar('barTAk', thrA, thrB, 'pos', true);
+  drawBar('barTBk', thrB, thrB, 'ob',  true);
+  drawBar('barLAk', tA,   latB, 'pu',  true);
+  drawBar('barLBk', latB, latB, 'pu',  true);
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

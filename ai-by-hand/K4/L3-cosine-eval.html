@@ -1,185 +1,372 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài L3 — Cosine đo embedding (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài L3 — Cosine đo embedding (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.storybox b{color:var(--ink)}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple)} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange)} .why2.o b{color:var(--orange)}
+.va{color:var(--blue);font-weight:800} .vb{color:var(--purple);font-weight:800} .vc{color:var(--orange);font-weight:800}
+.barcap{font:600 7.6px var(--sans);color:var(--dim);text-align:center;margin-top:.6mm}
+.tracks{display:flex;gap:6mm;justify-content:flex-start;align-items:flex-start;flex-wrap:wrap}
+.tracks .u{width:24mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần L</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Cosine đo embedding <small>— cặp giống vs khác · <i>Cosine similarity</i></small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~12 phút · Bài L3</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>a (mốc)</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>b (cùng nghĩa)</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>c (khác nghĩa)</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài L3</span><h1>Cosine đo embedding <small>— cặp giống vs khác</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~11 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Embedding tốt = "gần nghĩa thì gần vectơ". Để kiểm, ta đo cosine trên các cặp đã biết (giống/khác) và xem có
-    <b>tách bạch</b> không. Đây là cách chấm điểm mô hình embedding cho tìm kiếm, gợi ý, RAG.
-    <div class="formula">cos(a, b) = (a·b)/(‖a‖‖b‖) &nbsp;&nbsp; tốt: cos(giống) cao, cos(khác) thấp → khoảng cách lớn</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Từ 3 embedding cho sẵn (đều có độ dài ‖·‖ = <span data-q="nrm">5</span>), tự tính <b>cosine</b> của cặp <b>giống nghĩa</b> (a,b) và cặp <b>khác nghĩa</b> (a,c); thấy cos(giống) <b>cao</b> ≫ cos(khác) = 0 → embedding <b>tách bạch</b> hai nhóm; và tự chứng minh cosine <b>chỉ đo HƯỚNG</b> — nhân vectơ với hằng số k&gt;0 thì cosine <b>không đổi</b>.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Embedding tốt <b>tách</b> cặp giống khỏi cặp khác trên thang cosine: giống ≈ 0.9, khác ≈ 0.1. Khoảng cách giữa hai nhóm càng rộng → mô
-    hình càng phân biệt rõ → truy hồi càng chính xác.
+  <div class="why2 p"><b>💡 Trực giác.</b> Embedding tốt là "gần nghĩa thì gần vectơ". Cosine đo <b>góc</b> giữa hai vectơ, bỏ qua độ dài: cùng hướng → cos ≈ 1, vuông góc → cos = 0. Chấm mô hình embedding = đo cosine trên các cặp đã biết; cặp <b>giống</b> phải cho cosine cao, cặp <b>khác</b> phải thấp. Hai nhóm càng <b>tách rời</b> trên thang cosine → mô hình phân biệt nghĩa càng tốt → tìm kiếm / gợi ý / RAG càng chính xác.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — 3 embedding 2 chiều</span><span class="f">‖a‖ = ‖b‖ = ‖c‖ = <span data-q="nrm">5</span> · mẫu số = <span data-q="den">25</span></span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figVecs" viewBox="0 0 250 150" width="84mm" height="50.4mm" aria-label="ba vectơ a b c từ gốc"></svg>
+      <div class="storybox">
+        <div class="eq" style="line-height:1.8">
+          <span class="va">a</span> = (<span data-q="ax">3</span>, <span data-q="ay">4</span>) &nbsp;<i>mốc</i><br>
+          <span class="vb">b</span> = (<span data-q="bx">4</span>, <span data-q="by">3</span>) &nbsp;<i>cùng nghĩa a</i><br>
+          <span class="vc">c</span> = (<span data-q="cx">−4</span>, <span data-q="cy">3</span>) &nbsp;<i>khác nghĩa a</i>
+        </div>
+        <div class="cap" style="margin-top:.6mm"><b>cos(u,v) = (u·v) / (‖u‖‖v‖)</b>. Ở đây mọi ‖·‖ = <span data-q="nrm">5</span> nên mẫu số luôn = <span data-q="den">25</span>. Ô góc trên hình để <b>trống</b> — điền sau khi tính.</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">3 embedding · ‖·‖ = 5</span></div>
-    <div class="calc" style="font-size:14px">
-      a = (<span class="gv" data-q="ax">3</span>,<span class="gv" data-q="ay">4</span>) ;
-      b = (<span class="gv" data-q="bx">4</span>,<span class="gv" data-q="by">3</span>) <i>(cùng nghĩa)</i> ;
-      c = (<span class="gv" data-q="cx">−4</span>,<span class="gv" data-q="cy">3</span>) <i>(khác nghĩa)</i>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Cặp giống (a, b)</h2><span class="tag">a·b / 25</span></div>
-    <div class="calc">
-      a·b = <span data-q="axb">3·4+4·3</span> = <span data-q="dotAB">24</span> → cos = <span data-q="dotAB">24</span>/25 = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> cùng nghĩa → gần cùng hướng → cosine cao.</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cặp khác (a, c)</h2><span class="tag">a·c / 25</span></div>
-    <div class="calc">
-      a·c = <span data-q="axc">3·(−4)+4·3</span> = <span data-q="dotAC">0</span> → cos = <span data-q="dotAC">0</span>/25 = <span class="blk" style="min-width:44px"></span>
-    </div>
-    <div class="hint">Vuông góc → "không liên quan".</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Đọc kết quả</h2><span class="tag">tách bạch</span></div>
-    <div class="calc">cos(giống) = <span data-q="cosSame">0.96</span> ≫ cos(khác) = <span data-q="cosDiff">0</span> → <b>tách tốt</b></div>
-    <div class="why"><b>Vì sao:</b> chênh lệch lớn ⇒ embedding phân biệt được nghĩa → dùng tốt cho retrieval/gợi ý.</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Ngưỡng &amp; chỉ số</h2><span class="tag">tách bạch</span></div>
-    <div class="note">Chọn ngưỡng cosine để quyết "giống/khác"; chấm bằng AUC (L2) trên tập cặp. Embedding kém → hai nhóm cosine chồng lấn.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Embedding tốt thể hiện thế nào trên cosine? → <span class="blk" style="min-width:150px"></span></li>
-      <li>cos = 0 giữa hai embedding nghĩa là gì? → <span class="blk" style="min-width:130px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L3 · Cosine đo embedding</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài L3</span><h1>Cosine đo embedding <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Cặp giống</h2></div>
-    <div class="calc ans">cos(a,b) = <span data-q="dotAB">24</span>/25 = <span class="blk" data-q="cosSame">0.96</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cặp khác</h2></div>
-    <div class="calc ans">cos(a,c) = <span data-q="dotAC">0</span>/25 = <span class="blk" data-q="cosDiff">0</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>3 vectơ: góc giống nhỏ, khác 90°</h2><span class="tag">hướng</span></div>
-    <div class="figrow">
-      <svg id="figV" class="fig" viewBox="0 0 250 130" width="74mm" height="42mm" aria-label="ba vectơ a b c từ gốc, a và b sát nhau, c vuông góc với a"></svg>
-      <div style="flex:1">
-        <div class="note">a (lam) &amp; b (tím) sát nhau → góc nhỏ → cosine cao. c (cam) vuông góc a → cosine 0. Tách bạch hướng = embedding phân biệt nghĩa tốt.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">① Cặp GIỐNG nghĩa (a, b)</span><span class="f">a·b / <span data-q="den">25</span></span></div>
+    <div class="pb">
+      <div class="eq">a·b = <span data-q="axb">3·4 + 4·3</span> = <span class="slot"></span> &nbsp;→&nbsp; cos(a,b) = <span class="slot"></span> / <span data-q="den">25</span> = <span class="slot ans"></span></div>
+      <div class="tracks" style="margin-top:1mm">
+        <div>
+          <div class="track uni" id="barSame"></div>
+          <div class="barcap">tô cos(a,b) · thang 0 … 0.5 … 1</div>
+        </div>
+        <div class="why2 p" style="flex:1;min-width:70mm"><b>Vì sao cao?</b> a và b <i>gần cùng hướng</i> → góc nhỏ → cosine gần 1. Cùng nghĩa nên embedding tốt đặt chúng sát nhau.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Embedding tốt? → <span class="qa">Cặp giống nghĩa cosine cao, cặp khác thấp (tách bạch).</span></li>
-      <li>cos = 0? → <span class="qa">Không liên quan (vuông góc về hướng).</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">Đọc thang cosine — 3 chế độ hướng</span><span class="f">giá trị nói gì về nghĩa</span></div>
+    <div class="pb">
+      <table style="font-size:9px">
+        <thead><tr><th class="l" style="width:32mm">quan hệ hướng</th><th>góc</th><th>cosine</th><th class="l">nghĩa</th></tr></thead>
+        <tbody>
+          <tr><td class="l"><b class="va">cùng hướng</b></td><td>0°</td><td class="gvt">+1</td><td class="l" style="text-align:left">gần nghĩa nhất</td></tr>
+          <tr><td class="l"><b class="vc">vuông góc</b></td><td>90°</td><td class="gvt">0</td><td class="l" style="text-align:left">không liên quan</td></tr>
+          <tr><td class="l">ngược hướng</td><td>180°</td><td class="gvt">−1</td><td class="l" style="text-align:left">trái nghĩa</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm">Cosine ∈ [−1, 1] — chỉ phụ thuộc <b>hướng</b>, không phụ thuộc độ dài. Đánh giá embedding chủ yếu dùng vùng <b>[0, 1]</b>: cặp giống → gần 1, cặp khác → gần 0.</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Đánh giá embedding = cosine cặp giống cao vs cặp khác thấp; tách càng rõ càng tốt. Bài tiếp (L4): chấm văn
-    bản sinh bằng <b style="color:var(--accent2)">BLEU</b>.
-  </div>
+  <div class="why2"><b>🔮 Đoán trước.</b> Cặp <i>khác nghĩa</i> (a,c) ở trang sau: cosine sẽ <b>cao hay thấp</b>? Vì c vuông góc a, đoán góc là bao nhiêu? Ghi phỏng đoán rồi kiểm.</div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài L3 · Cosine đo embedding</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="scratch" style="height:44mm"><span class="lb">Nháp — a·b, cos(a,b), ghi phỏng đoán cos(a,c)</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L3 · Cosine đo embedding</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Cosine đo embedding <small>— cặp khác · độ tách · bất biến độ dài</small></h1>
+    <span class="chip">PHẦN L · ĐÁNH GIÁ</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">② Cặp KHÁC nghĩa (a, c)</span><span class="f">a·c / <span data-q="den">25</span></span></div>
+    <div class="pb">
+      <div class="eq">a·c = <span data-q="axc">3·(−4) + 4·3</span> = <span class="slot"></span> &nbsp;→&nbsp; cos(a,c) = <span class="slot"></span> / <span data-q="den">25</span> = <span class="slot ans"></span></div>
+      <div class="tracks" style="margin-top:1mm">
+        <div>
+          <div class="track uni" id="barDiff"></div>
+          <div class="barcap">tô cos(a,c) · thang 0 … 0.5 … 1</div>
+        </div>
+        <div class="why2 o" style="flex:1;min-width:70mm"><b>Vì sao ≈ 0?</b> c <i>vuông góc</i> với a (góc 90°) → cosine = 0 = "không liên quan về hướng". Khác nghĩa nên embedding đẩy chúng lệch hướng.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Đọc kết quả — độ TÁCH của hai nhóm</span><span class="f">gap = cos giống − cos khác</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figScale" viewBox="0 0 260 112" width="92mm" height="39.6mm" aria-label="thang cosine đánh dấu cặp giống và khác"></svg>
+      <div class="storybox">
+        <div class="eq">gap = <span class="slot sm"></span> − <span class="slot sm"></span> = <span class="slot ans"></span></div>
+        <div class="cap" style="margin-top:.6mm">Đánh dấu cos(a,b) <b class="va">giống</b> và cos(a,c) <b class="vc">khác</b> lên thang. Khoảng <b class="vb">tách</b> càng <b>rộng</b> → embedding phân biệt nghĩa càng rõ → truy hồi càng chính xác.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — vì sao dùng COSINE chứ không dùng tích vô hướng thô</div>
+    <div style="font-size:9px;line-height:1.45">Nhân a lên gấp đôi thành <b>2a</b> (vectơ dài gấp đôi, cùng hướng). Tính lại với b:</div>
+    <table style="margin-top:.8mm;font-size:9px">
+      <thead><tr><th class="l" style="width:40mm">đại lượng</th><th>với a</th><th>với 2a (dài gấp đôi)</th></tr></thead>
+      <tbody>
+        <tr><td class="l">tích vô hướng u·b</td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:16mm"></span></td></tr>
+        <tr><td class="l">cosine cos(u,b)</td><td><span class="cellb" style="width:16mm"></span></td><td><span class="cellb" style="width:16mm"></span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Tích vô hướng <b>phồng theo độ dài</b> (gấp đôi), nên nếu chấm bằng nó thì vectơ dài luôn "thắng". Cosine <b>chuẩn hóa</b> nên <b>không đổi</b> — chỉ còn đo HƯỚNG. Đó là lý do đo nghĩa bằng cosine.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — cosine BẤT BIẾN theo độ dài (k triệt tiêu)</div>
+    <div style="font-size:9px;line-height:1.45">Tính từng phần cho cặp (2a, b) rồi so với cos(a,b) ở bước ①:</div>
+    <div class="eq" style="margin-top:.3mm">2a·b = <span class="slot ans sm"></span> &nbsp;·&nbsp; ‖2a‖ = <span class="slot ans sm"></span> &nbsp;→&nbsp; cos(2a,b) = <span data-q="dotAB2s"></span> / (<span data-q="normA2">10</span>·<span data-q="nrm">5</span>) = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Cả tử và mẫu đều nhân k=2, <b>k triệt tiêu</b>: cos(2a,b) = cos(a,b). Đúng với <b>mọi k&gt;0</b> — cosine chỉ phụ thuộc <b>hướng</b>, không phụ thuộc độ dài. Đây là lý do embedding hay được chuẩn hóa về ‖·‖ = 1.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Ngưỡng &amp; chấm điểm</span><span class="f">tách bạch → chọn ngưỡng</span></div>
+    <div class="pb">
+      <div class="cap" style="font-size:8.8px">Chọn một <b>ngưỡng</b> cosine (vd 0.5) để quyết "giống / khác"; chấm chất lượng tách bằng <b>AUC</b> (Bài L2) trên cả tập cặp. Embedding <b>kém</b> → hai nhóm cosine <b>chồng lấn</b>, không có ngưỡng nào tách sạch.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:32mm"><span class="lb">Nháp — a·c · gap · kiểm 2a·b</span></div>
+  <div class="done">
+    <span><span class="ck"></span>cos giống</span>
+    <span><span class="ck"></span>cos khác</span>
+    <span><span class="ck"></span>độ tách</span>
+    <span><span class="ck"></span>bất biến k</span>
+    <span class="win">🎉 Xong Bài L3!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L3 · Cosine đo embedding</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>Cosine đo embedding <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">①②③④ — đáp số</span><span class="f">a=(<span data-q="ax">3</span>,<span data-q="ay">4</span>) b=(<span data-q="bx">4</span>,<span data-q="by">3</span>) c=(<span data-q="cx">−4</span>,<span data-q="cy">3</span>)</span></div>
+    <div class="pb">
+      <div class="eq">① cos(a,b) = <span data-q="axb">3·4 + 4·3</span> = <span data-q="dotAB">24</span> → <span data-q="dotAB">24</span>/<span data-q="den">25</span> = <span class="qa" data-q="cosSame">0.96</span></div>
+      <div class="eq">② cos(a,c) = <span data-q="axc">3·(−4) + 4·3</span> = <span data-q="dotAC">0</span> → <span data-q="dotAC">0</span>/<span data-q="den">25</span> = <span class="qa" data-q="cosDiff">0</span></div>
+      <div class="eq">③ gap = <span data-q="cosSame">0.96</span> − <span data-q="cosDiff">0</span> = <span class="qa" data-q="gap">0.96</span> &nbsp;→&nbsp; <b>tách tốt</b></div>
+      <div class="eq">④ ngưỡng ~0.5 tách hai nhóm; chấm bằng AUC (L2).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Ba vectơ đã đọc — góc giống nhỏ, khác 90°</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figVecsA" viewBox="0 0 250 150" width="84mm" height="50.4mm" aria-label="ba vectơ với cung góc"></svg>
+      <div class="storybox"><b class="va">a</b> &amp; <b class="vb">b</b> sát nhau → góc nhỏ → cos(a,b) = <span data-q="cosSame">0.96</span> (cao). <b class="vc">c</b> vuông góc a → cos(a,c) = 0. Tách bạch về <b>hướng</b> = embedding phân biệt nghĩa tốt. Cosine chỉ nhìn hướng, không nhìn độ dài.</div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Tích vô hướng phồng, cosine đứng yên — đáp án</div>
+    <div class="eq">u·b: &nbsp; a·b = <span data-q="dotAB">24</span> &nbsp;→&nbsp; 2a·b = <span data-q="dotAB2">48</span> (gấp đôi) &nbsp;·&nbsp; cos: &nbsp; <span data-q="cosSame">0.96</span> → <span data-q="cosSame">0.96</span> (không đổi)</div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">Nhân độ dài lên gấp đôi: tích vô hướng nhân đôi nhưng cosine giữ nguyên. Chấm nghĩa bằng tích vô hướng thô sẽ thiên vị vectơ dài → phải chuẩn hóa = <b>cosine</b>.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Bất biến theo độ dài — đáp án</div>
+    <div class="eq">2a·b = <b>2·<span data-q="dotAB">24</span> = <span data-q="dotAB2">48</span></b> · ‖2a‖ = <b><span data-q="normA2">10</span></b> → cos(2a,b) = <span data-q="dotAB2">48</span>/(<span data-q="normA2">10</span>·<span data-q="nrm">5</span>) = <b data-q="cosSame">0.96</b> = cos(a,b)</div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">Tử nhân k, mẫu cũng nhân k (vì ‖ka‖ = k‖a‖): <b>k triệt tiêu</b>. Với mọi k&gt;0, cos(ka,b) = cos(a,b). Cosine đo <b>góc</b> — bất biến theo độ dài. Vì thế embedding thường được chuẩn hóa ‖·‖=1 mà không mất thông tin cosine.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cosine vs khoảng cách Euclid</span><span class="f">đo hướng vs đo vị trí</span></div>
+    <div class="pb">
+      <table style="font-size:9px">
+        <thead><tr><th class="l" style="width:42mm">tình huống</th><th>cosine</th><th>khoảng cách Euclid</th></tr></thead>
+        <tbody>
+          <tr><td class="l" style="text-align:left">cùng hướng, khác độ dài (a vs 2a)</td><td class="gvt">1 (giống hệt)</td><td>lớn (khác vị trí)</td></tr>
+          <tr><td class="l" style="text-align:left">vuông góc (a vs c)</td><td class="gvt">0</td><td>vừa</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm">Đo <b>nghĩa</b> thì quan tâm <b>hướng</b> → dùng cosine. Euclid nhạy với độ dài nên hai vectơ cùng nghĩa mà khác độ lớn lại bị coi là "xa".</div>
+    </div>
+  </div>
+
+  <div class="why2 t"><b>Vì sao chuẩn hóa về ‖·‖=1?</b> Vì cosine bất biến theo độ dài, ta có thể chia mỗi embedding cho độ dài của nó (thành vectơ đơn vị) mà <b>không mất</b> thông tin cosine. Khi đó cos(u,v) = u·v (mẫu số = 1) — tích vô hướng của hai vectơ đã chuẩn hóa <b>chính là</b> cosine. Đây là lý do các thư viện tìm kiếm vectơ (FAISS, RAG) thường lưu embedding đã chuẩn hóa rồi so bằng tích vô hướng cho nhanh.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên chia cho ‖u‖‖v‖:</b> lấy thẳng tích vô hướng làm "độ giống" → thiên vị vectơ dài. Cosine phải chuẩn hóa.</li>
+        <li><b>Tưởng cos = 0 là "ngược nghĩa":</b> 0 là <b>vuông góc = không liên quan</b>; ngược hẳn hướng mới cho cos = −1.</li>
+        <li><b>Lẫn cosine với khoảng cách Euclid:</b> hai vectơ cùng hướng khác độ dài có cosine = 1 nhưng khoảng cách Euclid ≠ 0.</li>
+        <li><b>Chỉ nhìn cos(giống) cao:</b> phải xét cả <b>độ tách</b> (giống − khác). Giống 0.9 mà khác cũng 0.85 thì mô hình vẫn kém.</li>
+        <li><b>Chọn ngưỡng tùy tiện:</b> ngưỡng phải chấm trên tập cặp (AUC, L2), không đoán một con số.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Đánh giá embedding = đo <b>cosine = (u·v)/(‖u‖‖v‖)</b>: cặp <b>giống</b> cho cosine cao, cặp <b>khác</b> cho thấp, <b>độ tách</b> càng rộng càng tốt; cosine <b>bất biến theo độ dài</b> (chỉ đo hướng). Kém → hai nhóm chồng lấn. Bài tiếp <b>L4 · BLEU</b>: chấm chất lượng văn bản do mô hình sinh.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài L3 · Cosine đo embedding</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim, F=WB.fmtInt, W=WB.wrap;
-  var a = WB.pick([[3,4],[4,3]]);
-  var bOpts = (a[0]===3) ? [[4,3],[0,5]] : [[3,4],[5,0]];
-  var b = WB.pick(bOpts);
-  var c = [-a[1], a[0]];                 // perpendicular to a → dot 0
-  var dotAB = a[0]*b[0]+a[1]*b[1];
-  var dotAC = a[0]*c[0]+a[1]*c[1];       // = 0
-  var cosSame = Math.round(dotAB/25*100)/100;
-  var cosDiff = Math.round(dotAC/25*100)/100;
-  WB.setAll({
-    ax:String(a[0]), ay:String(a[1]), bx:String(b[0]), by:String(b[1]),
-    cx:F(c[0]), cy:F(c[1]),
-    axb:a[0]+'·'+b[0]+'+'+a[1]+'·'+b[1],
-    axc:a[0]+'·'+W(c[0])+'+'+a[1]+'·'+W(c[1]),
-    dotAB:String(dotAB), dotAC:String(dotAC),
-    cosSame:f(cosSame), cosDiff:f(cosDiff)
-  });
-  drawVecs('figV', a, b, c);
-}
-function drawVecs(id, a, b, c){
-  var svg = document.getElementById(id); if(!svg) return;
-  var ox=70, oy=92, sc=9;
+function drawVecs(id, a, b, c, showAns){
+  const svg=document.getElementById(id); if(!svg) return;
+  const ox=78, oy=104, sc=9;
+  function polar(r,deg){ const t=deg*Math.PI/180; return {x:ox+r*Math.cos(t), y:oy-r*Math.sin(t)}; }
+  function ang(v){ let d=Math.atan2(v[1],v[0])*180/Math.PI; return d; }
   function arrow(v,col,lab){
-    var X=ox+v[0]*sc, Y=oy-v[1]*sc;
-    return '<line x1="'+ox+'" y1="'+oy+'" x2="'+X.toFixed(1)+'" y2="'+Y.toFixed(1)+'" stroke="'+col+'" stroke-width="2" marker-end="url(#avL3)"/>'
-      +'<text x="'+(X+(v[0]<0?-4:4)).toFixed(1)+'" y="'+(Y-3).toFixed(1)+'" font-size="9" fill="'+col+'" font-weight="700">'+lab+'</text>';
+    const X=ox+v[0]*sc, Y=oy-v[1]*sc;
+    const lx=X+(v[0]<0?-8:6), ly=Y-4;
+    return '<line x1="'+ox+'" y1="'+oy+'" x2="'+X.toFixed(1)+'" y2="'+Y.toFixed(1)+'" stroke="'+col+'" stroke-width="2.2" marker-end="url(#avL3)"/>'
+      +'<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" font-size="10" fill="'+col+'" font-weight="800">'+lab+'</text>';
   }
-  var s='<defs><marker id="avL3" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#555"/></marker></defs>';
-  s+='<circle cx="'+ox+'" cy="'+oy+'" r="2" fill="#5b6776"/>';
+  function arc(r,a0,a1,col){
+    const p0=polar(r,a0), p1=polar(r,a1);
+    const large=Math.abs(a1-a0)>180?1:0;
+    const sweep=a1>a0?0:1;
+    return '<path d="M'+p0.x.toFixed(1)+' '+p0.y.toFixed(1)+' A'+r+' '+r+' 0 '+large+' '+sweep+' '+p1.x.toFixed(1)+' '+p1.y.toFixed(1)+'" fill="none" stroke="'+col+'" stroke-width="1.6"/>';
+  }
+  let s='<defs><marker id="avL3" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#555"/></marker></defs>';
+  // trục nhạt
+  s+='<line x1="14" y1="'+oy+'" x2="240" y2="'+oy+'" stroke="#e3e8ee" stroke-width="1"/>';
+  s+='<line x1="'+ox+'" y1="14" x2="'+ox+'" y2="130" stroke="#e3e8ee" stroke-width="1"/>';
+  const aA=ang(a), aB=ang(b), aC=ang(c);
+  if(showAns){
+    s+=arc(30,aB,aA,'#6d28d9');
+    const mAB=polar(38,(aA+aB)/2);
+    s+='<text x="'+mAB.x.toFixed(1)+'" y="'+mAB.y.toFixed(1)+'" font-size="7.6" fill="#6d28d9" font-weight="800" text-anchor="middle">góc nhỏ</text>';
+    s+=arc(22,aA,aC,'#b45309');
+    const mAC=polar(30,(aA+aC)/2);
+    s+='<text x="'+mAC.x.toFixed(1)+'" y="'+mAC.y.toFixed(1)+'" font-size="7.6" fill="#b45309" font-weight="800" text-anchor="middle">90°</text>';
+  } else {
+    const mAB=polar(34,(aA+aB)/2);
+    s+='<text x="'+mAB.x.toFixed(1)+'" y="'+mAB.y.toFixed(1)+'" font-size="9" fill="#6d28d9" font-weight="800" text-anchor="middle">?</text>';
+    const mAC=polar(28,(aA+aC)/2);
+    s+='<text x="'+mAC.x.toFixed(1)+'" y="'+mAC.y.toFixed(1)+'" font-size="9" fill="#b45309" font-weight="800" text-anchor="middle">?</text>';
+  }
+  s+='<circle cx="'+ox+'" cy="'+oy+'" r="2.2" fill="#5b6776"/>';
   s+=arrow(a,'#0e7490','a');
-  s+=arrow(b,'#7c5cff','b');
+  s+=arrow(b,'#6d28d9','b');
   s+=arrow(c,'#b45309','c');
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+function drawScale(id, cosSame, cosDiff, showAns){
+  const svg=document.getElementById(id); if(!svg) return;
+  const x0=30, x1=232, y=52;
+  function px(v){ return x0+Math.max(0,Math.min(v,1))*(x1-x0); }
+  let s='';
+  s+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="#16202e" stroke-width="1.6"/>';
+  [0,0.5,1].forEach(function(t){
+    const X=px(t);
+    s+='<line x1="'+X+'" y1="'+(y-4)+'" x2="'+X+'" y2="'+(y+4)+'" stroke="#16202e" stroke-width="1.2"/>';
+    s+='<text x="'+X+'" y="'+(y+16)+'" font-size="8" fill="#6b7280" font-weight="700" text-anchor="middle">'+t+'</text>';
+  });
+  s+='<text x="'+((x0+x1)/2)+'" y="14" font-size="8" fill="#6b7280" font-weight="700" text-anchor="middle">thang cosine</text>';
+  if(showAns){
+    const xd=px(cosDiff), xsm=px(cosSame);
+    // khoảng tách (tím)
+    s+='<line x1="'+xd+'" y1="'+(y-14)+'" x2="'+xsm+'" y2="'+(y-14)+'" stroke="#6d28d9" stroke-width="1.4" stroke-dasharray="3 2"/>';
+    s+='<text x="'+((xd+xsm)/2)+'" y="'+(y-18)+'" font-size="7.6" fill="#6d28d9" font-weight="800" text-anchor="middle">tách = gap</text>';
+    // marker khác (cam)
+    s+='<circle cx="'+xd+'" cy="'+y+'" r="3.4" fill="#b45309"/>';
+    s+='<text x="'+xd+'" y="'+(y+30)+'" font-size="8" fill="#b45309" font-weight="800" text-anchor="middle">khác</text>';
+    // marker giống (lam)
+    s+='<circle cx="'+xsm+'" cy="'+y+'" r="3.4" fill="#0e7490"/>';
+    s+='<text x="'+xsm+'" y="'+(y+30)+'" font-size="8" fill="#0e7490" font-weight="800" text-anchor="middle">giống</text>';
+  } else {
+    s+='<text x="'+(x0-2)+'" y="'+(y+30)+'" font-size="8" fill="#b45309" font-weight="800" text-anchor="start">khác = ?</text>';
+    s+='<text x="'+x1+'" y="'+(y+30)+'" font-size="8" fill="#0e7490" font-weight="800" text-anchor="end">giống = ?</text>';
+  }
+  svg.innerHTML=s;
+}
+function drawBar(id, v, max, fill){
+  const el=document.getElementById(id); if(!el) return;
+  let h='<div class="zero"></div><div class="tick" style="left:50%"></div>';
+  if(fill){
+    const pct=Math.min(Math.max(v,0)/max,1)*100;
+    if(pct>0) h+='<div class="fill pos" style="left:0;width:'+pct+'%"></div>';
+  }
+  el.innerHTML=h;
+}
+function gen(){
+  const f=WB.fmtTrim, F=WB.fmtInt, W=WB.wrap;
+  const a=WB.pick([[3,4],[4,3]]);
+  const bOpts=(a[0]===3)?[[4,3],[0,5]]:[[3,4],[5,0]];
+  const b=WB.pick(bOpts);
+  const c=[-a[1], a[0]];                 // vuông góc a → a·c = 0, ‖c‖ = 5
+  const dotAB=a[0]*b[0]+a[1]*b[1];
+  const dotAC=a[0]*c[0]+a[1]*c[1];       // = 0
+  const nrm=Math.round(Math.hypot(a[0],a[1]));   // = 5
+  const den=nrm*nrm;                      // = 25
+  const normA2=2*nrm;                     // ‖2a‖ = 10
+  const dotAB2=2*dotAB;
+  const cosSame=Math.round(dotAB/den*100)/100;
+  const cosDiff=Math.round(dotAC/den*100)/100;
+  const gap=Math.round((cosSame-cosDiff)*100)/100;
+  WB.setAll({
+    ax:F(a[0]), ay:F(a[1]), bx:F(b[0]), by:F(b[1]), cx:F(c[0]), cy:F(c[1]),
+    nrm:F(nrm), den:F(den), normA2:F(normA2),
+    axb:a[0]+'·'+b[0]+' + '+a[1]+'·'+b[1],
+    axc:a[0]+'·'+W(F(c[0]))+' + '+a[1]+'·'+W(F(c[1])),
+    dotAB:F(dotAB), dotAC:F(dotAC), dotAB2:F(dotAB2), dotAB2s:F(dotAB2),
+    cosSame:f(cosSame), cosDiff:f(cosDiff), gap:f(gap)
+  });
+  drawVecs('figVecs', a, b, c, false);
+  drawVecs('figVecsA', a, b, c, true);
+  drawScale('figScale', cosSame, cosDiff, false);
+  drawBar('barSame', cosSame, 1, false);
+  drawBar('barDiff', cosDiff, 1, false);
+  const pages=[...document.querySelectorAll('.page')];
+  const meas=pages.map((p,i)=>'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight)).join(' ');
+  const md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

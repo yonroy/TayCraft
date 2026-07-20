@@ -1,179 +1,427 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài M1 — GNN message passing (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài M1 — GNN: Message Passing (dashboard)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:6px;}
-.page .intro,.page .intuition{padding-top:7px;padding-bottom:7px;}
-.page .quiz{margin-top:7px;padding-top:7px;padding-bottom:7px;}
-.page .calc{line-height:1.7;}
-.page .why{margin-top:5px;}
-.page .note{margin-top:4px;}
+.tbl-disc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl-disc th{font:800 7px var(--sans);letter-spacing:.02em;text-transform:uppercase;color:var(--dim);padding:1mm .5mm;border-bottom:1.4px solid var(--line);text-align:center}
+.tbl-disc td{padding:1.7mm .5mm;border-bottom:1px solid var(--line2);font:700 9.6px var(--mono);text-align:center}
+.tbl-disc td.l{text-align:left;color:var(--blue);font-weight:800;font-size:8.4px}
+.tbl-disc td.pt{color:var(--purple);font-weight:800}
+.tbl-disc td.an{color:#7a3d00;background:#fff8f0;font-weight:800}
+.gk{color:var(--purple);font-weight:800}
+.rw{color:var(--orange);font-weight:800}
+.pk{color:var(--blue);font-weight:800}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9px;line-height:1.55}
+.trap li{margin:.7mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple);background:#f8f6fd} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange);background:#fff8f0} .why2.o b{color:var(--orange)}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tô bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần M</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>GNN — Message Passing <small>— gom tin hàng xóm rồi cập nhật nút · <i>GNN</i></small></h1>
+    <span class="chip">PHẦN M · NÂNG CAO</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~14 phút · Bài M1</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>nút đích A</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>hàng xóm</span>
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>tin nhắn · vectơ cho sẵn</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài M1</span><h1>GNN — message passing <small>— một bước lan tin</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~13 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Nhiều dữ liệu là <b>đồ thị</b> (mạng xã hội, phân tử, bản đồ). GNN cho mỗi nút "nghe" hàng xóm để học biểu diễn
-    theo cấu trúc quan hệ. Một lớp = một vòng lan tin; chồng lớp → nút thấy hàng xóm xa hơn.
-    <div class="formula">hᵥ' = Update( hᵥ , Aggregate({ hᵤ : u ∈ N(v) }) ) &nbsp;(Aggregate: sum/mean/max)</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Cho một đồ thị 5 nút, mỗi nút mang một <b>vectơ đặc trưng 2 chiều</b>. Bạn sẽ tự chạy <b>một lớp message passing</b>: ① <b>gộp tin</b> (cộng vectơ của mọi hàng xóm) → ② <b>cập nhật</b> hᵥ′ = hᵥ + (tổng gộp) → ③ làm cho mọi nút. Cuối phiếu bạn tự chứng minh được <b>tổng gộp không phụ thuộc thứ tự hàng xóm</b> và <b>nút cô lập đứng yên</b>, đồng thời thấy vì sao <b>số lớp = bán kính thông tin</b>.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Mỗi nút <b>gửi tin</b> (đặc trưng) cho hàng xóm và <b>nhận</b> lại; gom các tin nhận được (trung bình/tổng) rồi cập nhật bản thân. Sau k
-    lớp, một nút biết tin từ hàng xóm trong <b>bán kính k</b> — như tin đồn lan qua mạng quen biết.
+  <div class="why2 p"><b>💡 Trực giác.</b> Hãy coi mỗi nút là một <b>người</b>, mỗi cạnh là một <b>mối quen biết</b>, còn vectơ đặc trưng là "những gì người đó biết". Một lớp GNN = <b>một vòng buôn chuyện</b>: ai cũng gửi hiểu biết của mình cho hàng xóm, rồi <b>gộp</b> mọi tin nhận được và <b>trộn vào hiểu biết cũ của bản thân</b>. Chồng 2 lớp = buôn chuyện 2 vòng → tin của người-quen-của-người-quen (cách 2 cạnh) mới tới nơi. Công thức tổng quát: <b>hᵥ′ = Update( hᵥ , Aggregate{ hᵤ : u ∈ N(v) } )</b>; ở phiếu này Aggregate = <b>tổng</b> và Update = <b>cộng</b>.</div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — đồ thị 5 nút &amp; vectơ đặc trưng</span><span class="f">3 cạnh · nút E cô lập</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figGraph" viewBox="0 0 300 172" width="94mm" height="54mm" aria-label="đồ thị 5 nút với mũi tên tin nhắn về nút A"></svg>
+      <div class="storybox">
+        <b>Danh sách cạnh (vô hướng):</b> <b class="pk">A–B</b>, <b class="pk">A–C</b>, <b class="pk">C–D</b>. Nút <b class="rw">E</b> <b>không có cạnh nào</b>.
+        <div style="margin-top:1mm">Vô hướng nghĩa là tin chạy <b>cả hai chiều</b>: có cạnh A–B thì A nhận tin của B <i>và</i> B nhận tin của A.</div>
+        <div class="cap" style="margin-top:1.2mm">Trong hình: <b class="rw">A</b> = nút đang cập nhật, <b class="gk">B, C</b> = hàng xóm của A, mũi tên <b class="pk">lam</b> = tin nhắn đổ về A. Ô <b class="rw">hₐ′ = ?</b> để trống — bạn điền ở bước ②.</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">nút A · 2 hàng xóm</span></div>
-    <div class="calc" style="font-size:14px">
-      h_A = (<span class="gv" data-q="ax">1</span>,<span class="gv" data-q="ay">0</span>) ; hàng xóm h_B = (<span class="gv" data-q="bx">0</span>,<span class="gv" data-q="by">1</span>),
-      h_C = (<span class="gv" data-q="cx">1</span>,<span class="gv" data-q="cy">1</span>) ; Aggregate = trung bình
+  <div class="panel">
+    <div class="ph"><span class="t">Bảng dữ liệu — đọc kỹ trước khi tính</span><span class="f">N(v) = tập hàng xóm · bậc = |N(v)|</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:9px">
+        <thead><tr><th style="width:18mm">Nút v</th><th>vectơ hᵥ cho sẵn</th><th>hàng xóm N(v)</th><th style="width:14mm">bậc</th></tr></thead>
+        <tbody>
+          <tr><td class="l">A (đích)</td><td class="pk">(<span data-q="ax">1</span>, <span data-q="ay">0</span>)</td><td class="pt">B, C</td><td>2</td></tr>
+          <tr><td class="l">B</td><td class="pk">(<span data-q="bx">0</span>, <span data-q="by">1</span>)</td><td class="pt">A</td><td>1</td></tr>
+          <tr><td class="l">C</td><td class="pk">(<span data-q="cx">1</span>, <span data-q="cy">1</span>)</td><td class="pt">A, D</td><td>2</td></tr>
+          <tr><td class="l">D</td><td class="pk">(<span data-q="dx">2</span>, <span data-q="dy">1</span>)</td><td class="pt">C</td><td>1</td></tr>
+          <tr><td class="l">E (cô lập)</td><td class="pk">(<span data-q="ex">1</span>, <span data-q="ey">2</span>)</td><td class="pt">— (rỗng)</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm">Cộng vectơ làm theo <b>từng thành phần</b>: (a₁, a₂) + (b₁, b₂) = (a₁+b₁, a₂+b₂). Số âm viết dấu <b>−</b>; cộng một số âm chính là trừ.</div>
     </div>
   </div>
 
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Gom tin hàng xóm (mean)</h2><span class="tag">trung bình B, C</span></div>
-    <div class="calc">
-      agg = ( (<span data-q="bx">0</span>+<span data-q="cx">1</span>)/2 , (<span data-q="by">1</span>+<span data-q="cy">1</span>)/2 ) = ( <span class="blk" style="min-width:32px"></span> , <span class="blk" style="min-width:32px"></span> )
+  <div class="panel">
+    <div class="ph"><span class="t">① Gộp tin — cộng vectơ của mọi hàng xóm của A</span><span class="f">mₐ = Σ hᵤ, u ∈ N(A)</span></div>
+    <div class="pb">
+      <div class="eq">mₐ = h<sub>B</sub> + h<sub>C</sub> = (<span data-q="bx">0</span>, <span data-q="by">1</span>) + (<span data-q="cx">1</span>, <span data-q="cy">1</span>) = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+      <div class="why2"><b>Đây là gì?</b> Một vectơ <b>tóm tắt bối cảnh xung quanh</b> A — "hàng xóm của tôi trông như thế nào". Nó <b>chưa chứa</b> gì của chính A cả. Chú ý phép gộp chỉ là <b>cộng</b>: liệt kê B trước hay C trước đều ra một kết quả (sẽ kiểm bằng tay ở trang 2).</div>
     </div>
-    <div class="why"><b>Vì sao:</b> trung bình cho biểu diễn "bối cảnh hàng xóm" của A, bất biến số lượng/thứ tự hàng xóm.</div>
   </div>
 
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cập nhật nút A</h2><span class="tag">h_A + agg</span></div>
-    <div class="calc">
-      h_A' = ( <span data-q="ax">1</span>+<span data-q="aggx">0.5</span> , <span data-q="ay">0</span>+<span data-q="aggy">1</span> ) = ( <span class="blk" style="min-width:32px"></span> , <span class="blk" style="min-width:32px"></span> )
+  <div class="panel">
+    <div class="ph"><span class="t">② Cập nhật nút A — trộn bản thân với bối cảnh</span><span class="f">hₐ′ = hₐ + mₐ</span></div>
+    <div class="pb">
+      <div class="eq">hₐ′ = hₐ + mₐ = (<span data-q="ax">1</span>, <span data-q="ay">0</span>) + ( <span class="slot sm"></span> , <span class="slot sm"></span> ) = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+      <div class="why2 o"><b>Vì sao phải cộng thêm hₐ?</b> Nếu chỉ lấy mₐ thì nút <b>quên mất chính mình</b> — hai nút khác hẳn nhau nhưng có cùng bộ hàng xóm sẽ ra biểu diễn giống hệt nhau. Cộng hₐ (nhánh "bản thân", còn gọi <b>self-loop</b>) giữ lại danh tính của nút. GNN thật thay phép cộng bằng <b>hₐ′ = σ(W₁hₐ + W₂mₐ)</b> — vẫn đúng khung này, chỉ thêm trọng số học được và hàm kích hoạt.</div>
+      <div class="cap">Chép kết quả hₐ′ vào ô <b>hₐ′ = ?</b> trên sơ đồ ở đầu trang.</div>
     </div>
-    <div class="hint">Cộng (hoặc nối + lớp tuyến tính) để trộn "bản thân" với "hàng xóm".</div>
   </div>
 
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Chồng lớp</h2><span class="tag">bán kính k</span></div>
-    <div class="why"><b>Vì sao:</b> sau lớp 2, A nhận tin từ hàng xóm của hàng xóm (bán kính 2). Chiều sâu GNN = bán kính thông tin; quá sâu → "over-smoothing" (mọi nút giống nhau).</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Aggregate hoán vị-bất biến</h2><span class="tag">sum/mean/max</span></div>
-    <div class="note">Hàng xóm <b>không có thứ tự</b> → hàm gom phải bất biến hoán vị (sum/mean/max), không phải nối theo thứ tự.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Một lớp GNN cho nút thấy gì? → <span class="blk" style="min-width:150px"></span></li>
-      <li>Vì sao hàm aggregate phải bất biến hoán vị? → <span class="blk" style="min-width:120px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M1 · GNN message passing</span><span>Trang 1/2 · ĐỀ</span></div>
+  <div class="why2"><b>🔮 Dự đoán trước khi sang trang.</b> Nút <b>E không có cạnh nào</b> — theo bạn sau một lớp h<sub>E</sub>′ đổi hay đứng yên? Nút <b>D cách A 2 cạnh</b> — sau <b>một</b> lớp, hₐ′ có chứa chút gì của h<sub>D</sub> không? Ghi phỏng đoán vào nháp rồi kiểm ở trang 2.</div>
+  <div class="scratch" style="height:24mm"><span class="lb">Nháp — cộng vectơ bước ① ② · ghi phỏng đoán về E và D</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài M1 · GNN — Message Passing</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ============ TRANG 2 · ĐỀ ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>GNN — Message Passing <small>— cập nhật mọi nút · số lớp = bán kính · bất biến hoán vị</small></h1>
+    <span class="chip">PHẦN M · NÂNG CAO</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Làm cho MỌI nút còn lại — vẫn một công thức đó</span><span class="f">mᵥ = Σ hàng xóm · hᵥ′ = hᵥ + mᵥ</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:9px">
+        <thead><tr><th style="width:13mm">Nút v</th><th style="width:24mm">hᵥ</th><th>hàng xóm cộng vào</th><th>mᵥ (tổng gộp)</th><th>hᵥ′ = hᵥ + mᵥ</th></tr></thead>
+        <tbody>
+          <tr><td class="l">B</td><td class="pk">(<span data-q="bx">0</span>, <span data-q="by">1</span>)</td><td class="pt">hₐ</td><td><span class="cellb" style="width:21mm"></span></td><td><span class="cellb" style="width:21mm"></span></td></tr>
+          <tr><td class="l">C</td><td class="pk">(<span data-q="cx">1</span>, <span data-q="cy">1</span>)</td><td class="pt">hₐ + h<sub>D</sub></td><td><span class="cellb" style="width:21mm"></span></td><td><span class="cellb" style="width:21mm"></span></td></tr>
+          <tr><td class="l">D</td><td class="pk">(<span data-q="dx">2</span>, <span data-q="dy">1</span>)</td><td class="pt">h<sub>C</sub></td><td><span class="cellb" style="width:21mm"></span></td><td><span class="cellb" style="width:21mm"></span></td></tr>
+          <tr><td class="l">E</td><td class="pk">(<span data-q="ex">1</span>, <span data-q="ey">2</span>)</td><td class="pt">— (không có)</td><td><span class="cellb" style="width:21mm"></span></td><td><span class="cellb" style="width:21mm"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm"><b>Quan trọng:</b> mọi nút gửi đi <b>vectơ CŨ</b> (giá trị đầu lớp). Tính xong nút này đừng vội thay số rồi lấy số mới đi cộng cho nút sau — một lớp GNN cập nhật <b>đồng thời</b> tất cả các nút.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — số lớp = bán kính thông tin</div>
+    <div class="figwrap" style="align-items:flex-start">
+      <svg id="figHops" viewBox="0 0 300 132" width="86mm" height="38mm" aria-label="sơ đồ bán kính lan tin quanh nút A"></svg>
+      <div class="storybox">Sau lớp 1: hₐ′ = hₐ + h<sub>B</sub> + h<sub>C</sub>. Chạy tiếp <b>lớp 2</b> (mọi nút cùng làm lớp 1 trước):
+        <div class="eq" style="font-size:9px;line-height:1.7">h<sub>B</sub>′ = h<sub>B</sub> + hₐ<br>h<sub>C</sub>′ = h<sub>C</sub> + hₐ + h<sub>D</sub></div>
+        Khai triển hₐ″ = hₐ′ + h<sub>B</sub>′ + h<sub>C</sub>′ theo <b>vectơ gốc</b> rồi điền hệ số vào bảng dưới.</div>
+    </div>
+    <table class="tbl-disc" style="margin-top:.8mm">
+      <thead><tr><th style="width:32mm">hệ số trong hₐ″ (2 lớp)</th><th>hₐ</th><th>h<sub>B</sub></th><th>h<sub>C</sub></th><th>h<sub>D</sub></th><th>h<sub>E</sub></th></tr></thead>
+      <tbody><tr><td class="l">điền số nguyên</td>
+        <td><span class="cellb" style="width:13mm"></span></td><td><span class="cellb" style="width:13mm"></span></td>
+        <td><span class="cellb" style="width:13mm"></span></td><td><span class="cellb" style="width:13mm"></span></td>
+        <td><span class="cellb" style="width:13mm"></span></td></tr></tbody>
+    </table>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Hệ số của <b>h<sub>D</sub></b> sau <b>một</b> lớp là <b>0</b> (D cách A 2 cạnh, tin chưa kịp tới) nhưng sau <b>hai</b> lớp đã khác 0 ⟹ <b>k lớp = nghe được bán kính k</b>. Còn hệ số của <b>h<sub>E</sub></b> bằng 0 <b>mãi mãi</b>: E ở thành phần liên thông khác, không đường nào tới. Nhưng chồng quá nhiều lớp lại sinh bệnh <b>over-smoothing</b>: mọi nút gộp gần như cùng một tập tin → vectơ hóa giống nhau, mất khả năng phân biệt.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — bất biến hoán vị &amp; nút cô lập đứng yên</div>
+    <div style="font-size:9px;line-height:1.45"><b>(a) Đổi THỨ TỰ liệt kê hàng xóm của A.</b> Tính tổng gộp theo hai thứ tự khác nhau:</div>
+    <div class="eq">thứ tự (B, C): mₐ = (<span data-q="bx">0</span>, <span data-q="by">1</span>) + (<span data-q="cx">1</span>, <span data-q="cy">1</span>) = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )<br>
+    thứ tự (C, B): mₐ = (<span data-q="cx">1</span>, <span data-q="cy">1</span>) + (<span data-q="bx">0</span>, <span data-q="by">1</span>) = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+    <div style="font-size:8.8px;line-height:1.45">→ Hai dòng ra <b>y hệt</b> vì phép cộng <b>giao hoán</b>. Đó là <b>bất biến hoán vị</b>: đồ thị không hề có "nút số 1, nút số 2" — cách đánh số chỉ là quy ước của người vẽ, nên hàm gộp <b>bắt buộc</b> phải cho cùng kết quả với mọi thứ tự (sum / mean / max đều được; nối chuỗi theo thứ tự thì KHÔNG).</div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1.4mm"><b>(b) Nút E không có cạnh nào.</b> Tổng của một tập <b>rỗng</b> bằng vectơ 0:</div>
+    <div class="eq">m<sub>E</sub> = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> ) &nbsp;→&nbsp; h<sub>E</sub>′ = h<sub>E</sub> + m<sub>E</sub> = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+    <div style="font-size:8.8px;line-height:1.45">→ h<sub>E</sub>′ = h<sub>E</sub>: nút cô lập <b>đứng yên qua mọi lớp</b>. Bấm 🎲 đổi số bao nhiêu lần thì đẳng thức này vẫn đúng — chính sự đứng yên đó là bằng chứng rằng thông tin chỉ chảy <b>dọc theo cạnh</b>.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Chọn hàm gộp nào? — sum / mean / max</span><span class="f">cả ba đều bất biến hoán vị</span></div>
+    <div class="pb">
+      <table class="tbl-disc" style="font-size:8.6px">
+        <thead><tr><th style="width:20mm">Aggregate</th><th style="width:26mm">Làm gì</th><th>Mạnh / yếu</th></tr></thead>
+        <tbody>
+          <tr><td class="l">sum (phiếu này)</td><td style="text-align:left">cộng hết hàng xóm</td><td style="text-align:left">giữ được <b>bậc</b> (nút nhiều bạn ra vectơ lớn) — phân biệt cấu trúc mạnh nhất, nhưng dễ <b>phình độ lớn</b></td></tr>
+          <tr><td class="l">mean</td><td style="text-align:left">chia tổng cho bậc</td><td style="text-align:left">ổn định thang đo, hợp khi bậc chênh lệch lớn; đổi lại <b>mất</b> thông tin về số lượng hàng xóm</td></tr>
+          <tr><td class="l">max</td><td style="text-align:left">lấy max từng chiều</td><td style="text-align:left">bắt <b>đặc trưng nổi bật nhất</b>, chịu nhiễu tốt; bỏ qua phần còn lại của hàng xóm</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm">Nối hàng xóm theo thứ tự rồi cho qua một lớp tuyến tính thì <b>không</b> bất biến hoán vị → đổi cách đánh số nút là đổi kết quả: sai về nguyên tắc.</div>
+    </div>
+  </div>
+
+  <div class="scratch" style="height:15mm"><span class="lb">Nháp — bảng ③ · khai triển 2 lớp · tự kiểm</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Gộp tin cho A</span>
+    <span><span class="ck"></span>Cập nhật hₐ′</span>
+    <span><span class="ck"></span>Bảng mọi nút</span>
+    <span><span class="ck"></span>Hoán vị &amp; cô lập</span>
+    <span class="win">🎉 Xong Bài M1!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài M1 · GNN — Message Passing</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
 <section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài M1</span><h1>GNN message passing <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Gom tin (mean)</h2></div>
-    <div class="calc ans">agg = ( <span class="blk" data-q="aggx">0.5</span> , <span class="blk" data-q="aggy">1</span> )</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>GNN — Message Passing <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cập nhật A</h2></div>
-    <div class="calc ans">h_A' = ( <span class="blk" data-q="hx">1.5</span> , <span class="blk" data-q="hy">1</span> )</div>
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ — đáp án đầy đủ</span><span class="f">hₐ=(<span data-q="ax">1</span>,<span data-q="ay">0</span>) h<sub>B</sub>=(<span data-q="bx">0</span>,<span data-q="by">1</span>) h<sub>C</sub>=(<span data-q="cx">1</span>,<span data-q="cy">1</span>) h<sub>D</sub>=(<span data-q="dx">2</span>,<span data-q="dy">1</span>) h<sub>E</sub>=(<span data-q="ex">1</span>,<span data-q="ey">2</span>)</span></div>
+    <div class="pb">
+      <div class="eq">① mₐ = h<sub>B</sub> + h<sub>C</sub> = (<span data-q="bx">0</span>, <span data-q="by">1</span>) + (<span data-q="cx">1</span>, <span data-q="cy">1</span>) = <span class="qa">(<span data-q="mAx">1</span>, <span data-q="mAy">2</span>)</span></div>
+      <div class="eq">② hₐ′ = hₐ + mₐ = (<span data-q="ax">1</span>, <span data-q="ay">0</span>) + (<span data-q="mAx">1</span>, <span data-q="mAy">2</span>) = <span class="qa">(<span data-q="hAx">2</span>, <span data-q="hAy">2</span>)</span></div>
+      <table class="tbl-disc" style="margin-top:.6mm">
+        <thead><tr><th style="width:13mm">③ nút</th><th>hᵥ</th><th>hàng xóm</th><th>mᵥ</th><th>hᵥ′ = hᵥ + mᵥ</th></tr></thead>
+        <tbody>
+          <tr><td class="l">B</td><td class="pk">(<span data-q="bx">0</span>, <span data-q="by">1</span>)</td><td class="pt">hₐ</td><td class="an">(<span data-q="mBx">1</span>, <span data-q="mBy">0</span>)</td><td class="an">(<span data-q="hBx">1</span>, <span data-q="hBy">1</span>)</td></tr>
+          <tr><td class="l">C</td><td class="pk">(<span data-q="cx">1</span>, <span data-q="cy">1</span>)</td><td class="pt">hₐ + h<sub>D</sub></td><td class="an">(<span data-q="mCx">3</span>, <span data-q="mCy">1</span>)</td><td class="an">(<span data-q="hCx">4</span>, <span data-q="hCy">2</span>)</td></tr>
+          <tr><td class="l">D</td><td class="pk">(<span data-q="dx">2</span>, <span data-q="dy">1</span>)</td><td class="pt">h<sub>C</sub></td><td class="an">(<span data-q="mDx">1</span>, <span data-q="mDy">1</span>)</td><td class="an">(<span data-q="hDx">3</span>, <span data-q="hDy">2</span>)</td></tr>
+          <tr><td class="l">E</td><td class="pk">(<span data-q="ex">1</span>, <span data-q="ey">2</span>)</td><td class="pt">— rỗng</td><td class="an">(0, 0)</td><td class="an">(<span data-q="hEx">1</span>, <span data-q="hEy">2</span>)</td></tr>
+        </tbody>
+      </table>
+      <div class="cap" style="margin-top:.6mm">Mọi dòng đều dùng vectơ <b>đầu lớp</b>. Nếu bạn lỡ lấy hₐ′ (đã cập nhật) đi tính cho B thì kết quả sẽ lệch — đó là bẫy số 1 ở dưới.</div>
+    </div>
   </div>
 
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>Tin từ B, C đổ về A</h2><span class="tag">message passing</span></div>
-    <div class="figrow">
-      <svg id="figG" class="fig" viewBox="0 0 250 130" width="74mm" height="42mm" aria-label="nút A nhận mũi tên tin từ hai hàng xóm B và C"></svg>
-      <div style="flex:1">
-        <div class="note">B, C gửi đặc trưng (mũi tên lam) về A; A gom (trung bình) thành agg rồi cộng vào chính nó → h_A'. Một lớp = một vòng lan tin từ hàng xóm trực tiếp.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Sơ đồ đã điền — tin đổ về A</span><span class="f">hₐ′ = hₐ + h<sub>B</sub> + h<sub>C</sub></span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figGraphA" viewBox="0 0 300 172" width="86mm" height="49mm" aria-label="đồ thị đã điền vectơ mới của A"></svg>
+      <div class="storybox"><b class="rw">A</b> nhận đúng <b>hai</b> tin (từ <b class="gk">B</b> và <b class="gk">C</b>) vì bậc của A bằng 2. <b>D</b> có gửi tin, nhưng gửi cho <b>C</b> — chưa tới A trong lớp này. <b class="rw">E</b> không gửi cũng không nhận.
+        <div class="cap" style="margin-top:1.2mm">Cùng một công thức chạy song song ở mọi nút; thứ duy nhất khác nhau giữa các nút là <b>tập hàng xóm</b>. Cấu trúc đồ thị chính là thứ điều khiển tính toán — đó là điểm khác biệt của GNN so với MLP.</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Bán kính thông tin — đáp án</div>
+    <div class="figwrap" style="align-items:flex-start">
+      <svg id="figHopsA" viewBox="0 0 300 132" width="86mm" height="38mm" aria-label="sơ đồ bán kính lan tin đã điền"></svg>
+      <div class="storybox">
+        <div class="eq" style="font-size:9px;line-height:1.6">hₐ″ = (hₐ+h<sub>B</sub>+h<sub>C</sub>) + (h<sub>B</sub>+hₐ) + (h<sub>C</sub>+hₐ+h<sub>D</sub>)</div>
+        <table class="tbl-disc" style="margin-top:.6mm">
+          <thead><tr><th style="width:18mm">hệ số</th><th>hₐ</th><th>h<sub>B</sub></th><th>h<sub>C</sub></th><th>h<sub>D</sub></th><th>h<sub>E</sub></th></tr></thead>
+          <tbody><tr><td class="l">sau 2 lớp</td>
+            <td class="an"><span data-q="cA">3</span></td><td class="an"><span data-q="cB">2</span></td>
+            <td class="an"><span data-q="cC">2</span></td><td class="an"><span data-q="cD">1</span></td>
+            <td class="an"><span data-q="cE">0</span></td></tr></tbody>
+        </table>
       </div>
     </div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm"><b>Kết luận.</b> Hệ số h<sub>D</sub> nhảy từ <b>0</b> (một lớp) lên <b>1</b> (hai lớp) → tin của nút cách 2 cạnh chỉ tới sau <b>2</b> lớp: <b>số lớp chính là bán kính nghe được</b>. Kiểm bằng số: thành phần x của hₐ″ = 3·<span data-q="ax">1</span> + 2·<span data-q="bx">0</span> + 2·<span data-q="cx">1</span> + <span data-q="dxw">2</span> = <span class="qa" data-q="hA2x">7</span>; thành phần y = <span class="qa" data-q="hA2y">5</span>. Hệ số h<sub>E</sub> luôn <b>0</b> vì E nằm ở thành phần liên thông khác.</div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Một lớp GNN? → <span class="qa">Thông tin từ hàng xóm trực tiếp (bán kính 1).</span></li>
-      <li>Bất biến hoán vị? → <span class="qa">Hàng xóm không có thứ tự cố định.</span></li>
-    </ol>
+  <div class="selfbox">
+    <div class="h">🔎 Bất biến hoán vị &amp; nút cô lập — đáp án</div>
+    <div class="eq">(a) (B, C): mₐ = <b>(<span data-q="mAx">1</span>, <span data-q="mAy">2</span>)</b> &nbsp;·&nbsp; (C, B): mₐ = <b>(<span data-q="mAx">1</span>, <span data-q="mAy">2</span>)</b> → <b>bằng nhau</b><br>
+    (b) m<sub>E</sub> = <b>(0, 0)</b> → h<sub>E</sub>′ = <b>(<span data-q="hEx">1</span>, <span data-q="hEy">2</span>)</b> = h<sub>E</sub> → <b>đứng yên</b></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">(a) Cộng <b>giao hoán</b> nên tổng gộp chỉ phụ thuộc <b>tập</b> hàng xóm, không phụ thuộc cách sắp thứ tự ⟹ GNN cho cùng kết quả dù ta đánh số nút kiểu nào. Đây chính là lý do hàm gộp phải là sum/mean/max chứ không được là phép nối theo thứ tự. (b) Tổng trên tập rỗng bằng vectơ 0, nên hᵥ′ = hᵥ: <b>thông tin chỉ chảy dọc theo cạnh</b> — không cạnh thì không có gì để học thêm.</div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> GNN = gom tin hàng xóm (mean/sum) + cập nhật nút; chồng lớp → bán kính lớn hơn. Bài tiếp (M2): học biểu diễn
-    bằng đối lập — <b style="color:var(--accent2)">contrastive/InfoNCE</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Cập nhật tuần tự:</b> dùng hₐ′ (vừa tính) để gộp cho B. Một lớp phải đọc <b>toàn bộ giá trị cũ</b> rồi ghi đồng thời.</li>
+        <li><b>Quên nhánh bản thân:</b> đặt hᵥ′ = mᵥ. Nút mất danh tính — hai nút khác nhau mà cùng bộ hàng xóm sẽ ra vectơ giống hệt.</li>
+        <li><b>Tưởng một lớp là thấy cả đồ thị:</b> một lớp chỉ nghe <b>bán kính 1</b>; muốn tới nút cách k cạnh phải chồng k lớp.</li>
+        <li><b>Gộp theo thứ tự (nối chuỗi):</b> phá <b>bất biến hoán vị</b> — đổi cách đánh số nút là đổi kết quả, mô hình vô nghĩa.</li>
+        <li><b>Chồng thật nhiều lớp cho "mạnh":</b> quá sâu → <b>over-smoothing</b>, mọi nút hội tụ về cùng một vectơ, hết phân biệt.</li>
+      </ul>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài M1 · GNN message passing</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Một lớp GNN = <b>mᵥ = Σ hàng xóm</b> rồi <b>hᵥ′ = hᵥ + mᵥ</b>: hàm gộp phải <b>bất biến hoán vị</b> (nhờ cộng giao hoán), nút <b>cô lập đứng yên</b>, và <b>k lớp = bán kính k</b> (quá sâu → over-smoothing). Bài tiếp <b>M2 · Contrastive &amp; InfoNCE</b>: học biểu diễn bằng cách <b>kéo cặp giống lại gần, đẩy cặp khác ra xa</b> — đúng cách người ta huấn luyện những vectơ đặc trưng mà GNN vừa sinh ra.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài M1 · GNN — Message Passing</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
 </section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim;
-  var A = [WB.randInt(0,2), WB.randInt(0,2)];
-  var B = [WB.randInt(0,2), WB.randInt(0,2)];
-  var C = [WB.randInt(0,2), WB.randInt(0,2)];
-  var aggx = Math.round((B[0]+C[0])/2*100)/100;
-  var aggy = Math.round((B[1]+C[1])/2*100)/100;
-  var hx = Math.round((A[0]+aggx)*100)/100;
-  var hy = Math.round((A[1]+aggy)*100)/100;
-  WB.setAll({
-    ax:String(A[0]), ay:String(A[1]), bx:String(B[0]), by:String(B[1]), cx:String(C[0]), cy:String(C[1]),
-    aggx:f(aggx), aggy:f(aggy), hx:f(hx), hy:f(hy)
-  });
-  drawGraph('figG', A, B, C);
+var CA='#b45309', CN='#6d28d9', CM='#0e7490', COTH='#475569';
+
+// ô chứa vectơ CÓ THỂ ÂM → rộng 40px, font 6.8px (chống "nuốt" dấu trừ khi in)
+function vlabel(x,y,txt,col,bg){
+  var w=42,h=13;
+  return '<rect x="'+(x-w/2)+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="2.5" fill="'+bg+'" stroke="'+col+'" stroke-width="1.1"/>'+
+         '<text x="'+x+'" y="'+(y+2.4)+'" text-anchor="middle" font-size="6.8" font-weight="800" fill="'+col+'" font-family="Consolas,monospace">'+txt+'</text>';
 }
-function drawGraph(id, A, B, C){
-  var svg = document.getElementById(id); if(!svg) return;
-  var s='<defs><marker id="agM1" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#0e7490"/></marker></defs>';
-  var aP=[180,66], bP=[60,30], cP=[60,104];
-  function node(p,col,lab,v){
-    return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="16" fill="'+col+'22" stroke="'+col+'" stroke-width="1.5"/>'
-      +'<text x="'+p[0]+'" y="'+(p[1]-1)+'" text-anchor="middle" font-size="10" fill="'+col+'" font-weight="700">'+lab+'</text>'
-      +'<text x="'+p[0]+'" y="'+(p[1]+10)+'" text-anchor="middle" font-size="7" fill="#5b6776">('+v[0]+','+v[1]+')</text>';
+function node(x,y,name,col,bg){
+  return '<circle cx="'+x+'" cy="'+y+'" r="14" fill="'+bg+'" stroke="'+col+'" stroke-width="2"/>'+
+         '<text x="'+x+'" y="'+(y+4.2)+'" text-anchor="middle" font-size="11.5" font-weight="800" fill="'+col+'">'+name+'</text>';
+}
+function edge(x1,y1,x2,y2){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#9aa5b1" stroke-width="1.6"/>';
+}
+// mũi tên "tin nhắn" chạy song song cạnh, lệch sang bên
+function msgArrow(x1,y1,x2,y2,col){
+  var dx=x2-x1, dy=y2-y1, L=Math.sqrt(dx*dx+dy*dy), ux=dx/L, uy=dy/L;
+  var px=-uy, py=ux;
+  var sx=x1+ux*17+px*6, sy=y1+uy*17+py*6, ex=x2-ux*19+px*6, ey=y2-uy*19+py*6;
+  var a1x=ex-ux*7+px*3.4, a1y=ey-uy*7+py*3.4, a2x=ex-ux*7-px*3.4, a2y=ey-uy*7-py*3.4;
+  return '<line x1="'+sx+'" y1="'+sy+'" x2="'+ex+'" y2="'+ey+'" stroke="'+col+'" stroke-width="2"/>'+
+         '<polygon points="'+ex+','+ey+' '+a1x+','+a1y+' '+a2x+','+a2y+'" fill="'+col+'"/>';
+}
+
+function drawGraph(id, v, show){
+  var svg=document.getElementById(id); if(!svg) return;
+  var A=[150,86], B=[58,34], C=[58,138], D=[252,138], E=[252,34];
+  var s='';
+  s+=edge(A[0],A[1],B[0],B[1]);
+  s+=edge(A[0],A[1],C[0],C[1]);
+  s+=edge(C[0],C[1],D[0],D[1]);
+  s+=msgArrow(B[0],B[1],A[0],A[1],CM);
+  s+=msgArrow(C[0],C[1],A[0],A[1],CM);
+  s+='<text x="106" y="46" text-anchor="middle" font-size="6.6" font-weight="800" fill="'+CM+'">tin nhắn</text>';
+  s+='<text x="106" y="132" text-anchor="middle" font-size="6.6" font-weight="800" fill="'+CM+'">tin nhắn</text>';
+  s+=node(B[0],B[1],'B',CN,'#f5f1fe');
+  s+=node(C[0],C[1],'C',CN,'#f5f1fe');
+  s+=node(D[0],D[1],'D',COTH,'#f1f5f9');
+  s+=node(E[0],E[1],'E',COTH,'#f1f5f9');
+  s+=node(A[0],A[1],'A',CA,'#fff5e9');
+  s+=vlabel(B[0],8,v.B,CM,'#eaf4f6');
+  s+=vlabel(C[0],164,v.C,CM,'#eaf4f6');
+  s+=vlabel(D[0],164,v.D,CM,'#eaf4f6');
+  s+=vlabel(E[0],8,v.E,CM,'#eaf4f6');
+  s+=vlabel(A[0],118,v.A,CM,'#eaf4f6');
+  s+='<text x="'+(A[0]+25)+'" y="121" font-size="6.4" font-weight="700" fill="#6b7280">= hₐ</text>';
+  if(show){
+    s+=vlabel(A[0],50,v.Anew,CA,'#fff8f0');
+    s+='<text x="'+(A[0]+25)+'" y="53" font-size="6.4" font-weight="700" fill="'+CA+'">= hₐ′</text>';
+  }else{
+    s+='<rect x="'+(A[0]-21)+'" y="43" width="42" height="14" rx="2.5" fill="#fff" stroke="'+CA+'" stroke-width="1.4" stroke-dasharray="3 2"/>';
+    s+='<text x="'+A[0]+'" y="53" text-anchor="middle" font-size="7" font-weight="800" fill="'+CA+'">hₐ′ = ?</text>';
+    s+='<text x="'+(A[0]+25)+'" y="53" font-size="6.4" font-weight="700" fill="'+CA+'">điền</text>';
   }
-  s+='<line x1="'+(bP[0]+15)+'" y1="'+(bP[1]+6)+'" x2="'+(aP[0]-17)+'" y2="'+(aP[1]-6)+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#agM1)"/>';
-  s+='<line x1="'+(cP[0]+15)+'" y1="'+(cP[1]-6)+'" x2="'+(aP[0]-17)+'" y2="'+(aP[1]+6)+'" stroke="#0e7490" stroke-width="1.5" marker-end="url(#agM1)"/>';
-  s+=node(bP,'#7c5cff','B',B);
-  s+=node(cP,'#7c5cff','C',C);
-  s+=node(aP,'#b45309','A',A);
+  s+='<text x="252" y="108" text-anchor="middle" font-size="6.6" font-weight="800" fill="'+COTH+'">E: không cạnh nào</text>';
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+
+function drawHops(id, show){
+  var svg=document.getElementById(id); if(!svg) return;
+  var A=[36,46], B=[126,20], C=[126,72], D=[216,72], E=[266,20];
+  var s='';
+  s+='<line x1="81" y1="4" x2="81" y2="88" stroke="#d7dde5" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  s+='<line x1="171" y1="4" x2="171" y2="88" stroke="#d7dde5" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  s+='<text x="126" y="96" text-anchor="middle" font-size="6.4" font-weight="800" fill="'+CN+'">cách 1 cạnh</text>';
+  s+='<text x="216" y="96" text-anchor="middle" font-size="6.4" font-weight="800" fill="'+COTH+'">cách 2 cạnh</text>';
+  s+=edge(A[0],A[1],B[0],B[1]);
+  s+=edge(A[0],A[1],C[0],C[1]);
+  s+=edge(C[0],C[1],D[0],D[1]);
+  s+=node(B[0],B[1],'B',CN,'#f5f1fe');
+  s+=node(C[0],C[1],'C',CN,'#f5f1fe');
+  s+=node(D[0],D[1],'D',COTH,'#f1f5f9');
+  s+=node(E[0],E[1],'E',COTH,'#f1f5f9');
+  s+=node(A[0],A[1],'A',CA,'#fff5e9');
+  s+='<text x="266" y="44" text-anchor="middle" font-size="6.4" font-weight="800" fill="'+COTH+'">cô lập</text>';
+  s+='<text x="266" y="53" text-anchor="middle" font-size="6.4" font-weight="800" fill="'+COTH+'">(không bao giờ tới)</text>';
+  s+='<text x="8" y="108" font-size="6.6" font-weight="800" fill="'+CA+'">Sau lớp 1, A nghe được:</text>';
+  s+='<text x="158" y="108" font-size="6.6" font-weight="800" fill="'+CA+'">Sau lớp 2, A nghe được:</text>';
+  if(show){
+    s+='<rect x="8" y="112" width="132" height="16" rx="2.5" fill="#fff8f0" stroke="'+CA+'" stroke-width="1.4"/>';
+    s+='<text x="74" y="123" text-anchor="middle" font-size="7.6" font-weight="800" fill="'+CA+'">A, B, C</text>';
+    s+='<rect x="158" y="112" width="134" height="16" rx="2.5" fill="#fff8f0" stroke="'+CA+'" stroke-width="1.4"/>';
+    s+='<text x="225" y="123" text-anchor="middle" font-size="7.6" font-weight="800" fill="'+CA+'">A, B, C, D — không có E</text>';
+  }else{
+    s+='<rect x="8" y="112" width="132" height="16" rx="2.5" fill="#fff" stroke="'+CA+'" stroke-width="1.4" stroke-dasharray="3 2"/>';
+    s+='<rect x="158" y="112" width="134" height="16" rx="2.5" fill="#fff" stroke="'+CA+'" stroke-width="1.4" stroke-dasharray="3 2"/>';
+  }
+  svg.innerHTML=s;
+}
+
+function gen(){
+  var ax,ay,bx,by,cx,cy,dx,dy,ex,ey,guard=0;
+  do{
+    ax=WB.randInt(-3,3); ay=WB.randInt(-3,3);
+    bx=WB.randInt(-3,3); by=WB.randInt(-3,3);
+    cx=WB.randInt(-3,3); cy=WB.randInt(-3,3);
+    dx=WB.randInt(-3,3); dy=WB.randInt(-3,3);
+    ex=WB.randInt(-3,3); ey=WB.randInt(-3,3);
+    guard++;
+  }while(guard<80 && (
+    // GUARD: không nút nào là vectơ 0 (tin rỗng thì mất ý nghĩa);
+    // tổng gộp của A khác (0,0) để bước ② thấy rõ sự thay đổi;
+    // phải có ít nhất một thành phần ÂM để người học luyện dấu trừ.
+    (ax===0&&ay===0)||(bx===0&&by===0)||(cx===0&&cy===0)||(dx===0&&dy===0)||(ex===0&&ey===0)||
+    ((bx+cx)===0&&(by+cy)===0)||
+    Math.min(ax,ay,bx,by,cx,cy,dx,dy,ex,ey)>=0
+  ));
+
+  var mAx=bx+cx, mAy=by+cy, hAx=ax+mAx, hAy=ay+mAy;   // N(A)={B,C}
+  var mBx=ax,    mBy=ay,    hBx=bx+mBx, hBy=by+mBy;   // N(B)={A}
+  var mCx=ax+dx, mCy=ay+dy, hCx=cx+mCx, hCy=cy+mCy;   // N(C)={A,D}
+  var mDx=cx,    mDy=cy,    hDx=dx+mDx, hDy=dy+mDy;   // N(D)={C}
+  var hEx=ex,    hEy=ey;                              // N(E)=∅ → đứng yên
+
+  // khai triển 2 lớp: hₐ″ = hₐ′+h_B′+h_C′ = 3hₐ + 2h_B + 2h_C + 1h_D + 0h_E
+  var cA=3, cB=2, cC=2, cD=1, cE=0;
+  var hA2x=cA*ax+cB*bx+cC*cx+cD*dx, hA2y=cA*ay+cB*by+cC*cy+cD*dy;
+
+  var F=WB.fmtInt;
+  WB.setAll({
+    ax:F(ax), ay:F(ay), bx:F(bx), by:F(by), cx:F(cx), cy:F(cy),
+    dx:F(dx), dy:F(dy), ex:F(ex), ey:F(ey), dxw:WB.wrap(F(dx)),
+    mAx:F(mAx), mAy:F(mAy), hAx:F(hAx), hAy:F(hAy),
+    mBx:F(mBx), mBy:F(mBy), hBx:F(hBx), hBy:F(hBy),
+    mCx:F(mCx), mCy:F(mCy), hCx:F(hCx), hCy:F(hCy),
+    mDx:F(mDx), mDy:F(mDy), hDx:F(hDx), hDy:F(hDy),
+    hEx:F(hEx), hEy:F(hEy),
+    cA:F(cA), cB:F(cB), cC:F(cC), cD:F(cD), cE:F(cE),
+    hA2x:F(hA2x), hA2y:F(hA2y)
+  });
+
+  var v={
+    A:'('+F(ax)+', '+F(ay)+')', B:'('+F(bx)+', '+F(by)+')',
+    C:'('+F(cx)+', '+F(cy)+')', D:'('+F(dx)+', '+F(dy)+')',
+    E:'('+F(ex)+', '+F(ey)+')', Anew:'('+F(hAx)+', '+F(hAy)+')'
+  };
+  drawGraph('figGraph', v, false);
+  drawGraph('figGraphA', v, true);
+  drawHops('figHops', false);
+  drawHops('figHopsA', true);
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

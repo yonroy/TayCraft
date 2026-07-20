@@ -1,214 +1,398 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Làm toán AI · Bài N1 — MLP một vòng huấn luyện (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Làm toán AI · Bài N1 — MLP Capstone (xuôi + ngược một lượt)</title>
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:5px;}
-.page .intro,.page .intuition{padding-top:6px;padding-bottom:6px;}
-.page .quiz{margin-top:6px;padding-top:6px;padding-bottom:6px;}
-.page .calc{line-height:1.6;}
-.page .why{margin-top:4px;}
-.page .note{margin-top:3px;}
+.why2{margin-top:1.2mm;background:#f7fafb;border-left:3px solid var(--blue);padding:1.5mm 2.6mm;font-size:9.2px;line-height:1.5}
+.why2 b{color:var(--blue)} .why2.p{border-left-color:var(--purple);background:#f8f6fd} .why2.p b{color:var(--purple)}
+.why2.o{border-left-color:var(--orange);background:#fff8f0} .why2.o b{color:var(--orange)}
+.why2.t{border-left-color:var(--teal);background:#eefaf8} .why2.t b{color:var(--teal)}
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.trap{margin:0;padding-left:4.2mm;font-size:9.2px;line-height:1.55}
+.trap li{margin:.9mm 0}.trap b{color:var(--orange)}
+.figwrap{display:flex;gap:3mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.storybox b{color:var(--ink)}
+.mxrow{display:flex;gap:5.5mm;align-items:center;flex-wrap:wrap}
+.mxcell{display:flex;flex-direction:column;align-items:center;gap:1mm}
+.mlab{font:800 9.5px var(--mono)}
+.mlab.b{color:var(--blue)} .mlab.o{color:var(--orange)} .mlab.p{color:var(--purple)}
+.pill{display:inline-block;border:1.4px solid var(--teal);background:#eefaf8;color:var(--teal);
+  border-radius:999px;padding:.5mm 2.4mm;font:800 8.6px var(--mono);margin-left:1mm}
+.eqn{font:400 10px var(--mono);line-height:2}
+.eqn .op{color:var(--dim)}
+.matans{display:grid;grid-template-columns:repeat(2,11mm);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;width:max-content}
+.matans>div{background:#fff;height:6.4mm;display:flex;align-items:center;justify-content:center;font:800 10px var(--mono)}
+.matans .blank{box-shadow:inset 0 0 0 1.4px var(--ink)}
+.matans .ansc{background:#fff8f0;color:#7a3d00;box-shadow:inset 0 0 0 1.4px var(--orange)}
+.trace{width:100%;border-collapse:collapse}
+.trace th{font:700 7.6px var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--dim);text-align:left;padding:0 2mm 1mm;border-bottom:1.4px solid var(--line)}
+.trace td{padding:1.5mm 2mm;border-bottom:1px solid var(--line2);font:700 9.4px var(--mono);text-align:left;vertical-align:middle}
+.trace td.n{color:var(--blue);font-weight:800;white-space:nowrap}
+.trace td.f{color:var(--dim);font-weight:400;font-size:8.8px}
+.trace td.r{color:#7a3d00;background:#fff8f0;font-weight:800;white-space:nowrap}
+.trace tr:last-child td{border-bottom:none}
+.badge{display:inline-block;background:var(--teal);color:#fff;border-radius:999px;font:800 7.6px var(--sans);padding:.2mm 1.6mm;margin-left:1mm}
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
-  <button class="js-randomize">🎲 Đổi số</button>
-  <button onclick="window.print()">🖨️ In / Lưu PDF</button>
+  <span class="tb-note">In ra giấy, điền &amp; tính bằng bút chì · 🎲 đổi số để luyện thêm</span>
+  <button class="js-randomize" type="button">🎲 Đổi số</button>
+  <button type="button" onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ============ TRANG 1 · ĐỀ — SETUP + FORWARD ============ -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nâng cao · Phần N</div>
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>MLP Capstone <small>— một vòng: xuôi → loss → ngược → cập nhật · MLP 2→2→1</small></h1>
+    <span class="chip">PHẦN N · TỔNG KẾT</span>
+  </div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~16 phút · Bài N1</span>
+    <span class="lg">
+      <span><span class="sw" style="background:#eaf4f6;border:1px solid var(--blue)"></span>x · vào / xuôi</span>
+      <span><span class="sw" style="background:#f5f1fe;border:1px solid var(--purple)"></span>h · lớp ẩn</span>
+      <span><span class="sw" style="background:#fff5e9;border:1px solid var(--orange)"></span>o &amp; gradient ngược</span>
+    </span>
   </div>
 
-  <div class="wb-title"><span class="no">Bài N1</span><h1>MLP — một vòng huấn luyện <small>— capstone 2→2→1</small></h1></div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~16 phút</span></div>
-
-  <div class="intro">
-    <b>Vì sao quan trọng.</b> Đây là "bài tổng duyệt": mọi viên gạch (tích vô hướng, ReLU, MSE, chuỗi, gradient) <b>ráp lại</b> thành một bước
-    học hoàn chỉnh. Hiểu trọn vòng này = hiểu mạng nơ-ron học thế nào.
-    <div class="formula">Forward: h=ReLU(W₁x+b₁), o=W₂h+b₂ · Loss: L=½(o−t)² · Backward: δ₂=o−t · Update: W←W−η∂W</div>
+  <div class="mission">
+    🎯 <b>Nhiệm vụ.</b> Chạy <b>trọn một vòng huấn luyện</b> một mạng nơ-ron 2→2→1 trên <i>một</i> mẫu: đẩy tín hiệu ra <b>dự đoán</b> (forward), <b>đo sai</b> bằng loss, <b>lan trách nhiệm</b> ngược về từng trọng số (backward), rồi <b>nhích trọng số</b> một bước (update). Cuối phiếu bạn tự chứng minh: sau đúng một bước, loss trên chính mẫu này <b>giảm</b>. Đây là toàn bộ deep learning thu nhỏ.
   </div>
 
-  <div class="intuition">
-    <span class="lead">💡 Trực giác</span>
-    Một vòng = <b>đoán → đo sai → truy trách nhiệm → chỉnh</b>. Forward đẩy tín hiệu ra dự đoán; loss đo lệch; backward chia trách nhiệm về
-    từng trọng số; update nhích trọng số để lần sau bớt sai. Lặp vòng này hàng triệu lần = "huấn luyện".
-  </div>
+  <div class="why2 p"><b>💡 Trực giác.</b> Một vòng học = <b>đoán → đo sai → truy trách nhiệm → chỉnh</b>. Forward đẩy số qua các lớp thành dự đoán <i>o</i>; loss đo <i>o</i> lệch mục tiêu <i>t</i> bao nhiêu; backward chia phần lỗi về từng trọng số (quy tắc dây chuyền); update kéo mỗi trọng số ngược hướng gradient để lần sau bớt sai. Lặp vòng này hàng triệu lần trên hàng triệu mẫu = "huấn luyện".</div>
 
-  <!-- GIVEN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">2→2→1 · η=0.1</span></div>
-    <div class="calc" style="font-size:13px">
-      x=(<span class="gv" data-q="x1">1</span>,<span class="gv" data-q="x2">2</span>) · W₁=[[1,1],[0,−1]], b₁=(0,1) ·
-      W₂=(<span class="gv" data-q="w2a">1</span>,<span class="gv" data-q="w2b">2</span>), b₂=<span class="gv" data-q="b2">−1</span> · t=<span class="gv" data-q="t">1</span>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Forward — lớp ẩn</h2><span class="tag">h = ReLU(W₁x+b₁)</span></div>
-    <div class="calc">
-      z = (<span data-q="z1">3</span>, <span data-q="z2">−1</span>) → h = ReLU(z) = ( <span class="blk" style="min-width:30px"></span> , <span class="blk" style="min-width:30px"></span> )
-    </div>
-    <div class="why"><b>Vì sao:</b> nơ-ron ẩn 2 <b>tắt</b> vì z₂&lt;0 (ReLU cắt về 0).</div>
-  </div>
-
-  <!-- BƯỚC 2 -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Forward — đầu ra &amp; loss</h2><span class="tag">o, L</span></div>
-    <div class="calc">
-      o = <span data-q="w2a">1</span>·<span data-q="h1">3</span> + <span data-q="w2b">2</span>·0 + <span data-q="b2w">(−1)</span> = <span class="blk" style="min-width:34px"></span> ;
-      L = ½(o−<span data-q="t">1</span>)² = <span class="blk" style="min-width:34px"></span>
-    </div>
-    <div class="hint">o là dự đoán; L đo lệch với mục tiêu t.</div>
-  </div>
-
-  <!-- BƯỚC 3 -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Backward</h2><span class="tag">δ₂ → ∂W</span></div>
-    <div class="calc" style="font-size:13px">
-      δ₂ = o−t = <span class="blk" style="min-width:26px"></span> ; ∂W₂ = δ₂·h = (<span data-q="gw2a">3</span>, 0) ;
-      δ₁ = (W₂ᵀδ₂)⊙ReLU'(z) = (<span data-q="d1a">1</span>, 0) ; ∂W₁ = δ₁⊗x = [[<span data-q="gw1a">1</span>,<span data-q="gw1b">2</span>],[0,0]]
-    </div>
-    <div class="why"><b>Vì sao:</b> trách nhiệm sai chảy ngược; hàng nơ-ron <b>tắt</b> → gradient 0 (ReLU' = 0).</div>
-  </div>
-
-  <!-- BƯỚC 4 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Update &amp; lặp</h2><span class="tag">W ← W − η∂W</span></div>
-    <div class="calc">
-      W₂ ← (<span data-q="w2a">1</span>,<span data-q="w2b">2</span>) − 0.1·(<span data-q="gw2a">3</span>,0) = ( <span class="blk" style="min-width:34px"></span> , <span class="blk" style="min-width:30px"></span> ) ;
-      b₂ ← <span data-q="b2w">(−1)</span> − 0.1·δ₂ = <span class="blk" style="min-width:38px"></span>
-    </div>
-    <div class="note">Forward lại với W mới → o gần t hơn → L giảm. Lặp = hội tụ.</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Bốn pha của một vòng huấn luyện? → <span class="blk" style="min-width:160px"></span></li>
-      <li>Vì sao gradient nơ-ron ẩn tắt = 0? → <span class="blk" style="min-width:130px"></span></li>
-    </ol>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N1 · MLP capstone</span><span>Trang 1/2 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
-<section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
-  </div>
-  <div class="wb-title"><span class="no">Bài N1</span><h1>MLP capstone <small>— lời giải</small></h1></div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Lớp ẩn</h2></div>
-    <div class="calc ans">h = ReLU(<span data-q="z1">3</span>, <span data-q="z2">−1</span>) = ( <span class="blk" data-q="h1">3</span> , <span class="blk" data-q="h2">0</span> )</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Đầu ra &amp; loss</h2></div>
-    <div class="calc ans">o = <span class="blk" data-q="o">2</span> ; L = ½(o−t)² = <span class="blk" data-q="L">0.5</span></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Backward</h2></div>
-    <div class="calc ans">δ₂ = <span class="blk" data-q="d2">1</span> ; ∂W₂=(<span data-q="gw2a">3</span>,0) ; ∂W₁=[[<span data-q="gw1a">1</span>,<span data-q="gw1b">2</span>],[0,0]]</div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Update</h2></div>
-    <div class="calc ans">W₂ ← ( <span class="blk" data-q="w2aNew">0.7</span> , <span class="blk" data-q="w2bNew">2</span> ) ; b₂ ← <span class="blk" data-q="b2New">−1.1</span></div>
-  </div>
-
-  <!-- SƠ ĐỒ -->
-  <div class="step">
-    <div class="step-h"><div class="b" style="background:var(--accent)">▦</div><h2>x → h → o, gradient chảy ngược</h2><span class="tag">một vòng</span></div>
-    <div class="figrow">
-      <svg id="figN" class="fig" viewBox="0 0 250 120" width="78mm" height="39mm" aria-label="mạng 2-2-1: đầu vào tới lớp ẩn tới đầu ra, mũi tên gradient chảy ngược"></svg>
-      <div style="flex:1">
-        <div class="note">Xuôi (lam): x → h → o. Ngược (cam): δ₂ từ loss chảy về ∂W₂, ∂W₁. Nơ-ron ẩn 2 tắt (h₂=0) → không nhận/truyền gradient.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — mạng 2→2→1 <span class="pill">η = <span data-q="eta">0.1</span></span></span><span class="f">W₁, b₁ cố định · x, W₂, b₂, t đổi khi 🎲</span></div>
+    <div class="pb">
+      <div class="mxrow">
+        <div class="mxcell"><span class="mlab b">x</span>
+          <div class="mx c1"><div class="gv" data-q="x1">1</div><div class="gv" data-q="x2">2</div></div></div>
+        <div class="mxcell"><span class="mlab">W₁</span>
+          <div class="mx c2"><div>1</div><div>1</div><div>0</div><div>−1</div></div></div>
+        <div class="mxcell"><span class="mlab">b₁</span>
+          <div class="mx c1"><div>0</div><div>1</div></div></div>
+        <div class="mxcell"><span class="mlab o">W₂</span>
+          <div class="mx c2"><div class="pe" data-q="w2a">1</div><div class="pe" data-q="w2b">2</div></div></div>
+        <div class="mxcell"><span class="mlab o">b₂</span>
+          <div class="mx c1"><div class="pe" data-q="b2">−1</div></div></div>
+        <div class="mxcell"><span class="mlab">t</span>
+          <div class="mx c1"><div class="gv" data-q="t">1</div></div></div>
+      </div>
+      <div class="cap">Mục tiêu <b>t</b> = giá trị ta muốn đầu ra <i>o</i> đạt tới. <b>W₁, b₁ cố định</b> ở mọi lượt 🎲 để nơ-ron ẩn 2 luôn nằm vùng tắt (xem ①). Đọc W₂ theo <b>(w₂ₐ, w₂_b)</b>.</div>
+      <div class="figwrap" style="margin-top:1.4mm">
+        <svg id="figNet" viewBox="0 0 264 152" width="84mm" height="43mm" aria-label="sơ đồ mạng 2-2-1 để điền"></svg>
+        <div class="storybox"><b>Đọc sơ đồ:</b> hai nút vào <b style="color:#0e7490">x</b> nối lên hai nút ẩn <b style="color:#7c5cff">h</b> qua W₁, rồi gộp về nút ra <b style="color:#b45309">o</b> qua W₂. Số trên cạnh = trọng số. Mũi tên <b style="color:#0e7490">lam</b> đẩy tín hiệu <i>xuôi</i>; mũi tên <b style="color:#b45309">cam đứt</b> mang <i>gradient</i> δ₂ chảy <i>ngược</i>. Điền h₁, h₂, o vào nút sau khi tính ở dưới.</div>
       </div>
     </div>
   </div>
 
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Bốn pha? → <span class="qa">Forward → Loss → Backward → Update.</span></li>
-      <li>Gradient ẩn tắt = 0? → <span class="qa">ReLU'(z&lt;0)=0 chặn gradient qua nó.</span></li>
-    </ol>
+  <div class="panel">
+    <div class="ph"><span class="t">① Forward — lớp ẩn: z = W₁x + b₁ → h = ReLU(z)</span><span class="f">nhân–cộng rồi cắt số âm</span></div>
+    <div class="pb">
+      <div class="eqn">z₁ = 1·<span data-q="x1">1</span> <span class="op">+</span> 1·<span data-q="x2">2</span> <span class="op">+</span> 0 = <span class="slot ans"></span>
+        &nbsp;&nbsp; z₂ = 0·<span data-q="x1">1</span> <span class="op">+</span> (−1)·<span data-q="x2">2</span> <span class="op">+</span> 1 = <span class="slot ans"></span></div>
+      <div class="eqn">h₁ = ReLU(z₁) = max(0, z₁) = <span class="slot ans"></span>
+        &nbsp;&nbsp; h₂ = ReLU(z₂) = max(0, z₂) = <span class="slot ans"></span></div>
+      <div class="why2 p"><b>ReLU cắt số âm về 0.</b> z₂ = 1 − x₂ luôn <b>âm</b> (vì x₂ ≥ 2) → h₂ = 0: nơ-ron ẩn 2 <b>TẮT</b>. Ghi nhớ — ở ③ nó sẽ chặn gradient, ở ④ trọng số nối vào nó <b>không đổi</b>.</div>
+    </div>
   </div>
 
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Một vòng MLP = forward → loss → backward → update; lặp để hội tụ. Đây là toàn bộ deep learning thu nhỏ. Bài
-    tiếp (N2): ráp một <b style="color:var(--accent2)">mini-CNN</b>.
+  <div class="panel">
+    <div class="ph"><span class="t">② Forward — đầu ra &amp; loss: o = W₂h + b₂, L = ½(o−t)²</span><span class="f">dự đoán rồi đo lệch</span></div>
+    <div class="pb">
+      <div class="eqn">o = w₂ₐ·h₁ <span class="op">+</span> w₂_b·h₂ <span class="op">+</span> b₂ = <span data-q="w2a">1</span>·h₁ <span class="op">+</span> <span data-q="w2b">2</span>·h₂ <span class="op">+</span> (<span data-q="b2w">−1</span>) = <span class="slot ans"></span></div>
+      <div class="eqn">L = ½(o − t)² = ½(o − <span data-q="t">1</span>)² = <span class="slot ans"></span></div>
+      <div class="why2"><b>o là dự đoán, L là thước sai.</b> Vì ẩn 2 tắt (h₂=0), số hạng w₂_b·h₂ = 0 — nhánh chết không góp gì cho đầu ra. L bình phương để lỗi luôn dương và phạt nặng lệch lớn; hệ số ½ để đạo hàm ra gọn (triệt số 2).</div>
+    </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài N1 · MLP capstone</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
+  <div class="why2 o"><b>🔮 Đoán trước.</b> Nơ-ron ẩn 2 đang tắt (h₂=0). Theo bạn, trọng số <b>w₂_b</b> (cạnh h₂→o) sau một bước học sẽ <b>đổi</b> hay <b>giữ nguyên</b>? Ghi phỏng đoán, kiểm ở trang sau (④).</div>
+
+  <div class="scratch" style="height:29mm"><span class="lb">Nháp — z, h, o, L · ghi phỏng đoán w₂_b</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài N1 · MLP Capstone</span><span>Trang 1/3 · ĐỀ</span></div>
 </section>
+
+<!-- ============ TRANG 2 · ĐỀ — BACKWARD + UPDATE + TỰ KIỂM ============ -->
+<section class="page">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>MLP Capstone <small>— lan gradient ngược · cập nhật · khép vòng</small></h1>
+    <span class="chip">PHẦN N · TỔNG KẾT</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ Backward — δ₂ = o−t, rồi ∂W₂, δ₁, ∂W₁</span><span class="f">lỗi chảy ngược, chia trách nhiệm</span></div>
+    <div class="pb">
+      <div class="eqn">δ₂ = o − t = <span class="slot ans"></span> &nbsp;<span class="op">(= ∂L/∂o, cũng chính là ∂b₂)</span></div>
+      <div class="eqn">∂W₂ = δ₂·(h₁, h₂) = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )
+        &nbsp;<span class="op">← cột h₂=0 nên ∂w₂_b = 0</span></div>
+      <div class="eqn">δ₁ = (w₂ₐ·δ₂·ReLU′z₁, &nbsp;w₂_b·δ₂·ReLU′z₂) = (<span data-q="w2a">1</span>·δ₂·1, &nbsp;<span data-q="w2b">2</span>·δ₂·0) = ( <span class="slot ans sm"></span> , <span class="slot ans sm"></span> )</div>
+      <div class="eqn" style="display:flex;align-items:center;gap:3mm;flex-wrap:wrap">∂W₁ = δ₁ ⊗ x = [[δ₁ₐ·x₁, δ₁ₐ·x₂],[δ₁_b·x₁, δ₁_b·x₂]] =
+        <span class="matans"><span class="blank"></span><span class="blank"></span><span class="blank"></span><span class="blank"></span></span></div>
+      <div class="why2 o"><b>Trách nhiệm sai chảy ngược.</b> ReLU′(z) = 1 nếu z&gt;0, = 0 nếu z&lt;0. Nơ-ron ẩn 2 tắt (z₂&lt;0) → ReLU′z₂ = 0 → <b>δ₁_b = 0</b> → cả <b>hàng 2 của ∂W₁ = (0,0)</b>. Gradient không đi qua nơ-ron đang tắt: nó "không chịu trách nhiệm" cho lỗi lần này.</div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — quy tắc dây chuyền nối thành TÍCH; một số 0 giết cả đường</div>
+    <div style="font-size:9px;line-height:1.5">Gradient tới một trọng số lớp 1 là <b>tích</b> các đạo hàm dọc đường từ loss về nó. Điền hai đường:</div>
+    <div class="eqn" style="margin-top:.4mm">Đường <b style="color:#7c5cff">SỐNG</b> (qua ẩn 1): ∂L/∂w₁,₁₁ = δ₂ · w₂ₐ · ReLU′z₁ · x₁ = <span data-q="d2w">1</span>·<span data-q="w2aw">1</span>·1·<span data-q="x1">1</span> = <span class="slot ans sm"></span></div>
+    <div class="eqn">Đường <b style="color:#b45309">CHẾT</b> (qua ẩn 2): ∂L/∂w₁,₂₁ = δ₂ · w₂_b · <b>ReLU′z₂</b> · x₁ = <span data-q="d2w">1</span>·<span data-q="w2bw">2</span>·<b>0</b>·<span data-q="x1">1</span> = <span class="slot ans sm"></span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Chỉ cần <b>một</b> thừa số bằng 0 (ở đây ReLU′z₂=0) là <b>cả tích = 0</b>. Đó là lý do nơ-ron tắt chặn đứng dòng gradient — và vì sao ReLU "chết" nhiều nơi thì mạng học chậm.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Update — nhích ngược hướng gradient: W ← W − η·∂W</span><span class="f">η = <span data-q="eta">0.1</span></span></div>
+    <div class="pb">
+      <div class="eqn">w₂ₐ ← w₂ₐ − η·∂w₂ₐ = <span data-q="w2a">1</span> <span class="op">−</span> <span data-q="eta">0.1</span>·<span data-q="gW2aw">3</span> = <span class="slot ans"></span>
+        &nbsp;·&nbsp; b₂ ← b₂ − η·δ₂ = <span data-q="b2">−1</span> <span class="op">−</span> <span data-q="eta">0.1</span>·<span data-q="d2w">1</span> = <span class="slot ans"></span></div>
+      <div class="eqn">w₂_b ← w₂_b − η·∂w₂_b = <span data-q="w2b">2</span> <span class="op">−</span> <span data-q="eta">0.1</span>·0 = <span class="slot ans"></span>
+        &nbsp;<span class="op">← ∂w₂_b = 0 ⇒ GIỮ NGUYÊN (đúng phỏng đoán 🔮?)</span></div>
+      <div class="why2 o"><b>Trừ vì gradient chỉ hướng ĐI LÊN của loss.</b> Muốn loss giảm thì bước ngược lại; η nhỏ để không nhảy vọt qua đáy. Trọng số nối vào nơ-ron tắt không nhận cập nhật (gradient của nó = 0) nên <b>w₂_b giữ nguyên</b>.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Vòng học khép kín — bốn pha lặp lại</span><span class="f">forward → loss → backward → update → …</span></div>
+    <div class="pb"><div class="figwrap" style="justify-content:center;width:100%">
+      <svg id="figLoop" viewBox="0 0 400 118" width="168mm" height="49mm" aria-label="vòng bốn pha huấn luyện"></svg>
+    </div></div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — sau MỘT bước, loss trên chính mẫu này GIẢM</div>
+    <div style="font-size:9px;line-height:1.5">Bất biến lõi của gradient descent (η đủ nhỏ): một bước phải kéo loss <b>xuống</b>. Forward lại bằng trọng số MỚI (W₁, b₁ chưa đổi → h giữ nguyên), rồi so:</div>
+    <div class="eqn" style="margin-top:.3mm">o′ = w₂ₐ′·h₁ <span class="op">+</span> w₂_b′·h₂ <span class="op">+</span> b₂′ = <span class="slot ans"></span>
+      &nbsp;&nbsp; L′ = ½(o′ − <span data-q="t">1</span>)² = <span class="slot ans"></span></div>
+    <div class="eqn">So sánh: L trước = <span data-q="L">0.5</span> &nbsp; <span class="slot" style="min-width:9mm">?</span> &nbsp; L′
+      &nbsp;<span class="op">(điền dấu &lt; / = / &gt; vào ô giữa)</span></div>
+    <div style="font-size:8.8px;line-height:1.45;margin-top:1mm">→ Tính đúng thì <b>L′ &lt; L</b>: loss đã tụt sau đúng một bước. Chính sự tụt này là bằng chứng gradient chỉ đúng hướng "đi xuống" — và là lý do lặp vòng thì mạng ngày càng giỏi.</div>
+  </div>
+
+  <div class="scratch" style="height:14mm"><span class="lb">Nháp — δ₂, ∂W₂, δ₁, ∂W₁ · update · o′, L′</span></div>
+  <div class="done">
+    <span><span class="ck"></span>Forward h, o</span>
+    <span><span class="ck"></span>Tính loss</span>
+    <span><span class="ck"></span>Backward ∂W</span>
+    <span><span class="ck"></span>Update &amp; kiểm L giảm</span>
+    <span class="win">🎉 Xong Bài N1!</span>
+  </div>
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài N1 · MLP Capstone</span><span>Trang 2/3 · ĐỀ</span></div>
+</section>
+
+<!-- ============ TRANG 3 · ĐÁP ÁN ============ -->
+<section class="page key">
+  <div class="top">
+    <span class="no">K4</span>
+    <h1>MLP Capstone <small>— đáp án &amp; vì sao</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">① ② ③ ④ — sơ đồ đã điền</span><span class="f">x=(<span data-q="x1">1</span>,<span data-q="x2">2</span>) · W₂=(<span data-q="w2a">1</span>,<span data-q="w2b">2</span>) · b₂=<span data-q="b2">−1</span> · t=<span data-q="t">1</span></span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figNetA" viewBox="0 0 264 152" width="82mm" height="44mm" aria-label="sơ đồ mạng đã điền"></svg>
+      <div class="storybox"><b>Xuôi (lam):</b> x=(<span data-q="x1">1</span>,<span data-q="x2">2</span>) → h=(<b style="color:#7c5cff"><span data-q="h1">3</span></b>,<b style="color:#7c5cff"><span data-q="h2">0</span></b>) → o=<b style="color:#b45309"><span data-q="o">2</span></b>. Nơ-ron ẩn 2 <b>tắt</b> (z₂=<span data-q="z2">−1</span>&lt;0 → h₂=0). <b>Ngược (cam):</b> δ₂=<span data-q="d2">1</span> chảy về, nhưng qua ẩn 2 bị ReLU′=0 chặn → w₂_b không đổi.</div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Bảng số — kiểm từng đại lượng của một vòng</span><span class="f">η = <span data-q="eta">0.1</span></span></div>
+    <div class="pb">
+      <table class="trace">
+        <thead><tr><th style="width:20mm">Đại lượng</th><th>Công thức</th><th style="width:34mm">Kết quả</th></tr></thead>
+        <tbody>
+          <tr><td class="n">z = (z₁,z₂)</td><td class="f">W₁x + b₁</td><td class="r">(<span data-q="z1">3</span>, <span data-q="z2">−1</span>)</td></tr>
+          <tr><td class="n">h = ReLU(z)</td><td class="f">cắt số âm về 0</td><td class="r">(<span data-q="h1">3</span>, <span data-q="h2">0</span>) <span class="badge">ẩn 2 tắt</span></td></tr>
+          <tr><td class="n">o</td><td class="f">w₂ₐh₁ + w₂_bh₂ + b₂</td><td class="r"><span data-q="o">2</span></td></tr>
+          <tr><td class="n">L</td><td class="f">½(o − t)²</td><td class="r"><span data-q="L">0.5</span></td></tr>
+          <tr><td class="n">δ₂</td><td class="f">o − t (= ∂b₂)</td><td class="r"><span data-q="d2">1</span></td></tr>
+          <tr><td class="n">∂W₂</td><td class="f">δ₂·(h₁, h₂)</td><td class="r">(<span data-q="gW2a">3</span>, <span data-q="gW2b">0</span>)</td></tr>
+          <tr><td class="n">δ₁</td><td class="f">(W₂ᵀδ₂) ⊙ ReLU′(z)</td><td class="r">(<span data-q="d1a">1</span>, <span data-q="d1b">0</span>)</td></tr>
+          <tr><td class="n">∂W₁</td><td class="f">δ₁ ⊗ x</td><td class="r">[[<span data-q="gW1_11">1</span>,<span data-q="gW1_12">2</span>],[<span data-q="gW1_21">0</span>,<span data-q="gW1_22">0</span>]]</td></tr>
+          <tr><td class="n">w₂ₐ′, b₂′</td><td class="f">W − η∂W</td><td class="r"><span data-q="w2aNew">0.7</span>, <span data-q="b2New">−1.1</span></td></tr>
+          <tr><td class="n">w₂_b′</td><td class="f">2 − η·0 → giữ nguyên</td><td class="r"><span data-q="w2bNew">2</span></td></tr>
+          <tr><td class="n">o′, L′</td><td class="f">forward lại với W′</td><td class="r"><span data-q="oNew">1</span>, <span data-q="Lnew">0</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — loss GIẢM sau một bước (đáp án)</div>
+    <div class="eqn">o′ = <span data-q="w2aNew">0.7</span>·<span data-q="h1">3</span> + <span data-q="w2bNew">2</span>·<span data-q="h2">0</span> + (<span data-q="b2Neww">−1.1</span>) = <b><span data-q="oNew">1</span></b> &nbsp;·&nbsp; L′ = ½(<span data-q="oNew">1</span>−<span data-q="t">1</span>)² = <b><span data-q="Lnew">0</span></b></div>
+    <div style="font-size:9px;line-height:1.5;margin-top:.6mm">L trước = <b><span data-q="L">0.5</span></b> &nbsp;<b style="color:var(--teal)">&gt;</b>&nbsp; L′ = <b><span data-q="Lnew">0</span></b> → loss đã <b>tụt</b>. Bất biến của gradient descent: một bước với η đủ nhỏ luôn hạ loss trên mẫu đang xét (chuỗi <b>SỐNG</b> ∂L/∂w₁,₁₁ = <span data-q="gW1_11">1</span>; chuỗi <b>CHẾT</b> qua ẩn 2 = 0).</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span></div>
+    <div class="pb">
+      <ul class="trap">
+        <li><b>Quên ReLU cắt số âm:</b> để h₂ = z₂ (âm) thay vì 0 → sai toàn bộ forward và backward.</li>
+        <li><b>Cập nhật trọng số của nơ-ron tắt:</b> ∂w₂_b = 0 nên w₂_b <b>giữ nguyên</b>; đừng trừ đi gì.</li>
+        <li><b>Cộng gradient thay vì trừ:</b> W ← W <b>−</b> η∂W. Cộng sẽ làm loss <i>tăng</i>.</li>
+        <li><b>Lẫn δ₂ với δ₁:</b> δ₂ = o−t (ở đầu ra); δ₁ = W₂ᵀδ₂ ⊙ ReLU′(z) (đã nhân đạo hàm ReLU).</li>
+        <li><b>Quên nhân ReLU′ ở δ₁:</b> bỏ ⊙ReLU′(z) thì nhánh tắt vẫn nhận gradient — sai bản chất.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="why2 t"><b>Bốn pha khớp bảng số.</b> ① Forward sinh z, h, o · ② Loss cho L · ③ Backward cho δ₂, ∂W₂, δ₁, ∂W₁ · ④ Update cho W′, b′. Dòng cuối (o′, L′) là forward lại để KIỂM: L′ &lt; L. Mỗi con số trong bảng là một mắt xích — bỏ hay sai một mắt là hỏng cả vòng.</div>
+
+  <div class="mission" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Một vòng MLP = <b>forward → loss → backward → update</b>: xuôi cho dự đoán, loss đo sai, ngược chia trách nhiệm (ReLU′ chặn nhánh tắt), update nhích trọng số ngược gradient → loss giảm. Lặp = hội tụ = "huấn luyện". Bạn vừa ráp mọi viên gạch K1–K2 thành một bước học hoàn chỉnh. Bài tiếp <b>N2 · mini-CNN</b>: thay lớp tuyến tính bằng tích chập, cùng khung xuôi–ngược này.
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ · K4 · Bài N1 · MLP Capstone</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+</section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
-function generate(){
-  var f = WB.fmtTrim, F=WB.fmtInt, W=WB.wrap;
-  // fixed W1=[[1,1],[0,-1]], b1=(0,1); randomize x, W2, b2, t
-  var x1 = WB.pick([1,2]), x2 = WB.pick([2,3]);   // x2>=2 → z2<0
-  var w2a = WB.pick([1,2]), w2b = WB.pick([1,2]);
-  var b2 = WB.pick([-1,-2]);
-  var t = WB.pick([1,2]);
-  var z1 = x1 + x2;          // row1=(1,1),b=0
-  var z2 = -x2 + 1;          // row2=(0,-1),b=1  → negative
-  var h1 = Math.max(0,z1), h2 = Math.max(0,z2);
-  var o = w2a*h1 + w2b*h2 + b2;
-  var L = Math.round(0.5*(o-t)*(o-t)*100)/100;
-  var d2 = o - t;
-  var gw2a = d2*h1, gw2b = d2*h2;       // gw2b=0
-  var d1a = w2a*d2*1, d1b = w2b*d2*0;   // ReLU'(z1)=1, ReLU'(z2)=0
-  var gw1a = d1a*x1, gw1b = d1a*x2;
-  var w2aNew = Math.round((w2a - 0.1*gw2a)*100)/100;
-  var w2bNew = Math.round((w2b - 0.1*gw2b)*100)/100;
-  var b2New = Math.round((b2 - 0.1*d2)*100)/100;
-  WB.setAll({
-    x1:String(x1), x2:String(x2), w2a:String(w2a), w2b:String(w2b),
-    b2:F(b2), b2w:W(b2), t:String(t),
-    z1:F(z1), z2:F(z2), h1:F(h1), h2:F(h2), o:F(o), L:f(L),
-    d2:F(d2), gw2a:F(gw2a), d1a:F(d1a), gw1a:F(gw1a), gw1b:F(gw1b),
-    w2aNew:f(w2aNew), w2bNew:f(w2bNew), b2New:f(b2New)
-  });
-  drawNet('figN');
-}
-function drawNet(id){
-  var svg = document.getElementById(id); if(!svg) return;
-  var xs=[36,128,212], ys2=[36,84], yo=60;
-  var s='<defs><marker id="fw" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 z" fill="#0e7490"/></marker>'
-    +'<marker id="bw" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L5,3 L0,6 z" fill="#b45309"/></marker></defs>';
-  // input nodes
-  [36,84].forEach(function(y,i){ s+='<circle cx="'+xs[0]+'" cy="'+y+'" r="11" fill="#0e749022" stroke="#0e7490" stroke-width="1.3"/><text x="'+xs[0]+'" y="'+(y+4)+'" text-anchor="middle" font-size="9" fill="#0e7490">x'+(i+1)+'</text>'; });
-  // hidden
-  ys2.forEach(function(y,i){ var off=(i===1); s+='<circle cx="'+xs[1]+'" cy="'+y+'" r="11" fill="'+(off?'#e5e7eb':'#7c5cff22')+'" stroke="'+(off?'#9aa3ad':'#7c5cff')+'" stroke-width="1.3"/><text x="'+xs[1]+'" y="'+(y+4)+'" text-anchor="middle" font-size="9" fill="'+(off?'#9aa3ad':'#7c5cff')+'">h'+(i+1)+'</text>'; });
-  // output
-  s+='<circle cx="'+xs[2]+'" cy="'+yo+'" r="11" fill="#b4530922" stroke="#b45309" stroke-width="1.3"/><text x="'+xs[2]+'" y="'+(yo+4)+'" text-anchor="middle" font-size="9" fill="#b45309">o</text>';
-  // forward edges
-  [36,84].forEach(function(yi){ ys2.forEach(function(yh){ s+='<line x1="'+(xs[0]+11)+'" y1="'+yi+'" x2="'+(xs[1]-11)+'" y2="'+yh+'" stroke="#cbd5e1" stroke-width="0.8"/>'; }); });
-  ys2.forEach(function(yh){ s+='<line x1="'+(xs[1]+11)+'" y1="'+yh+'" x2="'+(xs[2]-11)+'" y2="'+yo+'" stroke="#0e7490" stroke-width="1.2" marker-end="url(#fw)"/>'; });
-  // backward arrow
-  s+='<line x1="'+(xs[2]-2)+'" y1="'+(yo+16)+'" x2="'+(xs[1]+6)+'" y2="'+(ys2[0]+16)+'" stroke="#b45309" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#bw)"/>';
-  s+='<text x="'+((xs[1]+xs[2])/2)+'" y="'+(yo+30)+'" text-anchor="middle" font-size="8" fill="#b45309">δ₂</text>';
+var cur = {x1:1,x2:2,z1:3,z2:-1,h1:3,h2:0,o:2,w2a:1,w2b:2,b2:-1,d2:1,oNew:1};
+
+function drawNet(id, reveal){
+  var svg=document.getElementById(id); if(!svg) return;
+  var CX='#0e7490', CH='#7c5cff', CO='#b45309', GRAY='#9aa5b1', INK='#16202e';
+  var xN=[{x:30,y:40,lab:'x₁',v:WB.fmtInt(cur.x1),c:CX,bg:'#eaf4f6'},
+          {x:30,y:112,lab:'x₂',v:WB.fmtInt(cur.x2),c:CX,bg:'#eaf4f6'}];
+  var h2c = reveal ? GRAY : CH, h2bg = reveal ? '#f2f4f7' : '#f5f1fe';
+  var hN=[{x:132,y:40,lab:'h₁',v:reveal?WB.fmtInt(cur.h1):'?',c:CH,bg:'#f5f1fe'},
+          {x:132,y:112,lab:'h₂',v:reveal?WB.fmtInt(cur.h2):'?',c:h2c,bg:h2bg}];
+  var oN={x:232,y:76,lab:'o',v:reveal?WB.fmtInt(cur.o):'?',c:CO,bg:'#fff5e9'};
+  var r=15;
+  var s='<defs>'+
+    '<marker id="af" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+CX+'"/></marker>'+
+    '<marker id="ab" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+CO+'"/></marker>'+
+    '</defs>';
+  var w1=[['1','1'],['0','−1']]; // [hidden][input]
+  function edge(ax,ay,bx,by,lab){
+    var mx=ax+(bx-ax)*0.5, my=ay+(by-ay)*0.5;
+    var t='<line x1="'+ax+'" y1="'+ay+'" x2="'+(bx-2)+'" y2="'+by+'" stroke="'+CX+'" stroke-width="1.5" marker-end="url(#af)"/>';
+    t+='<rect x="'+(mx-8)+'" y="'+(my-6)+'" width="16" height="11" rx="2" fill="#fff" stroke="'+CX+'" stroke-width=".6"/>';
+    t+='<text x="'+mx+'" y="'+(my+2.6)+'" text-anchor="middle" font-size="7.2" font-weight="800" fill="'+CX+'">'+lab+'</text>';
+    return t;
+  }
+  for(var hi=0;hi<2;hi++)for(var xi=0;xi<2;xi++){
+    s+=edge(xN[xi].x+r, xN[xi].y, hN[hi].x-r, hN[hi].y, w1[hi][xi]);
+  }
+  s+=edge(hN[0].x+r, hN[0].y, oN.x-r, oN.y, WB.fmtInt(cur.w2a));
+  s+=edge(hN[1].x+r, hN[1].y, oN.x-r, oN.y, WB.fmtInt(cur.w2b));
+  s+='<path d="M '+(oN.x-4)+' '+(oN.y-r-1)+' C 200 8, 150 6, '+(hN[0].x+2)+' '+(hN[0].y-r-1)+'" fill="none" stroke="'+CO+'" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ab)"/>';
+  s+='<text x="185" y="14" text-anchor="middle" font-size="8.4" font-weight="800" fill="'+CO+'">δ₂ (gradient ngược)</text>';
+  function node(n){
+    var t='<circle cx="'+n.x+'" cy="'+n.y+'" r="'+r+'" fill="'+n.bg+'" stroke="'+n.c+'" stroke-width="2"/>';
+    t+='<text x="'+n.x+'" y="'+(n.y-r-4)+'" text-anchor="middle" font-size="8.6" font-weight="800" fill="'+n.c+'">'+n.lab+'</text>';
+    t+='<text x="'+n.x+'" y="'+(n.y+3.4)+'" text-anchor="middle" font-size="10" font-weight="800" fill="'+INK+'" font-family="Consolas,monospace">'+n.v+'</text>';
+    return t;
+  }
+  s+=node(xN[0])+node(xN[1])+node(hN[0])+node(hN[1])+node(oN);
+  if(reveal){ s+='<text x="132" y="146" text-anchor="middle" font-size="7.6" font-weight="700" fill="'+GRAY+'">h₂ tắt → w₂_b không đổi</text>'; }
   svg.innerHTML=s;
 }
-WB.wire(generate);
-generate();
+
+function drawLoop(id){
+  var svg=document.getElementById(id); if(!svg) return;
+  var boxes=[
+    {x:6,  c:'#0e7490',bg:'#eaf4f6',t:'① Forward',s:'h=ReLU(W₁x+b₁)',s2:'o=W₂h+b₂'},
+    {x:104,c:'#6d28d9',bg:'#f5f1fe',t:'② Loss',    s:'L = ½(o−t)²',s2:'đo lệch'},
+    {x:202,c:'#b45309',bg:'#fff5e9',t:'③ Backward',s:'δ = o−t → ∂W',s2:'chia lỗi'},
+    {x:300,c:'#0f766e',bg:'#eefaf8',t:'④ Update',  s:'W ← W − η∂W',s2:'nhích'}
+  ];
+  var w=88,h=48,y=24;
+  var s='';
+  boxes.forEach(function(b){
+    s+='<rect x="'+b.x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="6" fill="'+b.bg+'" stroke="'+b.c+'" stroke-width="1.8"/>';
+    s+='<text x="'+(b.x+w/2)+'" y="'+(y+15)+'" text-anchor="middle" font-size="9.6" font-weight="800" fill="'+b.c+'">'+b.t+'</text>';
+    s+='<text x="'+(b.x+w/2)+'" y="'+(y+29)+'" text-anchor="middle" font-size="7.4" font-weight="700" fill="#16202e" font-family="Consolas,monospace">'+b.s+'</text>';
+    s+='<text x="'+(b.x+w/2)+'" y="'+(y+40)+'" text-anchor="middle" font-size="7.4" fill="#6b7280">'+b.s2+'</text>';
+  });
+  for(var i=0;i<3;i++){
+    var xa=boxes[i].x+w, xb=boxes[i+1].x;
+    s+='<line x1="'+(xa+1)+'" y1="'+(y+h/2)+'" x2="'+(xb-3)+'" y2="'+(y+h/2)+'" stroke="#0e7490" stroke-width="1.8" marker-end="url(#lf)"/>';
+  }
+  s+='<path d="M '+(boxes[3].x+w/2)+' '+(y+h)+' C '+(boxes[3].x+w/2)+' 108, '+(boxes[0].x+w/2)+' 108, '+(boxes[0].x+w/2)+' '+(y+h)+'" fill="none" stroke="#0f766e" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#lt)"/>';
+  s+='<text x="200" y="112" text-anchor="middle" font-size="8.4" font-weight="800" fill="#0f766e">lặp hàng triệu mẫu → hội tụ</text>';
+  var defs='<defs>'+
+    '<marker id="lf" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0e7490"/></marker>'+
+    '<marker id="lt" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#0f766e"/></marker>'+
+    '</defs>';
+  svg.innerHTML=defs+s;
+}
+
+function gen(){
+  var x1,x2,z1,z2,h1,w2a,w2b,b2,t,d2;
+  while(true){
+    x1 = WB.randInt(1,2);
+    x2 = WB.randInt(2,3);
+    z1 = x1 + x2;          // W1 row1 = (1,1), b1a = 0
+    z2 = 1 - x2;           // W1 row2 = (0,-1), b1b = 1
+    if(z1<=0 || z1>4) continue;   // h1 in {3,4} → η(h1²+1) < 2 (loss giảm)
+    if(z2>=0) continue;           // nơ-ron ẩn 2 phải TẮT
+    h1 = z1;
+    w2a = WB.randIntNZ(-2,3);
+    w2b = WB.randIntNZ(-2,3);
+    b2  = WB.randInt(-3,3);
+    var allowed = (h1===3) ? [-2,-1,1,2] : [-2,2];  // giữ o′−t bội của 0.2 ⇒ L′ gọn
+    d2 = WB.pick(allowed);
+    t = (w2a*h1) + b2 - d2;        // h2 = 0
+    break;
+  }
+  var h2=0;
+  var o = w2a*h1 + w2b*h2 + b2;                 // = t + d2
+  var L = 0.5*d2*d2;
+  var gW2a = d2*h1, gW2b = d2*h2;               // gW2b = 0
+  var d1a = w2a*d2, d1b = 0;                    // ReLU′z1=1, ReLU′z2=0
+  var gW1_11 = d1a*x1, gW1_12 = d1a*x2, gW1_21 = d1b*x1, gW1_22 = d1b*x2;
+  var eta = 0.1;
+  var w2aNew = w2a - eta*gW2a;
+  var w2bNew = w2b - eta*gW2b;                  // = w2b
+  var b2New  = b2  - eta*d2;
+  var oNew = w2aNew*h1 + w2bNew*h2 + b2New;
+  var Lnew = 0.5*(oNew-t)*(oNew-t);
+
+  cur = {x1:x1,x2:x2,z1:z1,z2:z2,h1:h1,h2:h2,o:o,w2a:w2a,w2b:w2b,b2:b2,d2:d2,oNew:oNew};
+
+  WB.setAll({
+    x1:WB.fmtInt(x1), x2:WB.fmtInt(x2),
+    w2a:WB.fmtInt(w2a), w2b:WB.fmtInt(w2b), b2:WB.fmtInt(b2),
+    w2aw:WB.wrap(WB.fmtInt(w2a)), w2bw:WB.wrap(WB.fmtInt(w2b)), b2w:WB.wrap(WB.fmtInt(b2)),
+    t:WB.fmtInt(t), eta:WB.fmtTrim(eta),
+    z1:WB.fmtInt(z1), z2:WB.fmtInt(z2), h1:WB.fmtInt(h1), h2:WB.fmtInt(h2),
+    o:WB.fmtInt(o), L:WB.fmtTrim(L),
+    d2:WB.fmtInt(d2), d2w:WB.wrap(WB.fmtInt(d2)),
+    gW2a:WB.fmtInt(gW2a), gW2b:WB.fmtInt(gW2b), gW2aw:WB.wrap(WB.fmtInt(gW2a)),
+    d1a:WB.fmtInt(d1a), d1b:WB.fmtInt(d1b),
+    gW1_11:WB.fmtInt(gW1_11), gW1_12:WB.fmtInt(gW1_12),
+    gW1_21:WB.fmtInt(gW1_21), gW1_22:WB.fmtInt(gW1_22),
+    w2aNew:WB.fmtTrim(w2aNew), w2bNew:WB.fmtTrim(w2bNew),
+    b2New:WB.fmtTrim(b2New), b2Neww:WB.wrap(WB.fmtTrim(b2New)),
+    oNew:WB.fmtTrim(oNew), Lnew:WB.fmtTrim(Lnew)
+  });
+
+  drawNet('figNet', false);
+  drawNet('figNetA', true);
+  drawLoop('figLoop');
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(p,i){return 'Trang'+(i+1)+'='+Math.max(0,p.scrollHeight-p.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+window.generate = gen;   // để tools/check.mjs random lại mỗi lần chạy
+WB.wire(gen);
+gen();
 </script>
 </body>
 </html>

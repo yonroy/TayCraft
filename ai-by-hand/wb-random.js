@@ -75,6 +75,52 @@
     const btn = document.querySelector('.js-randomize');
     if (btn) btn.addEventListener('click', generate);
   }
+
+  // ---- Vừa-khít-màn-hình (chỉ trên MÀN HÌNH) ----------------------------------
+  // Trang phiếu rộng cố định (210mm dọc / 297mm ngang) → trên điện thoại bị tràn
+  // ngang, người xem chỉ thấy nửa trái. Ở đây đo bề rộng thật của .page rồi thu
+  // nhỏ cho vừa bề ngang viewport. Đo .page nên tự đúng cho cả dọc lẫn ngang.
+  // Khi IN: gỡ hết transform để PDF giữ đúng khổ A4 (xem before/afterprint).
+  function clearFit() {
+    var pages = document.querySelectorAll('.page');
+    for (var i = 0; i < pages.length; i++) {
+      pages[i].style.transform = '';
+      pages[i].style.transformOrigin = '';
+      pages[i].style.margin = '';
+    }
+    document.body.style.overflowX = '';
+  }
+  function fitToScreen() {
+    if (window.matchMedia && window.matchMedia('print').matches) return;
+    var pages = document.querySelectorAll('.page');
+    if (!pages.length) return;
+    clearFit();                                    // reset trước khi đo bề rộng thật
+    var vw = document.documentElement.clientWidth;
+    var pw = pages[0].offsetWidth;                 // bề rộng thật của .page (px)
+    if (vw >= pw) return;                          // màn đủ rộng → giữ nguyên
+    var scale = vw / pw;
+    for (var i = 0; i < pages.length; i++) {
+      var p = pages[i];
+      var ph = p.offsetHeight;
+      p.style.transformOrigin = 'top left';
+      p.style.transform = 'scale(' + scale + ')';
+      // scale chừa lại khoảng trống bằng kích thước gốc → bù margin cho khít
+      p.style.margin = (i === 0 ? '8px' : '0') + ' 0 ' +
+        (-(ph * (1 - scale)) + 12) + 'px 0';
+    }
+    document.body.style.overflowX = 'hidden';
+  }
+  var _fitPending;
+  function scheduleFit() {
+    clearTimeout(_fitPending);
+    _fitPending = setTimeout(fitToScreen, 120);    // gộp resize/xoay máy
+  }
+  window.addEventListener('DOMContentLoaded', fitToScreen);
+  window.addEventListener('load', fitToScreen);    // đo lại sau khi mọi thứ ổn định
+  window.addEventListener('resize', scheduleFit);
+  window.addEventListener('beforeprint', clearFit);
+  window.addEventListener('afterprint', fitToScreen);
+
   window.WB = {
     randInt: randInt, randIntNZ: randIntNZ, pick: pick, pickDistinct: pickDistinct,
     fmtInt: fmtInt, fmt2: fmt2, fmtTrim: fmtTrim, wrap: wrap, sumExpr: sumExpr, opTerm: opTerm,

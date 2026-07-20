@@ -230,7 +230,8 @@
     border: 1px solid var(--line);
     border-radius: 10px;
     box-shadow: var(--shadow-lg);
-    padding: 18px;
+    padding: 8px;
+    overflow: hidden;
   }
   .sheet-back {
     top: 26px;
@@ -245,56 +246,65 @@
     transform: rotate(3deg);
     z-index: 2;
   }
-  .sheet-label {
-    font-size: 10.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    background: rgba(14, 116, 144, 0.09);
-    display: inline-block;
-    padding: 3px 8px;
+  /* Ảnh phiếu thật trong khung tờ giấy — crop lấy phần đầu trang (đẹp, dễ nhận) */
+  .sheet img,
+  .hero-slide {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
     border-radius: 5px;
-    margin-bottom: 10px;
   }
-  .sheet-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--ink);
-    margin-bottom: 10px;
+  .sheet-back img {
+    opacity: 0.92;
   }
-  .grid-mock {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
-    margin-bottom: 10px;
+  /* Carousel tờ trước: các ảnh chồng nhau, cross-fade luân phiên (CSS thuần) */
+  .sheet-carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
   }
-  .grid-mock .cell {
-    aspect-ratio: 1;
-    border: 1.4px solid var(--line);
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: var(--dim);
-    background: #fafcfd;
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    animation: heroSlide 13.5s ease-in-out infinite;
   }
-  .grid-mock .cell.filled {
-    background: rgba(14, 116, 144, 0.1);
-    color: var(--accent);
-    border-color: rgba(14, 116, 144, 0.35);
+  .hero-slide.s1 {
+    animation-delay: 0s;
   }
-  .grid-mock .cell.blank {
-    color: transparent;
+  .hero-slide.s2 {
+    animation-delay: 4.5s;
   }
-  .sheet-foot {
-    font-size: 9.5px;
-    color: var(--dim);
-    display: flex;
-    justify-content: space-between;
-    margin-top: 8px;
+  .hero-slide.s3 {
+    animation-delay: 9s;
+  }
+  @keyframes heroSlide {
+    0% {
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    33% {
+      opacity: 1;
+    }
+    41% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  /* Tôn trọng người tắt hiệu ứng: chỉ hiện phiếu đầu, không xoay */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-slide {
+      animation: none;
+    }
+    .hero-slide.s1 {
+      opacity: 1;
+    }
   }
   .dice-badge {
     position: absolute;

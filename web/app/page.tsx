@@ -148,45 +148,33 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Hero visual: 2 tờ A4 xếp chồng (mô phỏng phiếu thật ĐỀ/ĐÁP ÁN) */}
+            {/* Hero visual: 2 tờ A4 xếp chồng — ẢNH PHIẾU THẬT, tờ trước tự xoay vòng */}
             <div className="hero-visual">
               <div className="floaty-tag tag-1">🎲 Đổi số vô hạn</div>
               <div className="floaty-tag tag-2">✓ 2 trang: ĐỀ + ĐÁP ÁN</div>
               <div className="sheet-stack">
                 <div className="sheet sheet-back">
-                  <div className="sheet-label">ĐÁP ÁN · Trang 2/2</div>
-                  <div className="sheet-title">B6 · PCA — Chiếu dữ liệu</div>
-                  <div className="grid-mock">
-                    <div className="cell filled">2.1</div>
-                    <div className="cell filled">−0.4</div>
-                    <div className="cell filled">1.3</div>
-                    <div className="cell filled">0.8</div>
-                    <div className="cell filled">−1.2</div>
-                    <div className="cell filled">3.0</div>
-                    <div className="cell filled">−0.6</div>
-                    <div className="cell filled">2.4</div>
-                  </div>
-                  <div className="sheet-foot">
-                    <span>Bài B6</span>
-                    <span>2/2 · ĐÁP ÁN</span>
-                  </div>
+                  <img src="/hero/phieu-attention.png" alt="" aria-hidden="true" />
                 </div>
                 <div className="sheet sheet-front">
-                  <div className="sheet-label">ĐỀ · Trang 1/2</div>
-                  <div className="sheet-title">B6 · PCA — Chiếu dữ liệu</div>
-                  <div className="grid-mock">
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                    <div className="cell blank">·</div>
-                  </div>
-                  <div className="sheet-foot">
-                    <span>Bài B6</span>
-                    <span>1/2 · ĐỀ</span>
+                  <div className="sheet-carousel">
+                    <img
+                      className="hero-slide s1"
+                      src="/hero/phieu-nhan-ma-tran.png"
+                      alt="Phiếu thật — Bài A7 · Nhân ma trận"
+                    />
+                    <img
+                      className="hero-slide s2"
+                      src="/hero/phieu-phep-chieu.png"
+                      alt="Phiếu thật — Bài A5 · Phép chiếu vectơ"
+                      aria-hidden="true"
+                    />
+                    <img
+                      className="hero-slide s3"
+                      src="/hero/phieu-cnn.png"
+                      alt="Phiếu thật — Bài F1 · CNN tích chập"
+                      aria-hidden="true"
+                    />
                   </div>
                 </div>
                 <div className="dice-badge">🎲</div>

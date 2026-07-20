@@ -80,14 +80,23 @@
   // Trang phiếu rộng cố định (210mm dọc / 297mm ngang) → trên điện thoại bị tràn
   // ngang, người xem chỉ thấy nửa trái. Ở đây đo bề rộng thật của .page rồi thu
   // nhỏ cho vừa bề ngang viewport. Đo .page nên tự đúng cho cả dọc lẫn ngang.
-  // Khi IN: gỡ hết transform để PDF giữ đúng khổ A4 (xem before/afterprint).
+  //
+  // Ưu tiên `zoom` (co giãn CẢ bố cục → hết tràn ngang, không cần bù margin,
+  // chạy đúng trên Safari/Chrome/Firefox mobile đời nay). Trình duyệt nào không
+  // hiểu `zoom` thì lùi về `transform: scale` + bù margin.
+  // Khi IN: gỡ hết để PDF giữ đúng khổ A4 (xem before/afterprint).
+  var _zoomOK = (function () {
+    var t = document.createElement('div');
+    t.style.zoom = '2';
+    return t.style.zoom === '2' || t.style.zoom === '200%';
+  })();
   function clearFit() {
     var pages = document.querySelectorAll('.page');
     for (var i = 0; i < pages.length; i++) {
-      pages[i].style.transform = '';
-      pages[i].style.transformOrigin = '';
-      pages[i].style.margin = '';
+      var s = pages[i].style;
+      s.zoom = ''; s.transform = ''; s.transformOrigin = ''; s.margin = '';
     }
+    document.documentElement.style.overflowX = '';
     document.body.style.overflowX = '';
   }
   function fitToScreen() {
@@ -97,18 +106,24 @@
     clearFit();                                    // reset trước khi đo bề rộng thật
     var vw = document.documentElement.clientWidth;
     var pw = pages[0].offsetWidth;                 // bề rộng thật của .page (px)
-    if (vw >= pw) return;                          // màn đủ rộng → giữ nguyên
+    if (vw >= pw + 1) return;                       // màn đủ rộng → giữ nguyên
     var scale = vw / pw;
     for (var i = 0; i < pages.length; i++) {
       var p = pages[i];
-      var ph = p.offsetHeight;
-      p.style.transformOrigin = 'top left';
-      p.style.transform = 'scale(' + scale + ')';
-      // scale chừa lại khoảng trống bằng kích thước gốc → bù margin cho khít
-      p.style.margin = (i === 0 ? '8px' : '0') + ' 0 ' +
-        (-(ph * (1 - scale)) + 12) + 'px 0';
+      if (_zoomOK) {
+        p.style.zoom = scale;                       // reflow: bố cục co lại thật
+      } else {
+        var ph = p.offsetHeight;
+        p.style.transformOrigin = 'top left';
+        p.style.transform = 'scale(' + scale + ')';
+        p.style.margin = (i === 0 ? '8px' : '0') + ' 0 ' +
+          (-(ph * (1 - scale)) + 12) + 'px 0';
+      }
     }
-    document.body.style.overflowX = 'hidden';
+    if (!_zoomOK) {                                 // chỉ transform mới cần chặn tràn
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.overflowX = 'hidden';
+    }
   }
   var _fitPending;
   function scheduleFit() {

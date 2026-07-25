@@ -64,6 +64,13 @@ export const giftDiscounts = pgTable(
   (t) => [unique("gift_discounts_user_product_unique").on(t.userId, t.product)],
 );
 
+// Lượt "đã THẤY hộp quà" — 1 dòng / 1 trình duyệt (cookie 'gv' chống trùng, không cần đăng nhập).
+// Để /admin tính "số người không nhận" = số người thấy − số người nhận (gift_discounts).
+export const giftImpressions = pgTable("gift_impressions", {
+  visitor: text("visitor").primaryKey(), // id ẩn danh trong cookie 'gv'
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Đánh giá của học viên — chỉ người có ≥1 enrollment được gửi; 1 người 1 review
 // (gửi lại = sửa và chờ duyệt lại). Trang chủ chỉ hiện approved=true (admin duyệt).
 export const reviews = pgTable("reviews", {
@@ -83,3 +90,4 @@ export type Enrollment = typeof enrollments.$inferSelect;
 export type FlashSale = typeof flashSale.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type GiftDiscount = typeof giftDiscounts.$inferSelect;
+export type GiftImpression = typeof giftImpressions.$inferSelect;

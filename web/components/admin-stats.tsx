@@ -104,6 +104,13 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
           sub={`Hôm nay +${gift.today} · 7d +${gift.d7} · 🏆 FREE ${gift.freeWon}`}
           accent="cam"
         />
+        <StatCard
+          label="Không nhận quà 👀"
+          value={gift.notClaimed.toLocaleString("vi-VN")}
+          sub={`${gift.impressions.toLocaleString("vi-VN")} người thấy · tỷ lệ nhận ${
+            gift.impressions > 0 ? pct(gift.total / gift.impressions) : "—"
+          }`}
+        />
       </div>
 
       {/* Tiến độ khai trương */}

@@ -33,6 +33,15 @@ export function GiftPopup() {
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
+  // Đếm "đã THẤY hộp quà" (impression) — 1 lần/phiên; server chống trùng theo cookie.
+  // Để /admin tính "số người không nhận" = số người thấy − số người nhận.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem("giftBeacon")) return;
+    sessionStorage.setItem("giftBeacon", "1");
+    fetch("/api/gift/seen", { method: "POST", keepalive: true }).catch(() => {});
+  }, []);
+
   // Tự bung 1 lần mỗi phiên (không làm phiền mỗi lần cuộn). Nút quà nổi vẫn mở lại được.
   useEffect(() => {
     if (typeof window === "undefined") return;

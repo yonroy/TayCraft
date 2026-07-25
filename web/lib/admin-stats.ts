@@ -52,6 +52,8 @@ export interface GiftStats {
   today: number; // nhận quà hôm nay (giờ VN)
   d7: number; // nhận quà 7 ngày
   byPercent: GiftPercentRow[]; // phân bố theo mức thưởng (100% ở đầu)
+  impressions: number; // số trình duyệt đã THẤY hộp quà (gift_impressions)
+  notClaimed: number; // số người thấy mà KHÔNG nhận ≈ impressions − total (sàn 0)
 }
 
 export interface AdminStats {
@@ -123,7 +125,7 @@ function fillSeries(rows: Row[], days: string[]): DayPoint[] {
 const tail = (arr: DayPoint[], k: number) => arr.slice(-k).reduce((a, p) => a + p.value, 0);
 
 function emptyGiftStats(): GiftStats {
-  return { total: 0, freeWon: 0, today: 0, d7: 0, byPercent: [] };
+  return { total: 0, freeWon: 0, today: 0, d7: 0, byPercent: [], impressions: 0, notClaimed: 0 };
 }
 
 // Số liệu hộp quà — try/catch RIÊNG để nếu bảng gift_discounts chưa áp migration thì
@@ -145,12 +147,25 @@ async function giftStats(): Promise<GiftStats> {
       )[0] ?? {};
     const rows = await q(sql`
       SELECT percent, COUNT(*)::int AS n FROM gift_discounts GROUP BY percent ORDER BY percent DESC`);
+
+    // Số người ĐÃ THẤY hộp quà — try/catch RIÊNG để nếu bảng gift_impressions chưa áp migration
+    // thì phần "không nhận" về 0, KHÔNG kéo sập số liệu nhận quà ở trên.
+    let impressions = 0;
+    try {
+      impressions = n((await q(sql`SELECT COUNT(*)::int AS n FROM gift_impressions`))[0]?.n);
+    } catch (e) {
+      console.warn("[admin-stats] gift_impressions chưa sẵn sàng (bỏ qua):", e);
+    }
+
+    const total = n(agg.total);
     return {
-      total: n(agg.total),
+      total,
       freeWon: n(agg.free_won),
       today: n(agg.today),
       d7: n(agg.d7),
       byPercent: rows.map((r) => ({ percent: n(r.percent), count: n(r.n) })),
+      impressions,
+      notClaimed: Math.max(0, impressions - total),
     };
   } catch (err) {
     console.warn("[admin-stats] gift_discounts chưa sẵn sàng (bỏ qua):", err);

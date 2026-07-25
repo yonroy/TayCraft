@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LaunchPopup } from "@/components/launch-popup";
+import { GiftPopup } from "@/components/gift-popup";
 import { LandingCurriculum } from "@/components/landing-curriculum";
 import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
@@ -98,6 +99,8 @@ export default async function Home() {
     <>
       <SiteHeader />
       {launchActive && !ownsK1 && <LaunchPopup />}
+      {/* Promo khai trương hết → hộp quà giảm giá tiếp quản (tránh 2 popup cùng bung). */}
+      {!launchActive && !ownsK1 && <GiftPopup />}
 
       <div className="lp">
         {/* ============ HERO ============ */}

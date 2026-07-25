@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { generateTransferCode, vietqrImageUrl, bankInfo, paymentContent } from "@/lib/vietqr";
 import { DEFAULT_PRODUCT, productById, isActiveProduct, effectivePriceVnd } from "@/lib/products";
+import { activeGiftPercent, discountedAmount } from "@/lib/gift";
 
 function orderResponse(o: { id: string; amountVnd: number; transferCode: string }) {
   const content = paymentContent(o.transferCode); // vd "SEVQR TCABC123" cho VietinBank
@@ -53,13 +54,19 @@ export async function POST(req: NextRequest) {
     return orderResponse(existing[0]);
   }
 
+  // Áp "hộp quà" nếu user có quà còn hạn cho gói này (server quyết định — không tin client).
+  // Mức giảm THẬT: ghi thẳng amount đã trừ % vào đơn; webhook chỉ chấp nhận khi nhận ≥ amount này.
+  const base = effectivePriceVnd(product);
+  const giftPercent = await activeGiftPercent(user.id, productId);
+  const amountVnd = giftPercent ? discountedAmount(base, giftPercent) : base;
+
   // Tạo mới, retry nếu trùng transferCode.
   for (let attempt = 0; attempt < 5; attempt++) {
     const transferCode = generateTransferCode();
     try {
       const [created] = await db
         .insert(orders)
-        .values({ userId: user.id, product: productId, amountVnd: effectivePriceVnd(product), transferCode })
+        .values({ userId: user.id, product: productId, amountVnd, transferCode })
         .returning();
       return orderResponse(created);
     } catch {

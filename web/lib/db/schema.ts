@@ -47,6 +47,23 @@ export const flashSale = pgTable("flash_sale", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Quà giảm giá "hộp quà" ở landing — server chốt % (chống khách tự chế %), lưu theo user.
+// 1 user 1 quà/gói (unique) → idempotent, % không đổi khi refresh; hết hạn kiểm ở expires_at.
+// Mức giảm THẬT: khi tạo đơn, amount đã trừ % được ghi vào orders.amount_vnd (webhook ép theo đó).
+export const giftDiscounts = pgTable(
+  "gift_discounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    // Gói được giảm (ProductId). Hiện chỉ áp cho "k1".
+    product: text("product").notNull().default("k1"),
+    percent: integer("percent").notNull(), // % giảm do server roll
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [unique("gift_discounts_user_product_unique").on(t.userId, t.product)],
+);
+
 // Đánh giá của học viên — chỉ người có ≥1 enrollment được gửi; 1 người 1 review
 // (gửi lại = sửa và chờ duyệt lại). Trang chủ chỉ hiện approved=true (admin duyệt).
 export const reviews = pgTable("reviews", {
@@ -65,3 +82,4 @@ export type Order = typeof orders.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type FlashSale = typeof flashSale.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
+export type GiftDiscount = typeof giftDiscounts.$inferSelect;

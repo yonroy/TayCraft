@@ -19,3 +19,31 @@ body {
   background: #ffffff;
   color: var(--color-ink);
 }
+
+/* ---- Hộp quà giảm giá (GiftPopup) ---- */
+/* Lắc nhẹ mời gọi cho nút/hộp quà. */
+@keyframes gift-shake {
+  0%, 88%, 100% { transform: rotate(0deg); }
+  90% { transform: rotate(-9deg); }
+  93% { transform: rotate(9deg); }
+  96% { transform: rotate(-6deg); }
+}
+.gift-shake {
+  animation: gift-shake 2.4s ease-in-out infinite;
+  transform-origin: 50% 60%;
+}
+/* Bung khi lộ % giảm. */
+@keyframes gift-pop {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.gift-pop {
+  animation: gift-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gift-shake,
+  .gift-pop {
+    animation: none;
+  }
+}

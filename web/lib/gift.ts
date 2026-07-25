@@ -4,7 +4,7 @@
 // trừ % được ghi vào orders.amount_vnd (webhook SePay ép transferAmount ≥ order.amount_vnd).
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { giftDiscounts, type GiftDiscount } from "@/lib/db/schema";
+import { giftDiscounts, enrollments, type GiftDiscount } from "@/lib/db/schema";
 import { ownsProduct } from "@/lib/auth";
 import type { ProductId } from "@/lib/products";
 
@@ -12,12 +12,39 @@ import type { ProductId } from "@/lib/products";
 export const GIFT_ENABLED = (process.env.GIFT_ENABLED ?? "true") !== "false";
 export const GIFT_PRODUCT: ProductId = "k1"; // gói được giảm
 export const GIFT_TTL_HOURS = Number(process.env.GIFT_TTL_HOURS ?? 24); // hạn dùng quà (tạo urgency thật)
-// Bậc % được phép (có lặp = trọng số): nghiêng về số nhỏ, thi thoảng trúng 20%.
-const GIFT_TIERS = [10, 10, 10, 15, 15, 20];
+export const FREE_PERCENT = 100; // mốc "trúng free" — quà 100% = tặng thẳng, không thu tiền
 
-// Chọn ngẫu nhiên 1 bậc % (server-side).
+// Bậc % + TRỌNG SỐ (quyết định kinh doanh). Tổng weight không cần = 100.
+// Mặc định "vừa phải": ~10% khách trúng FREE (100%), còn lại giảm 10–30%.
+const GIFT_TIERS: { percent: number; weight: number }[] = [
+  { percent: 10, weight: 35 },
+  { percent: 15, weight: 25 },
+  { percent: 20, weight: 18 },
+  { percent: 30, weight: 12 },
+  { percent: FREE_PERCENT, weight: 10 }, // JACKPOT: tặng free Khóa 1
+];
+
+// Chọn ngẫu nhiên 1 bậc % theo trọng số (server-side).
 export function rollGiftPercent(): number {
-  return GIFT_TIERS[Math.floor(Math.random() * GIFT_TIERS.length)];
+  const total = GIFT_TIERS.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  for (const t of GIFT_TIERS) {
+    if ((r -= t.weight) < 0) return t.percent;
+  }
+  return GIFT_TIERS[0].percent;
+}
+
+export function isFreeGift(percent: number): boolean {
+  return percent >= FREE_PERCENT;
+}
+
+// Cấp thẳng Khóa 1 free khi trúng 100% (enrollment không gắn đơn — như suất tặng khai trương).
+// Idempotent: unique (user, package) chặn nhận 2 lần.
+export async function grantGiftFreeK1(userId: string): Promise<void> {
+  await db
+    .insert(enrollments)
+    .values({ userId, package: GIFT_PRODUCT, orderId: null })
+    .onConflictDoNothing();
 }
 
 // Giá sau giảm — làm tròn XUỐNG nghìn cho đẹp & có lợi cho khách. Không bao giờ âm.
@@ -43,7 +70,14 @@ async function findGift(userId: string): Promise<GiftDiscount | null> {
 export type GiftState =
   | { status: "disabled" }
   | { status: "owned" } // đã sở hữu K1 → khỏi tặng
-  | { status: "ok"; percent: number; expiresAt: Date; expired: boolean };
+  | { status: "ok"; percent: number; expiresAt: Date; expired: boolean; free: boolean };
+
+// Dựng kết quả "ok" từ 1 bản ghi quà; nếu trúng FREE thì cấp thẳng Khóa 1 (idempotent).
+async function toOkState(userId: string, g: GiftDiscount): Promise<GiftState> {
+  const free = isFreeGift(g.percent);
+  if (free) await grantGiftFreeK1(userId); // trúng 100% → cấp free ngay, không cần thanh toán
+  return { status: "ok", percent: g.percent, expiresAt: g.expiresAt, expired: !isActive(g), free };
+}
 
 // Mở quà: idempotent. Trả quà cũ nếu đã có (% giữ nguyên → trung thực); nếu chưa & đủ điều kiện
 // thì roll % mới, lưu DB. Một user chỉ nhận MỘT quà (hết hạn là hết — urgency thật, không farm lại).
@@ -51,14 +85,7 @@ export async function getOrCreateGift(userId: string): Promise<GiftState> {
   if (!GIFT_ENABLED) return { status: "disabled" };
 
   const existing = await findGift(userId);
-  if (existing) {
-    return {
-      status: "ok",
-      percent: existing.percent,
-      expiresAt: existing.expiresAt,
-      expired: !isActive(existing),
-    };
-  }
+  if (existing) return toOkState(userId, existing);
 
   // Đã sở hữu K1 (mua/nhận) → không cấp quà.
   if (await ownsProduct(userId, GIFT_PRODUCT)) return { status: "owned" };
@@ -72,12 +99,7 @@ export async function getOrCreateGift(userId: string): Promise<GiftState> {
 
   // Đọc lại để xử lý đúng cả trường hợp 2 request chèn cùng lúc (giữ 1 bản ghi duy nhất).
   const saved = (await findGift(userId))!;
-  return {
-    status: "ok",
-    percent: saved.percent,
-    expiresAt: saved.expiresAt,
-    expired: !isActive(saved),
-  };
+  return toOkState(userId, saved);
 }
 
 // % giảm CÒN HIỆU LỰC cho đơn (dùng khi tạo đơn). Null nếu tắt / không có quà / hết hạn / sai gói.

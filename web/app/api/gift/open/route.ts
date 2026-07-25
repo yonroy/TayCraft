@@ -22,6 +22,7 @@ export async function POST() {
     status: "ok",
     product: GIFT_PRODUCT,
     percent: gift.percent,
+    free: gift.free, // trúng 100% → đã cấp Khóa 1 free, client dẫn thẳng vào học
     basePrice,
     finalPrice,
     expiresAt: gift.expiresAt.toISOString(),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { EmailOtpForm } from "@/components/email-otp-form";
 import { formatVnd } from "@/lib/utils";
 
@@ -8,6 +9,7 @@ type GiftData = {
   status: "ok";
   product: string;
   percent: number;
+  free: boolean; // trúng 100% → đã cấp Khóa 1 free, dẫn vào học thay vì checkout
   basePrice: number;
   finalPrice: number;
   expiresAt: string;
@@ -21,6 +23,7 @@ function pad(n: number) {
 // Hộp quà giảm giá K1: khách bấm mở → (đăng nhập nếu cần) → server chốt % → lộ giá đã giảm
 // + đồng hồ đếm ngược → CTA mua. % do server quyết (chống gian lận); giá đã giảm là THẬT.
 export function GiftPopup() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [opening, setOpening] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
@@ -124,8 +127,9 @@ export function GiftPopup() {
                     Quà tặng cho bạn!
                   </h2>
                   <p className="mt-2 text-sm text-amber-100/80">
-                    Mở hộp quà để nhận <b className="text-white">mã giảm giá</b> cho{" "}
-                    <b className="text-white">Khóa 1 · Nền tảng AI</b> — chỉ dành cho hôm nay.
+                    Mở hộp quà nhận <b className="text-white">mã giảm giá</b> cho{" "}
+                    <b className="text-white">Khóa 1 · Nền tảng AI</b> —{" "}
+                    <b className="text-amber-200">có cả suất tặng FREE 100%!</b>
                   </p>
 
                   {message ? (
@@ -159,52 +163,83 @@ export function GiftPopup() {
                   <div className="text-6xl" aria-hidden>
                     🎉
                   </div>
-                  <div className="mx-auto mt-3 inline-block rounded-full border border-amber-300/60 bg-amber-400/10 px-4 py-1 text-xs font-bold tracking-[0.15em] text-amber-200 uppercase">
-                    Bạn nhận được
-                  </div>
-                  <div className="mt-2 text-5xl font-extrabold text-amber-300">
-                    Giảm {data.percent}%
-                  </div>
 
-                  <div className="mt-4 rounded-2xl bg-black/20 px-4 py-3">
-                    <div className="text-sm text-amber-100/70">Khóa 1 · Nền tảng AI</div>
-                    <div className="mt-1 text-3xl font-extrabold text-white">
-                      {formatVnd(data.finalPrice)}{" "}
-                      <span className="text-lg font-semibold text-amber-100/50 line-through">
-                        {formatVnd(data.basePrice)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {!expired ? (
+                  {data.free ? (
+                    // JACKPOT: trúng 100% → Khóa 1 đã được cấp free, dẫn thẳng vào học.
                     <>
-                      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-amber-100/70">
-                        <span>Ưu đãi hết hạn sau</span>
-                        <span className="rounded-md bg-black/30 px-2 py-1 font-mono font-bold tabular-nums">
-                          {pad(h)}:{pad(m)}:{pad(s)}
-                        </span>
+                      <div className="mx-auto mt-3 inline-block rounded-full border border-amber-300/60 bg-amber-400/10 px-4 py-1 text-xs font-bold tracking-[0.15em] text-amber-200 uppercase">
+                        🏆 Trúng lớn
                       </div>
-                      <a
-                        href="/checkout?product=k1"
+                      <div className="mt-2 text-4xl font-extrabold text-amber-300 leading-tight">
+                        TẶNG FREE 100%
+                      </div>
+                      <p className="mt-3 text-sm text-amber-100/85">
+                        Bạn trúng suất tặng — nhận trọn <b className="text-white">Khóa 1 · Nền tảng AI</b>{" "}
+                        hoàn toàn miễn phí!
+                      </p>
+                      <button
+                        onClick={() => {
+                          router.push("/learn");
+                          router.refresh();
+                        }}
                         className="mt-5 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
                       >
-                        Nhận giá {formatVnd(data.finalPrice)} →
-                      </a>
+                        Vào học ngay →
+                      </button>
                       <p className="mt-3 text-xs text-amber-100/60">
-                        Mã đã gắn với tài khoản của bạn — cứ thanh toán là tự áp.
+                        Khóa đã mở sẵn trong tài khoản của bạn.
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="mt-4 text-sm text-amber-100/80">
-                        Ưu đãi đã hết hạn. Bạn vẫn có thể học Khóa 1 với giá thường:
-                      </p>
-                      <a
-                        href="/checkout?product=k1"
-                        className="mt-4 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
-                      >
-                        Học Khóa 1 →
-                      </a>
+                      <div className="mx-auto mt-3 inline-block rounded-full border border-amber-300/60 bg-amber-400/10 px-4 py-1 text-xs font-bold tracking-[0.15em] text-amber-200 uppercase">
+                        Bạn nhận được
+                      </div>
+                      <div className="mt-2 text-5xl font-extrabold text-amber-300">
+                        Giảm {data.percent}%
+                      </div>
+
+                      <div className="mt-4 rounded-2xl bg-black/20 px-4 py-3">
+                        <div className="text-sm text-amber-100/70">Khóa 1 · Nền tảng AI</div>
+                        <div className="mt-1 text-3xl font-extrabold text-white">
+                          {formatVnd(data.finalPrice)}{" "}
+                          <span className="text-lg font-semibold text-amber-100/50 line-through">
+                            {formatVnd(data.basePrice)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {!expired ? (
+                        <>
+                          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-amber-100/70">
+                            <span>Ưu đãi hết hạn sau</span>
+                            <span className="rounded-md bg-black/30 px-2 py-1 font-mono font-bold tabular-nums">
+                              {pad(h)}:{pad(m)}:{pad(s)}
+                            </span>
+                          </div>
+                          <a
+                            href="/checkout?product=k1"
+                            className="mt-5 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
+                          >
+                            Nhận giá {formatVnd(data.finalPrice)} →
+                          </a>
+                          <p className="mt-3 text-xs text-amber-100/60">
+                            Mã đã gắn với tài khoản của bạn — cứ thanh toán là tự áp.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="mt-4 text-sm text-amber-100/80">
+                            Ưu đãi đã hết hạn. Bạn vẫn có thể học Khóa 1 với giá thường:
+                          </p>
+                          <a
+                            href="/checkout?product=k1"
+                            className="mt-4 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
+                          >
+                            Học Khóa 1 →
+                          </a>
+                        </>
+                      )}
                     </>
                   )}
                 </div>

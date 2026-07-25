@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { generateTransferCode, vietqrImageUrl, bankInfo, paymentContent } from "@/lib/vietqr";
 import { DEFAULT_PRODUCT, productById, isActiveProduct, effectivePriceVnd } from "@/lib/products";
-import { activeGiftPercent, discountedAmount } from "@/lib/gift";
+import { activeGiftPercent, discountedAmount, grantGiftFreeK1 } from "@/lib/gift";
 
 function orderResponse(o: { id: string; amountVnd: number; transferCode: string }) {
   const content = paymentContent(o.transferCode); // vd "SEVQR TCABC123" cho VietinBank
@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
   const base = effectivePriceVnd(product);
   const giftPercent = await activeGiftPercent(user.id, productId);
   const amountVnd = giftPercent ? discountedAmount(base, giftPercent) : base;
+
+  // Quà 100% = free → không tạo đơn 0đ (QR 0đ không hợp lệ); cấp thẳng Khóa 1 rồi dẫn vào học.
+  if (amountVnd <= 0) {
+    await grantGiftFreeK1(user.id);
+    return NextResponse.json({ alreadyOwned: true });
+  }
 
   // Tạo mới, retry nếu trùng transferCode.
   for (let attempt = 0; attempt < 5; attempt++) {

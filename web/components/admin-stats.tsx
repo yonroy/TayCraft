@@ -38,8 +38,10 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
+const giftReward = (p: number) => (p >= 100 ? "🏆 FREE (100%)" : `Giảm ${p}%`);
+
 export function AdminStats({ stats }: { stats: AdminStats }) {
-  const { revenue, orders, users, promo } = stats;
+  const { revenue, orders, users, promo, gift } = stats;
 
   return (
     <section className="space-y-6">
@@ -96,6 +98,12 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
           sub={`Chuyển đổi ${pct(users.signupToPaidRate)} · ${users.freeLeads} lead free`}
           accent="lam"
         />
+        <StatCard
+          label="Lượt nhận quà 🎁"
+          value={gift.total.toLocaleString("vi-VN")}
+          sub={`Hôm nay +${gift.today} · 7d +${gift.d7} · 🏆 FREE ${gift.freeWon}`}
+          accent="cam"
+        />
       </div>
 
       {/* Tiến độ khai trương */}
@@ -110,6 +118,40 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
           K1 free: <b className="text-ink">{stats.k1.free}</b> · K1 mua: {stats.k1.paid} ·{" "}
           {promo.expired ? "Đã hết hạn khuyến mãi" : "Đang trong khuyến mãi"}
         </p>
+      </Card>
+
+      {/* Hộp quà giảm giá */}
+      <Card title={`Hộp quà 🎁 — ${gift.total} lượt nhận · ${gift.freeWon} trúng FREE`}>
+        {gift.byPercent.length === 0 ? (
+          <p className="text-sm text-dim">Chưa có ai nhận quà.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="text-left text-dim">
+              <tr>
+                <th className="pb-2 font-medium">Phần thưởng</th>
+                <th className="pb-2 text-right font-medium">Số lượt</th>
+                <th className="pb-2 text-right font-medium">Tỷ lệ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gift.byPercent.map((r) => (
+                <tr key={r.percent} className="border-t border-line">
+                  <td
+                    className={`py-2 ${r.percent >= 100 ? "font-semibold text-accent-2" : "text-ink"}`}
+                  >
+                    {giftReward(r.percent)}
+                  </td>
+                  <td className="py-2 text-right tabular-nums font-medium">
+                    {r.count.toLocaleString("vi-VN")}
+                  </td>
+                  <td className="py-2 text-right tabular-nums text-dim">
+                    {gift.total > 0 ? pct(r.count / gift.total) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </Card>
 
       {/* Biểu đồ xu hướng 30 ngày */}

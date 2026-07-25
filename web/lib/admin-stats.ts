@@ -42,6 +42,17 @@ export interface RecentSignupRow {
   fullName: string | null;
   createdAt: string;
 }
+export interface GiftPercentRow {
+  percent: number;
+  count: number;
+}
+export interface GiftStats {
+  total: number; // tổng lượt nhận quà (bấm "Mở hộp quà" + đăng nhập → 1 bản ghi)
+  freeWon: number; // trúng jackpot 100% (tặng free K1)
+  today: number; // nhận quà hôm nay (giờ VN)
+  d7: number; // nhận quà 7 ngày
+  byPercent: GiftPercentRow[]; // phân bố theo mức thưởng (100% ở đầu)
+}
 
 export interface AdminStats {
   ok: boolean; // false nếu truy vấn lỗi (DB chưa sẵn sàng) → UI báo nhẹ
@@ -82,6 +93,7 @@ export interface AdminStats {
   series: { revenue: DayPoint[]; orders: DayPoint[]; signups: DayPoint[] };
   recentPaid: RecentPaidRow[];
   recentSignups: RecentSignupRow[];
+  gift: GiftStats;
 }
 
 type Row = Record<string, unknown>;
@@ -110,6 +122,42 @@ function fillSeries(rows: Row[], days: string[]): DayPoint[] {
 
 const tail = (arr: DayPoint[], k: number) => arr.slice(-k).reduce((a, p) => a + p.value, 0);
 
+function emptyGiftStats(): GiftStats {
+  return { total: 0, freeWon: 0, today: 0, d7: 0, byPercent: [] };
+}
+
+// Số liệu hộp quà — try/catch RIÊNG để nếu bảng gift_discounts chưa áp migration thì
+// chỉ phần này về 0, KHÔNG kéo sập cả dashboard. Gọi cuối cùng trong getAdminStats.
+async function giftStats(): Promise<GiftStats> {
+  try {
+    const agg =
+      (
+        await q(sql`
+          SELECT
+            COUNT(*)::int                                    AS total,
+            COUNT(*) FILTER (WHERE percent >= 100)::int      AS free_won,
+            COUNT(*) FILTER (
+              WHERE created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'
+                    >= date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
+            )::int                                           AS today,
+            COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS d7
+          FROM gift_discounts`)
+      )[0] ?? {};
+    const rows = await q(sql`
+      SELECT percent, COUNT(*)::int AS n FROM gift_discounts GROUP BY percent ORDER BY percent DESC`);
+    return {
+      total: n(agg.total),
+      freeWon: n(agg.free_won),
+      today: n(agg.today),
+      d7: n(agg.d7),
+      byPercent: rows.map((r) => ({ percent: n(r.percent), count: n(r.n) })),
+    };
+  } catch (err) {
+    console.warn("[admin-stats] gift_discounts chưa sẵn sàng (bỏ qua):", err);
+    return emptyGiftStats();
+  }
+}
+
 function emptyStats(): AdminStats {
   return {
     ok: false,
@@ -135,6 +183,7 @@ function emptyStats(): AdminStats {
     series: { revenue: [], orders: [], signups: [] },
     recentPaid: [],
     recentSignups: [],
+    gift: emptyGiftStats(),
   };
 }
 
@@ -232,6 +281,9 @@ export async function getAdminStats(): Promise<AdminStats> {
       WHERE o.status='paid' ORDER BY o.paid_at DESC NULLS LAST LIMIT 5`);
     const recentSignupRows = await q(sql`
       SELECT email, full_name, created_at FROM profiles ORDER BY created_at DESC LIMIT 5`);
+
+    // (11) Số liệu hộp quà (try/catch riêng, gọi cuối — không kéo sập stats khác).
+    const gift = await giftStats();
 
     // ── Suy diễn trong JS ──
     const oPaid = n(oAgg.paid_count),
@@ -342,6 +394,7 @@ export async function getAdminStats(): Promise<AdminStats> {
         fullName: s(r.full_name),
         createdAt: String(r.created_at),
       })),
+      gift,
     };
   } catch (err) {
     console.error("[admin-stats] query failed:", err);

@@ -57,7 +57,12 @@ export default async function AdminPage() {
           {stats.orders.total} đơn · {stats.orders.pending} chờ · {stats.orders.paid} đã trả ·{" "}
           <b className="text-ink">
             K1 free: {stats.promo.claimed}/{stats.promo.limit}
-          </b>
+          </b>{" "}
+          · 🎁{" "}
+          <b className="text-ink">
+            {stats.gift.total} lượt nhận quà
+          </b>{" "}
+          ({stats.gift.freeWon} FREE)
         </p>
 
         <div className="mt-6">

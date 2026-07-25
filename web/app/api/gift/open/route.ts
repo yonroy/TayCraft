@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUser } from "@/lib/auth";
-import { getOrCreateGift, discountedAmount, GIFT_PRODUCT } from "@/lib/gift";
+import { getOrCreateGift, discountedAmount, tierRarityPercent, GIFT_PRODUCT } from "@/lib/gift";
 import { productById, effectivePriceVnd } from "@/lib/products";
 
 // Mở "hộp quà" — chốt % giảm cho user (server roll, idempotent). Yêu cầu đăng nhập:
@@ -22,6 +22,7 @@ export async function POST() {
     status: "ok",
     product: GIFT_PRODUCT,
     percent: gift.percent,
+    rarity: tierRarityPercent(gift.percent), // % người trúng đúng mức này (độ hiếm THẬT)
     free: gift.free, // trúng 100% → đã cấp Khóa 1 free, client dẫn thẳng vào học
     basePrice,
     finalPrice,

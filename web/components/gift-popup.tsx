@@ -9,6 +9,7 @@ type GiftData = {
   status: "ok";
   product: string;
   percent: number;
+  rarity: number; // % người trúng đúng mức này (độ hiếm THẬT, không bịa)
   free: boolean; // trúng 100% → đã cấp Khóa 1 free, dẫn vào học thay vì checkout
   basePrice: number;
   finalPrice: number;
@@ -131,6 +132,9 @@ export function GiftPopup() {
                     <b className="text-white">Khóa 1 · Nền tảng AI</b> —{" "}
                     <b className="text-amber-200">có cả suất tặng FREE 100%!</b>
                   </p>
+                  <p className="mt-1.5 text-xs text-amber-100/55">
+                    Mỗi tài khoản chỉ mở <b className="text-amber-100/80">1 lần</b> · ưu đãi có hạn
+                  </p>
 
                   {message ? (
                     <p className="mt-5 text-sm font-semibold text-amber-200">{message}</p>
@@ -173,6 +177,9 @@ export function GiftPopup() {
                       <div className="mt-2 text-4xl font-extrabold text-amber-300 leading-tight">
                         TẶNG FREE 100%
                       </div>
+                      <div className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-3 py-1 text-xs font-bold text-amber-200">
+                        🔥 CỰC HIẾM · chỉ {data.rarity}% người mở quà trúng suất FREE
+                      </div>
                       <p className="mt-3 text-sm text-amber-100/85">
                         Bạn trúng suất tặng — nhận trọn <b className="text-white">Khóa 1 · Nền tảng AI</b>{" "}
                         hoàn toàn miễn phí!
@@ -197,6 +204,16 @@ export function GiftPopup() {
                       </div>
                       <div className="mt-2 text-5xl font-extrabold text-amber-300">
                         Giảm {data.percent}%
+                      </div>
+                      <div className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-3 py-1 text-xs font-bold text-amber-200">
+                        {data.rarity <= 33 ? (
+                          <>
+                            {data.rarity <= 20 ? "🔥 HIẾM" : "✨"} · chỉ {data.rarity}% người mở quà
+                            trúng mức −{data.percent}%
+                          </>
+                        ) : (
+                          <>💥 Giảm ngay −{data.percent}% · ưu đãi có hạn, dùng kẻo lỡ</>
+                        )}
                       </div>
 
                       <div className="mt-4 rounded-2xl bg-black/20 px-4 py-3">

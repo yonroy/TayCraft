@@ -14,14 +14,13 @@ export const GIFT_PRODUCT: ProductId = "k1"; // gói được giảm
 export const GIFT_TTL_HOURS = Number(process.env.GIFT_TTL_HOURS ?? 24); // hạn dùng quà (tạo urgency thật)
 export const FREE_PERCENT = 100; // mốc "trúng free" — quà 100% = tặng thẳng, không thu tiền
 
-// Bậc % + TRỌNG SỐ (quyết định kinh doanh). Tổng weight không cần = 100.
-// Mặc định "vừa phải": ~10% khách trúng FREE (100%), còn lại giảm 10–30%.
+// Bậc % + TRỌNG SỐ (quyết định kinh doanh). Tổng weight = 100 → đọc thẳng ra %.
+// Bộ "hào phóng": giảm 30–70%, ~8% khách trúng FREE (100%).
 const GIFT_TIERS: { percent: number; weight: number }[] = [
-  { percent: 10, weight: 35 },
-  { percent: 15, weight: 25 },
-  { percent: 20, weight: 18 },
-  { percent: 30, weight: 12 },
-  { percent: FREE_PERCENT, weight: 10 }, // JACKPOT: tặng free Khóa 1
+  { percent: 30, weight: 45 },
+  { percent: 50, weight: 30 },
+  { percent: 70, weight: 17 },
+  { percent: FREE_PERCENT, weight: 8 }, // JACKPOT: tặng free Khóa 1
 ];
 
 // Chọn ngẫu nhiên 1 bậc % theo trọng số (server-side).
@@ -36,6 +35,13 @@ export function rollGiftPercent(): number {
 
 export function isFreeGift(percent: number): boolean {
   return percent >= FREE_PERCENT;
+}
+
+// Tỷ lệ (%) người mở quà trúng ĐÚNG mức này — để hiện "độ hiếm" THẬT (không bịa số).
+export function tierRarityPercent(percent: number): number {
+  const total = GIFT_TIERS.reduce((s, t) => s + t.weight, 0);
+  const tier = GIFT_TIERS.find((t) => t.percent === percent);
+  return tier && total > 0 ? Math.round((tier.weight / total) * 100) : 0;
 }
 
 // Cấp thẳng Khóa 1 free khi trúng 100% (enrollment không gắn đơn — như suất tặng khai trương).

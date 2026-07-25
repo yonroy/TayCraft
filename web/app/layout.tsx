@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "./landing.css";
 
@@ -42,7 +43,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className={`${sans.variable} ${mono.variable} h-full`}>
-      <body className="min-h-full flex flex-col font-sans antialiased">{children}</body>
+      <body className="min-h-full flex flex-col font-sans antialiased">
+        {children}
+        {/* Vercel Web Analytics: đếm lượt xem + khách duy nhất cho MỌI khách (kể cả ẩn danh).
+            Xem biểu đồ traffic ở Vercel → Project → Analytics (cần bật Web Analytics trong project). */}
+        <Analytics />
+      </body>
     </html>
   );
 }

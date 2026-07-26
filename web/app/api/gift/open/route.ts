@@ -2,29 +2,49 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/auth";
 import {
   getOrCreateGift,
+  absorbAnonGifts,
+  giftAnonSupported,
   applyGift,
   tierRarityPercent,
   logGiftError,
   isGiftProduct,
   GIFT_DEFAULT_PRODUCT,
+  GIFT_VISITOR_COOKIE,
+  GIFT_VISITOR_COOKIE_OPTIONS,
+  type GiftOwner,
 } from "@/lib/gift";
 import { productById, effectivePriceVnd, isActiveProduct } from "@/lib/products";
 
-// Mở "hộp quà" — chốt % giảm cho user (server roll MỘT lần, áp cho cả 4 gói, idempotent).
-// Yêu cầu đăng nhập: client hiện form OTP khi gặp 401 (đằng nào cũng cần đăng nhập để mua &
-// giữ quyền). Hoãn đăng nhập là việc của ĐỢT 2 — đợt này không đụng luồng auth.
+// Mở "hộp quà" — chốt % giảm MỘT lần, áp cho cả 4 gói, idempotent.
+//
+// ĐỢT 2 (2026-07-26) — HOÃN ĐĂNG NHẬP: route này KHÔNG còn đòi đăng nhập.
+// Khách ẩn danh quay được quà và thấy ngay mình giảm bao nhiêu; quà neo vào cookie 'gv'
+// (cùng cookie api/gift/seen). Đăng nhập chỉ cần ở bước LẤY THƯỞNG — /api/orders vẫn trả 401,
+// đó là chốt chặn cuối và không được gỡ.
+//   • Đã đăng nhập  → hấp thụ quà theo cookie vào tài khoản (first-wins: tài khoản đã có quà thì
+//                     giữ quà tài khoản), rồi trả quà của tài khoản.
+//   • Chưa đăng nhập→ quà theo cookie; chưa có cookie thì cấp mới ngay trong response.
+//   • DB chưa áp drizzle/gift-anon.sql (chưa có cột `visitor`) → giftAnonSupported() = false →
+//     trả 401 y như TRƯỚC ĐỢT 2, popup hiện form OTP. Đây là đường lùi an toàn, nhờ nó code này
+//     deploy được TRƯỚC khi migration được chạy mà không làm sập gì.
 //
 // Body (tùy chọn): { product?: ProductId } — CHỈ dùng để chọn gói được làm nổi bật trong popup.
 // KHÔNG TIN CLIENT: id gói phải nằm trong whitelist GIFT_PRODUCTS (lib/gift.ts) và phải đang mở
 // bán; sai → 400. % giảm và danh sách gói được giảm luôn do SERVER quyết, không đọc từ body.
-//
-// Toàn bộ handler bọc try/catch: getOrCreateGift đã tự bắt lỗi DB (trả {status:"error"}), khối
-// try/catch ở đây là lớp phòng thủ NGOÀI CÙNG cho các lỗi khác (vd productById/effectivePriceVnd) —
-// mục tiêu là route KHÔNG BAO GIỜ trả 500 câm nữa, luôn trả JSON để client hiện thông báo nhẹ nhàng.
 export async function POST(req: NextRequest) {
+  // Đọc trước khối try: cần cả ở nhánh lỗi để không cấp cookie trùng.
+  const existingVisitor = req.cookies.get(GIFT_VISITOR_COOKIE)?.value ?? null;
+  let mintedVisitor: string | null = null;
+
+  // Gắn cookie vừa cấp (nếu có) vào MỌI response thoát khỏi route — nếu không, khách quay quà
+  // xong mà không nhận được cookie thì lần sau vào lại sẽ quay ra % khác (mất idempotent).
+  const withVisitorCookie = (res: NextResponse) => {
+    if (mintedVisitor) res.cookies.set(GIFT_VISITOR_COOKIE, mintedVisitor, GIFT_VISITOR_COOKIE_OPTIONS);
+    return res;
+  };
+
   try {
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
 
     const body = (await req.json().catch(() => ({}))) as { product?: unknown };
     const raw = typeof body.product === "string" ? body.product : undefined;
@@ -33,11 +53,31 @@ export async function POST(req: NextRequest) {
     }
     const primary = raw ?? GIFT_DEFAULT_PRODUCT;
 
-    const gift = await getOrCreateGift(user.id);
+    let owner: GiftOwner;
+    if (user) {
+      // Khách vừa đăng nhập sau khi đã quay quà ẩn danh → kéo quà đó về tài khoản.
+      // Best-effort: thất bại cũng không sao, hàm này không quyết định con số nào.
+      await absorbAnonGifts(user.id, existingVisitor);
+      owner = { kind: "user", userId: user.id };
+    } else {
+      // Chưa đăng nhập: chỉ đi được nhánh ẩn danh khi DB đã có cột `visitor`.
+      if (!(await giftAnonSupported())) {
+        return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+      }
+      const visitor = existingVisitor ?? crypto.randomUUID();
+      if (!existingVisitor) mintedVisitor = visitor;
+      owner = { kind: "visitor", visitor };
+    }
+
+    const gift = await getOrCreateGift(owner);
+    if (gift.status === "login_required") {
+      // Chỉ xảy ra nếu cột `visitor` biến mất giữa hai lần dò → vẫn phải lùi về luồng cũ.
+      return withVisitorCookie(NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 }));
+    }
     if (gift.status !== "ok") {
       // "owned" (đã có mọi khóa) / "disabled" (tắt tính năng) / "error" (lỗi hạ tầng, đã log trong
       // gift.ts) → client không hiện quà (hoặc hiện thông báo nhẹ cho "error").
-      return NextResponse.json({ status: gift.status });
+      return withVisitorCookie(NextResponse.json({ status: gift.status }));
     }
 
     // Bảng giá cho ĐÚNG các gói quà này áp được, tính ở SERVER (client không tự nhân %).
@@ -57,17 +97,23 @@ export async function POST(req: NextRequest) {
         };
       });
 
-    return NextResponse.json({
-      status: "ok",
-      percent: gift.percent,
-      rarity: tierRarityPercent(gift.percent), // % người trúng đúng mức này (độ hiếm THẬT)
-      primary: products.some((p) => p.id === primary) ? primary : (products[0]?.id ?? null),
-      products,
-      expiresAt: gift.expiresAt.toISOString(),
-      expired: gift.expired,
-    });
+    return withVisitorCookie(
+      NextResponse.json({
+        status: "ok",
+        percent: gift.percent,
+        rarity: tierRarityPercent(gift.percent), // % người trúng đúng mức này (độ hiếm THẬT)
+        primary: products.some((p) => p.id === primary) ? primary : (products[0]?.id ?? null),
+        products,
+        expiresAt: gift.expiresAt.toISOString(),
+        expired: gift.expired,
+        // Khách ẩn danh: quà đã CHỐT và neo vào cookie, nhưng để nhận thì phải đăng nhập ở bước
+        // tạo đơn. Popup dùng cờ này để đổi nhãn CTA ("Đăng nhập để nhận giá này") thay vì đẩy
+        // khách sang /checkout rồi mới bắt đăng nhập.
+        needLoginToClaim: !user,
+      }),
+    );
   } catch (err) {
     await logGiftError("api/gift/open", err, "gift_discounts");
-    return NextResponse.json({ status: "error" });
+    return withVisitorCookie(NextResponse.json({ status: "error" }));
   }
 }

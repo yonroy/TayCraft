@@ -54,15 +54,42 @@ export const giftDiscounts = pgTable(
   "gift_discounts",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id").notNull(),
-    // Gói được giảm (ProductId). Hiện chỉ áp cho "k1".
+    // NULL = quà của khách ẩn danh CHƯA đăng nhập (chủ sở hữu nằm ở cột `visitor`).
+    // Thôi NOT NULL từ drizzle/gift-anon.sql (ĐỢT 2 — hoãn đăng nhập).
+    userId: uuid("user_id"),
+    // Chủ sở hữu ẩn danh: id trong cookie 'gv' (cùng nguồn gift_impressions.visitor).
+    // ⚠️ CỘT NÀY CHỈ TỒN TẠI SAU khi chạy drizzle/gift-anon.sql. Mọi truy vấn đọc/ghi nó PHẢI
+    // đi qua giftAnonSupported() trong lib/gift.ts, và các truy vấn còn lại phải chiếu cột
+    // tường minh (GIFT_COLS) chứ KHÔNG db.select() — nếu không, select sẽ kèm "visitor" và
+    // vỡ toàn bộ tính năng quà trên DB chưa áp migration.
+    visitor: text("visitor"),
+    // Gói được giảm (ProductId). Từ ĐỢT 1: áp cho cả 4 gói, không chỉ "k1".
     product: text("product").notNull().default("k1"),
     percent: integer("percent").notNull(), // % giảm do server roll
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   },
-  (t) => [unique("gift_discounts_user_product_unique").on(t.userId, t.product)],
+  // KHÔNG khai unique() ở đây: sau gift-anon.sql, ràng buộc là 2 PARTIAL unique index
+  // ((user_id,product) WHERE user_id IS NOT NULL và (visitor,product) WHERE visitor IS NOT NULL)
+  // mà drizzle không tả được mệnh đề WHERE. Khai unique() thường sẽ mô tả SAI thực tế DB.
 );
+
+// CÙNG bảng "gift_discounts" nhưng KHÔNG khai cột `visitor`. Dùng cho INSERT ở nhánh tài khoản.
+//
+// LÝ DO (đã bị hụt một lần, đừng bỏ): drizzle liệt kê MỌI cột của bảng trong câu INSERT — cột
+// không truyền giá trị thì nó điền `default`. Nên insert qua `giftDiscounts` luôn sinh
+//   insert into "gift_discounts" ("id","user_id","visitor","product",...) values (default,$1,default,...)
+// và ném 42703 trên DB CHƯA áp drizzle/gift-anon.sql, tức giết luôn luồng quà của người đã đăng
+// nhập đang chạy tốt. Bỏ cột khỏi ĐỊNH NGHĨA là cách duy nhất khiến câu SQL y hệt trước ĐỢT 2.
+// Sau migration, chèn qua bản này vẫn đúng: `visitor` tự nhận NULL.
+export const giftDiscountsLegacy = pgTable("gift_discounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id"),
+  product: text("product").notNull().default("k1"),
+  percent: integer("percent").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
 
 // Lượt "đã THẤY hộp quà" — 1 dòng / 1 trình duyệt (cookie 'gv' chống trùng, không cần đăng nhập).
 // Để /admin tính "số người không nhận" = số người thấy − số người nhận (gift_discounts).

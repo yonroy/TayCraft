@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -6,7 +7,7 @@ import { ViewerCount } from "@/components/viewer-count";
 import { LoginForm } from "@/components/login-form";
 import { getUser, ownsProduct } from "@/lib/auth";
 import { DEFAULT_PRODUCT, isActiveProduct, productById, effectivePriceVnd } from "@/lib/products";
-import { activeGiftPercent, applyGift } from "@/lib/gift";
+import { effectiveGiftPercent, applyGift, GIFT_VISITOR_COOKIE } from "@/lib/gift";
 import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
@@ -29,7 +30,13 @@ export default async function CheckoutPage({
   // Giá hiển thị PHẢI khớp số tiền đơn sẽ ghi (api/orders áp cùng activeGiftPercent + applyGift).
   // Trước đây chỗ này luôn hiện giá GỐC trong khi QR lại ra số đã giảm → khách thấy 149k rồi mới
   // thấy 44k ở bước cuối: vừa mất niềm tin, vừa giấu mất chính lợi ích đang thuyết phục họ mua.
-  const giftPercent = user && meta ? await activeGiftPercent(user.id, productId) : null;
+  // ĐỢT 2: khách CHƯA đăng nhập cũng phải thấy giá đã giảm — quà neo ở cookie 'gv'. Nếu chỗ này
+  // vẫn hiện giá gốc cho khách ẩn danh thì cả việc hoãn đăng nhập trở nên vô nghĩa: popup vừa
+  // khoe "giảm 70%", bấm sang đây lại thấy giá nguyên.
+  // Chỉ ĐỌC cookie, không ghi (server component không set được cookie) và không ghi DB — việc
+  // hấp thụ quà vào tài khoản do /api/gift/open và /api/orders làm.
+  const visitor = (await cookies()).get(GIFT_VISITOR_COOKIE)?.value ?? null;
+  const giftPercent = meta ? await effectiveGiftPercent(user?.id ?? null, visitor, productId) : null;
   const price = meta ? applyGift(effectivePriceVnd(meta), giftPercent) : undefined;
   const nextUrl = `/checkout?product=${productId}`;
 

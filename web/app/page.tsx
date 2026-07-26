@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -8,7 +9,7 @@ import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
 import { TOTAL_AVAILABLE, PARTS, FREE_SLUGS } from "@/lib/lessons";
 import { PRODUCTS, COURSES, productById, effectivePriceVnd, type Product } from "@/lib/products";
-import { activeGiftPercents, applyGift } from "@/lib/gift";
+import { effectiveGiftPercents, applyGift, GIFT_VISITOR_COOKIE } from "@/lib/gift";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { formatVnd } from "@/lib/utils";
 
@@ -106,7 +107,10 @@ export default async function Home() {
   // Trước đây ẩn ngay khi có K1, tức người mua K1 rồi không bao giờ được mời nâng cấp Pro/Trọn bộ.
   const ownsEverything = COURSES.every((c) => access.includes(c.id));
   // % giảm còn hiệu lực của từng gói (1 query) → 4 thẻ giá hiện đúng số khách sẽ trả.
-  const giftPercents = user ? await activeGiftPercents(user.id) : {};
+  // ĐỢT 2: tính cả quà ẩn danh theo cookie 'gv' → khách quay quà xong quay lại trang chủ vẫn
+  // thấy 4 thẻ giá đã giảm dù chưa đăng nhập.
+  const visitor = (await cookies()).get(GIFT_VISITOR_COOKIE)?.value ?? null;
+  const giftPercents = await effectiveGiftPercents(user?.id ?? null, visitor);
   const launchActive = !promoExpired();
   const reviews = await getApprovedReviews();
   const reviewCount = reviews.length;

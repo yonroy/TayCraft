@@ -26,19 +26,28 @@ type GiftData = {
   products: GiftProduct[]; // các gói quà này áp được, giá do SERVER tính
   expiresAt: string;
   expired: boolean;
+  // ĐỢT 2: quà đã CHỐT (neo vào cookie 'gv') nhưng khách chưa đăng nhập → phải đăng nhập ở
+  // bước LẤY THƯỞNG. Server quyết cờ này, không suy từ client.
+  needLoginToClaim?: boolean;
 };
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-// Hộp quà giảm giá: khách bấm mở → (đăng nhập nếu cần) → server chốt % MỘT lần → lộ mức giảm
-// áp cho CẢ 4 GÓI + đồng hồ đếm ngược → CTA mua. % do server quyết (chống gian lận);
-// giá đã giảm là THẬT (đơn ghi đúng số tiền đó, webhook ép theo).
+// Hộp quà giảm giá: khách bấm mở → server chốt % MỘT lần → lộ mức giảm áp cho CẢ 4 GÓI +
+// đồng hồ đếm ngược → CTA mua. % do server quyết (chống gian lận); giá đã giảm là THẬT
+// (đơn ghi đúng số tiền đó, webhook ép theo).
+//
+// ĐỢT 2 — HOÃN ĐĂNG NHẬP: mở quà KHÔNG cần đăng nhập nữa (quà neo vào cookie 'gv'). Đăng nhập
+// chuyển xuống bước LẤY THƯỞNG: khách chọn gói → form OTP ngay trong popup → sang /checkout.
+// `needLogin` vẫn giữ cho đường lùi: DB chưa áp drizzle/gift-anon.sql thì server trả 401 và
+// popup hiện OTP TRƯỚC khi mở quà, đúng như hành vi trước ĐỢT 2.
 export function GiftPopup() {
   const [open, setOpen] = useState(false);
   const [opening, setOpening] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
+  const [claimProduct, setClaimProduct] = useState<string | null>(null); // gói khách chọn để nhận
   const [data, setData] = useState<GiftData | null>(null);
   const [gone, setGone] = useState(false); // đã sở hữu / tính năng tắt → ẩn hẳn
   const [message, setMessage] = useState<string | null>(null);
@@ -167,7 +176,9 @@ export function GiftPopup() {
                     <b className="text-white">mọi gói</b> — <b className="text-amber-200">giảm tới 80%!</b>
                   </p>
                   <p className="mt-1.5 text-xs text-amber-100/55">
-                    Mỗi tài khoản chỉ mở <b className="text-amber-100/80">1 lần</b> · ưu đãi có hạn
+                    {/* ĐỢT 2: bỏ "mỗi tài khoản" vì mở quà không còn cần tài khoản. */}
+                    Chỉ mở được <b className="text-amber-100/80">1 lần</b> · ưu đãi có hạn ·{" "}
+                    <b className="text-amber-100/80">không cần đăng nhập</b>
                   </p>
 
                   {message ? (
@@ -223,37 +234,75 @@ export function GiftPopup() {
                         Áp cho <b className="text-amber-100">mọi gói</b> dưới đây — chọn gói bạn muốn:
                       </p>
                       <div className="mt-3 space-y-2 text-left">
-                        {data.products.map((p) => (
-                          <a
-                            key={p.id}
-                            href={`/checkout?product=${p.id}`}
-                            className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition hover:brightness-110 ${
-                              p.id === data.primary
-                                ? "bg-gradient-to-b from-amber-300 to-amber-500 text-[#5a0a0a]"
-                                : "bg-black/25 text-white ring-1 ring-amber-300/20"
-                            }`}
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-extrabold">{p.label}</span>
-                              <span
-                                className={`block text-xs ${p.id === data.primary ? "text-[#5a0a0a]/70" : "text-amber-100/55"}`}
-                              >
-                                {formatVnd(p.basePrice)} → còn {formatVnd(p.finalPrice)}
+                        {data.products.map((p) => {
+                          const primary = p.id === data.primary;
+                          const rowClass = `flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition hover:brightness-110 ${
+                            primary
+                              ? "bg-gradient-to-b from-amber-300 to-amber-500 text-[#5a0a0a]"
+                              : "bg-black/25 text-white ring-1 ring-amber-300/20"
+                          } ${claimProduct === p.id ? "ring-2 ring-amber-300" : ""}`;
+                          const inner = (
+                            <>
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-extrabold">{p.label}</span>
+                                <span
+                                  className={`block text-xs ${primary ? "text-[#5a0a0a]/70" : "text-amber-100/55"}`}
+                                >
+                                  {formatVnd(p.basePrice)} → còn {formatVnd(p.finalPrice)}
+                                </span>
                               </span>
-                            </span>
-                            <span className="shrink-0 text-right">
-                              <span className="block text-lg font-extrabold leading-tight">
-                                {formatVnd(p.finalPrice)}
+                              <span className="shrink-0 text-right">
+                                <span className="block text-lg font-extrabold leading-tight">
+                                  {formatVnd(p.finalPrice)}
+                                </span>
+                                <span
+                                  className={`block text-[11px] font-bold ${primary ? "text-[#5a0a0a]/70" : "text-amber-200"}`}
+                                >
+                                  −{data.percent}%
+                                </span>
                               </span>
-                              <span
-                                className={`block text-[11px] font-bold ${p.id === data.primary ? "text-[#5a0a0a]/70" : "text-amber-200"}`}
-                              >
-                                −{data.percent}%
-                              </span>
-                            </span>
-                          </a>
-                        ))}
+                            </>
+                          );
+
+                          // Chưa đăng nhập → chọn gói mở form OTP NGAY TẠI ĐÂY (bước lấy thưởng),
+                          // không đẩy sang /checkout rồi mới bắt đăng nhập.
+                          return data.needLoginToClaim ? (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                setClaimProduct(p.id);
+                                track("gift_login_required");
+                              }}
+                              className={rowClass}
+                            >
+                              {inner}
+                            </button>
+                          ) : (
+                            <a key={p.id} href={`/checkout?product=${p.id}`} className={rowClass}>
+                              {inner}
+                            </a>
+                          );
+                        })}
                       </div>
+
+                      {/* Bước LẤY THƯỞNG cho khách ẩn danh: đăng nhập rồi sang thẳng thanh toán.
+                          Quà đã neo ở cookie 'gv' → server tự gắn vào tài khoản vừa đăng nhập. */}
+                      {data.needLoginToClaim && claimProduct && (
+                        <div className="mt-4 space-y-2 rounded-2xl bg-black/25 p-3 text-left ring-1 ring-amber-300/20">
+                          <p className="text-center text-xs text-amber-100/75">
+                            Nhập email để <b className="text-amber-100">nhận giá này</b> — mã xác nhận
+                            gửi qua email, không cần mật khẩu
+                          </p>
+                          <EmailOtpForm
+                            dark
+                            onSuccess={() => {
+                              track("gift_login_completed");
+                              window.location.href = `/checkout?product=${claimProduct}`;
+                            }}
+                          />
+                        </div>
+                      )}
 
                       <div className="mt-4 flex items-center justify-center gap-2 text-xs text-amber-100/70">
                         <span>Ưu đãi hết hạn sau</span>
@@ -262,7 +311,9 @@ export function GiftPopup() {
                         </span>
                       </div>
                       <p className="mt-3 text-xs text-amber-100/60">
-                        Mã đã gắn với tài khoản của bạn — cứ thanh toán là tự áp.
+                        {data.needLoginToClaim
+                          ? "Mã đang được giữ cho bạn trên máy này — đăng nhập ở bước nhận là tự áp."
+                          : "Mã đã gắn với tài khoản của bạn — cứ thanh toán là tự áp."}
                       </p>
                     </>
                   ) : (

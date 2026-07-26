@@ -114,7 +114,7 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
                 : "Bảng đếm lượt thấy chưa sẵn sàng (xem cảnh báo bên dưới)"
               : gift.impressions < gift.total
                 ? `Chỉ ${gift.impressions.toLocaleString("vi-VN")} lượt thấy nhưng ${gift.total.toLocaleString("vi-VN")} lượt nhận — đếm lượt thấy mới bật SAU một số lượt nhận, chưa so được`
-                : `${gift.impressions.toLocaleString("vi-VN")} người thấy · tỷ lệ nhận ${pct(gift.total / gift.impressions)}`
+                : `${gift.impressions.toLocaleString("vi-VN")} người thấy · tỷ lệ nhận ${pct(gift.total / gift.impressions)} · ⚠️ chưa loại được tài khoản test`
           }
         />
       </div>

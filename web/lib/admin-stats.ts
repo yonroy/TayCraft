@@ -7,6 +7,30 @@ import { productById, effectivePriceVnd, coursesOfProduct } from "@/lib/products
 import { PROMO_FREE_LIMIT, promoExpired } from "@/lib/promo";
 import { GIFT_TIERS, logGiftError } from "@/lib/gift";
 
+// ── Loại tài khoản TEST khỏi mọi số liệu /admin — MỘT nguồn sự thật duy nhất ──
+// Đọc từ ADMIN_EXCLUDED_EMAILS (phân tách dấu phẩy) trên Vercel; đổi/thêm tài khoản test
+// không cần sửa code, chỉ cần đổi env var. Mặc định = tài khoản test đã biết của chủ dự án.
+const DEFAULT_EXCLUDED_TEST_EMAILS = "tranminhtoan140601@gmail.com";
+
+export function excludedTestEmails(): string[] {
+  const raw = process.env.ADMIN_EXCLUDED_EMAILS ?? DEFAULT_EXCLUDED_TEST_EMAILS;
+  return raw
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+// Resolve email → id (uuid) MỘT LẦN đầu getAdminStats, dùng lại cho MỌI query bên dưới —
+// đây là điểm duy nhất tính "ai là test account", tránh rải điều kiện lọc rời rạc khắp nơi.
+// "$col != ALL(excludedIds::uuid[])" — mảng rỗng luôn TRUE (đã verify bằng SELECT thật trên
+// production: profiles WHERE id != ALL('{}'::uuid[]) = tổng số dòng, không lọc nhầm khi rỗng).
+async function resolveExcludedIds(): Promise<string[]> {
+  const emails = excludedTestEmails();
+  if (!emails.length) return [];
+  const rows = await q(sql`SELECT id::text AS id FROM profiles WHERE lower(email) = ANY(${emails}::text[])`);
+  return rows.map((r) => String(r.id));
+}
+
 export interface DayPoint {
   day: string; // YYYY-MM-DD (giờ VN)
   value: number;
@@ -79,7 +103,9 @@ export interface GiftStats {
   today: number; // nhận quà hôm nay (giờ VN)
   d7: number; // nhận quà 7 ngày
   byPercent: GiftPercentRow[]; // phân bố theo mức thưởng (100% ở đầu)
-  impressions: number; // số trình duyệt đã THẤY hộp quà (gift_impressions)
+  // gift_impressions là bảng ẨN DANH (cookie 'gv', không có user_id) → KHÔNG lọc được tài khoản
+  // test khỏi số này bằng cấu trúc dữ liệu hiện tại (không có gì để đối chiếu email/user_id).
+  impressions: number; // số trình duyệt đã THẤY hộp quà (gift_impressions) — CHƯA loại được test
   notClaimed: number; // số người thấy mà KHÔNG nhận ≈ impressions − total (sàn 0)
   health: GiftHealth; // để /admin báo rõ "hộp quà đang sống hay chết" thay vì suy đoán từ total=0
   tiers: GiftTierRow[]; // phân bố thực tế vs lý thuyết + tỷ lệ dùng trước hạn, theo từng mức %
@@ -88,6 +114,9 @@ export interface GiftStats {
 
 export interface AdminStats {
   ok: boolean; // false nếu truy vấn lỗi (DB chưa sẵn sàng) → UI báo nhẹ
+  // Đã loại N tài khoản test (ADMIN_EXCLUDED_EMAILS) khỏi MỌI số liệu bên dưới — TRỪ
+  // gift.impressions (bảng gift_impressions ẩn danh theo cookie, không có user_id để đối chiếu).
+  testFilter: { excludedCount: number };
   revenue: {
     total: number;
     today: number;
@@ -198,7 +227,9 @@ async function tableExists(qualifiedName: string): Promise<boolean> {
 
 // Số liệu hộp quà — try/catch RIÊNG để nếu bảng gift_discounts chưa áp migration thì
 // chỉ phần này về 0, KHÔNG kéo sập cả dashboard. Gọi cuối cùng trong getAdminStats.
-async function giftStats(): Promise<GiftStats> {
+// excludedIds áp cho MỌI query ở đây TRỪ gift_impressions (bảng ẩn danh theo cookie 'gv',
+// không có user_id → không có gì để đối chiếu, xem ghi chú ở field GiftStats.impressions).
+async function giftStats(excludedIds: string[]): Promise<GiftStats> {
   const discountsOk = await tableExists("public.gift_discounts");
   const impressionsOk = await tableExists("public.gift_impressions");
   const health: GiftHealth = {
@@ -217,7 +248,7 @@ async function giftStats(): Promise<GiftStats> {
   }
 
   // Số người ĐÃ THẤY hộp quà — độc lập với gift_discounts, để "không nhận" vẫn tính được
-  // dù bảng nhận-quà có vấn đề riêng.
+  // dù bảng nhận-quà có vấn đề riêng. KHÔNG lọc được test account (xem comment ở đầu hàm).
   let impressions = 0;
   if (impressionsOk) {
     try {
@@ -241,10 +272,13 @@ async function giftStats(): Promise<GiftStats> {
                     >= date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
             )::int                                           AS today,
             COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS d7
-          FROM gift_discounts`)
+          FROM gift_discounts
+          WHERE user_id != ALL(${excludedIds}::uuid[])`)
       )[0] ?? {};
     const rows = await q(sql`
-      SELECT percent, COUNT(*)::int AS n FROM gift_discounts GROUP BY percent ORDER BY percent DESC`);
+      SELECT percent, COUNT(*)::int AS n FROM gift_discounts
+      WHERE user_id != ALL(${excludedIds}::uuid[])
+      GROUP BY percent ORDER BY percent DESC`);
 
     // Phân bố THỰC TẾ vs LÝ THUYẾT (GIFT_TIERS, lib/gift.ts) + tỷ lệ đã DÙNG trước khi hết hạn.
     // "Dùng" = có đơn K1 status='paid' với paid_at <= expires_at của chính quà đó; mức FREE
@@ -261,6 +295,7 @@ async function giftStats(): Promise<GiftStats> {
              )
         )::int AS used_n
       FROM gift_discounts gd
+      WHERE gd.user_id != ALL(${excludedIds}::uuid[])
       GROUP BY gd.percent ORDER BY gd.percent DESC`);
 
     const totalForPct = usageRows.reduce((s, r) => s + n(r.n), 0);
@@ -294,7 +329,8 @@ async function giftStats(): Promise<GiftStats> {
               SELECT 1 FROM orders o WHERE o.user_id = gd.user_id AND o.product = 'k1' AND o.status = 'paid'
             ))::int AS non_free_paid,
             COUNT(*) FILTER (WHERE gd.percent >= 100)::int AS free_recipients
-          FROM gift_discounts gd`)
+          FROM gift_discounts gd
+          WHERE gd.user_id != ALL(${excludedIds}::uuid[])`)
       )[0] ?? {};
 
     const noGiftAgg =
@@ -306,7 +342,8 @@ async function giftStats(): Promise<GiftStats> {
               SELECT 1 FROM orders o WHERE o.user_id = p.id AND o.product = 'k1' AND o.status = 'paid'
             ))::int AS paid_k1
           FROM profiles p
-          WHERE NOT EXISTS (SELECT 1 FROM gift_discounts gd WHERE gd.user_id = p.id)`)
+          WHERE NOT EXISTS (SELECT 1 FROM gift_discounts gd WHERE gd.user_id = p.id)
+            AND p.id != ALL(${excludedIds}::uuid[])`)
       )[0] ?? {};
 
     const nonFreeRecipients = n(convAgg.non_free_recipients);
@@ -344,6 +381,7 @@ async function giftStats(): Promise<GiftStats> {
 function emptyStats(): AdminStats {
   return {
     ok: false,
+    testFilter: { excludedCount: 0 },
     revenue: { total: 0, today: 0, d7: 0, d30: 0, pending: 0, aov: 0 },
     revenueByProduct: [],
     orders: {
@@ -386,6 +424,10 @@ export async function getAdminStats(): Promise<AdminStats> {
   try {
     const days = last30VnDays();
 
+    // (0) Loại tài khoản test — resolve MỘT LẦN, dùng lại cho MỌI query bên dưới. Đây là điểm
+    // duy nhất quyết định "ai là test" trong toàn bộ hàm — không rải điều kiện lọc rời rạc.
+    const excludedIds = await resolveExcludedIds();
+
     // (1) Mọi số vô hướng trên bảng orders trong 1 lượt quét.
     const oAgg =
       (
@@ -399,20 +441,23 @@ export async function getAdminStats(): Promise<AdminStats> {
             COALESCE(AVG(amount_vnd) FILTER (WHERE status='paid'),0)::float     AS aov,
             COUNT(DISTINCT user_id)::int                            AS users_initiated,
             COUNT(DISTINCT user_id) FILTER (WHERE status='paid')::int AS users_paid
-          FROM orders`)
+          FROM orders
+          WHERE user_id != ALL(${excludedIds}::uuid[])`)
       )[0] ?? {};
 
     // (2) Đơn paid nhóm theo (gói, số tiền) → suy ra doanh thu/gói + đếm lệch giá trong JS.
     const paidRows = await q(sql`
       SELECT product, amount_vnd, COUNT(*)::int AS n
-      FROM orders WHERE status='paid' GROUP BY product, amount_vnd`);
+      FROM orders WHERE status='paid' AND user_id != ALL(${excludedIds}::uuid[])
+      GROUP BY product, amount_vnd`);
 
     // (3) Enrollment theo gói (kèm free/paid) trong 1 query.
     const enrRows = await q(sql`
       SELECT package, COUNT(*)::int AS n,
         COUNT(*) FILTER (WHERE order_id IS NULL)::int     AS free_n,
         COUNT(*) FILTER (WHERE order_id IS NOT NULL)::int AS paid_n
-      FROM enrollments GROUP BY package`);
+      FROM enrollments WHERE user_id != ALL(${excludedIds}::uuid[])
+      GROUP BY package`);
 
     // (4) Phân bố theo user (paying / free-only / số gói / nâng cấp) trong 1 query.
     const uAgg =
@@ -429,33 +474,40 @@ export async function getAdminStats(): Promise<AdminStats> {
             SELECT user_id,
               COUNT(*)                                   AS total_pkgs,
               COUNT(*) FILTER (WHERE order_id IS NOT NULL) AS paid_pkgs
-            FROM enrollments GROUP BY user_id
+            FROM enrollments WHERE user_id != ALL(${excludedIds}::uuid[])
+            GROUP BY user_id
           ) t`)
       )[0] ?? {};
 
     // (5) Tổng tài khoản.
-    const usersTotal = n((await q(sql`SELECT COUNT(*)::int AS n FROM profiles`))[0]?.n);
+    const usersTotal = n(
+      (await q(sql`SELECT COUNT(*)::int AS n FROM profiles WHERE id != ALL(${excludedIds}::uuid[])`))[0]
+        ?.n,
+    );
 
     // (6–8) Chuỗi 30 ngày (giờ VN).
     const revSeries = fillSeries(
       await q(sql`
         SELECT to_char(date_trunc('day', paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COALESCE(SUM(amount_vnd),0)::bigint AS value
-        FROM orders WHERE status='paid' AND paid_at >= now() - interval '30 days' GROUP BY 1`),
+        FROM orders WHERE status='paid' AND paid_at >= now() - interval '30 days'
+          AND user_id != ALL(${excludedIds}::uuid[]) GROUP BY 1`),
       days,
     );
     const ordSeries = fillSeries(
       await q(sql`
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
-        FROM orders WHERE created_at >= now() - interval '30 days' GROUP BY 1`),
+        FROM orders WHERE created_at >= now() - interval '30 days'
+          AND user_id != ALL(${excludedIds}::uuid[]) GROUP BY 1`),
       days,
     );
     const signupSeries = fillSeries(
       await q(sql`
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
-        FROM profiles WHERE created_at >= now() - interval '30 days' GROUP BY 1`),
+        FROM profiles WHERE created_at >= now() - interval '30 days'
+          AND id != ALL(${excludedIds}::uuid[]) GROUP BY 1`),
       days,
     );
 
@@ -463,12 +515,15 @@ export async function getAdminStats(): Promise<AdminStats> {
     const recentPaidRows = await q(sql`
       SELECT o.transfer_code, o.product, o.amount_vnd, o.paid_at, p.email
       FROM orders o LEFT JOIN profiles p ON p.id = o.user_id
-      WHERE o.status='paid' ORDER BY o.paid_at DESC NULLS LAST LIMIT 5`);
+      WHERE o.status='paid' AND o.user_id != ALL(${excludedIds}::uuid[])
+      ORDER BY o.paid_at DESC NULLS LAST LIMIT 5`);
     const recentSignupRows = await q(sql`
-      SELECT email, full_name, created_at FROM profiles ORDER BY created_at DESC LIMIT 5`);
+      SELECT email, full_name, created_at FROM profiles
+      WHERE id != ALL(${excludedIds}::uuid[])
+      ORDER BY created_at DESC LIMIT 5`);
 
     // (11) Số liệu hộp quà (try/catch riêng, gọi cuối — không kéo sập stats khác).
-    const gift = await giftStats();
+    const gift = await giftStats(excludedIds);
 
     // (12) Tách nguồn gốc enrollment K1-free: trúng jackpot hộp quà (percent>=100 ở CHÍNH user đó)
     // vs khuyến mãi khai trương cũ (claimFreeK1 — không đụng gift_discounts bao giờ). Phân biệt
@@ -489,7 +544,8 @@ export async function getAdminStats(): Promise<AdminStats> {
                 WHERE gd.user_id = e.user_id AND gd.product = e.package AND gd.percent >= 100
               ))::int AS via_launch_promo
             FROM enrollments e
-            WHERE e.package = 'k1' AND e.order_id IS NULL`)
+            WHERE e.package = 'k1' AND e.order_id IS NULL
+              AND e.user_id != ALL(${excludedIds}::uuid[])`)
         )[0] ?? {};
       k1FreeViaGiftJackpot = n(k1FreeSplit.via_gift_jackpot);
       k1FreeViaLaunchPromo = n(k1FreeSplit.via_launch_promo);
@@ -563,6 +619,7 @@ export async function getAdminStats(): Promise<AdminStats> {
 
     return {
       ok: true,
+      testFilter: { excludedCount: excludedIds.length },
       revenue: {
         total: n(oAgg.rev_total),
         today: revSeries.at(-1)?.value ?? 0,

@@ -64,6 +64,13 @@ export default async function AdminPage() {
           </b>{" "}
           ({stats.gift.freeWon} FREE)
         </p>
+        {stats.testFilter.excludedCount > 0 && (
+          <p className="mt-1 text-xs text-dim">
+            🧪 Đã loại <b>{stats.testFilter.excludedCount}</b> tài khoản test khỏi mọi số liệu ở trang
+            này — trừ &quot;lượt thấy hộp quà&quot; (bảng đếm ẩn danh, không có tài khoản để đối chiếu,
+            xem ghi chú ở khu Hộp quà).
+          </p>
+        )}
 
         <div className="mt-6">
           <AdminStats stats={stats} />

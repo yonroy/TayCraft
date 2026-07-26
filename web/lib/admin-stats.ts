@@ -20,14 +20,37 @@ export function excludedTestEmails(): string[] {
     .filter(Boolean);
 }
 
+// ⚠️ BÀI HỌC (sự cố production 2026-07-26): `sql\`...${arr}::uuid[]\`` với arr là JS array KHÔNG
+// serialize đúng qua drizzle-orm's `sql` tag + db.execute() (khác với package `postgres` gốc, có
+// phép tự-serialize mảng khi dùng tagged template CỦA CHÍNH NÓ — app không đi qua đường đó).
+// Driver stringify mảng thành 1 tham số bind phẳng (vd `["a"].toString()` = `"a"`, không có `{}`),
+// Postgres ép kiểu `::uuid[]` lên chuỗi đó → "malformed array literal", NÉM LỖI NGAY LẬP TỨC kể cả
+// mảng rỗng. Toàn bộ /admin sập về emptyStats() vì lỗi này xảy ra ở query ĐẦU TIÊN của hàm.
+// Fix ĐÚNG: bind TỪNG phần tử làm 1 tham số riêng qua sql.join, dựng literal `ARRAY[$1,$2,...]`
+// bằng chính cú pháp SQL (không dựa vào driver tự đoán kiểu mảng nào cả).
+function sqlUuidArray(ids: string[]) {
+  if (!ids.length) return sql.raw("ARRAY[]::uuid[]");
+  return sql`ARRAY[${sql.join(
+    ids.map((id) => sql`${id}`),
+    sql`, `,
+  )}]::uuid[]`;
+}
+function sqlTextArray(vals: string[]) {
+  if (!vals.length) return sql.raw("ARRAY[]::text[]");
+  return sql`ARRAY[${sql.join(
+    vals.map((v) => sql`${v}`),
+    sql`, `,
+  )}]::text[]`;
+}
+
 // Resolve email → id (uuid) MỘT LẦN đầu getAdminStats, dùng lại cho MỌI query bên dưới —
 // đây là điểm duy nhất tính "ai là test account", tránh rải điều kiện lọc rời rạc khắp nơi.
-// "$col != ALL(excludedIds::uuid[])" — mảng rỗng luôn TRUE (đã verify bằng SELECT thật trên
-// production: profiles WHERE id != ALL('{}'::uuid[]) = tổng số dòng, không lọc nhầm khi rỗng).
+// "$col != ALL(sqlUuidArray(excludedIds))" — mảng rỗng luôn TRUE (đã verify bằng SELECT thật
+// trên production qua ĐÚNG đường thi hành db.execute(): != ALL(ARRAY[]::uuid[]) = tổng số dòng).
 async function resolveExcludedIds(): Promise<string[]> {
   const emails = excludedTestEmails();
   if (!emails.length) return [];
-  const rows = await q(sql`SELECT id::text AS id FROM profiles WHERE lower(email) = ANY(${emails}::text[])`);
+  const rows = await q(sql`SELECT id::text AS id FROM profiles WHERE lower(email) = ANY(${sqlTextArray(emails)})`);
   return rows.map((r) => String(r.id));
 }
 
@@ -273,11 +296,11 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
             )::int                                           AS today,
             COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS d7
           FROM gift_discounts
-          WHERE user_id != ALL(${excludedIds}::uuid[])`)
+          WHERE user_id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
     const rows = await q(sql`
       SELECT percent, COUNT(*)::int AS n FROM gift_discounts
-      WHERE user_id != ALL(${excludedIds}::uuid[])
+      WHERE user_id != ALL(${sqlUuidArray(excludedIds)})
       GROUP BY percent ORDER BY percent DESC`);
 
     // Phân bố THỰC TẾ vs LÝ THUYẾT (GIFT_TIERS, lib/gift.ts) + tỷ lệ đã DÙNG trước khi hết hạn.
@@ -295,7 +318,7 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
              )
         )::int AS used_n
       FROM gift_discounts gd
-      WHERE gd.user_id != ALL(${excludedIds}::uuid[])
+      WHERE gd.user_id != ALL(${sqlUuidArray(excludedIds)})
       GROUP BY gd.percent ORDER BY gd.percent DESC`);
 
     const totalForPct = usageRows.reduce((s, r) => s + n(r.n), 0);
@@ -330,7 +353,7 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
             ))::int AS non_free_paid,
             COUNT(*) FILTER (WHERE gd.percent >= 100)::int AS free_recipients
           FROM gift_discounts gd
-          WHERE gd.user_id != ALL(${excludedIds}::uuid[])`)
+          WHERE gd.user_id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
 
     const noGiftAgg =
@@ -343,7 +366,7 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
             ))::int AS paid_k1
           FROM profiles p
           WHERE NOT EXISTS (SELECT 1 FROM gift_discounts gd WHERE gd.user_id = p.id)
-            AND p.id != ALL(${excludedIds}::uuid[])`)
+            AND p.id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
 
     const nonFreeRecipients = n(convAgg.non_free_recipients);
@@ -442,13 +465,13 @@ export async function getAdminStats(): Promise<AdminStats> {
             COUNT(DISTINCT user_id)::int                            AS users_initiated,
             COUNT(DISTINCT user_id) FILTER (WHERE status='paid')::int AS users_paid
           FROM orders
-          WHERE user_id != ALL(${excludedIds}::uuid[])`)
+          WHERE user_id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
 
     // (2) Đơn paid nhóm theo (gói, số tiền) → suy ra doanh thu/gói + đếm lệch giá trong JS.
     const paidRows = await q(sql`
       SELECT product, amount_vnd, COUNT(*)::int AS n
-      FROM orders WHERE status='paid' AND user_id != ALL(${excludedIds}::uuid[])
+      FROM orders WHERE status='paid' AND user_id != ALL(${sqlUuidArray(excludedIds)})
       GROUP BY product, amount_vnd`);
 
     // (3) Enrollment theo gói (kèm free/paid) trong 1 query.
@@ -456,7 +479,7 @@ export async function getAdminStats(): Promise<AdminStats> {
       SELECT package, COUNT(*)::int AS n,
         COUNT(*) FILTER (WHERE order_id IS NULL)::int     AS free_n,
         COUNT(*) FILTER (WHERE order_id IS NOT NULL)::int AS paid_n
-      FROM enrollments WHERE user_id != ALL(${excludedIds}::uuid[])
+      FROM enrollments WHERE user_id != ALL(${sqlUuidArray(excludedIds)})
       GROUP BY package`);
 
     // (4) Phân bố theo user (paying / free-only / số gói / nâng cấp) trong 1 query.
@@ -474,14 +497,14 @@ export async function getAdminStats(): Promise<AdminStats> {
             SELECT user_id,
               COUNT(*)                                   AS total_pkgs,
               COUNT(*) FILTER (WHERE order_id IS NOT NULL) AS paid_pkgs
-            FROM enrollments WHERE user_id != ALL(${excludedIds}::uuid[])
+            FROM enrollments WHERE user_id != ALL(${sqlUuidArray(excludedIds)})
             GROUP BY user_id
           ) t`)
       )[0] ?? {};
 
     // (5) Tổng tài khoản.
     const usersTotal = n(
-      (await q(sql`SELECT COUNT(*)::int AS n FROM profiles WHERE id != ALL(${excludedIds}::uuid[])`))[0]
+      (await q(sql`SELECT COUNT(*)::int AS n FROM profiles WHERE id != ALL(${sqlUuidArray(excludedIds)})`))[0]
         ?.n,
     );
 
@@ -491,7 +514,7 @@ export async function getAdminStats(): Promise<AdminStats> {
         SELECT to_char(date_trunc('day', paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COALESCE(SUM(amount_vnd),0)::bigint AS value
         FROM orders WHERE status='paid' AND paid_at >= now() - interval '30 days'
-          AND user_id != ALL(${excludedIds}::uuid[]) GROUP BY 1`),
+          AND user_id != ALL(${sqlUuidArray(excludedIds)}) GROUP BY 1`),
       days,
     );
     const ordSeries = fillSeries(
@@ -499,7 +522,7 @@ export async function getAdminStats(): Promise<AdminStats> {
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
         FROM orders WHERE created_at >= now() - interval '30 days'
-          AND user_id != ALL(${excludedIds}::uuid[]) GROUP BY 1`),
+          AND user_id != ALL(${sqlUuidArray(excludedIds)}) GROUP BY 1`),
       days,
     );
     const signupSeries = fillSeries(
@@ -507,7 +530,7 @@ export async function getAdminStats(): Promise<AdminStats> {
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
         FROM profiles WHERE created_at >= now() - interval '30 days'
-          AND id != ALL(${excludedIds}::uuid[]) GROUP BY 1`),
+          AND id != ALL(${sqlUuidArray(excludedIds)}) GROUP BY 1`),
       days,
     );
 
@@ -515,11 +538,11 @@ export async function getAdminStats(): Promise<AdminStats> {
     const recentPaidRows = await q(sql`
       SELECT o.transfer_code, o.product, o.amount_vnd, o.paid_at, p.email
       FROM orders o LEFT JOIN profiles p ON p.id = o.user_id
-      WHERE o.status='paid' AND o.user_id != ALL(${excludedIds}::uuid[])
+      WHERE o.status='paid' AND o.user_id != ALL(${sqlUuidArray(excludedIds)})
       ORDER BY o.paid_at DESC NULLS LAST LIMIT 5`);
     const recentSignupRows = await q(sql`
       SELECT email, full_name, created_at FROM profiles
-      WHERE id != ALL(${excludedIds}::uuid[])
+      WHERE id != ALL(${sqlUuidArray(excludedIds)})
       ORDER BY created_at DESC LIMIT 5`);
 
     // (11) Số liệu hộp quà (try/catch riêng, gọi cuối — không kéo sập stats khác).
@@ -545,7 +568,7 @@ export async function getAdminStats(): Promise<AdminStats> {
               ))::int AS via_launch_promo
             FROM enrollments e
             WHERE e.package = 'k1' AND e.order_id IS NULL
-              AND e.user_id != ALL(${excludedIds}::uuid[])`)
+              AND e.user_id != ALL(${sqlUuidArray(excludedIds)})`)
         )[0] ?? {};
       k1FreeViaGiftJackpot = n(k1FreeSplit.via_gift_jackpot);
       k1FreeViaLaunchPromo = n(k1FreeSplit.via_launch_promo);

@@ -46,9 +46,22 @@ function sectionsOf(html) {
   while ((m = re.exec(html))) out.push({ key: /\bkey\b/.test(m[1]), body: m[2] });
   return out;
 }
+// Số vòng tròn ①…⑨ của form DASHBOARD → số thường.
+const CIRCLED = '①②③④⑤⑥⑦⑧⑨';
+
 function stepNums(body) {
-  const re = /<div class="b">([^<]+)<\/div>/g; let m; const s = new Set();
+  const s = new Set();
+  // Form GIẢNG GIẢI (wb.css): badge <div class="b">Bước 3</div>
+  let m; const re = /<div class="b">([^<]+)<\/div>/g;
   while ((m = re.exec(body))) expand(m[1]).forEach((n) => s.add(n));
+  // Form DASHBOARD (wb-dashboard.css): tiêu đề panel <span class="t">③ Tự kiểm …</span>
+  // Không có badge "Bước N" → trước đây stepNums trả rỗng cho CẢ ĐỀ lẫn ĐÁP ÁN
+  // ⇒ cổng [1] pass RỖNG, không soát gì. Bắt số vòng tròn để cổng chạy thật.
+  const reP = /<span class="t">\s*([^<]+?)\s*<\/span>/g;
+  while ((m = reP.exec(body))) {
+    const i = CIRCLED.indexOf([...m[1]][0] || '');
+    if (i >= 0) s.add(i + 1);
+  }
   return s;
 }
 

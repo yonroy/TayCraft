@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { productById, effectivePriceVnd, coursesOfProduct } from "@/lib/products";
 import { PROMO_FREE_LIMIT, promoExpired } from "@/lib/promo";
+import { GIFT_TIERS, logGiftError } from "@/lib/gift";
 
 export interface DayPoint {
   day: string; // YYYY-MM-DD (giờ VN)
@@ -46,6 +47,29 @@ export interface GiftPercentRow {
   percent: number;
   count: number;
 }
+// "ok" = bảng tồn tại (không quan tâm có dữ liệu hay không) · "missing" = CHƯA chạy migration
+// (drizzle/gift-discounts.sql | gift-impressions.sql) · "unknown" = không probe được (lỗi khác).
+export interface GiftHealth {
+  discountsTable: "ok" | "missing" | "unknown";
+  impressionsTable: "ok" | "missing" | "unknown";
+}
+export interface GiftTierRow {
+  percent: number;
+  count: number; // số lượt nhận đúng mức này
+  actualPct: number; // % thực tế trong tổng lượt nhận quà
+  theoreticalPct: number; // % lý thuyết theo trọng số GIFT_TIERS (lib/gift.ts) — lệch mạnh = dấu hiệu farm
+  usedCount: number; // đã thanh toán TRƯỚC khi hết hạn (FREE tính là "dùng" ngay vì cấp tự động)
+  usedPct: number; // usedCount / count
+}
+export interface GiftConversion {
+  nonFreeRecipients: number; // user nhận quà giảm 30/50/70% (không tính suất FREE — FREE tự động "chuyển đổi" 100%, so sánh vô nghĩa)
+  nonFreePaid: number; // trong đó đã mua K1 (status='paid')
+  nonFreePaidRate: number;
+  freeRecipients: number; // trúng FREE — chỉ để tham khảo, không nằm trong phép so sánh
+  noGiftUsers: number; // có tài khoản (profiles) nhưng CHƯA từng nhận quà
+  noGiftUsersPaidK1: number; // trong đó đã mua K1
+  noGiftUsersPaidRate: number;
+}
 export interface GiftStats {
   total: number; // tổng lượt nhận quà (bấm "Mở hộp quà" + đăng nhập → 1 bản ghi)
   freeWon: number; // trúng jackpot 100% (tặng free K1)
@@ -54,6 +78,9 @@ export interface GiftStats {
   byPercent: GiftPercentRow[]; // phân bố theo mức thưởng (100% ở đầu)
   impressions: number; // số trình duyệt đã THẤY hộp quà (gift_impressions)
   notClaimed: number; // số người thấy mà KHÔNG nhận ≈ impressions − total (sàn 0)
+  health: GiftHealth; // để /admin báo rõ "hộp quà đang sống hay chết" thay vì suy đoán từ total=0
+  tiers: GiftTierRow[]; // phân bố thực tế vs lý thuyết + tỷ lệ dùng trước hạn, theo từng mức %
+  conversion: GiftConversion; // nhóm nhận quà (không-free) vs nhóm không nhận — ai mua K1 nhiều hơn
 }
 
 export interface AdminStats {
@@ -124,13 +151,75 @@ function fillSeries(rows: Row[], days: string[]): DayPoint[] {
 
 const tail = (arr: DayPoint[], k: number) => arr.slice(-k).reduce((a, p) => a + p.value, 0);
 
-function emptyGiftStats(): GiftStats {
-  return { total: 0, freeWon: 0, today: 0, d7: 0, byPercent: [], impressions: 0, notClaimed: 0 };
+function emptyGiftStats(health: GiftHealth, impressions = 0): GiftStats {
+  return {
+    total: 0,
+    freeWon: 0,
+    today: 0,
+    d7: 0,
+    byPercent: [],
+    impressions,
+    notClaimed: impressions,
+    health,
+    tiers: [],
+    conversion: {
+      nonFreeRecipients: 0,
+      nonFreePaid: 0,
+      nonFreePaidRate: 0,
+      freeRecipients: 0,
+      noGiftUsers: 0,
+      noGiftUsersPaidK1: 0,
+      noGiftUsersPaidRate: 0,
+    },
+  };
+}
+
+// Probe "bảng có tồn tại không" bằng to_regclass — KHÔNG BAO GIỜ ném lỗi (khác với chạy thẳng
+// SELECT ... FROM <bảng> rồi bắt exception), nên đáng tin hơn để /admin báo "sống hay chết"
+// một cách dứt khoát thay vì suy đoán từ total=0 (0 lượt nhận có thể là "chưa ai mở" chứ không
+// hẳn là "bảng chưa tồn tại" — hai tình huống khác hẳn nhau mà trước đây không phân biệt được).
+async function tableExists(qualifiedName: string): Promise<boolean> {
+  try {
+    const rows = await q(sql`SELECT to_regclass(${qualifiedName}) IS NOT NULL AS exists`);
+    return Boolean(rows[0]?.exists);
+  } catch {
+    return false;
+  }
 }
 
 // Số liệu hộp quà — try/catch RIÊNG để nếu bảng gift_discounts chưa áp migration thì
 // chỉ phần này về 0, KHÔNG kéo sập cả dashboard. Gọi cuối cùng trong getAdminStats.
 async function giftStats(): Promise<GiftStats> {
+  const discountsOk = await tableExists("public.gift_discounts");
+  const impressionsOk = await tableExists("public.gift_impressions");
+  const health: GiftHealth = {
+    discountsTable: discountsOk ? "ok" : "missing",
+    impressionsTable: impressionsOk ? "ok" : "missing",
+  };
+  if (!discountsOk) {
+    console.error(
+      '[gift] TABLE MISSING: "gift_discounts" (phát hiện qua to_regclass ở /admin). Chạy drizzle/gift-discounts.sql trong Supabase SQL Editor.',
+    );
+  }
+  if (!impressionsOk) {
+    console.error(
+      '[gift] TABLE MISSING: "gift_impressions" (phát hiện qua to_regclass ở /admin). Chạy drizzle/gift-impressions.sql trong Supabase SQL Editor.',
+    );
+  }
+
+  // Số người ĐÃ THẤY hộp quà — độc lập với gift_discounts, để "không nhận" vẫn tính được
+  // dù bảng nhận-quà có vấn đề riêng.
+  let impressions = 0;
+  if (impressionsOk) {
+    try {
+      impressions = n((await q(sql`SELECT COUNT(*)::int AS n FROM gift_impressions`))[0]?.n);
+    } catch (e) {
+      logGiftError("admin-stats/impressions", e, "gift_impressions");
+    }
+  }
+
+  if (!discountsOk) return emptyGiftStats(health, impressions);
+
   try {
     const agg =
       (
@@ -148,14 +237,72 @@ async function giftStats(): Promise<GiftStats> {
     const rows = await q(sql`
       SELECT percent, COUNT(*)::int AS n FROM gift_discounts GROUP BY percent ORDER BY percent DESC`);
 
-    // Số người ĐÃ THẤY hộp quà — try/catch RIÊNG để nếu bảng gift_impressions chưa áp migration
-    // thì phần "không nhận" về 0, KHÔNG kéo sập số liệu nhận quà ở trên.
-    let impressions = 0;
-    try {
-      impressions = n((await q(sql`SELECT COUNT(*)::int AS n FROM gift_impressions`))[0]?.n);
-    } catch (e) {
-      console.warn("[admin-stats] gift_impressions chưa sẵn sàng (bỏ qua):", e);
-    }
+    // Phân bố THỰC TẾ vs LÝ THUYẾT (GIFT_TIERS, lib/gift.ts) + tỷ lệ đã DÙNG trước khi hết hạn.
+    // "Dùng" = có đơn K1 status='paid' với paid_at <= expires_at của chính quà đó; mức FREE
+    // luôn tính là "đã dùng" vì được cấp enrollment ngay lúc mở, không qua bước thanh toán.
+    const usageRows = await q(sql`
+      SELECT gd.percent,
+        COUNT(*)::int AS n,
+        COUNT(*) FILTER (
+          WHERE gd.percent >= 100
+             OR EXISTS (
+               SELECT 1 FROM orders o
+               WHERE o.user_id = gd.user_id AND o.product = gd.product
+                 AND o.status = 'paid' AND o.paid_at IS NOT NULL AND o.paid_at <= gd.expires_at
+             )
+        )::int AS used_n
+      FROM gift_discounts gd
+      GROUP BY gd.percent ORDER BY gd.percent DESC`);
+
+    const totalForPct = usageRows.reduce((s, r) => s + n(r.n), 0);
+    const totalWeight = GIFT_TIERS.reduce((s, t) => s + t.weight, 0);
+    const tiers: GiftTierRow[] = usageRows.map((r) => {
+      const percent = n(r.percent);
+      const count = n(r.n);
+      const usedCount = n(r.used_n);
+      const theoretical = GIFT_TIERS.find((t) => t.percent === percent);
+      return {
+        percent,
+        count,
+        actualPct: totalForPct > 0 ? Math.round((count / totalForPct) * 1000) / 10 : 0,
+        theoreticalPct:
+          theoretical && totalWeight > 0 ? Math.round((theoretical.weight / totalWeight) * 1000) / 10 : 0,
+        usedCount,
+        usedPct: count > 0 ? Math.round((usedCount / count) * 1000) / 10 : 0,
+      };
+    });
+
+    // So sánh nhóm nhận quà (không-free) vs nhóm KHÔNG nhận quà — ai mua K1 tỷ lệ cao hơn.
+    // Suất FREE loại khỏi vế "nhận quà" vì nó tự động chuyển đổi 100% (được cấp thẳng, không
+    // qua quyết định mua) — đưa vào sẽ làm sai lệch phép so sánh.
+    const convAgg =
+      (
+        await q(sql`
+          SELECT
+            COUNT(*) FILTER (WHERE gd.percent < 100)::int AS non_free_recipients,
+            COUNT(*) FILTER (WHERE gd.percent < 100 AND EXISTS (
+              SELECT 1 FROM orders o WHERE o.user_id = gd.user_id AND o.product = 'k1' AND o.status = 'paid'
+            ))::int AS non_free_paid,
+            COUNT(*) FILTER (WHERE gd.percent >= 100)::int AS free_recipients
+          FROM gift_discounts gd`)
+      )[0] ?? {};
+
+    const noGiftAgg =
+      (
+        await q(sql`
+          SELECT
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE EXISTS (
+              SELECT 1 FROM orders o WHERE o.user_id = p.id AND o.product = 'k1' AND o.status = 'paid'
+            ))::int AS paid_k1
+          FROM profiles p
+          WHERE NOT EXISTS (SELECT 1 FROM gift_discounts gd WHERE gd.user_id = p.id)`)
+      )[0] ?? {};
+
+    const nonFreeRecipients = n(convAgg.non_free_recipients);
+    const nonFreePaid = n(convAgg.non_free_paid);
+    const noGiftUsers = n(noGiftAgg.total);
+    const noGiftUsersPaidK1 = n(noGiftAgg.paid_k1);
 
     const total = n(agg.total);
     return {
@@ -166,10 +313,21 @@ async function giftStats(): Promise<GiftStats> {
       byPercent: rows.map((r) => ({ percent: n(r.percent), count: n(r.n) })),
       impressions,
       notClaimed: Math.max(0, impressions - total),
+      health,
+      tiers,
+      conversion: {
+        nonFreeRecipients,
+        nonFreePaid,
+        nonFreePaidRate: nonFreeRecipients > 0 ? nonFreePaid / nonFreeRecipients : 0,
+        freeRecipients: n(convAgg.free_recipients),
+        noGiftUsers,
+        noGiftUsersPaidK1,
+        noGiftUsersPaidRate: noGiftUsers > 0 ? noGiftUsersPaidK1 / noGiftUsers : 0,
+      },
     };
   } catch (err) {
-    console.warn("[admin-stats] gift_discounts chưa sẵn sàng (bỏ qua):", err);
-    return emptyGiftStats();
+    logGiftError("admin-stats/giftStats", err, "gift_discounts");
+    return emptyGiftStats(health, impressions);
   }
 }
 
@@ -198,7 +356,9 @@ function emptyStats(): AdminStats {
     series: { revenue: [], orders: [], signups: [] },
     recentPaid: [],
     recentSignups: [],
-    gift: emptyGiftStats(),
+    // DB không phản hồi được ở đây (catch ngoài cùng của getAdminStats) → không tự probe được
+    // bảng nào tồn tại hay không, để "unknown" cho trung thực (khác "missing" = đã kiểm và thiếu).
+    gift: emptyGiftStats({ discountsTable: "unknown", impressionsTable: "unknown" }),
   };
 }
 

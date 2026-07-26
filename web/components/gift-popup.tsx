@@ -2,8 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@vercel/analytics";
 import { EmailOtpForm } from "@/components/email-otp-form";
 import { formatVnd } from "@/lib/utils";
+
+// Event Vercel Analytics cho phễu hộp quà — CHỈ gửi biến phân loại (percent/free/trigger),
+// KHÔNG bao giờ gửi email/user_id/tên (không định danh cá nhân lên analytics bên thứ ba).
 
 type GiftData = {
   status: "ok";
@@ -48,23 +52,34 @@ export function GiftPopup() {
     if (sessionStorage.getItem("giftSeen")) return;
     const t = setTimeout(() => {
       setOpen(true);
+      track("gift_shown", { trigger: "auto" });
       sessionStorage.setItem("giftSeen", "1");
     }, 1200);
     return () => clearTimeout(t);
   }, []);
 
   const openGift = useCallback(async () => {
+    track("gift_open_clicked");
     setOpening(true);
     setMessage(null);
     try {
       const res = await fetch("/api/gift/open", { method: "POST" });
       if (res.status === 401) {
+        track("gift_login_required");
         setNeedLogin(true);
         return;
       }
       const d = await res.json();
       if (d.status === "ok") {
         setData(d as GiftData);
+        // Tách rõ 2 nhánh: quà còn hạn nhận được (claimed) vs quay lại thấy quà cũ đã hết hạn
+        // chưa dùng (expired_unused) — đây là khoảng mù trước đây không phân biệt được.
+        if (d.expired) track("gift_expired_unused", { percent: d.percent });
+        else track("gift_claimed", { percent: d.percent, free: d.free });
+      } else if (d.status === "error") {
+        // Lỗi hạ tầng (đã log chi tiết ở server, prefix "[gift]") — khách chỉ thấy thông báo nhẹ,
+        // giống hệt nhánh lỗi mạng bên dưới, không lộ chi tiết kỹ thuật.
+        setMessage("Có lỗi, bạn thử lại nhé.");
       } else {
         // "owned" (đã có K1) hoặc "disabled" → không có quà để trao.
         setGone(true);
@@ -99,7 +114,10 @@ export function GiftPopup() {
       {!open && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            track("gift_shown", { trigger: "reopen" });
+          }}
           aria-label="Mở hộp quà ưu đãi"
           className="gift-shake fixed bottom-24 right-4 z-[75] grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-rose-500 to-rose-700 text-2xl shadow-xl ring-2 ring-amber-300/60 hover:brightness-110 sm:bottom-6"
         >
@@ -155,6 +173,7 @@ export function GiftPopup() {
                       <EmailOtpForm
                         dark
                         onSuccess={() => {
+                          track("gift_login_completed");
                           setNeedLogin(false);
                           openGift();
                         }}

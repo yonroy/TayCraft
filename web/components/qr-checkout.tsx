@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@vercel/analytics";
 import { formatVnd } from "@/lib/utils";
+
+// Event Vercel Analytics cho phễu thanh toán — chỉ gửi `product` (không email/user_id/amount cá nhân).
 
 // Kênh liên hệ admin cho fallback "chờ duyệt tay" — set ở env (NEXT_PUBLIC_*), để trống nếu không dùng.
 const CONTACT = {
@@ -33,6 +36,9 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
   const [showHelp, setShowHelp] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Chặn track() bắn trùng khi effect chạy lại (React StrictMode dev double-invoke, re-render).
+  const trackedOrderIdRef = useRef<string | null>(null);
+  const trackedPaidIdRef = useRef<string | null>(null);
 
   // Tạo đơn khi vào trang (và mỗi lần bấm "Thử lại" → tăng attempt để chạy lại effect).
   useEffect(() => {
@@ -55,6 +61,13 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
           return;
         }
         setOrder(data);
+        // "qr_shown" bắn cùng lúc "checkout_started": QR render ngay khi có order, không có
+        // bước tải ảnh riêng để tách mốc — đơn giản hóa có chủ đích, không phải thiếu sót.
+        if (trackedOrderIdRef.current !== data.id) {
+          trackedOrderIdRef.current = data.id;
+          track("checkout_started", { product: product ?? "unknown" });
+          track("qr_shown", { product: product ?? "unknown" });
+        }
       } catch {
         if (active) setError("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
       }
@@ -72,6 +85,10 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
       if (!res.ok) return;
       const { status } = await res.json();
       if (status === "paid") {
+        if (trackedPaidIdRef.current !== order.id) {
+          trackedPaidIdRef.current = order.id;
+          track("order_paid", { product: product ?? "unknown" });
+        }
         setPaid(true);
         if (pollRef.current) clearInterval(pollRef.current);
         // Để khách kịp đọc lời chúc; vẫn tự dẫn vào khu học nếu họ không bấm nút.
@@ -84,7 +101,7 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [order, router]);
+  }, [order, router, product]);
 
   // Sau HELP_DELAY_MS chưa nhận được tiền → hiện khối liên hệ admin (poll vẫn chạy tiếp).
   useEffect(() => {

@@ -16,7 +16,9 @@ export const FREE_PERCENT = 100; // mốc "trúng free" — quà 100% = tặng t
 
 // Bậc % + TRỌNG SỐ (quyết định kinh doanh). Tổng weight = 100 → đọc thẳng ra %.
 // Bộ "hào phóng": giảm 30–70%, ~8% khách trúng FREE (100%).
-const GIFT_TIERS: { percent: number; weight: number }[] = [
+// Export để /admin so PHÂN BỐ THỰC TẾ với trọng số lý thuyết (lệch mạnh về FREE = dấu hiệu farm
+// đa tài khoản) — đọc từ ĐÚNG một nguồn này, không chép lại số ở lib/admin-stats.ts (tránh lệch).
+export const GIFT_TIERS: { percent: number; weight: number }[] = [
   { percent: 30, weight: 45 },
   { percent: 50, weight: 30 },
   { percent: 70, weight: 17 },
@@ -76,7 +78,30 @@ async function findGift(userId: string): Promise<GiftDiscount | null> {
 export type GiftState =
   | { status: "disabled" }
   | { status: "owned" } // đã sở hữu K1 → khỏi tặng
+  | { status: "error" } // lỗi hạ tầng (bảng chưa tồn tại / DB lỗi) — KHÔNG phải trạng thái nghiệp vụ
   | { status: "ok"; percent: number; expiresAt: Date; expired: boolean; free: boolean };
+
+// ---- Chẩn đoán lỗi hạ tầng (KHÔNG đổi hành vi/xác suất — chỉ để LOG rõ & fail an toàn) ----
+// Postgres báo "relation ... does not exist" (code 42P01) khi bảng chưa chạy migration
+// (drizzle/gift-discounts.sql, drizzle/gift-impressions.sql là file SQL chạy TAY trong Supabase
+// SQL Editor — không nằm trong lịch sử drizzle-kit nên không có cách nào khác để biết đã áp chưa).
+// Tách riêng lỗi này khỏi lỗi DB chung để log ra Vercel Logs một dòng thật dễ tìm.
+export function isMissingTableError(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  const msg = err instanceof Error ? err.message : String(err);
+  return code === "42P01" || /relation .* does not exist/i.test(msg);
+}
+
+// Log có cấu trúc, prefix "[gift]" để tra Vercel Logs được (giống "[sepay]" ở webhook).
+// table: tên bảng liên quan (để dòng TABLE MISSING nêu đích danh bảng cần chạy migration).
+export function logGiftError(context: string, err: unknown, table: string): void {
+  if (isMissingTableError(err)) {
+    // Dòng riêng, dễ nhận — đây là lỗi hạ tầng (thiếu migration), KHÔNG phải bug logic.
+    console.error(`[gift] TABLE MISSING: "${table}" chưa tồn tại (context=${context}). Chạy drizzle/${table === "gift_discounts" ? "gift-discounts" : "gift-impressions"}.sql trong Supabase SQL Editor.`);
+  } else {
+    console.error(`[gift] ERROR (${context}):`, err);
+  }
+}
 
 // Dựng kết quả "ok" từ 1 bản ghi quà; nếu trúng FREE thì cấp thẳng Khóa 1 (idempotent).
 async function toOkState(userId: string, g: GiftDiscount): Promise<GiftState> {
@@ -87,31 +112,47 @@ async function toOkState(userId: string, g: GiftDiscount): Promise<GiftState> {
 
 // Mở quà: idempotent. Trả quà cũ nếu đã có (% giữ nguyên → trung thực); nếu chưa & đủ điều kiện
 // thì roll % mới, lưu DB. Một user chỉ nhận MỘT quà (hết hạn là hết — urgency thật, không farm lại).
+// Bọc try/catch: bảng thiếu / DB lỗi → trả {status:"error"} thay vì ném exception (trước đây route
+// gọi hàm này không catch gì cả → 500 câm, khách chỉ thấy "Có lỗi, thử lại", không ai biết vì sao).
 export async function getOrCreateGift(userId: string): Promise<GiftState> {
   if (!GIFT_ENABLED) return { status: "disabled" };
 
-  const existing = await findGift(userId);
-  if (existing) return toOkState(userId, existing);
+  try {
+    const existing = await findGift(userId);
+    if (existing) return await toOkState(userId, existing);
 
-  // Đã sở hữu K1 (mua/nhận) → không cấp quà.
-  if (await ownsProduct(userId, GIFT_PRODUCT)) return { status: "owned" };
+    // Đã sở hữu K1 (mua/nhận) → không cấp quà.
+    if (await ownsProduct(userId, GIFT_PRODUCT)) return { status: "owned" };
 
-  const percent = rollGiftPercent();
-  const expiresAt = new Date(Date.now() + GIFT_TTL_HOURS * 3_600_000);
-  await db
-    .insert(giftDiscounts)
-    .values({ userId, product: GIFT_PRODUCT, percent, expiresAt })
-    .onConflictDoNothing();
+    const percent = rollGiftPercent();
+    const expiresAt = new Date(Date.now() + GIFT_TTL_HOURS * 3_600_000);
+    await db
+      .insert(giftDiscounts)
+      .values({ userId, product: GIFT_PRODUCT, percent, expiresAt })
+      .onConflictDoNothing();
 
-  // Đọc lại để xử lý đúng cả trường hợp 2 request chèn cùng lúc (giữ 1 bản ghi duy nhất).
-  const saved = (await findGift(userId))!;
-  return toOkState(userId, saved);
+    // Đọc lại để xử lý đúng cả trường hợp 2 request chèn cùng lúc (giữ 1 bản ghi duy nhất).
+    const saved = (await findGift(userId))!;
+    return await toOkState(userId, saved);
+  } catch (err) {
+    logGiftError("getOrCreateGift", err, "gift_discounts");
+    return { status: "error" };
+  }
 }
 
 // % giảm CÒN HIỆU LỰC cho đơn (dùng khi tạo đơn). Null nếu tắt / không có quà / hết hạn / sai gói.
+// Bọc try/catch: đây được gọi từ /api/orders CHO MỌI GÓI (không chỉ k1) — nếu bảng gift_discounts
+// thiếu mà không catch, một đơn hàng K1 THẬT (không liên quan gì tới hộp quà) cũng sẽ vỡ theo.
+// Lỗi hạ tầng ở tính năng khuyến mãi phụ KHÔNG được phép chặn doanh thu chính → fallback null
+// (= coi như không có quà, tính giá gốc) là lựa chọn AN TOÀN, không làm lộ giảm giá sai.
 export async function activeGiftPercent(userId: string, product: string): Promise<number | null> {
   if (!GIFT_ENABLED || product !== GIFT_PRODUCT) return null;
-  const g = await findGift(userId);
-  if (!g || !isActive(g)) return null;
-  return g.percent;
+  try {
+    const g = await findGift(userId);
+    if (!g || !isActive(g)) return null;
+    return g.percent;
+  } catch (err) {
+    logGiftError("activeGiftPercent", err, "gift_discounts");
+    return null;
+  }
 }

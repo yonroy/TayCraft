@@ -127,38 +127,137 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
         </p>
       </Card>
 
+      {/* Sức khỏe hộp quà — để nhìn 1 cái biết đang SỐNG hay CHẾT, không phải suy đoán từ total=0 */}
+      {(gift.health.discountsTable !== "ok" || gift.health.impressionsTable !== "ok") && (
+        <div className="rounded-xl border border-accent-2/40 bg-accent-2/5 px-4 py-3 text-sm">
+          <p className="font-semibold text-accent-2">⚠️ Hộp quà đang KHÔNG hoạt động đầy đủ</p>
+          <ul className="mt-1 list-disc pl-5 text-accent-2/90">
+            {gift.health.discountsTable !== "ok" && (
+              <li>
+                Bảng <code className="font-mono">gift_discounts</code> {gift.health.discountsTable === "missing" ? "CHƯA tồn tại" : "không kiểm tra được"} — khách bấm &quot;Mở hộp quà&quot; sẽ chỉ thấy &quot;Có lỗi, bạn thử lại nhé.&quot;, không nhận được quà nào. Chạy{" "}
+                <code className="font-mono">drizzle/gift-discounts.sql</code> trong Supabase SQL Editor.
+              </li>
+            )}
+            {gift.health.impressionsTable !== "ok" && (
+              <li>
+                Bảng <code className="font-mono">gift_impressions</code> {gift.health.impressionsTable === "missing" ? "CHƯA tồn tại" : "không kiểm tra được"} — số &quot;người thấy mà không nhận&quot; sẽ luôn là 0 (thiếu, không sai). Chạy{" "}
+                <code className="font-mono">drizzle/gift-impressions.sql</code>.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
       {/* Hộp quà giảm giá */}
       <Card title={`Hộp quà 🎁 — ${gift.total} lượt nhận · ${gift.freeWon} trúng FREE`}>
-        {gift.byPercent.length === 0 ? (
-          <p className="text-sm text-dim">Chưa có ai nhận quà.</p>
+        {gift.tiers.length === 0 ? (
+          <p className="text-sm text-dim">
+            {gift.health.discountsTable === "ok" ? "Chưa có ai nhận quà." : "Chưa đọc được dữ liệu (xem cảnh báo phía trên)."}
+          </p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-dim">
-              <tr>
-                <th className="pb-2 font-medium">Phần thưởng</th>
-                <th className="pb-2 text-right font-medium">Số lượt</th>
-                <th className="pb-2 text-right font-medium">Tỷ lệ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gift.byPercent.map((r) => (
-                <tr key={r.percent} className="border-t border-line">
-                  <td
-                    className={`py-2 ${r.percent >= 100 ? "font-semibold text-accent-2" : "text-ink"}`}
-                  >
-                    {giftReward(r.percent)}
-                  </td>
-                  <td className="py-2 text-right tabular-nums font-medium">
-                    {r.count.toLocaleString("vi-VN")}
-                  </td>
-                  <td className="py-2 text-right tabular-nums text-dim">
-                    {gift.total > 0 ? pct(r.count / gift.total) : "—"}
-                  </td>
+          <>
+            <table className="w-full text-sm">
+              <thead className="text-left text-dim">
+                <tr>
+                  <th className="pb-2 font-medium">Phần thưởng</th>
+                  <th className="pb-2 text-right font-medium">Số lượt</th>
+                  <th className="pb-2 text-right font-medium">% thực tế</th>
+                  <th className="pb-2 text-right font-medium">% lý thuyết</th>
+                  <th className="pb-2 text-right font-medium">Đã dùng trước hạn</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {gift.tiers.map((r) => {
+                  const deviation = r.actualPct - r.theoreticalPct;
+                  const flagFarm = r.percent >= 100 && deviation > 5; // FREE thực tế cao hơn lý thuyết >5đpt
+                  return (
+                    <tr key={r.percent} className="border-t border-line">
+                      <td className={`py-2 ${r.percent >= 100 ? "font-semibold text-accent-2" : "text-ink"}`}>
+                        {giftReward(r.percent)}
+                      </td>
+                      <td className="py-2 text-right tabular-nums font-medium">
+                        {r.count.toLocaleString("vi-VN")}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-dim">
+                        {r.actualPct.toFixed(1)}%
+                        {flagFarm && (
+                          <span className="ml-1 text-accent-2" title="Lệch mạnh so với lý thuyết — có thể là dấu hiệu farm đa tài khoản">
+                            ⚠️
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-dim">{r.theoreticalPct.toFixed(1)}%</td>
+                      <td className="py-2 text-right tabular-nums text-dim">
+                        {r.usedCount.toLocaleString("vi-VN")} ({r.usedPct.toFixed(1)}%)
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className="mt-2 text-xs text-dim">
+              &quot;% lý thuyết&quot; tính từ đúng trọng số đang cấu hình trong code (45/30/17/8). Lệch mạnh
+              — nhất là mức FREE thực tế cao hơn hẳn lý thuyết — là dấu hiệu một người dùng nhiều tài
+              khoản để roll lại (xem cảnh báo ⚠️). &quot;Đã dùng trước hạn&quot; = đã thanh toán K1 trước khi
+              quà hết hạn (FREE luôn tính 100% vì cấp thẳng không qua thanh toán).
+            </p>
+          </>
         )}
+      </Card>
+
+      {/* So sánh chuyển đổi: nhận quà vs không nhận quà */}
+      <Card title="Hộp quà có tạo thêm doanh thu, hay chỉ giảm giá cho người vốn đã định mua?">
+        <table className="w-full text-sm">
+          <thead className="text-left text-dim">
+            <tr>
+              <th className="pb-2 font-medium">Nhóm</th>
+              <th className="pb-2 text-right font-medium">Số người</th>
+              <th className="pb-2 text-right font-medium">Đã mua K1</th>
+              <th className="pb-2 text-right font-medium">Tỷ lệ mua</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-t border-line">
+              <td className="py-2 text-ink">Nhận quà giảm (30/50/70%)</td>
+              <td className="py-2 text-right tabular-nums">
+                {gift.conversion.nonFreeRecipients.toLocaleString("vi-VN")}
+              </td>
+              <td className="py-2 text-right tabular-nums">
+                {gift.conversion.nonFreePaid.toLocaleString("vi-VN")}
+              </td>
+              <td className="py-2 text-right tabular-nums font-semibold text-accent">
+                {pct(gift.conversion.nonFreePaidRate)}
+              </td>
+            </tr>
+            <tr className="border-t border-line">
+              <td className="py-2 text-ink">Không nhận quà (chưa từng mở)</td>
+              <td className="py-2 text-right tabular-nums">
+                {gift.conversion.noGiftUsers.toLocaleString("vi-VN")}
+              </td>
+              <td className="py-2 text-right tabular-nums">
+                {gift.conversion.noGiftUsersPaidK1.toLocaleString("vi-VN")}
+              </td>
+              <td className="py-2 text-right tabular-nums font-semibold">
+                {pct(gift.conversion.noGiftUsersPaidRate)}
+              </td>
+            </tr>
+            {gift.conversion.freeRecipients > 0 && (
+              <tr className="border-t border-line text-dim">
+                <td className="py-2">Trúng FREE (tham khảo, không tính vào so sánh)</td>
+                <td className="py-2 text-right tabular-nums">{gift.conversion.freeRecipients}</td>
+                <td className="py-2 text-right tabular-nums" colSpan={2}>
+                  cấp thẳng, không qua quyết định mua
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <p className="mt-2 text-xs text-dim">
+          ⚠️ KHÔNG phải thử nghiệm ngẫu nhiên (A/B test): người tự bấm &quot;Mở hộp quà&quot; có thể vốn đã
+          quan tâm hơn mức trung bình (thiên lệch tự chọn). Tỷ lệ mua cao hơn ở nhóm nhận quà không
+          chứng minh được hộp quà LÀ NGUYÊN NHÂN — chỉ là tín hiệu tham khảo tốt nhất hiện có với dữ
+          liệu đang thu thập.
+        </p>
       </Card>
 
       {/* Biểu đồ xu hướng 30 ngày */}

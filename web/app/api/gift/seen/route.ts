@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { giftImpressions } from "@/lib/db/schema";
+import { logGiftError } from "@/lib/gift";
 
 // Ghi 1 lượt "đã THẤY hộp quà" cho mỗi trình duyệt (cookie 'gv' chống trùng) — KHÔNG cần đăng nhập.
 // Trình duyệt đã có cookie → bỏ qua (không ghi thêm) → mỗi máy chỉ đếm 1 lần.
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     await db.insert(giftImpressions).values({ visitor }).onConflictDoNothing();
   } catch (err) {
     // Bảng chưa áp migration / lỗi DB → không chặn khách, chỉ bỏ qua việc đếm.
-    console.warn("[gift/seen] ghi impression lỗi (bỏ qua):", err);
+    logGiftError("api/gift/seen", err, "gift_impressions");
   }
   return res;
 }

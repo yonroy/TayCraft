@@ -113,17 +113,17 @@ export interface GiftTierRow {
   usedPct: number; // usedCount / count
 }
 export interface GiftConversion {
-  nonFreeRecipients: number; // user nhận quà giảm 30/50/70% (không tính suất FREE — FREE tự động "chuyển đổi" 100%, so sánh vô nghĩa)
-  nonFreePaid: number; // trong đó đã mua K1 (status='paid')
+  nonFreeRecipients: number; // user nhận quà giảm (không tính suất FREE di sản — FREE tự động "chuyển đổi" 100%, so sánh vô nghĩa)
+  nonFreePaid: number; // trong đó đã mua ĐÚNG gói đang giữ quà (status='paid')
   nonFreePaidRate: number;
-  freeRecipients: number; // trúng FREE — chỉ để tham khảo, không nằm trong phép so sánh
+  freeRecipients: number; // trúng FREE (bậc đã bỏ 2026-07-26) — tham khảo, không nằm trong phép so sánh
   noGiftUsers: number; // có tài khoản (profiles) nhưng CHƯA từng nhận quà
-  noGiftUsersPaidK1: number; // trong đó đã mua K1
+  noGiftUsersPaidK1: number; // trong đó đã mua gói BẤT KỲ (đối xứng với vế trên; tên field giữ nguyên để không phá /admin)
   noGiftUsersPaidRate: number;
 }
 export interface GiftStats {
-  total: number; // tổng lượt nhận quà (bấm "Mở hộp quà" + đăng nhập → 1 bản ghi)
-  freeWon: number; // trúng jackpot 100% (tặng free K1)
+  total: number; // tổng lượt nhận quà, ĐẾM THEO USER (1 lượt quay ghi 4 dòng — 1 dòng/gói)
+  freeWon: number; // DI SẢN: trúng jackpot 100% thời còn bậc FREE (đã bỏ 2026-07-26) — không tăng nữa
   today: number; // nhận quà hôm nay (giờ VN)
   d7: number; // nhận quà 7 ngày
   byPercent: GiftPercentRow[]; // phân bố theo mức thưởng (100% ở đầu)
@@ -315,32 +315,36 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
   if (!discountsOk) return emptyGiftStats(health, impressions);
 
   try {
+    // ĐẾM THEO USER, KHÔNG theo dòng: từ 2026-07-26 một lượt quay ghi 4 dòng (1 dòng/gói, cùng
+    // percent) → COUNT(*) sẽ thổi mọi con số lên gấp 4 và làm "người thấy mà không nhận" âm.
+    // COUNT(DISTINCT user_id) = đúng nghĩa "số lượt nhận quà" ở mọi cấu hình cũ lẫn mới.
     const agg =
       (
         await q(sql`
           SELECT
-            COUNT(*)::int                                    AS total,
-            COUNT(*) FILTER (WHERE percent >= 100)::int      AS free_won,
-            COUNT(*) FILTER (
+            COUNT(DISTINCT user_id)::int                                AS total,
+            COUNT(DISTINCT user_id) FILTER (WHERE percent >= 100)::int  AS free_won,
+            COUNT(DISTINCT user_id) FILTER (
               WHERE created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'
                     >= date_trunc('day', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
-            )::int                                           AS today,
-            COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS d7
+            )::int                                                      AS today,
+            COUNT(DISTINCT user_id) FILTER (WHERE created_at >= now() - interval '7 days')::int AS d7
           FROM gift_discounts
           WHERE user_id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
     const rows = await q(sql`
-      SELECT percent, COUNT(*)::int AS n FROM gift_discounts
+      SELECT percent, COUNT(DISTINCT user_id)::int AS n FROM gift_discounts
       WHERE user_id != ALL(${sqlUuidArray(excludedIds)})
       GROUP BY percent ORDER BY percent DESC`);
 
     // Phân bố THỰC TẾ vs LÝ THUYẾT (GIFT_TIERS, lib/gift.ts) + tỷ lệ đã DÙNG trước khi hết hạn.
-    // "Dùng" = có đơn K1 status='paid' với paid_at <= expires_at của chính quà đó; mức FREE
-    // luôn tính là "đã dùng" vì được cấp enrollment ngay lúc mở, không qua bước thanh toán.
+    // "Dùng" = có đơn status='paid' cho CHÍNH gói được giảm, paid_at <= expires_at của quà đó
+    // (quà giờ áp cho 4 gói → dùng ở bất kỳ gói nào cũng tính); mức FREE di sản luôn tính là
+    // "đã dùng" vì được cấp enrollment ngay lúc mở, không qua bước thanh toán.
     const usageRows = await q(sql`
       SELECT gd.percent,
-        COUNT(*)::int AS n,
-        COUNT(*) FILTER (
+        COUNT(DISTINCT gd.user_id)::int AS n,
+        COUNT(DISTINCT gd.user_id) FILTER (
           WHERE gd.percent >= 100
              OR EXISTS (
                SELECT 1 FROM orders o
@@ -371,29 +375,35 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
       };
     });
 
-    // So sánh nhóm nhận quà (không-free) vs nhóm KHÔNG nhận quà — ai mua K1 tỷ lệ cao hơn.
-    // Suất FREE loại khỏi vế "nhận quà" vì nó tự động chuyển đổi 100% (được cấp thẳng, không
-    // qua quyết định mua) — đưa vào sẽ làm sai lệch phép so sánh.
+    // So sánh nhóm nhận quà (không-free) vs nhóm KHÔNG nhận quà — ai xuống tiền tỷ lệ cao hơn.
+    // Suất FREE di sản loại khỏi vế "nhận quà" vì nó tự động chuyển đổi 100% (được cấp thẳng,
+    // không qua quyết định mua) — đưa vào sẽ làm sai lệch phép so sánh.
+    // Quà giờ áp cho CẢ 4 GÓI nên "đã mua" = mua ĐÚNG gói mình đang giữ quà (o.product =
+    // gd.product), không còn khóa cứng 'k1' — khóa cứng sẽ bỏ sót người dùng quà mua Pro/Trọn bộ
+    // và báo tỷ lệ chuyển đổi thấp giả tạo.
     const convAgg =
       (
         await q(sql`
           SELECT
-            COUNT(*) FILTER (WHERE gd.percent < 100)::int AS non_free_recipients,
-            COUNT(*) FILTER (WHERE gd.percent < 100 AND EXISTS (
-              SELECT 1 FROM orders o WHERE o.user_id = gd.user_id AND o.product = 'k1' AND o.status = 'paid'
+            COUNT(DISTINCT gd.user_id) FILTER (WHERE gd.percent < 100)::int AS non_free_recipients,
+            COUNT(DISTINCT gd.user_id) FILTER (WHERE gd.percent < 100 AND EXISTS (
+              SELECT 1 FROM orders o
+              WHERE o.user_id = gd.user_id AND o.product = gd.product AND o.status = 'paid'
             ))::int AS non_free_paid,
-            COUNT(*) FILTER (WHERE gd.percent >= 100)::int AS free_recipients
+            COUNT(DISTINCT gd.user_id) FILTER (WHERE gd.percent >= 100)::int AS free_recipients
           FROM gift_discounts gd
           WHERE gd.user_id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
 
+    // Vế đối chứng phải ĐỐI XỨNG với vế trên: nhóm không có quà tính là "đã mua" khi mua BẤT KỲ
+    // gói nào (trước đây chỉ đếm đơn 'k1' → so lệch chuẩn giữa 2 nhóm, nhóm không-quà bị hạ thấp).
     const noGiftAgg =
       (
         await q(sql`
           SELECT
             COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE EXISTS (
-              SELECT 1 FROM orders o WHERE o.user_id = p.id AND o.product = 'k1' AND o.status = 'paid'
+              SELECT 1 FROM orders o WHERE o.user_id = p.id AND o.status = 'paid'
             ))::int AS paid_k1
           FROM profiles p
           WHERE NOT EXISTS (SELECT 1 FROM gift_discounts gd WHERE gd.user_id = p.id)

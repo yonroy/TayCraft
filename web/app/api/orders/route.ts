@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { generateTransferCode, vietqrImageUrl, bankInfo, paymentContent } from "@/lib/vietqr";
 import { DEFAULT_PRODUCT, productById, isActiveProduct, effectivePriceVnd } from "@/lib/products";
-import { activeGiftPercent, discountedAmount, grantGiftFreeK1 } from "@/lib/gift";
+import { activeGiftPercent, discountedAmount, logGiftError } from "@/lib/gift";
 
 function orderResponse(o: { id: string; amountVnd: number; transferCode: string }) {
   const content = paymentContent(o.transferCode); // vd "SEVQR TCABC123" cho VietinBank
@@ -56,14 +56,21 @@ export async function POST(req: NextRequest) {
 
   // Áp "hộp quà" nếu user có quà còn hạn cho gói này (server quyết định — không tin client).
   // Mức giảm THẬT: ghi thẳng amount đã trừ % vào đơn; webhook chỉ chấp nhận khi nhận ≥ amount này.
+  // activeGiftPercent đã clamp về trần hiện hành (80%) nên dòng percent=100 di sản KHÔNG còn ra 0đ.
   const base = effectivePriceVnd(product);
   const giftPercent = await activeGiftPercent(user.id, productId);
   const amountVnd = giftPercent ? discountedAmount(base, giftPercent) : base;
 
-  // Quà 100% = free → không tạo đơn 0đ (QR 0đ không hợp lệ); cấp thẳng Khóa 1 rồi dẫn vào học.
+  // Chốt an toàn: bậc FREE 100% đã BỎ (2026-07-26) nên không còn đường nào ra 0đ. Nếu vẫn xảy ra
+  // thì đó là lỗi cấu hình giá/bậc % — thà từ chối tạo đơn và log ra để sửa, còn hơn âm thầm cấp
+  // khóa miễn phí (nhánh grantGiftFreeK1 cũ) hoặc dựng QR 0đ mà ngân hàng không nhận.
   if (amountVnd <= 0) {
-    await grantGiftFreeK1(user.id);
-    return NextResponse.json({ alreadyOwned: true });
+    await logGiftError(
+      "api/orders/zero-amount",
+      new Error(`Đơn 0đ bị chặn: product=${productId} base=${base} giftPercent=${giftPercent}`),
+      "gift_discounts",
+    );
+    return NextResponse.json({ error: "Giá gói đang có vấn đề, thử lại sau" }, { status: 500 });
   }
 
   // Tạo mới, retry nếu trùng transferCode.

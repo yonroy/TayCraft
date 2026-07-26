@@ -287,9 +287,10 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
               &quot;% lý thuyết&quot; tính từ đúng trọng số đang cấu hình trong code HIỆN TẠI. Bảng trọng số
               đã đổi ít nhất 1 lần trong lịch sử — dòng đánh dấu &quot;(mức cũ)&quot; là % không còn tồn tại
               trong cấu hình bây giờ, so lý thuyết với chúng VÔ NGHĨA (không phải bug hay farm). Chỉ nghi
-              farm khi mức FREE CÒN TRONG cấu hình hiện tại mà % thực tế cao hơn hẳn lý thuyết (xem ⚠️).
-              &quot;Đã dùng trước hạn&quot; = đã thanh toán K1 trước khi quà hết hạn (FREE luôn tính 100% vì
-              cấp thẳng không qua thanh toán). Tổng mẫu hiện tại: <b>{gift.total}</b> lượt — dưới 30 thì
+              farm khi mức cao nhất CÒN TRONG cấu hình hiện tại mà % thực tế cao hơn hẳn lý thuyết (xem ⚠️).
+              &quot;Đã dùng trước hạn&quot; = đã thanh toán gói được giảm trước khi quà hết hạn (mức FREE di
+              sản luôn tính 100% vì cấp thẳng không qua thanh toán). Tổng mẫu hiện tại: <b>{gift.total}</b>{" "}
+              lượt (đếm theo người, không theo dòng) — dưới 30 thì
               mọi tỷ lệ ở đây chỉ mang tính tham khảo, chưa đủ để kết luận.
             </p>
           </>
@@ -303,13 +304,13 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
             <tr>
               <th className="pb-2 font-medium">Nhóm</th>
               <th className="pb-2 text-right font-medium">Số người</th>
-              <th className="pb-2 text-right font-medium">Đã mua K1</th>
+              <th className="pb-2 text-right font-medium">Đã mua</th>
               <th className="pb-2 text-right font-medium">Tỷ lệ mua</th>
             </tr>
           </thead>
           <tbody>
             <tr className="border-t border-line">
-              <td className="py-2 text-ink">Nhận quà giảm (30/50/70%)</td>
+              <td className="py-2 text-ink">Nhận quà giảm (30/50/70/80%)</td>
               <td className="py-2 text-right tabular-nums">
                 {gift.conversion.nonFreeRecipients.toLocaleString("vi-VN")}
               </td>

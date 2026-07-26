@@ -6,6 +6,7 @@ import { ViewerCount } from "@/components/viewer-count";
 import { LoginForm } from "@/components/login-form";
 import { getUser, ownsProduct } from "@/lib/auth";
 import { DEFAULT_PRODUCT, isActiveProduct, productById, effectivePriceVnd } from "@/lib/products";
+import { activeGiftPercent, applyGift } from "@/lib/gift";
 import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
@@ -25,7 +26,11 @@ export default async function CheckoutPage({
   if (user && (await ownsProduct(user.id, productId))) redirect("/learn");
 
   const flash = await getFlashSale();
-  const price = meta ? effectivePriceVnd(meta) : undefined;
+  // Giá hiển thị PHẢI khớp số tiền đơn sẽ ghi (api/orders áp cùng activeGiftPercent + applyGift).
+  // Trước đây chỗ này luôn hiện giá GỐC trong khi QR lại ra số đã giảm → khách thấy 149k rồi mới
+  // thấy 44k ở bước cuối: vừa mất niềm tin, vừa giấu mất chính lợi ích đang thuyết phục họ mua.
+  const giftPercent = user && meta ? await activeGiftPercent(user.id, productId) : null;
+  const price = meta ? applyGift(effectivePriceVnd(meta), giftPercent) : undefined;
   const nextUrl = `/checkout?product=${productId}`;
 
   return (
@@ -46,8 +51,22 @@ export default async function CheckoutPage({
                   <div>
                     <div className="co-sum-name">{meta.label}</div>
                     {meta.tagline && <div className="co-sum-tag">{meta.tagline}</div>}
+                    {price.percent != null && (
+                      <div className="co-sum-gift">
+                        🎁 Đã áp mã giảm giá của bạn — tiết kiệm{" "}
+                        {formatVnd(price.base - price.final)}
+                      </div>
+                    )}
                   </div>
-                  <div className="co-sum-price">{formatVnd(price)}</div>
+                  <div className="co-sum-price-col">
+                    {price.percent != null && (
+                      <>
+                        <span className="co-sum-old">{formatVnd(price.base)}</span>
+                        <span className="co-sum-off">−{price.percent}%</span>
+                      </>
+                    )}
+                    <div className="co-sum-price">{formatVnd(price.final)}</div>
+                  </div>
                 </div>
                 <ul className="co-perks">
                   <li>

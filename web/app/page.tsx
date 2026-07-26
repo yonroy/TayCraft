@@ -7,7 +7,8 @@ import { LandingCurriculum } from "@/components/landing-curriculum";
 import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
 import { TOTAL_AVAILABLE, PARTS, FREE_SLUGS } from "@/lib/lessons";
-import { PRODUCTS, productById, effectivePriceVnd, type Product } from "@/lib/products";
+import { PRODUCTS, COURSES, productById, effectivePriceVnd, type Product } from "@/lib/products";
+import { activeGiftPercents, applyGift } from "@/lib/gift";
 import { getUser, accessibleCourses } from "@/lib/auth";
 import { formatVnd } from "@/lib/utils";
 
@@ -43,9 +44,20 @@ const FAQS = [
   },
 ];
 
-function PackageCard({ p, launchActive }: { p: Product; launchActive: boolean }) {
-  const price = effectivePriceVnd(p);
-  const old = p.compareAtVnd && p.compareAtVnd > price ? p.compareAtVnd : null;
+function PackageCard({
+  p,
+  launchActive,
+  giftPercent,
+}: {
+  p: Product;
+  launchActive: boolean;
+  giftPercent?: number | null;
+}) {
+  // Có quà còn hạn → thẻ hiện GIÁ ĐÃ GIẢM, gạch ngang giá thường + nhãn −N%. Giá gạch ngang lúc
+  // này là giá thường (thứ khách thật sự tiết kiệm được), không phải compareAtVnd "mua lẻ cộng lại".
+  const gift = applyGift(effectivePriceVnd(p), giftPercent);
+  const price = gift.final;
+  const old = gift.percent != null ? gift.base : p.compareAtVnd && p.compareAtVnd > price ? p.compareAtVnd : null;
   const featured = !!p.highlight;
   const launchRibbon = p.id === "k1" && launchActive;
   return (
@@ -60,8 +72,14 @@ function PackageCard({ p, launchActive }: { p: Product; launchActive: boolean })
       <div className="pkg-price-row">
         <span className="pkg-price">{formatVnd(price)}</span>
         {old && <span className="pkg-old">{formatVnd(old)}</span>}
+        {gift.percent != null && <span className="pkg-off">−{gift.percent}%</span>}
       </div>
-      {old && <span className="pkg-save">Tiết kiệm {formatVnd(old - price)}</span>}
+      {old && (
+        <span className={`pkg-save ${gift.percent != null ? "gift" : ""}`}>
+          {gift.percent != null ? "🎁 Quà tặng · tiết kiệm " : "Tiết kiệm "}
+          {formatVnd(old - price)}
+        </span>
+      )}
       <div className="pkg-note">Trả một lần, học trọn đời</div>
       <ul className="pkg-feats">
         {(p.perks ?? []).map((perk) => (
@@ -84,6 +102,11 @@ export default async function Home() {
   const user = await getUser();
   const access = user ? await accessibleCourses(user.id) : [];
   const ownsK1 = access.includes("K1");
+  // Hộp quà giờ giảm cho CẢ 4 GÓI → chỉ ẩn khi khách đã sở hữu TRỌN BỘ (không còn gì để bán).
+  // Trước đây ẩn ngay khi có K1, tức người mua K1 rồi không bao giờ được mời nâng cấp Pro/Trọn bộ.
+  const ownsEverything = COURSES.every((c) => access.includes(c.id));
+  // % giảm còn hiệu lực của từng gói (1 query) → 4 thẻ giá hiện đúng số khách sẽ trả.
+  const giftPercents = user ? await activeGiftPercents(user.id) : {};
   const launchActive = !promoExpired();
   const reviews = await getApprovedReviews();
   const reviewCount = reviews.length;
@@ -100,7 +123,7 @@ export default async function Home() {
       <SiteHeader />
       {launchActive && !ownsK1 && <LaunchPopup />}
       {/* Promo khai trương hết → hộp quà giảm giá tiếp quản (tránh 2 popup cùng bung). */}
-      {!launchActive && !ownsK1 && <GiftPopup />}
+      {!launchActive && !ownsEverything && <GiftPopup />}
 
       <div className="lp">
         {/* ============ HERO ============ */}
@@ -257,7 +280,12 @@ export default async function Home() {
             </div>
             <div className="pkg-grid">
               {PRODUCTS.filter((p) => p.active).map((p) => (
-                <PackageCard key={p.id} p={p} launchActive={launchActive} />
+                <PackageCard
+                  key={p.id}
+                  p={p}
+                  launchActive={launchActive}
+                  giftPercent={giftPercents[p.id] ?? null}
+                />
               ))}
             </div>
           </div>

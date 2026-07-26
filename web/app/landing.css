@@ -530,6 +530,24 @@
     border-radius: 999px;
     margin-bottom: 14px;
   }
+  /* Giá đang được giảm bằng mã hộp quà — đỏ/hổ phách để tách khỏi "tiết kiệm" xanh thông thường. */
+  .pkg-off {
+    display: inline-block;
+    margin-left: 7px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 2px 8px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+  .pkg-save.gift {
+    color: #9a3412;
+    background: #fff7ed;
+    border-color: #fed7aa;
+  }
   .pkg-note {
     font-size: 12.5px;
     color: var(--dim);
@@ -1287,6 +1305,33 @@
     font-weight: 800;
     color: var(--accent-2-dark);
     white-space: nowrap;
+  }
+  /* Tóm tắt đơn khi khách đang có mã quà: giá gốc gạch ngang + nhãn −N% ngay trên giá phải trả. */
+  .co-sum-price-col {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .co-sum-old {
+    font-size: 14px;
+    color: #9aa7b3;
+    text-decoration: line-through;
+    margin-right: 6px;
+  }
+  .co-sum-off {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .co-sum-gift {
+    margin-top: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #9a3412;
   }
   .co-perks {
     list-style: none;

@@ -4,242 +4,339 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Làm toán AI · Bài A2 — Độ dài & chuẩn (A4 in được)</title>
-<link rel="stylesheet" href="../wb.css">
-<!-- Bộ pattern "bản đẹp" (.mission/.wcell/.scratch/.done-row/màu Phần) nằm cuối wb.css -->
+<!-- Phong cách DASHBOARD (bảng điều khiển): panel + bảng số + thanh giá trị.
+     Hệ class riêng → link wb-dashboard.css, KHÔNG link kèm wb.css (trùng tên `.page`/`.why`). -->
+<link rel="stylesheet" href="../wb-dashboard.css">
 <style>
-.page .step{margin-top:5px;}
-.page .why{margin-top:4px;}
-.page .mission{padding-top:7px;padding-bottom:7px;}
+/* Khối bổ sung — pattern đã dùng ở nhiều phiếu K3/K4 khác (chưa gộp vào wb-dashboard.css) */
+.selfbox{border:1.5px solid var(--teal);border-radius:5px;background:#eefaf8;padding:2mm 2.8mm;margin-top:1.9mm}
+.selfbox .h{font:800 9.2px var(--sans);color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.explorebox{border:1.5px solid var(--purple);border-radius:5px;background:#f8f6fd;padding:2mm 2.8mm;margin-top:1.9mm}
+.explorebox .h{font:800 9.2px var(--sans);color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1mm}
+.figwrap{display:flex;gap:4mm;align-items:center}
+.figwrap svg{flex:0 0 auto}
+.storybox{font-size:9px;color:var(--dim);line-height:1.5}
+.storybox b{color:var(--ink)}
+.zn{color:var(--dim);font-size:8.6px}
 </style>
 </head>
-<body class="part pA">
+<body>
 
 <div class="toolbar">
-  <span class="tb-note" style="align-self:center;font-size:12px;font-weight:600;color:#0e7490;max-width:240px;line-height:1.25">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
+  <span class="tb-note">🖨️ In phiếu ra giấy để làm bài bằng bút chì nhé!</span>
   <button class="js-randomize">🎲 Đổi số</button>
   <button onclick="window.print()">🖨️ In / Lưu PDF</button>
 </div>
 
-<!-- ============ TRANG 1 — ĐỀ BÀI ============ -->
+<!-- ================= TRANG 1 — ĐỀ ================= -->
 <section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
-  </div>
-
-  <div class="wb-title">
-    <span class="no">Bài A2</span>
+  <div class="top">
+    <span class="no">A2</span>
     <h1>Độ dài &amp; chuẩn <small>— vectơ này "lớn" cỡ nào?</small></h1>
-    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
+    <span class="chip">PHẦN A · TOÁN NỀN</span>
   </div>
-  <div class="namebar"><span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>Thời gian: ~12 phút</span></div>
+  <div class="subbar">
+    <span>Họ tên: <u></u></span><span>Ngày: <u></u></span><span>~12 phút</span>
+    <span class="lg">
+      <span><span class="sw" style="background:var(--blue)"></span>cho sẵn (x, y)</span>
+      <span><span class="sw" style="background:var(--orange)"></span>kết quả &amp; đáp án</span>
+    </span>
+  </div>
 
   <div class="mission">
-    🎯 <b>Nhiệm vụ.</b> Đo <b>độ lớn</b> của một vectơ bằng hai cách: <b>L2</b> = đường <b>chim bay</b>
-    (bình phương từng ô → cộng → lấy căn, chính là Pythagore); <b>L1</b> = đường <b>taxi</b> (cộng trị tuyệt đối, chỉ đi ngang/dọc).
-    Số đã chọn là bộ Pythagore nên căn ra <b>số đẹp</b>. Cùng một vectơ, xem <b>L1 hay L2 lớn hơn</b>?
+    🎯 <b>Nhiệm vụ.</b> Đo <b>độ lớn</b> vectơ hai cách: <b>L2</b> = đường <b>chim bay</b> (bình phương từng ô →
+    cộng → lấy căn); <b>L1</b> = đường <b>taxi</b> (cộng trị tuyệt đối). Số đã chọn là bộ Pythagore nên L2 ra
+    <b>số đẹp</b>. Cuối phiếu tự chứng minh: <b>L1 LUÔN ≥ L2</b>, dù x, y là gì.
   </div>
 
-  <!-- BƯỚC 0 — CHO SẴN -->
-  <div class="step">
-    <div class="step-h"><div class="b">0</div><h2>Cho sẵn</h2><span class="tag">1 vectơ 2D · 1 vectơ 3D</span></div>
-    <div class="row">
-      <div class="mwrap"><div class="mlabel">x <s>2D</s></div>
-        <div class="mtx c2"><div class="cell given" data-q="x1">3</div><div class="cell given" data-q="x2">4</div></div></div>
-      <div class="mwrap"><div class="mlabel">y <s>3D</s></div>
-        <div class="mtx c3"><div class="cell given" data-q="y1">2</div><div class="cell given" data-q="y2">−3</div><div class="cell given" data-q="y3">6</div></div></div>
-      <div class="note" style="max-width:74mm">Chuẩn luôn là <b>một số ≥ 0</b> (= 0 chỉ khi vectơ 0).</div>
-    </div>
-  </div>
-
-  <!-- BƯỚC 1 — L2 CỦA x -->
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>Chuẩn L2 của x — chim bay</h2><span class="tag">√(Σxᵢ²)</span></div>
-    <div class="calc big">
-      x₁² = <span data-q="x1w">3</span>² = <span class="wcell"></span>
-      &nbsp; x₂² = <span data-q="x2w">4</span>² = <span class="wcell"></span><br>
-      ‖x‖₂ = √( <span class="blk"></span> + <span class="blk"></span> ) = √<span class="blk" style="min-width:38px"></span> = <span class="wcell"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> bình phương <b>bỏ dấu</b> và <b>phạt mạnh</b> thành phần lớn → L2 nhạy với giá trị ngoại lệ.</div>
-  </div>
-
-  <!-- BƯỚC 2 — HERO: TAM GIÁC PYTHAGORE, ĐIỀN CẠNH HUYỀN -->
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Nhìn bằng hình — L2 chính là cạnh huyền</h2><span class="tag">Pythagore</span></div>
-    <div class="figrow">
-      <svg id="figQ" class="fig" viewBox="0 0 300 200" width="104mm" height="69.3mm" aria-label="tam giác vuông, cạnh ngang x1, cạnh dọc x2, cạnh huyền là chuẩn L2, ô điền độ dài huyền"></svg>
-      <div style="flex:1;min-width:48mm">
-        <div class="note">Cạnh ngang = <b style="color:#0e7490">x₁</b>, cạnh dọc = <b style="color:#7c5cff">x₂</b>,
-          cạnh huyền <b style="color:#b45309">cam</b> = ‖x‖₂. <b>Điền độ dài cạnh huyền vào ô cam.</b></div>
-        <div class="note" style="margin-top:8px">Đây đúng là định lý Pythagore: huyền² = ngang² + dọc². Chuẩn L2 <b>chính là</b> đường thẳng từ gốc tới đầu vectơ.</div>
+  <!-- CHO SẴN -->
+  <div class="panel">
+    <div class="ph"><span class="t">Cho sẵn — 1 vectơ 2D &amp; 1 vectơ 3D</span><span class="f">Pythagore</span></div>
+    <div class="pb" style="display:flex;gap:9mm;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div style="font:800 8.2px var(--sans);color:var(--blue);letter-spacing:.06em;margin-bottom:1mm">VECTƠ x (2D)</div>
+        <div class="mx c2" style="--cw:11mm;--ch:7mm">
+          <div class="gv" data-q="x1">3</div><div class="gv" data-q="x2">4</div>
+        </div>
       </div>
+      <div>
+        <div style="font:800 8.2px var(--sans);color:var(--blue);letter-spacing:.06em;margin-bottom:1mm">VECTƠ y (3D)</div>
+        <div class="mx c3" style="--cw:11mm;--ch:7mm">
+          <div class="gv" data-q="y1">2</div><div class="gv" data-q="y2">−3</div><div class="gv" data-q="y3">6</div>
+        </div>
+      </div>
+      <div class="cap" style="flex:1;min-width:52mm;align-self:center">Chuẩn luôn là <b>một số ≥ 0</b> (= 0 chỉ khi vectơ 0) — không phải vectơ, khác với các phép ở Bài A1.</div>
     </div>
   </div>
 
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A2 · Độ dài &amp; chuẩn</span><span>Trang 1/3 · ĐỀ</span></div>
+  <!-- ① L2 CỦA x -->
+  <div class="panel">
+    <div class="ph"><span class="t">① Chuẩn L2 của x — chim bay (Pythagore)</span><span class="f">‖x‖₂ = √(Σxᵢ²)</span></div>
+    <div class="pb">
+      <div class="eq">x₁² = ( <span data-q="x1w">3</span> )² = <span class="slot sm"></span>
+        &nbsp; x₂² = ( <span data-q="x2w">4</span> )² = <span class="slot sm"></span></div>
+      <div class="eq">‖x‖₂ = √( <span class="slot sm"></span> + <span class="slot sm"></span> ) = √<span class="slot sm"></span> = <span class="slot"></span></div>
+    </div>
+  </div>
+
+  <!-- ② HÌNH -->
+  <div class="panel">
+    <div class="ph"><span class="t">② Kiểm bằng hình — cạnh huyền = ‖x‖₂</span><span class="f">Pythagore</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figQ" viewBox="0 0 300 200" width="86mm" height="57mm" aria-label="tam giác vuông, cạnh ngang x1, cạnh dọc x2, cạnh huyền là chuẩn L2, ô điền độ dài huyền"></svg>
+      <div class="storybox" style="flex:1">
+        Cạnh ngang = <b style="color:var(--blue)">x₁</b>, cạnh dọc = <b style="color:#7c5cff">x₂</b>,
+        cạnh huyền <b style="color:var(--orange)">cam</b> = ‖x‖₂. <b>Điền độ dài cạnh huyền vào ô cam.</b><br><br>
+        Định lý Pythagore: huyền² = ngang² + dọc². Chuẩn L2 <b>chính là</b> đường thẳng từ gốc tới đầu vectơ.
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ③ L1 & L2 CỦA y + TÔ THANH -->
+  <div class="panel">
+    <div class="ph"><span class="t">③ L1 &amp; L2 của y — taxi vs chim bay, chẻ từng ô</span><span class="f">Σ|yᵢ| · √Σyᵢ²</span></div>
+    <div class="pb">
+      <div class="eq">‖y‖₁ = |<span data-q="y1">2</span>| + |<span data-q="y2">−3</span>| + |<span data-q="y3">6</span>| = <span class="slot"></span></div>
+      <div class="eq">y₁² = ( <span data-q="y1w">2</span> )² = <span class="slot sm"></span>
+        &nbsp; y₂² = ( <span data-q="y2w">(−3)</span> )² = <span class="slot sm"></span>
+        &nbsp; y₃² = ( <span data-q="y3w">6</span> )² = <span class="slot sm"></span></div>
+      <div class="eq">‖y‖₂ = √( <span class="slot sm"></span> + <span class="slot sm"></span> + <span class="slot sm"></span> ) = √<span class="slot sm"></span> = <span class="slot"></span></div>
+      <table>
+        <tr><th class="l">Tô thanh (0…20)</th><th>Giá trị</th><th>Gốc trái, chỉ chạy phải — bên nào dài hơn?</th></tr>
+        <tr><td class="l">‖y‖₁ (taxi)</td><td><span class="cellb"></span></td><td><div class="track uni" id="tL1"></div></td></tr>
+        <tr><td class="l">‖y‖₂ (chim bay)</td><td><span class="cellb"></span></td><td><div class="track uni" id="tL2"></div></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ④ VECTƠ ĐƠN VỊ -->
+  <div class="panel">
+    <div class="ph"><span class="t">④ Vectơ đơn vị: chia x cho ‖x‖ → chuẩn = 1</span><span class="f">x̂ = x / ‖x‖</span></div>
+    <div class="pb">
+      <div class="eq">x̂ = x / ‖x‖₂ = ( <span data-q="x1">3</span>/<span data-q="L2x">5</span> , <span data-q="x2">4</span>/<span data-q="L2x">5</span> ) = ( <span class="slot sm"></span>, <span class="slot sm"></span> )</div>
+      <div class="eq">kiểm: ‖x̂‖₂ = √(x̂₁² + x̂₂²) = <span class="slot sm"></span> <span class="zn">(phải = 1 → đúng là vectơ đơn vị ✓)</span></div>
+    </div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — co giãn x có đổi HƯỚNG (vectơ đơn vị) không?</div>
+    <div style="font-size:9px;line-height:1.5">Dự đoán TRƯỚC khi lật trang đáp án: nếu nhân x với 2 (thành 2x) rồi tự chuẩn hoá lại
+      (chia cho chuẩn MỚI ‖2x‖), vectơ đơn vị thu được có <b>giống hệt</b> x̂ ở Bước ④ không?
+      Điền dự đoán (GIỐNG HỆT / KHÁC): <span class="slot" style="min-width:34mm"></span></div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — L1 LUÔN ≥ L2, với MỌI vectơ</div>
+    <div style="font-size:9px;line-height:1.45">Dùng đúng số của y ở Bước ③ — bình phương cả hai chuẩn rồi so:</div>
+    <div class="eq">‖y‖₁² = ( <span class="slot sm"></span> )² = <span class="slot sm"></span>
+      &nbsp;·&nbsp; ‖y‖₂² = <span class="slot sm"></span> <span class="zn">(= tổng bình phương ở Bước ③)</span></div>
+    <div class="eq" style="margin-top:-.4mm">‖y‖₁² − ‖y‖₂² = <span class="slot sm"></span> − <span class="slot sm"></span> = <span class="slot sm"></span>
+      &nbsp; so với 2·(|y₁y₂|+|y₁y₃|+|y₂y₃|) = <span class="slot" style="min-width:16mm"></span></div>
+    <div style="font-size:8.8px;line-height:1.4;margin-top:1mm">Hai số này có bằng nhau không, và luôn <b>≥ 0</b> không? → <span class="slot" style="min-width:20mm"></span></div>
+  </div>
+
+  <div class="scratch" style="height:12mm"><span class="lb">✏️ Nháp — bình phương, so hai chuẩn ở đây</span></div>
+
+  <div class="done">
+    <span><span class="ck"></span>L2 của x &amp; kiểm hình</span>
+    <span><span class="ck"></span>L1, L2 của y &amp; tô thanh</span>
+    <span><span class="ck"></span>Chứng minh L1 ≥ L2</span>
+    <span class="win">🎉 Bạn vừa đo được độ lớn &amp; chuẩn hóa vectơ!</span>
+  </div>
+
+  <div class="foot"><span>Làm toán AI ✍️ — Bài A2 · Độ dài &amp; chuẩn</span><span>Trang 1/2 · ĐỀ</span></div>
 </section>
 
-<!-- ============ TRANG 2 — ĐỀ (tiếp): L1/L2 của y + vectơ đơn vị ============ -->
-<section class="page">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta">Phiếu in A4 · tính tay<br>Mức: nhập môn · Phần A</div>
-  </div>
-  <div class="wb-title">
-    <span class="no">Bài A2</span>
-    <h1>Độ dài &amp; chuẩn <small>— taxi vs chim bay, &amp; vectơ đơn vị</small></h1>
-    <span class="part-chip" style="margin-left:auto">PHẦN A · TOÁN NỀN</span>
-  </div>
-
-  <!-- BƯỚC 3 — L1 & L2 của y (chẻ từng bình phương) -->
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Taxi (L1) &amp; chim bay (L2) cho y — chẻ từng ô</h2><span class="tag">Σ|yᵢ| · √Σyᵢ²</span></div>
-    <div class="calc big">
-      ‖x‖₁ = |<span data-q="x1">3</span>| + |<span data-q="x2">4</span>| = <span class="wcell"></span>
-      &nbsp; ‖y‖₁ = |<span data-q="y1">2</span>| + |<span data-q="y2">−3</span>| + |<span data-q="y3">6</span>| = <span class="wcell"></span><br>
-      y₁² = <span data-q="y1w">2</span>² = <span class="wcell"></span> &nbsp; y₂² = <span data-q="y2w">(−3)</span>² = <span class="wcell"></span> &nbsp; y₃² = <span data-q="y3w">6</span>² = <span class="wcell"></span><br>
-      ‖y‖₂ = √( <span class="blk"></span> + <span class="blk"></span> + <span class="blk"></span> ) = √<span class="blk" style="min-width:38px"></span> = <span class="wcell"></span>
-    </div>
-    <div class="why"><b>Vì sao:</b> L1 cộng "quãng đường tuyệt đối" (ít phạt ngoại lệ, hay dùng ép trọng số về 0); L2 bình phương nên phạt mạnh thành phần lớn.</div>
-  </div>
-
-  <!-- BƯỚC 4 — vectơ đơn vị + tự kiểm ‖x̂‖ = 1 -->
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vectơ đơn vị: chia x cho ‖x‖ → chuẩn = 1</h2><span class="tag">x̂ = x / ‖x‖</span></div>
-    <div class="calc big">
-      x̂ = x / ‖x‖₂ = ( <span data-q="x1">3</span>/<span data-q="L2x">5</span> , <span data-q="x2">4</span>/<span data-q="L2x">5</span> ) = ( <span class="wcell"></span>, <span class="wcell"></span> )<br>
-      kiểm: ‖x̂‖₂ = √(x̂₁² + x̂₂²) = <span class="wcell"></span> <small style="color:#7a8794">(phải = 1 → đúng là vectơ đơn vị ✓)</small>
-    </div>
-    <div class="note">Chia một vectơ cho chuẩn của nó → giữ <b>hướng</b>, bỏ <b>độ lớn</b> (dài đúng 1). AI chuẩn hóa embedding kiểu này trước khi so cosine.</div>
-  </div>
-
-  <div class="scratch" style="height:24mm"><span class="lb">✏️ Nháp — bình phương, cộng, lấy căn ở đây</span></div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra</div>
-    <ol>
-      <li>Chuẩn của một vectơ có thể âm không? → <span class="blk" style="min-width:110px"></span></li>
-      <li>"Vectơ đơn vị" là vectơ có chuẩn bằng bao nhiêu? → <span class="blk" style="min-width:70px"></span></li>
-    </ol>
-  </div>
-
-  <div class="done-row">
-    <span><span class="ck"></span>L1 &amp; L2 của y</span>
-    <span><span class="ck"></span>Vectơ đơn vị x̂</span>
-    <span class="win">🎉 Bạn đo được độ lớn &amp; chuẩn hóa vectơ!</span>
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A2 · Độ dài &amp; chuẩn</span><span>Trang 2/3 · ĐỀ</span></div>
-</section>
-
-<!-- ============ TRANG 2 — ĐÁP ÁN ============ -->
+<!-- ================= TRANG 3 — ĐÁP ÁN ================= -->
+<!-- class "key" là quy ước dự án: tools/check-de-key.mjs dò trang đáp án bằng `.page.key` -->
 <section class="page key">
-  <div class="wb-head">
-    <div class="brand">Làm toán AI <span>✍️</span> · Toán × AI</div>
-    <div class="meta"><span class="key-badge">ĐÁP ÁN</span></div>
+  <div class="top">
+    <span class="no">A2</span>
+    <h1>Độ dài &amp; chuẩn <small>— lời giải</small></h1>
+    <span class="chip key-chip">ĐÁP ÁN</span>
   </div>
-  <div class="wb-title"><span class="no">Bài A2</span><h1>Độ dài &amp; chuẩn <small>— lời giải</small></h1></div>
+  <div class="subbar">
+    <span>Bấm 🎲 Đổi số để luyện bộ số khác</span>
+    <span class="lg"><span><span class="sw" style="background:var(--blue)"></span>cho sẵn</span>
+      <span><span class="sw" style="background:var(--orange)"></span>kết quả · đáp án</span></span>
+  </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">1</div><h2>L2 của x</h2></div>
-    <div class="calc ans big">
-      x₁² = <span class="wcell ans" data-q="sq1">9</span>
-      &nbsp; x₂² = <span class="wcell ans" data-q="sq2">16</span>
-      &nbsp; ‖x‖₂ = √<span data-q="sumx2">25</span> = <span class="wcell ans" data-q="L2x">5</span>
+  <div class="panel">
+    <div class="ph"><span class="t">① Chuẩn L2 của x — lời giải</span></div>
+    <div class="pb">
+      <div class="eq">x₁² = <span class="slot ans sm" data-q="sq1">9</span>
+        &nbsp; x₂² = <span class="slot ans sm" data-q="sq2">16</span>
+        &nbsp; ‖x‖₂ = √<span class="qa" data-q="sumx2">25</span> = <span class="slot ans" data-q="L2x">5</span></div>
     </div>
-    <div class="why"><b>Vì sao:</b> bình phương bỏ dấu và phạt mạnh thành phần lớn → L2 nhạy với ngoại lệ.</div>
+    <div class="why" style="margin:0 2.6mm 1.8mm"><b>Vì sao:</b> bình phương <b>bỏ dấu</b> và <b>phạt mạnh</b> thành phần lớn → L2 nhạy với giá trị ngoại lệ.</div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">2</div><h2>Cạnh huyền = ‖x‖₂</h2></div>
-    <div class="figrow">
-      <svg id="figA" class="fig" viewBox="0 0 300 200" width="90mm" height="60mm"></svg>
-      <div style="flex:1;min-width:46mm">
-        <div class="calc ans">huyền = √(<span data-q="x1">3</span>²+<span data-q="x2">4</span>²) = <span class="wcell ans" data-q="L2x2">5</span></div>
-        <div class="why"><b>Vì sao khớp:</b> Pythagore — huyền² = ngang² + dọc². Chuẩn L2 chính là chiều dài đường chim bay.</div>
+  <div class="panel">
+    <div class="ph"><span class="t">② Cạnh huyền = ‖x‖₂ — đã điền</span></div>
+    <div class="pb"><div class="figwrap">
+      <svg id="figA" viewBox="0 0 300 200" width="74mm" height="49mm"></svg>
+      <div class="storybox" style="flex:1">
+        <div class="eq" style="margin-top:0">huyền = √(<span data-q="x1">3</span>²+<span data-q="x2">4</span>²) = <span class="slot ans sm" data-q="L2x2">5</span></div>
+        <b>Vì sao khớp:</b> Pythagore — huyền² = ngang² + dọc². Chuẩn L2 chính là chiều dài đường chim bay.
+      </div>
+    </div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">③ L1 &amp; L2 của y — lời giải + tô thanh</span></div>
+    <div class="pb">
+      <div class="eq">‖y‖₁ = <span class="slot ans" data-q="L1y">11</span></div>
+      <div class="eq">y₁² = <span class="slot ans sm" data-q="sy1">4</span>
+        &nbsp; y₂² = <span class="slot ans sm" data-q="sy2">9</span>
+        &nbsp; y₃² = <span class="slot ans sm" data-q="sy3">36</span>
+        &nbsp; ‖y‖₂ = √<span class="qa" data-q="sumy2">49</span> = <span class="slot ans" data-q="L2y">7</span></div>
+      <div style="font:800 8.4px var(--sans);color:var(--dim);letter-spacing:.06em;margin:1.6mm 0 .8mm">TÔ THANH — ĐÃ TÔ</div>
+      <table>
+        <tr><th class="l">Đại lượng</th><th>Giá trị</th><th>Đã tô (0…20)</th></tr>
+        <tr><td class="l">‖y‖₁ (taxi)</td><td class="qa" data-q="L1y">11</td><td><div class="track uni" id="aL1"></div></td></tr>
+        <tr><td class="l">‖y‖₂ (chim bay)</td><td class="qa" data-q="L2y">7</td><td><div class="track uni" id="aL2"></div></td></tr>
+      </table>
+      <div class="why" style="margin:1.6mm 0 0"><b>So sánh:</b> cùng vectơ y, <b>L1 ≥ L2</b> luôn — đường gấp khúc (taxi) không bao giờ ngắn hơn đường thẳng (chim bay).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">④ Vectơ đơn vị x̂ &amp; kiểm ‖x̂‖ = 1</span></div>
+    <div class="pb">
+      <div class="eq">x̂ = ( <span class="slot ans sm" data-q="ux1">0.60</span>, <span class="slot ans sm" data-q="ux2">0.80</span> ) &nbsp;·&nbsp;
+        ‖x̂‖₂ = √(<span data-q="ux1">0.60</span>² + <span data-q="ux2">0.80</span>²) = <span class="slot ans sm" data-q="uchk">1.00</span></div>
+    </div>
+    <div class="why" style="margin:0 2.6mm 1.8mm"><b>Vì sao:</b> x̂ = x/‖x‖ nên ‖x̂‖ = ‖x‖/‖x‖ = 1. Vectơ đơn vị giữ hướng, bỏ độ lớn — bước chuẩn hóa trước khi so cosine (A4).</div>
+  </div>
+
+  <div class="explorebox">
+    <div class="h">🔬 Khám phá — đáp án</div>
+    <div style="font-size:9px;line-height:1.5"><b class="qa">GIỐNG HỆT.</b> 2x/‖2x‖ = 2x/(2·‖x‖) = x/‖x‖ = x̂ — số 2 (dương) triệt tiêu ở tử và mẫu.
+      Nhân với BẤT KỲ số dương nào cũng vậy: vectơ đơn vị chỉ phụ thuộc <b>hướng</b>, không phụ thuộc độ dài ban đầu.</div>
+  </div>
+
+  <div class="selfbox">
+    <div class="h">🔎 Tự kiểm — đáp án</div>
+    <div class="eq">‖y‖₁² = ( <span class="qa" data-q="L1y">11</span> )² = <span class="slot ans sm" data-q="L1sq">121</span>
+      &nbsp;·&nbsp; ‖y‖₂² = <span class="slot ans sm" data-q="L2sq">49</span></div>
+    <div class="eq" style="margin-top:-.4mm">‖y‖₁² − ‖y‖₂² = <span class="qa" data-q="L1sq">121</span> − <span class="qa" data-q="L2sq">49</span> = <span class="slot ans sm" data-q="diffSq">72</span>
+      &nbsp; so với 2·(<span class="slot ans sm" data-q="c12">6</span>+<span class="slot ans sm" data-q="c13">12</span>+<span class="slot ans sm" data-q="c23">18</span>) = <span class="slot ans" data-q="crossD">72</span></div>
+    <div style="font-size:9px;line-height:1.45;margin-top:1mm">→ <b>Bằng nhau ✓</b> — vì (Σ|yᵢ|)² = Σyᵢ² + 2·Σ<sub>i&lt;j</sub>|yᵢ||yⱼ|, và số hạng chéo <b>luôn ≥ 0</b> (toàn trị tuyệt đối).
+      Vậy ‖y‖₁² ≥ ‖y‖₂² ⟹ <b>‖y‖₁ ≥ ‖y‖₂</b>, với <b>MỌI</b> vectơ — không riêng bộ số này.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Sai lầm thường gặp</span><span class="f">4 bẫy hay dính ở chuẩn vectơ</span></div>
+    <div class="split">
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Cộng các thành phần trước rồi mới bình phương."</b><br>
+          <span style="color:var(--dim)">Sai — phải <b>bình phương TỪNG Ô</b> trước (xᵢ²), rồi mới cộng lại. (Σxᵢ)² cho kết quả khác hẳn Σxᵢ².</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "L1 cũng phải lấy căn giống L2."</b><br>
+          <span style="color:var(--dim)">L1 chỉ <b>cộng trị tuyệt đối</b>, KHÔNG bình phương, KHÔNG lấy căn — công thức khác hẳn L2.</span>
+        </div>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <div class="eq" style="line-height:1.5;font-family:var(--sans);font-size:9.4px">
+          <b style="color:var(--orange)">✗ "Cộng bình phương xong là ra chuẩn."</b><br>
+          <span style="color:var(--dim)">Quên bước <b>LẤY CĂN</b> cuối cùng — Σxᵢ² mới là <b>bình phương</b> của chuẩn, phải căn mới ra ‖x‖.</span>
+          <div style="height:1.6mm"></div>
+          <b style="color:var(--orange)">✗ "‖a+b‖ luôn bằng ‖a‖+‖b‖."</b><br>
+          <span style="color:var(--dim)">Chỉ đúng khi <b>cùng hướng</b>. Nói chung luôn có ‖a+b‖ ≤ ‖a‖+‖b‖ (bất đẳng thức tam giác — đường thẳng luôn ngắn hơn đường vòng).</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">3</div><h2>Taxi (L1) &amp; L2 của y</h2></div>
-    <div class="calc ans big">
-      ‖x‖₁ = <span class="wcell ans" data-q="L1x">7</span>
-      &nbsp; ‖y‖₁ = <span class="wcell ans" data-q="L1y">11</span><br>
-      y₁² = <span class="wcell ans" data-q="sy1">4</span> &nbsp; y₂² = <span class="wcell ans" data-q="sy2">9</span> &nbsp; y₃² = <span class="wcell ans" data-q="sy3">36</span>
-      &nbsp; ‖y‖₂ = √<span data-q="sumy2">49</span> = <span class="wcell ans" data-q="L2y">7</span>
-    </div>
-    <div class="why"><b>So sánh:</b> cùng x, <b>L1 = <span data-q="L1x">7</span> ≥ L2 = <span data-q="L2x">5</span></b> — đường gấp khúc (taxi) luôn dài hơn đường thẳng (chim bay).</div>
+  <div class="why" style="border-left-color:var(--teal);background:#eefaf8">
+    <b style="color:var(--teal)">Rút ra.</b> Chuẩn biến một vectơ thành <b>một số đo độ lớn</b>. Chia vectơ cho chuẩn của nó →
+    <b>vectơ đơn vị</b> (chỉ còn hướng, dài 1). L1 và L2 đo cùng một vectơ theo hai cách khác nhau,
+    nhưng <b>L1 không bao giờ nhỏ hơn L2</b>. Bài kế (A4): dùng chuẩn để đo <b>độ giống nhau về hướng</b>
+    giữa hai vectơ — cosine.
   </div>
 
-  <div class="step">
-    <div class="step-h"><div class="b">4</div><h2>Vectơ đơn vị x̂ &amp; kiểm ‖x̂‖ = 1</h2></div>
-    <div class="calc ans big">
-      x̂ = ( <span class="wcell ans" data-q="ux1">0.6</span>, <span class="wcell ans" data-q="ux2">0.8</span> ) &nbsp;·&nbsp;
-      ‖x̂‖₂ = √(<span data-q="ux1">0.6</span>² + <span data-q="ux2">0.8</span>²) = <span class="wcell ans" data-q="uchk">1</span>
-    </div>
-    <div class="why"><b>Vì sao:</b> x̂ = x/‖x‖ nên ‖x̂‖ = ‖x‖/‖x‖ = 1. Vectơ đơn vị giữ hướng, bỏ độ lớn — bước chuẩn hóa trước khi so cosine (A4).</div>
-  </div>
-
-  <div class="quiz">
-    <div class="qh">✎ Tự kiểm tra — đáp án</div>
-    <ol>
-      <li>Chuẩn có thể âm không? → <span class="qa">Không — luôn ≥ 0 (= 0 chỉ khi vectơ 0)</span></li>
-      <li>Vectơ đơn vị có chuẩn bằng? → <span class="qa">Bằng 1</span></li>
-    </ol>
-  </div>
-
-  <div class="intro" style="border-left-color:var(--accent2)">
-    <b style="color:var(--accent2)">Rút ra.</b> Chuẩn biến một vectơ thành <b>một số đo độ lớn</b>. Chia vectơ cho chuẩn của nó →
-    <b>vectơ đơn vị</b> (chỉ còn hướng, dài 1). Bài kế (A4): dùng chuẩn để đo <b>độ giống nhau về hướng</b> giữa hai vectơ — cosine.
-  </div>
-
-  <div class="wb-foot"><span>Làm toán AI ✍️ — Bài A2 · Độ dài &amp; chuẩn</span><span>Trang 3/3 · ĐÁP ÁN</span></div>
+  <div class="foot"><span>Làm toán AI ✍️ — Bài A2 · Độ dài &amp; chuẩn</span><span>Trang 2/2 · ĐÁP ÁN</span></div>
 </section>
+
+<div id="measure" data-measure="" style="display:none"></div>
 
 <script src="../wb-random.js"></script>
 <script>
 var XY = {x:[3,4]};
 
 function generate(){
+  var fi = WB.fmtInt, f2 = WB.fmt2;
+
   // x = bộ Pythagore để L2 ra số nguyên đẹp; giữ nhỏ cho lưới
   var x = WB.pick([[3,4],[6,8],[4,3],[8,6]]);
-  // y = bộ 3 số có Σ bình phương chính phương (L2 nguyên); dấu ngẫu nhiên
-  var yBase = WB.pick([[2,3,6],[1,2,2],[2,6,9],[6,2,3],[4,4,2]]); // 49,9,121,49,36 → 7,3,11,7,6
+  // y = bộ 3 số có Σ bình phương chính phương (L2 nguyên); dấu ngẫu nhiên, không có ô nào = 0
+  // (nếu ô nào = 0 thì số hạng chéo tương ứng trong tự kiểm bằng 0, vẫn ĐÚNG nhưng kém rõ ràng)
+  var yBase = WB.pick([[2,3,6],[1,2,2],[2,6,9],[6,2,3],[4,4,2]]); // Σ² = 49,9,121,49,36 → L2 = 7,3,11,7,6
   var sgn = function(){ return WB.pick([1,-1]); };
   var y = [yBase[0]*sgn(), yBase[1]*sgn(), yBase[2]*sgn()];
 
   var sq1 = x[0]*x[0], sq2 = x[1]*x[1], sumx2 = sq1+sq2, L2x = Math.sqrt(sumx2);
-  var L1x = Math.abs(x[0]) + Math.abs(x[1]);
   var L1y = Math.abs(y[0]) + Math.abs(y[1]) + Math.abs(y[2]);
   var sy1 = y[0]*y[0], sy2 = y[1]*y[1], sy3 = y[2]*y[2];
   var sumy2 = sy1 + sy2 + sy3, L2y = Math.sqrt(sumy2);
   // vectơ đơn vị x̂ = x/‖x‖ (x là bộ Pythagore nên toạ độ đẹp); ‖x̂‖ = 1
-  function trim(v){ return String(Math.round(v*100)/100); }
   var ux1 = x[0]/L2x, ux2 = x[1]/L2x;
+  var uchk = Math.sqrt(ux1*ux1 + ux2*ux2);
+
+  // Tự kiểm: ‖y‖1² − ‖y‖2² = 2·(|y1y2|+|y1y3|+|y2y3|)  (luôn đúng, luôn ≥ 0)
+  var L1sq = L1y*L1y, L2sq = sumy2, diffSq = L1sq - L2sq;
+  var c12 = Math.abs(y[0]*y[1]), c13 = Math.abs(y[0]*y[2]), c23 = Math.abs(y[1]*y[2]);
+  var crossD = 2*(c12+c13+c23);
 
   XY.x = x;
   WB.setAll({
-    x1: WB.fmtInt(x[0]), x2: WB.fmtInt(x[1]),
-    x1w: WB.wrap(WB.fmtInt(x[0])), x2w: WB.wrap(WB.fmtInt(x[1])),
-    y1: WB.fmtInt(y[0]), y2: WB.fmtInt(y[1]), y3: WB.fmtInt(y[2]),
-    y1w: WB.wrap(WB.fmtInt(y[0])), y2w: WB.wrap(WB.fmtInt(y[1])), y3w: WB.wrap(WB.fmtInt(y[2])),
-    sq1: WB.fmtInt(sq1), sq2: WB.fmtInt(sq2), sumx2: WB.fmtInt(sumx2),
-    L2x: WB.fmtInt(L2x), L2x2: WB.fmtInt(L2x),
-    L1x: WB.fmtInt(L1x), L1y: WB.fmtInt(L1y),
-    sy1: WB.fmtInt(sy1), sy2: WB.fmtInt(sy2), sy3: WB.fmtInt(sy3),
-    sumy2: WB.fmtInt(sumy2), L2y: WB.fmtInt(L2y),
-    ux1: trim(ux1), ux2: trim(ux2), uchk: '1'
+    x1: fi(x[0]), x2: fi(x[1]),
+    x1w: WB.wrap(fi(x[0])), x2w: WB.wrap(fi(x[1])),
+    y1: fi(y[0]), y2: fi(y[1]), y3: fi(y[2]),
+    y1w: WB.wrap(fi(y[0])), y2w: WB.wrap(fi(y[1])), y3w: WB.wrap(fi(y[2])),
+    sq1: fi(sq1), sq2: fi(sq2), sumx2: fi(sumx2),
+    L2x: fi(L2x), L2x2: fi(L2x),
+    L1y: fi(L1y),
+    sy1: fi(sy1), sy2: fi(sy2), sy3: fi(sy3),
+    sumy2: fi(sumy2), L2y: fi(L2y),
+    ux1: f2(ux1), ux2: f2(ux2), uchk: f2(uchk),
+    L1sq: fi(L1sq), L2sq: fi(L2sq), diffSq: fi(diffSq),
+    c12: fi(c12), c13: fi(c13), c23: fi(c23), crossD: fi(crossD)
   });
+
+  // tô thanh: ‖y‖1 và ‖y‖2, một chiều (gốc trái), thang cố định 0..20
+  drawUni('tL1', 0, 20, false); drawUni('tL2', 0, 20, false);
+  drawUni('aL1', L1y, 20, true); drawUni('aL2', L2y, 20, true);
+
   drawTri('figQ', x, false);
   drawTri('figA', x, true);
+
+  var pages=[].slice.call(document.querySelectorAll('.page'));
+  var meas=pages.map(function(pg,i){return 'Trang'+(i+1)+'='+Math.max(0,pg.scrollHeight-pg.clientHeight);}).join(' ');
+  var md=document.getElementById('measure'); if(md) md.setAttribute('data-measure',meas);
+}
+
+// Thanh MỘT chiều (gốc trái, thang 0…max) — dùng cho đại lượng luôn ≥0 như chuẩn.
+// fill=false → chỉ vạch 0 + mốc, chừa trống cho người học tô bút chì.
+function drawUni(id, v, max, fill){
+  var el=document.getElementById(id); if(!el) return;
+  var h='<div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div>';
+  if(fill && v!==0){
+    var pct = Math.min(v/max, 1) * 100;
+    h += '<div class="fill pos" style="left:0;width:'+pct+'%"></div>';
+  }
+  el.innerHTML=h;
 }
 
 // Tam giác vuông: vectơ x (cam huyền), cạnh ngang (lam) = x1, cạnh dọc (tím nét đứt) = x2; ô điền huyền.
+// Tự vẽ lưới/trục/mũi tên bằng thuộc tính SVG trực tiếp (KHÔNG dựa vào class .grid/.axis
+// của wb.css — file này chỉ link wb-dashboard.css, không có các class đó).
 function drawTri(id, x, showAns){
   var svg = document.getElementById(id);
   if (!svg) return;
-  var LAM='#0e7490', TIM='#7c5cff', CAM='#b45309', INK='#16202e';
+  var LAM='#0e7490', TIM='#7c5cff', CAM='#b45309', DIM='#9aa5b1', GRID='#eef2f6';
   var a = Math.abs(x[0]), b = Math.abs(x[1]);
   var m = Math.max(a, b, 4);
   var unit = Math.min(30, Math.floor(150/m));
@@ -247,28 +344,30 @@ function drawTri(id, x, showAns){
   function X(v){ return (O.x + v*unit).toFixed(1); }
   function Y(v){ return (O.y - v*unit).toFixed(1); }
   var s = '<defs>'
-    + '<marker id="ah'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b6776"/></marker>'
+    + '<marker id="ah'+id+'" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+DIM+'"/></marker>'
     + '<marker id="aw'+id+'" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 Z" fill="'+CAM+'"/></marker>'
     + '</defs>';
   for (var g = 0; g <= m; g++){
-    s += '<line class="grid" x1="'+X(g)+'" y1="'+Y(0)+'" x2="'+X(g)+'" y2="'+Y(m)+'"/>';
-    s += '<line class="grid" x1="'+X(0)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'"/>';
+    s += '<line x1="'+X(g)+'" y1="'+Y(0)+'" x2="'+X(g)+'" y2="'+Y(m)+'" stroke="'+GRID+'" stroke-width=".6"/>';
+    s += '<line x1="'+X(0)+'" y1="'+Y(g)+'" x2="'+X(m)+'" y2="'+Y(g)+'" stroke="'+GRID+'" stroke-width=".6"/>';
   }
-  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+(O.x+m*unit+9).toFixed(1)+'" y2="'+Y(0)+'" marker-end="url(#ah'+id+')"/>';
-  s += '<line class="axis" x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+(O.y-m*unit-9).toFixed(1)+'" marker-end="url(#ah'+id+')"/>';
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+(O.x+m*unit+9).toFixed(1)+'" y2="'+Y(0)+'" stroke="'+DIM+'" stroke-width="1" marker-end="url(#ah'+id+')"/>';
+  s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+(O.y-m*unit-9).toFixed(1)+'" stroke="'+DIM+'" stroke-width="1" marker-end="url(#ah'+id+')"/>';
   // cạnh ngang (lam) từ O tới (a,0)
   s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(a)+'" y2="'+Y(0)+'" stroke="'+LAM+'" stroke-width="3"/>';
   // cạnh dọc (tím nét đứt) từ (a,0) tới (a,b)
   s += '<line x1="'+X(a)+'" y1="'+Y(0)+'" x2="'+X(a)+'" y2="'+Y(b)+'" stroke="'+TIM+'" stroke-width="3" stroke-dasharray="5 3"/>';
   // dấu góc vuông
-  s += '<path d="M'+X(a-0.4)+' '+Y(0)+' L'+X(a-0.4)+' '+Y(0.4)+' L'+X(a)+' '+Y(0.4)+'" fill="none" stroke="#5b6776" stroke-width="1"/>';
+  s += '<path d="M'+X(a-0.4)+' '+Y(0)+' L'+X(a-0.4)+' '+Y(0.4)+' L'+X(a)+' '+Y(0.4)+'" fill="none" stroke="'+DIM+'" stroke-width="1"/>';
   // cạnh huyền (cam)
   s += '<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(a)+'" y2="'+Y(b)+'" stroke="'+CAM+'" stroke-width="3" marker-end="url(#aw'+id+')"/>';
   // nhãn cạnh
   s += '<text x="'+X(a/2)+'" y="'+(O.y+15)+'" text-anchor="middle" style="font-size:11px" fill="'+LAM+'" font-weight="700">x₁ = '+a+'</text>';
   s += '<text x="'+(+X(a)+8)+'" y="'+Y(b/2)+'" style="font-size:11px" fill="'+TIM+'" font-weight="700">x₂ = '+b+'</text>';
-  // ô điền huyền, đặt cạnh giữa huyền
-  var hx = +X(a/2)-64, hy = +Y(b/2)-30;
+  // ô điền huyền, đặt cạnh giữa huyền — clamp để KHÔNG bao giờ trồi khỏi viewBox 0..300 / 0..200
+  // (bài học từ A1: ô đáp án trên SVG có thể trồi khi toạ độ điểm lớn — luôn clamp từ đầu)
+  // căn giữa ô theo chiều ngang trên trung điểm cạnh huyền, chừa khe hở ~9px phía trên (không đè lên cạnh huyền)
+  var hx = Math.min(Math.max(+X(a/2)-27, 4), 244), hy = Math.min(Math.max(+Y(b/2)-34, 6), 166);
   s += '<text x="'+hx+'" y="'+(hy-4)+'" style="font-size:9px" fill="'+CAM+'" font-weight="700">‖x‖₂ ✍</text>';
   s += '<rect x="'+hx+'" y="'+hy+'" width="54" height="25" rx="7" fill="'+(showAns?'#fff5e9':'#fff')+'" stroke="'+(showAns?'#e3b780':CAM)+'" stroke-width="1.8"/>';
   var hyp = Math.sqrt(a*a+b*b);
@@ -276,9 +375,9 @@ function drawTri(id, x, showAns){
   else s += '<text x="'+(hx+27)+'" y="'+(hy+16)+'" text-anchor="middle" style="font-size:11px" fill="#c3ccd6">?</text>';
   svg.innerHTML = s;
 }
+
 WB.wire(generate);
-drawTri('figQ', XY.x, false);
-drawTri('figA', XY.x, true);
+generate();
 </script>
 </body>
 </html>

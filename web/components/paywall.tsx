@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { formatVnd } from "@/lib/utils";
 import { FREE_SLUGS, TOTAL_AVAILABLE, lessonBySlug, type Course } from "@/lib/lessons";
+import { getUser } from "@/lib/auth";
+import { effectiveGiftPercent, applyGift, GIFT_VISITOR_COOKIE } from "@/lib/gift";
 import {
   packagesGrantingCourse,
   productById,
@@ -28,12 +31,27 @@ function previewSrc(): string | null {
   return sample?.slug ? `/api/learn/${sample.course}/${sample.slug}.html` : null;
 }
 
-export function Paywall({ title, course }: { title: string; course: Course }) {
+export async function Paywall({ title, course }: { title: string; course: Course }) {
   const p = cheapestUnlock(course);
-  const price = effectivePriceVnd(p);
   const preview = previewSrc();
   // N = tổng phiếu đã phát hành trừ đúng bài đang xem (tính động, không hardcode).
   const others = Math.max(0, TOTAL_AVAILABLE - 1);
+
+  // Giá đi qua ĐÚNG nguồn chân lý dùng chung với /checkout, trang chủ và /api/orders
+  // (effectiveGiftPercent + applyGift) → 4 nơi không thể ra số khác nhau. Trước đây chỗ này
+  // luôn hiện giá GỐC: khách vừa quay trúng 70% ở hộp quà, mở một bài đang khóa lại thấy
+  // 149.000đ nguyên giá — đúng màn hình thuyết phục mua nhất thì giấu mất lợi ích, và số ở đây
+  // lệch hẳn số ở /checkout ngay bước sau.
+  // ĐỢT 2: quà có thể neo ở cookie 'gv' của khách CHƯA đăng nhập → phải đọc CẢ cookie, không chỉ
+  // user, nếu không thì khách ẩn danh vẫn thấy giá nguyên và việc hoãn đăng nhập thành vô nghĩa.
+  // Chỉ ĐỌC cookie (server component không set được cookie) và không ghi DB — hấp thụ quà vào
+  // tài khoản là việc của /api/gift/open và /api/orders.
+  // getUser() gọi lại lần 2 (trang learn đã gọi) vì page.tsx không truyền user xuống; đổi lại
+  // paywall tự đủ dữ liệu, không cần sửa chữ ký ở nơi gọi.
+  const user = await getUser();
+  const visitor = (await cookies()).get(GIFT_VISITOR_COOKIE)?.value ?? null;
+  const giftPercent = await effectiveGiftPercent(user?.id ?? null, visitor, p.id);
+  const price = applyGift(effectivePriceVnd(p), giftPercent);
 
   return (
     <div className="pw-wrap">
@@ -73,7 +91,21 @@ export function Paywall({ title, course }: { title: string; course: Course }) {
           </div>
         )}
 
-        <div className="pw-price">{formatVnd(price)}</div>
+        {/* Có quà còn hạn → giá gốc gạch ngang + nhãn −N% NGAY TRÊN giá phải trả, rồi dòng
+            "tiết kiệm". Dùng lại đúng .co-sum-* của tóm tắt đơn ở /checkout để hai màn hình
+            liền mạch một hệ, khách không phải đối chiếu lại. */}
+        {price.percent != null && (
+          <div className="pw-gift-row">
+            <span className="co-sum-old">{formatVnd(price.base)}</span>
+            <span className="co-sum-off">−{price.percent}%</span>
+          </div>
+        )}
+        <div className="pw-price">{formatVnd(price.final)}</div>
+        {price.percent != null && (
+          <div className="co-sum-gift">
+            🎁 Đã áp mã giảm giá của bạn — tiết kiệm {formatVnd(price.base - price.final)}
+          </div>
+        )}
         <p className="pw-price-note">Trọn đời · hoàn tiền trong 7 ngày nếu chưa hợp</p>
         <div className="pw-btns">
           <Link href={`/checkout?product=${p.id}`} className="btn btn-primary btn-lg">

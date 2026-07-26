@@ -1645,6 +1645,21 @@
     color: var(--dim);
     margin-top: 2px;
   }
+  /* Paywall khi khách đang có mã quà còn hạn: hàng "giá gốc gạch ngang + −N%" nằm TRÊN giá phải
+     trả. Chỉ thêm phần căn giữa; màu/gạch ngang/viên thuốc dùng lại .co-sum-old/.co-sum-off của
+     tóm tắt đơn (cùng nằm trong .lp) để paywall và /checkout không trôi khỏi nhau. */
+  .pw-gift-row {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    line-height: 1;
+  }
+  /* Hàng trên đã đẩy khoảng cách rồi → giá không cần margin-top 18px nữa. */
+  .pw-gift-row + .pw-price {
+    margin-top: 4px;
+  }
   .pw-btns {
     display: flex;
     flex-direction: column;

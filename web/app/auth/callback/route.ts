@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/auth";
+import { persistAppError } from "@/lib/log";
 
 // Đổi mã OAuth/magic-link thành phiên đăng nhập, rồi đồng bộ profile.
 export async function GET(request: NextRequest) {
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
       // Log để soi trong Vercel Logs (vd "both auth code and code verifier should be non-empty"
       // = lệch host giữa lúc bấm đăng nhập và lúc nhận callback).
       console.error("[auth/callback] exchangeCodeForSession failed:", error.message, "host=", request.headers.get("host"));
+      await persistAppError("auth/callback", error.message, { host: request.headers.get("host") });
     }
     if (!error) {
       const {

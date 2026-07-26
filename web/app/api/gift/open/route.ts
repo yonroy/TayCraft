@@ -36,7 +36,7 @@ export async function POST() {
       expired: gift.expired,
     });
   } catch (err) {
-    logGiftError("api/gift/open", err, "gift_discounts");
+    await logGiftError("api/gift/open", err, "gift_discounts");
     return NextResponse.json({ status: "error" });
   }
 }

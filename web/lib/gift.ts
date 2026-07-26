@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { giftDiscounts, enrollments, type GiftDiscount } from "@/lib/db/schema";
 import { ownsProduct } from "@/lib/auth";
+import { persistAppError } from "@/lib/log";
 import type { ProductId } from "@/lib/products";
 
 // ---- Cấu hình (dễ chỉnh; quyết định kinh doanh) ----
@@ -94,12 +95,17 @@ export function isMissingTableError(err: unknown): boolean {
 
 // Log có cấu trúc, prefix "[gift]" để tra Vercel Logs được (giống "[sepay]" ở webhook).
 // table: tên bảng liên quan (để dòng TABLE MISSING nêu đích danh bảng cần chạy migration).
-export function logGiftError(context: string, err: unknown, table: string): void {
+// Ghi SONG SONG vào bảng app_errors (qua persistAppError, KHÔNG console.error lần 2 — giữ đúng
+// 1 dòng console như cũ, tránh in trùng). persistAppError tự nuốt lỗi nếu app_errors chưa tồn tại.
+export async function logGiftError(context: string, err: unknown, table: string): Promise<void> {
   if (isMissingTableError(err)) {
     // Dòng riêng, dễ nhận — đây là lỗi hạ tầng (thiếu migration), KHÔNG phải bug logic.
-    console.error(`[gift] TABLE MISSING: "${table}" chưa tồn tại (context=${context}). Chạy drizzle/${table === "gift_discounts" ? "gift-discounts" : "gift-impressions"}.sql trong Supabase SQL Editor.`);
+    const msg = `[gift] TABLE MISSING: "${table}" chưa tồn tại (context=${context}). Chạy drizzle/${table === "gift_discounts" ? "gift-discounts" : "gift-impressions"}.sql trong Supabase SQL Editor.`;
+    console.error(msg);
+    await persistAppError("gift", msg, { table, reason: "table_missing", subcontext: context });
   } else {
     console.error(`[gift] ERROR (${context}):`, err);
+    await persistAppError("gift", err instanceof Error ? err.message : String(err), { table, subcontext: context });
   }
 }
 
@@ -135,7 +141,7 @@ export async function getOrCreateGift(userId: string): Promise<GiftState> {
     const saved = (await findGift(userId))!;
     return await toOkState(userId, saved);
   } catch (err) {
-    logGiftError("getOrCreateGift", err, "gift_discounts");
+    await logGiftError("getOrCreateGift", err, "gift_discounts");
     return { status: "error" };
   }
 }
@@ -152,7 +158,7 @@ export async function activeGiftPercent(userId: string, product: string): Promis
     if (!g || !isActive(g)) return null;
     return g.percent;
   } catch (err) {
-    logGiftError("activeGiftPercent", err, "gift_discounts");
+    await logGiftError("activeGiftPercent", err, "gift_discounts");
     return null;
   }
 }

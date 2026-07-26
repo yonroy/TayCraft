@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, timestamp, pgEnum, unique, boolean } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, timestamp, pgEnum, unique, boolean, jsonb } from "drizzle-orm/pg-core";
 
 export const orderStatus = pgEnum("order_status", ["pending", "paid", "canceled"]);
 
@@ -85,9 +85,40 @@ export const reviews = pgTable("reviews", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Nhật ký lỗi runtime có cấu trúc — context (vd "gift", "sepay", "admin-stats") + message +
+// detail tùy ý (jsonb). Trước đây mọi lỗi chỉ console.error/warn → bắt buộc vào Vercel Logs mới
+// thấy, /admin không có cách nào biết đang có lỗi xảy ra (đây là lý do sự cố /admin sập hoàn
+// toàn 2026-07-26 không ai biết cho tới khi tự chụp ảnh gửi). Ghi SONG SONG với console, không
+// thay thế — xem lib/log.ts.
+export const appErrors = pgTable("app_errors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
+  context: text("context").notNull(),
+  message: text("message").notNull(),
+  detail: jsonb("detail"),
+});
+
+// Audit trail MỌI lần webhook SePay gọi tới, kể cả bị BỎ QUA (skip_reason NOT NULL) — trước đây
+// các nhánh skip (thiếu mã đơn / không khớp đơn pending / thiếu tiền) chỉ console.warn, không để
+// lại dấu vết nào trong DB: khách có thể đã chuyển khoản thành công (tiền vào tài khoản ngân hàng
+// thật) nhưng hệ thống không khớp được đơn → khách mất tiền mà không nhận được hàng, và không ai
+// biết. rawPayload lưu payload ĐÃ QUA zod validate (lib/gift.ts's payloadSchema), KHÔNG lưu toàn
+// bộ request body thô — hạn chế rủi ro lưu thừa trường nhạy cảm ngoài ý muốn từ SePay.
+export const paymentWebhookEvents = pgTable("payment_webhook_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  rawPayload: jsonb("raw_payload"),
+  transferAmount: integer("transfer_amount"),
+  matchedTransferCode: text("matched_transfer_code"),
+  matchedOrderId: uuid("matched_order_id"),
+  skipReason: text("skip_reason"), // null = thành công; vd "no_transfer_code" | "order_not_found" | "amount_mismatch"
+});
+
 export type Order = typeof orders.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type FlashSale = typeof flashSale.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type GiftDiscount = typeof giftDiscounts.$inferSelect;
 export type GiftImpression = typeof giftImpressions.$inferSelect;
+export type AppError = typeof appErrors.$inferSelect;
+export type PaymentWebhookEvent = typeof paymentWebhookEvents.$inferSelect;

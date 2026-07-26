@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     await db.insert(giftImpressions).values({ visitor }).onConflictDoNothing();
   } catch (err) {
     // Bảng chưa áp migration / lỗi DB → không chặn khách, chỉ bỏ qua việc đếm.
-    logGiftError("api/gift/seen", err, "gift_impressions");
+    await logGiftError("api/gift/seen", err, "gift_impressions");
   }
   return res;
 }

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { productById, effectivePriceVnd, coursesOfProduct } from "@/lib/products";
 import { PROMO_FREE_LIMIT, promoExpired } from "@/lib/promo";
 import { GIFT_TIERS, logGiftError } from "@/lib/gift";
+import { persistAppError } from "@/lib/log";
 
 // ── Loại tài khoản TEST khỏi mọi số liệu /admin — MỘT nguồn sự thật duy nhất ──
 // Đọc từ ADMIN_EXCLUDED_EMAILS (phân tách dấu phẩy) trên Vercel; đổi/thêm tài khoản test
@@ -135,6 +136,29 @@ export interface GiftStats {
   conversion: GiftConversion; // nhóm nhận quà (không-free) vs nhóm không nhận — ai mua K1 nhiều hơn
 }
 
+// "ok" = bảng tồn tại · "missing" = CHƯA chạy migration (drizzle/app-errors.sql |
+// payment-webhook-events.sql) · "unknown" = không probe được (lỗi DB khác).
+export interface OpsHealth {
+  paymentEventsTable: "ok" | "missing" | "unknown";
+  appErrorsTable: "ok" | "missing" | "unknown";
+}
+export interface SkippedPaymentRow {
+  receivedAt: string;
+  transferAmount: number | null;
+  matchedTransferCode: string | null;
+  skipReason: string;
+}
+export interface RecentErrorRow {
+  occurredAt: string;
+  context: string;
+  message: string;
+}
+export interface OpsStats {
+  health: OpsHealth;
+  skippedPayments: SkippedPaymentRow[]; // webhook có vào tiền nhưng KHÔNG khớp được đơn — CẢNH BÁO
+  recentErrors: RecentErrorRow[]; // N lỗi runtime mới nhất (bảng app_errors)
+}
+
 export interface AdminStats {
   ok: boolean; // false nếu truy vấn lỗi (DB chưa sẵn sàng) → UI báo nhẹ
   // Đã loại N tài khoản test (ADMIN_EXCLUDED_EMAILS) khỏi MỌI số liệu bên dưới — TRỪ
@@ -161,12 +185,16 @@ export interface AdminStats {
     priceMismatch: number; // đơn paid lệch giá gói
   };
   users: {
+    // NGƯỜI duy nhất — COUNT(DISTINCT lower(email)), KHÔNG phải số dòng profile. profiles.email
+    // KHÔNG có unique constraint (Supabase tạo auth-user MỚI mỗi lần đăng nhập OTP nếu mất phiên),
+    // nên 1 người có thể có nhiều dòng profile. Xác nhận thật trên production: 1 email tạo 8 dòng.
     total: number;
+    rawRowCount: number; // số dòng profile thật — hiện ra để so sánh, KHÁC total khi có trùng email
     today: number;
     d7: number;
     d30: number;
-    paying: number; // có ≥1 enrollment trả phí
-    freeLeads: number; // chỉ có enrollment free (K1 khai trương)
+    paying: number; // có ≥1 enrollment trả phí (đếm theo NGƯỜI, JOIN profiles theo email)
+    freeLeads: number; // chỉ có enrollment free (K1 khai trương) — đếm theo NGƯỜI
     signupToPaidRate: number;
   };
   enrollmentsByPackage: PackageRow[];
@@ -184,6 +212,7 @@ export interface AdminStats {
   recentPaid: RecentPaidRow[];
   recentSignups: RecentSignupRow[];
   gift: GiftStats;
+  ops: OpsStats;
 }
 
 type Row = Record<string, unknown>;
@@ -260,14 +289,16 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
     impressionsTable: impressionsOk ? "ok" : "missing",
   };
   if (!discountsOk) {
-    console.error(
-      '[gift] TABLE MISSING: "gift_discounts" (phát hiện qua to_regclass ở /admin). Chạy drizzle/gift-discounts.sql trong Supabase SQL Editor.',
-    );
+    const msg =
+      '[gift] TABLE MISSING: "gift_discounts" (phát hiện qua to_regclass ở /admin). Chạy drizzle/gift-discounts.sql trong Supabase SQL Editor.';
+    console.error(msg);
+    await persistAppError("gift", msg, { table: "gift_discounts", reason: "table_missing", subcontext: "admin-stats/tableExists" });
   }
   if (!impressionsOk) {
-    console.error(
-      '[gift] TABLE MISSING: "gift_impressions" (phát hiện qua to_regclass ở /admin). Chạy drizzle/gift-impressions.sql trong Supabase SQL Editor.',
-    );
+    const msg =
+      '[gift] TABLE MISSING: "gift_impressions" (phát hiện qua to_regclass ở /admin). Chạy drizzle/gift-impressions.sql trong Supabase SQL Editor.';
+    console.error(msg);
+    await persistAppError("gift", msg, { table: "gift_impressions", reason: "table_missing", subcontext: "admin-stats/tableExists" });
   }
 
   // Số người ĐÃ THẤY hộp quà — độc lập với gift_discounts, để "không nhận" vẫn tính được
@@ -277,7 +308,7 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
     try {
       impressions = n((await q(sql`SELECT COUNT(*)::int AS n FROM gift_impressions`))[0]?.n);
     } catch (e) {
-      logGiftError("admin-stats/impressions", e, "gift_impressions");
+      await logGiftError("admin-stats/impressions", e, "gift_impressions");
     }
   }
 
@@ -396,9 +427,70 @@ async function giftStats(excludedIds: string[]): Promise<GiftStats> {
       },
     };
   } catch (err) {
-    logGiftError("admin-stats/giftStats", err, "gift_discounts");
+    await logGiftError("admin-stats/giftStats", err, "gift_discounts");
     return emptyGiftStats(health, impressions);
   }
+}
+
+function emptyOpsStats(health: OpsHealth): OpsStats {
+  return { health, skippedPayments: [], recentErrors: [] };
+}
+
+// Số liệu vận hành: giao dịch webhook bị bỏ qua (tiền có thể đã vào tài khoản nhưng chưa khớp
+// đơn) + N lỗi runtime gần nhất. Cả 2 bảng nguồn (payment_webhook_events, app_errors) là migration
+// CHẠY TAY — probe tableExists() trước, KHÔNG đọc thẳng rồi bắt exception, để phân biệt "chưa chạy
+// migration" (missing) với "0 dòng vì chưa có sự kiện nào" (ok, rỗng) — cùng bài học với giftStats().
+async function opsStats(): Promise<OpsStats> {
+  const paymentEventsOk = await tableExists("public.payment_webhook_events");
+  const appErrorsOk = await tableExists("public.app_errors");
+  const health: OpsHealth = {
+    paymentEventsTable: paymentEventsOk ? "ok" : "missing",
+    appErrorsTable: appErrorsOk ? "ok" : "missing",
+  };
+
+  let skippedPayments: SkippedPaymentRow[] = [];
+  if (paymentEventsOk) {
+    try {
+      const rows = await q(sql`
+        SELECT received_at, transfer_amount, matched_transfer_code, skip_reason
+        FROM payment_webhook_events
+        WHERE skip_reason IS NOT NULL
+        ORDER BY received_at DESC LIMIT 20`);
+      skippedPayments = rows.map((r) => ({
+        receivedAt: String(r.received_at),
+        transferAmount: r.transfer_amount == null ? null : n(r.transfer_amount),
+        matchedTransferCode: r.matched_transfer_code == null ? null : String(r.matched_transfer_code),
+        skipReason: String(r.skip_reason),
+      }));
+    } catch (err) {
+      await persistAppError(
+        "admin-stats/opsStats",
+        err instanceof Error ? err.message : String(err),
+        { table: "payment_webhook_events" },
+      );
+    }
+  }
+
+  let recentErrors: RecentErrorRow[] = [];
+  if (appErrorsOk) {
+    try {
+      const rows = await q(sql`
+        SELECT occurred_at, context, message
+        FROM app_errors
+        ORDER BY occurred_at DESC LIMIT 20`);
+      recentErrors = rows.map((r) => ({
+        occurredAt: String(r.occurred_at),
+        context: String(r.context),
+        message: String(r.message),
+      }));
+    } catch {
+      // Đọc app_errors lỗi → console.warn thôi, KHÔNG ghi lại vào chính bảng đó (tránh vòng lặp
+      // log-lỗi-của-log-lỗi vô nghĩa).
+      console.warn("[admin-stats] đọc app_errors lỗi (bỏ qua)");
+    }
+  }
+
+  return { health, skippedPayments, recentErrors };
 }
 
 function emptyStats(): AdminStats {
@@ -418,7 +510,16 @@ function emptyStats(): AdminStats {
       closeRate: 0,
       priceMismatch: 0,
     },
-    users: { total: 0, today: 0, d7: 0, d30: 0, paying: 0, freeLeads: 0, signupToPaidRate: 0 },
+    users: {
+      total: 0,
+      rawRowCount: 0,
+      today: 0,
+      d7: 0,
+      d30: 0,
+      paying: 0,
+      freeLeads: 0,
+      signupToPaidRate: 0,
+    },
     enrollmentsByPackage: [],
     k1: { free: 0, paid: 0, freeViaGiftJackpot: 0, freeViaLaunchPromo: 0 },
     promo: { claimed: 0, limit: PROMO_FREE_LIMIT, expired: promoExpired() },
@@ -430,6 +531,7 @@ function emptyStats(): AdminStats {
     // DB không phản hồi được ở đây (catch ngoài cùng của getAdminStats) → không tự probe được
     // bảng nào tồn tại hay không, để "unknown" cho trung thực (khác "missing" = đã kiểm và thiếu).
     gift: emptyGiftStats({ discountsTable: "unknown", impressionsTable: "unknown" }),
+    ops: emptyOpsStats({ paymentEventsTable: "unknown", appErrorsTable: "unknown" }),
   };
 }
 
@@ -451,21 +553,26 @@ export async function getAdminStats(): Promise<AdminStats> {
     // duy nhất quyết định "ai là test" trong toàn bộ hàm — không rải điều kiện lọc rời rạc.
     const excludedIds = await resolveExcludedIds();
 
-    // (1) Mọi số vô hướng trên bảng orders trong 1 lượt quét.
+    // (1) Mọi số vô hướng trên bảng orders trong 1 lượt quét. users_initiated/users_paid đếm theo
+    // NGƯỜI (distinct email qua JOIN profiles), KHÔNG theo user_id — 1 người có thể có nhiều
+    // user_id nếu tạo lại phiên đăng nhập (xem comment ở AdminStats.users). LEFT JOIN (không phải
+    // INNER) để 1 order thiếu profile khớp (không nên xảy ra) vẫn không bị rớt khỏi paid_count/rev_*
+    // — chỉ riêng 2 cột COUNT(DISTINCT email) mới bỏ qua NULL email một cách tự nhiên và an toàn.
     const oAgg =
       (
         await q(sql`
           SELECT
-            COUNT(*) FILTER (WHERE status='paid')::int     AS paid_count,
-            COUNT(*) FILTER (WHERE status='pending')::int  AS pending_count,
-            COUNT(*) FILTER (WHERE status='canceled')::int AS canceled_count,
-            COALESCE(SUM(amount_vnd) FILTER (WHERE status='paid'),0)::bigint    AS rev_total,
-            COALESCE(SUM(amount_vnd) FILTER (WHERE status='pending'),0)::bigint AS rev_pending,
-            COALESCE(AVG(amount_vnd) FILTER (WHERE status='paid'),0)::float     AS aov,
-            COUNT(DISTINCT user_id)::int                            AS users_initiated,
-            COUNT(DISTINCT user_id) FILTER (WHERE status='paid')::int AS users_paid
-          FROM orders
-          WHERE user_id != ALL(${sqlUuidArray(excludedIds)})`)
+            COUNT(*) FILTER (WHERE o.status='paid')::int     AS paid_count,
+            COUNT(*) FILTER (WHERE o.status='pending')::int  AS pending_count,
+            COUNT(*) FILTER (WHERE o.status='canceled')::int AS canceled_count,
+            COALESCE(SUM(o.amount_vnd) FILTER (WHERE o.status='paid'),0)::bigint    AS rev_total,
+            COALESCE(SUM(o.amount_vnd) FILTER (WHERE o.status='pending'),0)::bigint AS rev_pending,
+            COALESCE(AVG(o.amount_vnd) FILTER (WHERE o.status='paid'),0)::float     AS aov,
+            COUNT(DISTINCT lower(p.email))::int                                AS users_initiated,
+            COUNT(DISTINCT lower(p.email)) FILTER (WHERE o.status='paid')::int AS users_paid
+          FROM orders o
+          LEFT JOIN profiles p ON p.id = o.user_id
+          WHERE o.user_id != ALL(${sqlUuidArray(excludedIds)})`)
       )[0] ?? {};
 
     // (2) Đơn paid nhóm theo (gói, số tiền) → suy ra doanh thu/gói + đếm lệch giá trong JS.
@@ -482,7 +589,9 @@ export async function getAdminStats(): Promise<AdminStats> {
       FROM enrollments WHERE user_id != ALL(${sqlUuidArray(excludedIds)})
       GROUP BY package`);
 
-    // (4) Phân bố theo user (paying / free-only / số gói / nâng cấp) trong 1 query.
+    // (4) Phân bố theo NGƯỜI (paying / free-only / số gói / nâng cấp) — group theo email (JOIN
+    // profiles), KHÔNG theo user_id, cùng lý do ở (1). COUNT(DISTINCT e.package) (không phải
+    // COUNT(*)) để 1 gói không bị đếm 2 lần nếu cùng 1 người lỡ có 2 user_id đều enroll gói đó.
     const uAgg =
       (
         await q(sql`
@@ -494,19 +603,26 @@ export async function getAdminStats(): Promise<AdminStats> {
             COUNT(*) FILTER (WHERE total_pkgs >= 3)::int AS p3,
             COUNT(*) FILTER (WHERE paid_pkgs >= 2)::int  AS upgraded
           FROM (
-            SELECT user_id,
-              COUNT(*)                                   AS total_pkgs,
-              COUNT(*) FILTER (WHERE order_id IS NOT NULL) AS paid_pkgs
-            FROM enrollments WHERE user_id != ALL(${sqlUuidArray(excludedIds)})
-            GROUP BY user_id
+            SELECT lower(p.email) AS person,
+              COUNT(DISTINCT e.package)                                       AS total_pkgs,
+              COUNT(DISTINCT e.package) FILTER (WHERE e.order_id IS NOT NULL) AS paid_pkgs
+            FROM enrollments e
+            JOIN profiles p ON p.id = e.user_id
+            WHERE e.user_id != ALL(${sqlUuidArray(excludedIds)})
+            GROUP BY lower(p.email)
           ) t`)
       )[0] ?? {};
 
-    // (5) Tổng tài khoản.
-    const usersTotal = n(
-      (await q(sql`SELECT COUNT(*)::int AS n FROM profiles WHERE id != ALL(${sqlUuidArray(excludedIds)})`))[0]
-        ?.n,
-    );
+    // (5) Tổng tài khoản — NGƯỜI duy nhất (distinct email) + số dòng profile thật để so sánh
+    // (khác nhau khi có trùng email — xem comment AdminStats.users).
+    const usersAgg =
+      (
+        await q(sql`
+          SELECT COUNT(*)::int AS raw_n, COUNT(DISTINCT lower(email))::int AS n
+          FROM profiles WHERE id != ALL(${sqlUuidArray(excludedIds)})`)
+      )[0] ?? {};
+    const usersTotal = n(usersAgg.n);
+    const usersRawRowCount = n(usersAgg.raw_n);
 
     // (6–8) Chuỗi 30 ngày (giờ VN).
     const revSeries = fillSeries(
@@ -525,12 +641,20 @@ export async function getAdminStats(): Promise<AdminStats> {
           AND user_id != ALL(${sqlUuidArray(excludedIds)}) GROUP BY 1`),
       days,
     );
+    // Bucket theo NGƯỜI: mốc "ngày" là lần đăng ký ĐẦU TIÊN của mỗi email (MIN created_at), không
+    // phải mọi dòng profile — nếu không, 1 người tạo lại phiên đăng nhập nhiều lần sẽ bị đếm là
+    // "tài khoản mới" nhiều lần trong biểu đồ dù họ không phải khách mới.
     const signupSeries = fillSeries(
       await q(sql`
-        SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
+        SELECT to_char(date_trunc('day', first_seen AT TIME ZONE 'Asia/Ho_Chi_Minh'),'YYYY-MM-DD') AS day,
                COUNT(*)::int AS value
-        FROM profiles WHERE created_at >= now() - interval '30 days'
-          AND id != ALL(${sqlUuidArray(excludedIds)}) GROUP BY 1`),
+        FROM (
+          SELECT lower(email) AS email, MIN(created_at) AS first_seen
+          FROM profiles WHERE id != ALL(${sqlUuidArray(excludedIds)})
+          GROUP BY lower(email)
+        ) t
+        WHERE first_seen >= now() - interval '30 days'
+        GROUP BY 1`),
       days,
     );
 
@@ -547,6 +671,9 @@ export async function getAdminStats(): Promise<AdminStats> {
 
     // (11) Số liệu hộp quà (try/catch riêng, gọi cuối — không kéo sập stats khác).
     const gift = await giftStats(excludedIds);
+
+    // (11b) Số liệu vận hành: giao dịch webhook bị bỏ qua + lỗi runtime gần nhất.
+    const ops = await opsStats();
 
     // (12) Tách nguồn gốc enrollment K1-free: trúng jackpot hộp quà (percent>=100 ở CHÍNH user đó)
     // vs khuyến mãi khai trương cũ (claimFreeK1 — không đụng gift_discounts bao giờ). Phân biệt
@@ -575,7 +702,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     } catch (err) {
       // Nếu gift_discounts chưa sẵn sàng: coi mọi K1-free hiện có là "khai trương cũ" — an toàn,
       // không phóng đại đóng góp của hộp quà khi không xác minh được nguồn gốc thật.
-      logGiftError("admin-stats/k1FreeSplit", err, "gift_discounts");
+      await logGiftError("admin-stats/k1FreeSplit", err, "gift_discounts");
       k1FreeViaLaunchPromo = n(enrRows.find((r) => String(r.package) === "k1")?.free_n);
       k1FreeViaGiftJackpot = 0;
     }
@@ -665,6 +792,7 @@ export async function getAdminStats(): Promise<AdminStats> {
       },
       users: {
         total: usersTotal,
+        rawRowCount: usersRawRowCount,
         today: signupSeries.at(-1)?.value ?? 0,
         d7: tail(signupSeries, 7),
         d30: tail(signupSeries, 30),
@@ -698,9 +826,11 @@ export async function getAdminStats(): Promise<AdminStats> {
         createdAt: String(r.created_at),
       })),
       gift,
+      ops,
     };
   } catch (err) {
     console.error("[admin-stats] query failed:", err);
+    await persistAppError("admin-stats", err instanceof Error ? err.message : String(err));
     return emptyStats();
   }
 }

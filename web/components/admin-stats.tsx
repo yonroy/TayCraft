@@ -40,14 +40,79 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 const giftReward = (p: number) => (p >= 100 ? "🏆 FREE (100%)" : `Giảm ${p}%`);
 
+const SKIP_REASON_LABEL: Record<string, string> = {
+  no_transfer_code: "Không tìm thấy mã đơn trong nội dung chuyển khoản",
+  order_not_found: "Có mã nhưng không khớp đơn đang chờ (có thể đã trả/hủy)",
+  amount_mismatch: "Số tiền chuyển ít hơn giá đơn",
+};
+
 export function AdminStats({ stats }: { stats: AdminStats }) {
-  const { revenue, orders, users, promo, gift } = stats;
+  const { revenue, orders, users, promo, gift, ops } = stats;
 
   return (
     <section className="space-y-6">
       {!stats.ok && (
         <div className="rounded-xl border border-accent-2/40 bg-accent-2/5 px-4 py-3 text-sm text-accent-2">
           ⚠️ Không tải được số liệu (DB chưa sẵn sàng). Các con số bên dưới là 0.
+        </div>
+      )}
+
+      {/* Giao dịch webhook vào tiền nhưng CHƯA khớp đơn — CẢNH BÁO ưu tiên cao nhất: tiền thật có
+          thể đã vào tài khoản ngân hàng của shop mà khách chưa được mở khóa (khách mất tiền, admin
+          không biết trừ khi khách tự nhắn báo). Đặt ngay đầu trang để không ai bỏ sót. */}
+      {ops.health.paymentEventsTable !== "ok" ? (
+        <div className="rounded-xl border border-accent-2/40 bg-accent-2/5 px-4 py-3 text-sm text-accent-2">
+          ⚠️ Bảng <code className="font-mono">payment_webhook_events</code>{" "}
+          {ops.health.paymentEventsTable === "missing" ? "CHƯA tồn tại" : "không kiểm tra được"} — chưa
+          ghi được giao dịch webhook nào, chưa thể cảnh báo &quot;vào tiền nhưng chưa khớp đơn&quot;.
+          Chạy{" "}
+          <code className="font-mono">drizzle/payment-webhook-events.sql</code> trong Supabase SQL
+          Editor.
+        </div>
+      ) : ops.skippedPayments.length > 0 ? (
+        <div className="rounded-xl border-2 border-red-400 bg-red-50 px-4 py-4">
+          <p className="font-bold text-red-700">
+            🚨 {ops.skippedPayments.length} giao dịch vào tiền nhưng CHƯA khớp đơn — kiểm tra ngay
+          </p>
+          <p className="mt-1 text-xs text-red-600">
+            Khách có thể đã chuyển khoản thành công nhưng sai/thiếu nội dung nên hệ thống không tự
+            khớp được đơn. Đối chiếu sao kê ngân hàng rồi duyệt tay ở bảng &quot;100 đơn gần
+            nhất&quot; bên dưới nếu đúng là đơn thật.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-red-700">
+                <tr>
+                  <th className="pb-1 pr-3 font-medium">Lúc nhận</th>
+                  <th className="pb-1 pr-3 text-right font-medium">Số tiền</th>
+                  <th className="pb-1 pr-3 font-medium">Mã nhận diện được</th>
+                  <th className="pb-1 font-medium">Lý do bỏ qua</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ops.skippedPayments.map((r, i) => (
+                  <tr key={i} className="border-t border-red-200">
+                    <td className="whitespace-nowrap py-1 pr-3 text-red-800">
+                      {new Date(r.receivedAt).toLocaleString("vi-VN")}
+                    </td>
+                    <td className="py-1 pr-3 text-right tabular-nums font-medium text-red-800">
+                      {r.transferAmount != null ? formatVnd(r.transferAmount) : "—"}
+                    </td>
+                    <td className="py-1 pr-3 font-mono text-red-800">
+                      {r.matchedTransferCode ?? "— (không nhận diện được)"}
+                    </td>
+                    <td className="py-1 text-red-700">
+                      {SKIP_REASON_LABEL[r.skipReason] ?? r.skipReason}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-line bg-white px-4 py-3 text-sm text-dim">
+          ✅ Không có giao dịch webhook nào bị bỏ qua gần đây.
         </div>
       )}
 
@@ -90,7 +155,12 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
         <StatCard
           label="Tài khoản"
           value={users.total.toLocaleString("vi-VN")}
-          sub={`Hôm nay +${users.today} · 7d +${users.d7}`}
+          sub={
+            `Hôm nay +${users.today} · 7d +${users.d7}` +
+            (users.rawRowCount !== users.total
+              ? ` · ⚠️ ${users.rawRowCount.toLocaleString("vi-VN")} dòng đăng nhập (đếm theo email duy nhất, không phải số dòng)`
+              : "")
+          }
         />
         <StatCard
           label="Khách trả tiền"
@@ -420,6 +490,38 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
           )}
         </Card>
       </div>
+
+      {/* Lỗi gần đây — bảng app_errors, ghi song song với console.error/warn ở [gift]/[sepay]/
+          [admin-stats]/[auth/callback]. Trước đây phải vào Vercel Logs mới thấy được. */}
+      <Card
+        title={`Lỗi gần đây${ops.health.appErrorsTable !== "ok" ? " — bảng chưa sẵn sàng" : ""}`}
+      >
+        {ops.health.appErrorsTable !== "ok" ? (
+          <p className="text-sm text-dim">
+            Bảng <code className="font-mono">app_errors</code>{" "}
+            {ops.health.appErrorsTable === "missing" ? "CHƯA tồn tại" : "không kiểm tra được"}. Chạy{" "}
+            <code className="font-mono">drizzle/app-errors.sql</code> trong Supabase SQL Editor.
+          </p>
+        ) : ops.recentErrors.length === 0 ? (
+          <p className="text-sm text-dim">Chưa ghi nhận lỗi nào — hộp quà và thanh toán đang chạy sạch.</p>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {ops.recentErrors.map((e, i) => (
+              <li key={i} className="border-t border-line pt-2 first:border-0 first:pt-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-semibold text-accent-2">{e.context}</span>
+                  <span className="shrink-0 text-xs text-dim">
+                    {new Date(e.occurredAt).toLocaleString("vi-VN")}
+                  </span>
+                </div>
+                <p className="mt-0.5 truncate text-dim" title={e.message}>
+                  {e.message}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </section>
   );
 }

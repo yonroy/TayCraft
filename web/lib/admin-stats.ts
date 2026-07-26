@@ -58,6 +58,9 @@ export interface GiftTierRow {
   count: number; // số lượt nhận đúng mức này
   actualPct: number; // % thực tế trong tổng lượt nhận quà
   theoreticalPct: number; // % lý thuyết theo trọng số GIFT_TIERS (lib/gift.ts) — lệch mạnh = dấu hiệu farm
+  isLegacyTier: boolean; // percent này KHÔNG còn trong GIFT_TIERS hiện tại → dữ liệu từ cấu hình trọng số CŨ
+  // (trọng số đã đổi ít nhất 1 lần trong lịch sử, vd 10/15/20/30/FREE → 30/50/70/FREE — so "thực tế vs lý
+  // thuyết" với các dòng legacy là VÔ NGHĨA, không phải bug hay dấu hiệu farm).
   usedCount: number; // đã thanh toán TRƯỚC khi hết hạn (FREE tính là "dùng" ngay vì cấp tự động)
   usedPct: number; // usedCount / count
 }
@@ -115,7 +118,13 @@ export interface AdminStats {
     signupToPaidRate: number;
   };
   enrollmentsByPackage: PackageRow[];
-  k1: { free: number; paid: number };
+  // "free" = TỔNG mọi enrollment K1 miễn phí, bất kể nguồn gốc. Tách rõ 2 nguồn hoàn toàn khác
+  // nhau để không phóng đại tác động của hộp quà: freeViaGiftJackpot (trúng 100% ở hộp quà) vs
+  // freeViaLaunchPromo (khuyến mãi khai trương cũ claimFreeK1, hết hạn 07/07, không liên quan hộp quà).
+  // Phân biệt bằng JOIN thật với gift_discounts (không đoán theo mốc thời gian).
+  k1: { free: number; paid: number; freeViaGiftJackpot: number; freeViaLaunchPromo: number };
+  // claimed = CHỈ đếm suất khai trương cũ (freeViaLaunchPromo) — đúng ý nghĩa khi so với /limit=100,
+  // KHÔNG cộng cả suất trúng hộp quà vào (trước đây gộp chung, phóng đại số suất khai trương).
   promo: { claimed: number; limit: number; expired: boolean };
   packagesPerUser: PackagesPerUserRow[];
   funnel: FunnelStep[];
@@ -267,6 +276,7 @@ async function giftStats(): Promise<GiftStats> {
         actualPct: totalForPct > 0 ? Math.round((count / totalForPct) * 1000) / 10 : 0,
         theoreticalPct:
           theoretical && totalWeight > 0 ? Math.round((theoretical.weight / totalWeight) * 1000) / 10 : 0,
+        isLegacyTier: !theoretical, // percent này không còn trong cấu hình hiện tại → từ trọng số cũ
         usedCount,
         usedPct: count > 0 ? Math.round((usedCount / count) * 1000) / 10 : 0,
       };
@@ -349,7 +359,7 @@ function emptyStats(): AdminStats {
     },
     users: { total: 0, today: 0, d7: 0, d30: 0, paying: 0, freeLeads: 0, signupToPaidRate: 0 },
     enrollmentsByPackage: [],
-    k1: { free: 0, paid: 0 },
+    k1: { free: 0, paid: 0, freeViaGiftJackpot: 0, freeViaLaunchPromo: 0 },
     promo: { claimed: 0, limit: PROMO_FREE_LIMIT, expired: promoExpired() },
     packagesPerUser: [],
     funnel: [],
@@ -460,6 +470,37 @@ export async function getAdminStats(): Promise<AdminStats> {
     // (11) Số liệu hộp quà (try/catch riêng, gọi cuối — không kéo sập stats khác).
     const gift = await giftStats();
 
+    // (12) Tách nguồn gốc enrollment K1-free: trúng jackpot hộp quà (percent>=100 ở CHÍNH user đó)
+    // vs khuyến mãi khai trương cũ (claimFreeK1 — không đụng gift_discounts bao giờ). Phân biệt
+    // bằng JOIN thật với gift_discounts, KHÔNG đoán theo mốc thời gian đăng ký/nhận.
+    let k1FreeViaGiftJackpot = 0;
+    let k1FreeViaLaunchPromo = 0;
+    try {
+      const k1FreeSplit =
+        (
+          await q(sql`
+            SELECT
+              COUNT(*) FILTER (WHERE EXISTS (
+                SELECT 1 FROM gift_discounts gd
+                WHERE gd.user_id = e.user_id AND gd.product = e.package AND gd.percent >= 100
+              ))::int AS via_gift_jackpot,
+              COUNT(*) FILTER (WHERE NOT EXISTS (
+                SELECT 1 FROM gift_discounts gd
+                WHERE gd.user_id = e.user_id AND gd.product = e.package AND gd.percent >= 100
+              ))::int AS via_launch_promo
+            FROM enrollments e
+            WHERE e.package = 'k1' AND e.order_id IS NULL`)
+        )[0] ?? {};
+      k1FreeViaGiftJackpot = n(k1FreeSplit.via_gift_jackpot);
+      k1FreeViaLaunchPromo = n(k1FreeSplit.via_launch_promo);
+    } catch (err) {
+      // Nếu gift_discounts chưa sẵn sàng: coi mọi K1-free hiện có là "khai trương cũ" — an toàn,
+      // không phóng đại đóng góp của hộp quà khi không xác minh được nguồn gốc thật.
+      logGiftError("admin-stats/k1FreeSplit", err, "gift_discounts");
+      k1FreeViaLaunchPromo = n(enrRows.find((r) => String(r.package) === "k1")?.free_n);
+      k1FreeViaGiftJackpot = 0;
+    }
+
     // ── Suy diễn trong JS ──
     const oPaid = n(oAgg.paid_count),
       oPending = n(oAgg.pending_count),
@@ -552,8 +593,15 @@ export async function getAdminStats(): Promise<AdminStats> {
         signupToPaidRate: usersTotal > 0 ? paying / usersTotal : 0,
       },
       enrollmentsByPackage,
-      k1: { free: k1Free, paid: k1Paid },
-      promo: { claimed: k1Free, limit: PROMO_FREE_LIMIT, expired: promoExpired() },
+      k1: {
+        free: k1Free,
+        paid: k1Paid,
+        freeViaGiftJackpot: k1FreeViaGiftJackpot,
+        freeViaLaunchPromo: k1FreeViaLaunchPromo,
+      },
+      // claimed = CHỈ suất khai trương cũ — đúng ý nghĩa khi so với /limit=100 (trước đây gộp cả
+      // suất trúng hộp quà vào, phóng đại số suất khai trương đã phát).
+      promo: { claimed: k1FreeViaLaunchPromo, limit: PROMO_FREE_LIMIT, expired: promoExpired() },
       packagesPerUser,
       funnel,
       series: { revenue: revSeries, orders: ordSeries, signups: signupSeries },

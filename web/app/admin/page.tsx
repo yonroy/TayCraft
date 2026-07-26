@@ -56,7 +56,7 @@ export default async function AdminPage() {
         <p className="text-dim mt-1">
           {stats.orders.total} đơn · {stats.orders.pending} chờ · {stats.orders.paid} đã trả ·{" "}
           <b className="text-ink">
-            K1 free: {stats.promo.claimed}/{stats.promo.limit}
+            K1 free (khai trương): {stats.promo.claimed}/{stats.promo.limit}
           </b>{" "}
           · 🎁{" "}
           <b className="text-ink">

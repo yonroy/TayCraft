@@ -106,14 +106,21 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
         />
         <StatCard
           label="Không nhận quà 👀"
-          value={gift.notClaimed.toLocaleString("vi-VN")}
-          sub={`${gift.impressions.toLocaleString("vi-VN")} người thấy · tỷ lệ nhận ${
-            gift.impressions > 0 ? pct(gift.total / gift.impressions) : "—"
-          }`}
+          value={gift.impressions >= gift.total && gift.impressions > 0 ? gift.notClaimed.toLocaleString("vi-VN") : "—"}
+          sub={
+            gift.impressions === 0
+              ? gift.health.impressionsTable === "ok"
+                ? "0 lượt thấy ghi nhận — chưa đủ dữ liệu để so, không phải ai cũng bỏ qua"
+                : "Bảng đếm lượt thấy chưa sẵn sàng (xem cảnh báo bên dưới)"
+              : gift.impressions < gift.total
+                ? `Chỉ ${gift.impressions.toLocaleString("vi-VN")} lượt thấy nhưng ${gift.total.toLocaleString("vi-VN")} lượt nhận — đếm lượt thấy mới bật SAU một số lượt nhận, chưa so được`
+                : `${gift.impressions.toLocaleString("vi-VN")} người thấy · tỷ lệ nhận ${pct(gift.total / gift.impressions)}`
+          }
         />
       </div>
 
-      {/* Tiến độ khai trương */}
+      {/* Tiến độ khai trương — CHỈ tính suất khuyến mãi cũ, không gộp suất trúng hộp quà vào
+          (trước đây gộp chung khiến "K1 free" trông như phóng đại gấp nhiều lần tác động hộp quà). */}
       <Card title={`Suất K1 khai trương đã phát · ${promo.claimed}/${promo.limit}`}>
         <div className="h-3 w-full overflow-hidden rounded-full bg-paper">
           <div
@@ -122,7 +129,9 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
           />
         </div>
         <p className="mt-2 text-xs text-dim">
-          K1 free: <b className="text-ink">{stats.k1.free}</b> · K1 mua: {stats.k1.paid} ·{" "}
+          K1 free — khai trương: <b className="text-ink">{stats.k1.freeViaLaunchPromo}</b> · trúng hộp
+          quà: <b className="text-accent-2">{stats.k1.freeViaGiftJackpot}</b> (2 nguồn khác nhau, không
+          cộng dồn) · K1 mua: {stats.k1.paid} ·{" "}
           {promo.expired ? "Đã hết hạn khuyến mãi" : "Đang trong khuyến mãi"}
         </p>
       </Card>
@@ -169,11 +178,18 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
               <tbody>
                 {gift.tiers.map((r) => {
                   const deviation = r.actualPct - r.theoreticalPct;
-                  const flagFarm = r.percent >= 100 && deviation > 5; // FREE thực tế cao hơn lý thuyết >5đpt
+                  // Chỉ cờ farm cho mức CÒN trong cấu hình hiện tại — mức cũ (isLegacyTier) luôn có
+                  // theoreticalPct=0 nên sẽ luôn "lệch", không phải dấu hiệu farm, chỉ là dữ liệu cũ.
+                  const flagFarm = !r.isLegacyTier && r.percent >= 100 && deviation > 5;
                   return (
                     <tr key={r.percent} className="border-t border-line">
                       <td className={`py-2 ${r.percent >= 100 ? "font-semibold text-accent-2" : "text-ink"}`}>
                         {giftReward(r.percent)}
+                        {r.isLegacyTier && (
+                          <span className="ml-1.5 text-xs font-normal text-dim" title="Mức % này không còn trong cấu hình hiện tại — dữ liệu từ trọng số CŨ, đã đổi">
+                            (mức cũ)
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 text-right tabular-nums font-medium">
                         {r.count.toLocaleString("vi-VN")}
@@ -186,7 +202,9 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
                           </span>
                         )}
                       </td>
-                      <td className="py-2 text-right tabular-nums text-dim">{r.theoreticalPct.toFixed(1)}%</td>
+                      <td className="py-2 text-right tabular-nums text-dim">
+                        {r.isLegacyTier ? "— (mức cũ)" : `${r.theoreticalPct.toFixed(1)}%`}
+                      </td>
                       <td className="py-2 text-right tabular-nums text-dim">
                         {r.usedCount.toLocaleString("vi-VN")} ({r.usedPct.toFixed(1)}%)
                       </td>
@@ -196,10 +214,13 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
               </tbody>
             </table>
             <p className="mt-2 text-xs text-dim">
-              &quot;% lý thuyết&quot; tính từ đúng trọng số đang cấu hình trong code (45/30/17/8). Lệch mạnh
-              — nhất là mức FREE thực tế cao hơn hẳn lý thuyết — là dấu hiệu một người dùng nhiều tài
-              khoản để roll lại (xem cảnh báo ⚠️). &quot;Đã dùng trước hạn&quot; = đã thanh toán K1 trước khi
-              quà hết hạn (FREE luôn tính 100% vì cấp thẳng không qua thanh toán).
+              &quot;% lý thuyết&quot; tính từ đúng trọng số đang cấu hình trong code HIỆN TẠI. Bảng trọng số
+              đã đổi ít nhất 1 lần trong lịch sử — dòng đánh dấu &quot;(mức cũ)&quot; là % không còn tồn tại
+              trong cấu hình bây giờ, so lý thuyết với chúng VÔ NGHĨA (không phải bug hay farm). Chỉ nghi
+              farm khi mức FREE CÒN TRONG cấu hình hiện tại mà % thực tế cao hơn hẳn lý thuyết (xem ⚠️).
+              &quot;Đã dùng trước hạn&quot; = đã thanh toán K1 trước khi quà hết hạn (FREE luôn tính 100% vì
+              cấp thẳng không qua thanh toán). Tổng mẫu hiện tại: <b>{gift.total}</b> lượt — dưới 30 thì
+              mọi tỷ lệ ở đây chỉ mang tính tham khảo, chưa đủ để kết luận.
             </p>
           </>
         )}
@@ -253,6 +274,11 @@ export function AdminStats({ stats }: { stats: AdminStats }) {
           </tbody>
         </table>
         <p className="mt-2 text-xs text-dim">
+          Mẫu: <b>{gift.conversion.nonFreeRecipients}</b> người nhận quà giảm ·{" "}
+          <b>{gift.conversion.noGiftUsers}</b> người chưa nhận
+          {gift.conversion.nonFreeRecipients < 30 || gift.conversion.noGiftUsers < 30
+            ? " — cả hai đều dưới 30, tỷ lệ trên KHÔNG đủ tin cậy để kết luận, chỉ để theo dõi xu hướng."
+            : "."}{" "}
           ⚠️ KHÔNG phải thử nghiệm ngẫu nhiên (A/B test): người tự bấm &quot;Mở hộp quà&quot; có thể vốn đã
           quan tâm hơn mức trung bình (thiên lệch tự chọn). Tỷ lệ mua cao hơn ở nhóm nhận quà không
           chứng minh được hộp quà LÀ NGUYÊN NHÂN — chỉ là tín hiệu tham khảo tốt nhất hiện có với dữ

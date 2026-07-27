@@ -1,7 +1,15 @@
 # TayCraft AI — "Làm toán AI ✍️"
 
+## Harness entrypoint (đọc TRƯỚC — thêm 2026-07-07, cấp L1)
+Dự án đã có **Harness** (process gate). Đọc `d:\SecondBrain\_projects\TayCraft AI\AGENTS.md` đầu tiên — nó dẫn tới toàn bộ MEMORY + HARNESS.
+- **Feature Intake bắt buộc** trước khi code việc normal/high-risk: `HARNESS\FEATURE_INTAKE.md` (6 câu hỏi + phân loại tiny/normal/high-risk). Không jump-to-code.
+- Công cụ đã trang bị (lint/test/build/deploy): `HARNESS\TOOL_REGISTRY.md`. Behavior→proof: `HARNESS\TEST_MATRIX.md`.
+- Quyết định kiến trúc durable → `HARNESS\decisions\ADR-XXX-*.md`; tactical → `MEMORY\DECISIONS.md`.
+- Session Management (cuối phiên, nhắc commit) vẫn theo mục "Session Management" cuối file này.
+
 ## Second Brain
 Đọc các file sau trước khi làm bất cứ gì:
+- `d:\SecondBrain\_projects\TayCraft AI\AGENTS.md` — **entrypoint Harness** (đọc đầu tiên)
 - `d:\SecondBrain\_projects\TayCraft AI\MEMORY\CONTEXT.md` — trạng thái dự án
 - `d:\SecondBrain\_global\my-stack.md` — preferences cá nhân (lưu ý: stack ưa thích là Next.js/TS, KHÔNG áp vào dự án này)
 

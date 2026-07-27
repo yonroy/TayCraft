@@ -127,6 +127,17 @@ WB.wire(generate);
 Quy ước màu số học giữ nguyên: lam `--accent` (vào/xuôi/Q), cam `--accent2` (trọng số/đáp án/ngược/K), tím `#7c5cff` (V/thành phần 3). Ô given nền `--given`; ô đáp án nền `#fff5e9`.
 > `.intuition`, `.why`, `.quiz` là **class additive** đã thêm cuối `wb.css` — không sửa class cũ.
 
+## 5b. Bộ pattern "BẢN ĐẸP" (chốt 2026-07-05 — BẮT BUỘC cho phiếu mới)
+Triết lý: **hình + ô điền to là nhân vật chính, chữ giảng là phụ.** Class có sẵn cuối `wb.css`
+(không copy CSS vào file). Chi tiết + snippet: `CACH-TAO-PHIEU.md §2`. Mẫu chuẩn:
+**`K2/D7-backpropagation-dep.html`**.
+1. **`.wcell`** — đáp án CHÍNH mỗi bước viết vào ô ≥17×10mm (dòng chứa nó dùng `.calc.big`); `.blk` chỉ còn cho đáp phụ/quiz. ĐÁP ÁN: `.wcell.ans` + `data-q`.
+2. **Sơ đồ-để-điền (hero)** — trang ĐỀ có 1 hình chủ đạo ≥⅓ trang, **ô điền nằm TRONG hình** (rect trắng ~22×12mm, góc ✍ mờ); một hàm `drawX(id, showAns)` vẽ cả bản ĐỀ (ô trắng) lẫn ĐÁP ÁN (ô cam lộ số); mũi tên ghi sẵn phép phải nhân.
+3. **`.mission`** — mở trang ĐỀ bằng 2–3 dòng nhiệm vụ 🎯 thay intro dày; phần giảng đầy đủ dời sang trang ĐÁP ÁN (`.why`, Rút ra). Nếu được, bước cuối = **phần thưởng thấy được** (vd sửa w xong → loss lao dốc).
+4. **`.scratch`** — khoảng trắng chết ≥15mm cuối trang ĐỀ → ô nháp lưới chấm (`style="height:XXmm"` theo chỗ còn).
+5. **`.done-row`** — cuối ĐỀ: 2–3 ô tick `.ck` + câu thưởng `.win` 🎉 nói rõ vừa làm được gì.
+6. **Màu theo Phần** — `<body class="part pX">` + `.part-chip` cuối `.wb-title` (bảng màu/tên: `CACH-TAO-PHIEU.md §2.6`); chỉ tô chrome trang ĐỀ, KHÔNG đổi quy ước màu số học.
+
 ## 6. Làm số TÍNH TAY ĐƯỢC
 - Số nguyên nhỏ; tránh chia xấu. Số âm cho qua `wrap`.
 - `√`, `exp`, `ln`, `tanh`, `σ`: chọn số rơi vào mốc đẹp, hoặc **cho bảng tra sẵn** trên phiếu.
@@ -161,10 +172,13 @@ Tool tự chèn script đo, chạy Edge headless ×N (mỗi lần `generate()` s
 
 **➎ Không lệ thuộc số:** bấm 🎲 vài lần — số ĐỀ + lời giải + hình đổi **khớp**; cấu trúc đúng với mọi bộ số.
 
+**➏ Soát pattern bản đẹp (§5b):** `.wcell` cho đáp chính? hero figure có ô điền trong hình? `.mission` mở bài? `.scratch` lấp trống? `.done-row` chốt? `body class="part pX"` đúng phần?
+
 ## 9. Đăng ký bài (khi ra bài thật)
 - `ai-by-hand/index.html`: bật thẻ `todo`→`done` (hoặc `adv done`), sửa `href`, đổi `○`→`Mở →`. Footer ghi đúng `Bài NN` + `Trang X/N`.
 - `web/lib/lessons.ts`: đặt `slug` + `available:true` (+ `isFree` nếu cho xem thử). Bài K1 mặc định free (FREE_COURSES). Web tự sync qua `web/scripts/sync-content.mjs` lúc build — **không sửa `web/content/`**.
 
 ## 10. Mẫu tham chiếu (đọc trước khi làm)
+- **`ai-by-hand/K2/D7-backpropagation-dep.html` — mẫu chuẩn BẢN ĐẸP (§5b): hero figure ô-điền-trong-hình, `.wcell`, `.mission`, `.scratch`, `.done-row`, màu Phần D.**
 - `ai-by-hand/01-tich-vo-huong.html` — classic chuẩn (intro, step, .calc/.blk, .hint/.note, hình vectơ, Rút ra). **Bản nâng cấp giải-thích = bài này + ➋ `.intuition` + ➍ `.why`/bước + ➎ `.quiz`.**
 - Style chung: `ai-by-hand/wb.css` (class mới ở cuối file) · engine: `ai-by-hand/wb-random.js` · quy tắc nền: `ai-by-hand/CACH-TAO-PHIEU.md`.

@@ -82,6 +82,20 @@ function arrow(x1,y1,x2,y2,c,w){var a=Math.atan2(y2-y1,x2-x1),L=8;
 ```
 Mỗi sơ đồ là 1 `drawXxx(id, …)` build chuỗi `s` rồi `el(id).innerHTML=s`. Gọi tất cả trong `generate()` (động) + `drawPipe()` (tĩnh) sau `WB.wire(generate); generate();`.
 
+## 5b. Bộ pattern "BẢN ĐẸP" (chốt 2026-07-05 — áp cho phiếu mới)
+Class có sẵn cuối `wb.css`, dùng thẳng (KHÔNG copy vào `<style>` nội bộ). Chi tiết + snippet:
+`CACH-TAO-PHIEU.md §2` · mẫu chuẩn `K2/D7-backpropagation-dep.html`.
+- **`.wcell`** ô điền to ≥17×10mm cho đáp án CHÍNH (trong `.calc2` vẫn dùng `.blk` cho chuỗi
+  bước trung gian; kết quả CHỐT của cụm → `.wcell`).
+- **Ô điền TRONG hình**: sơ đồ-để-điền vốn là lõi skill này — ô "?" nên vẽ thành **rect trắng
+  to ~22×12mm có ✍ mờ** (không chỉ dấu "?") để người học viết thẳng vào hình in ra.
+- **`.mission`** 🎯 mở trang ĐỀ 1 (2–3 dòng nhiệm vụ + phần thưởng) — đặt TRƯỚC/THAY `.intro`
+  dày; thiết kế cụm cuối là **phần thưởng thấy được** khi khả thi.
+- **`.scratch`** lấp khoảng trắng ≥15mm cuối MỖI trang ĐỀ (phiếu nhiều trang càng cần).
+- **`.done-row`** cuối trang ĐỀ cuối cùng: ô tick mốc + câu thưởng 🎉.
+- **Màu theo Phần**: `<body class="part pX">` + `.part-chip` (bảng: `CACH-TAO-PHIEU.md §2.6`);
+  không đổi mã màu số học Q/K/V ở §4.
+
 ## 6. CSS additive cần có (trong `<style>` nội bộ)
 ```css
 /* hình + chú thích cạnh nhau */
@@ -158,6 +172,7 @@ node ai-by-hand/tools/check-de-key.mjs K?/<slug>-hieu-ro.html        # 0 lệch 
 - [ ] Sơ đồ KHÔNG in sẵn giá trị mà `.calc2` bắt người học tính (vd eˣ, α) — để "?" trên hình.
 - [ ] Mã màu đồng nhất ở legend + mọi hình + thẻ; ĐÁP ÁN gọn (đáp số + ≤1 dòng/câu), badge icon.
 - [ ] Spec v3 mô tả đúng từng hình (đối chiếu viewBox/toạ độ với HTML thật).
+- [ ] Pattern bản đẹp (§5b): ô "?" trong hình là rect trắng to viết được · `.wcell` cho đáp chốt · `.mission` mở bài · `.scratch` lấp trống · `.done-row` chốt · `body class="part pX"`.
 
 ## 10. Đăng ký (khi ra bài thật — chỉ khi được yêu cầu)
 - `ai-by-hand/index.html`: bật thẻ `todo`→`done`, sửa `href`, `○`→`Mở →`. (Bản hiểu-rõ thường là **biến thể** của bài đã có → hỏi người dùng: thay bản gốc / song song / để nháp.)
@@ -167,4 +182,5 @@ node ai-by-hand/tools/check-de-key.mjs K?/<slug>-hieu-ro.html        # 0 lệch 
 - **Phiếu mẫu chuẩn (template mới): `ai-by-hand/K3/H4-multi-head-attention-hieu-ro.html`** (4 trang · 5 sơ đồ TRÊN ĐỀ: split, heads, concat, mix-Wₒ, pipeline · chùm câu hỏi thẻ vai trò · ĐÁP ÁN gọn).
 - Spec mẫu: `ai-by-hand/_specs/H4-multi-head-attention.v3.md`.
 - H1/H2/H3 cũng đã dựng lại theo template này (tham chiếu thêm).
+- **Pattern bản đẹp: `ai-by-hand/K2/D7-backpropagation-dep.html`** (hero ô-điền-trong-hình, `.wcell`, `.mission`, `.scratch`, `.done-row`, màu Phần).
 - Nền: `ai-by-hand/wb.css` · `ai-by-hand/wb-random.js` · `ai-by-hand/CACH-TAO-PHIEU.md` · skill `phieu-giai-thich`.

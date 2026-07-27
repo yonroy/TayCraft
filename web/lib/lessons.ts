@@ -56,7 +56,9 @@ export function isFreeLesson(l: Lesson): boolean {
 }
 
 // Các asset dùng chung luôn được phép tải (kể cả khi xem bài free).
-export const SHARED_ASSETS = ["wb.css", "wb-canvas.css", "wb-random.js"];
+// LƯU Ý: danh sách này chỉ để ghi rõ ý định — route /api/learn còn cho qua MỌI file .css/.js
+// nằm ngay tại gốc content/ai-by-hand (xem isAlwaysAllowed), nên thêm wb-*.css mới không cần sửa đây.
+export const SHARED_ASSETS = ["wb.css", "wb-canvas.css", "wb-dashboard.css", "wb-random.js"];
 
 export const LESSONS: Lesson[] = [
   // ── PHẦN A · Toán nền tảng (K1) ─────────────────────────────────────────

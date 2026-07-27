@@ -19,8 +19,18 @@ const MIME: Record<string, string> = {
   ".woff2": "font/woff2",
 };
 
-function isAlwaysAllowed(fileName: string): boolean {
+// File .css/.js nằm NGAY tại gốc content/ai-by-hand (không thuộc K1–K4) đều là style/engine
+// dùng chung — không phải nội dung bán. Cho qua vô điều kiện để thêm wb-*.css mới không tái phát
+// lỗi "phiếu mất sạch CSS" (wb-dashboard.css từng bị 402 vì thiếu trong whitelist).
+// KHÔNG nới cho .html: index.html ở gốc vẫn phải qua cổng quyền như mọi phiếu.
+function isSharedRootAsset(rel: string, fileName: string): boolean {
+  if (/[/\\]/.test(rel)) return false; // nằm trong thư mục con → không phải asset gốc
+  return fileName.endsWith(".css") || fileName.endsWith(".js");
+}
+
+function isAlwaysAllowed(rel: string, fileName: string): boolean {
   if (SHARED_ASSETS.includes(fileName)) return true; // wb.css, wb-random.js
+  if (isSharedRootAsset(rel, fileName)) return true; // mọi wb-*.css / *.js ở gốc
   if (fileName.endsWith(".html")) {
     const slug = fileName.replace(/\.html$/, "");
     return isFreeContentSlug(slug); // free slug lẻ + toàn bộ khóa free (K1)
@@ -44,7 +54,7 @@ export async function GET(
   const fileName = basename(filePath);
 
   // Kiểm tra quyền: tài nguyên free/shared → cho qua; còn lại cần quyền theo gói của bài.
-  if (!isAlwaysAllowed(fileName)) {
+  if (!isAlwaysAllowed(rel, fileName)) {
     const slug = fileName.endsWith(".html") ? fileName.replace(/\.html$/, "") : undefined;
     const user = await getUser();
     if (!user || !(await hasAccess(user.id, slug))) {

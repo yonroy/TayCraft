@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { NavProgress } from "@/components/nav-progress";
 import "./globals.css";
 import "./landing.css";
 
@@ -44,6 +45,8 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${sans.variable} ${mono.variable} h-full`}>
       <body className="min-h-full flex flex-col font-sans antialiased">
+        {/* Phản hồi tức thì khi bấm link — chạy trước cả khi server trả HTML của route mới. */}
+        <NavProgress />
         {children}
         {/* Vercel Web Analytics: đếm lượt xem + khách duy nhất cho MỌI khách (kể cả ẩn danh).
             Xem biểu đồ traffic ở Vercel → Project → Analytics (cần bật Web Analytics trong project). */}

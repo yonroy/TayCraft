@@ -115,6 +115,16 @@ export function LaunchPopup() {
     return () => clearInterval(id);
   }, [open]);
 
+  // Khoá cuộn nền khi popup mở — khôi phục đúng giá trị cũ (không set cứng "") khi đóng.
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
   if (!open || !status || status.expired) return null;
 
   const close = () => {
@@ -136,13 +146,13 @@ export function LaunchPopup() {
       onClick={close}
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-3xl bg-gradient-to-b from-[#7a0d0d] to-[#3a0606] text-white shadow-2xl ring-1 ring-amber-300/30"
+        className="relative max-h-full w-full max-w-md overflow-y-auto rounded-3xl bg-gradient-to-b from-[#7a0d0d] to-[#3a0606] text-white shadow-2xl ring-1 ring-amber-300/30"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={close}
           aria-label="Đóng"
-          className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-black/30 text-white/80 hover:bg-black/50"
+          className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/30 text-white/80 hover:bg-black/50"
         >
           ✕
         </button>

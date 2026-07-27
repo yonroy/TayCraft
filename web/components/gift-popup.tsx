@@ -70,7 +70,7 @@ export function GiftPopup() {
       setOpen(true);
       track("gift_shown", { trigger: "auto" });
       sessionStorage.setItem("giftSeen", "1");
-    }, 1200);
+    }, 4000);
     return () => clearTimeout(t);
   }, []);
 
@@ -116,6 +116,16 @@ export function GiftPopup() {
     return () => clearInterval(id);
   }, [data]);
 
+  // Khoá cuộn nền khi popup mở — khôi phục đúng giá trị cũ (không set cứng "") khi đóng.
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
   if (gone) return null;
 
   const left = data ? Math.max(0, new Date(data.expiresAt).getTime() - now) : 0;
@@ -156,7 +166,7 @@ export function GiftPopup() {
             <button
               onClick={() => setOpen(false)}
               aria-label="Đóng"
-              className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-black/30 text-white/80 hover:bg-black/50"
+              className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/30 text-white/80 hover:bg-black/50"
             >
               ✕
             </button>

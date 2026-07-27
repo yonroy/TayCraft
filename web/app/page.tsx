@@ -5,9 +5,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { LaunchPopup } from "@/components/launch-popup";
 import { GiftPopup } from "@/components/gift-popup";
 import { LandingCurriculum } from "@/components/landing-curriculum";
-import { promoExpired } from "@/lib/promo";
+import { promoExpired, K1_LAUNCH_PRICE, K1_REGULAR_PRICE } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
-import { TOTAL_AVAILABLE, PARTS, FREE_SLUGS } from "@/lib/lessons";
+import { TOTAL_AVAILABLE, PARTS, FREE_SLUGS, lessonBySlug } from "@/lib/lessons";
 import { PRODUCTS, COURSES, productById, effectivePriceVnd, type Product } from "@/lib/products";
 import { effectiveGiftPercents, applyGift, GIFT_VISITOR_COOKIE } from "@/lib/gift";
 import { getUser, accessibleCourses } from "@/lib/auth";
@@ -22,10 +22,37 @@ const FEATURES = [
   { icon: "🪜", t: "Học theo thứ tự", d: "Lộ trình K1→K4 thiết kế tuần tự, mỗi bài xây trên nền bài trước, không nhảy cóc." },
 ];
 
+// 1 phiếu đại diện mỗi phần A→N (14 phần) — ưu tiên H, I (Transformer/LLM) lên đầu vì
+// khách quan tâm nhất tới đó. Ảnh thật lấy từ public/thumbs/<slug>.png (đã render sẵn).
+const PREVIEW_SLUGS = [
+  "H2-self-attention",
+  "I5-lora",
+  "A7-nhan-ma-tran-bien-doi-2d",
+  "B6-pca",
+  "C10-softmax",
+  "D7-backpropagation",
+  "E6-batchnorm",
+  "F1-cnn-tich-chap",
+  "G4-lstm-mot-o-nho",
+  "J3-gan",
+  "K6-policy-gradient-hieu-ro",
+  "L1-confusion-matrix-hieu-ro",
+  "M4-clip-hieu-ro",
+  "N3-mini-gpt-hieu-ro",
+];
+
 const FAQS = [
   {
     q: "Phiếu tính tay là gì? Học kiểu gì?",
     a: "Mỗi phiếu là 1 file gồm 2 trang khổ A4: trang ĐỀ có ô trống để bạn tự điền số, trang ĐÁP ÁN để đối chiếu. Bạn in ra giấy, dùng bút chì tính tay từng bước — theo tinh thần “AI by Hand” của Prof. Tom Yeh. Có nút 🎲 để đổi bộ số bất kỳ lúc nào, luyện lại vô hạn lần.",
+  },
+  {
+    q: "Trên YouTube có đầy tài liệu miễn phí, sao phải trả tiền?",
+    a: "Xem video là học thụ động — xem xong dễ quên vì tay không làm gì cả. Phiếu tính tay bắt bạn tự điền từng con số, có nút 🎲 đổi số để luyện lại vô hạn lần, và đáp án đối chiếu ngay khi làm xong thay vì tự đoán đúng sai. Toàn bộ đi theo lộ trình K1→K4 liền mạch, không phải tự mò rải rác qua chục video khác nhau.",
+  },
+  {
+    q: "Sao không có video giảng như các khóa học khác?",
+    a: "Vì học bằng tay nhớ lâu hơn học bằng mắt. Xem giảng viên giải hộ trên video, lúc xem thấy hiểu nhưng não không phải tự xử lý gì nên quên rất nhanh. Phiếu tính tay bắt bạn tự tay điền từng ô — đúng cơ chế học chủ động, nhớ sâu hơn nhiều so với xem người khác làm.",
   },
   {
     q: "Tôi không biết lập trình, có học được không?",
@@ -274,29 +301,8 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ============ PACKAGES ============ */}
-        <section className="sec sec-alt" id="packages">
-          <div className="lpc">
-            <div className="sec-head">
-              <span className="eyebrow">Bảng giá</span>
-              <h2>Chọn gói phù hợp — trả một lần, học trọn đời</h2>
-              <p>Không phí ẩn, không gia hạn hàng tháng. Thanh toán QR chuyển khoản, kích hoạt tức thì.</p>
-            </div>
-            <div className="pkg-grid">
-              {PRODUCTS.filter((p) => p.active).map((p) => (
-                <PackageCard
-                  key={p.id}
-                  p={p}
-                  launchActive={launchActive}
-                  giftPercent={giftPercents[p.id] ?? null}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ============ CURRICULUM ============ */}
-        <section className="sec" id="curriculum">
+        <section className="sec sec-alt" id="curriculum">
           <div className="lpc">
             <div className="sec-head">
               <span className="eyebrow">Lộ trình học</span>
@@ -304,6 +310,49 @@ export default async function Home() {
               <p>Bấm vào từng khóa để xem các phần bên trong.</p>
             </div>
             <LandingCurriculum />
+          </div>
+        </section>
+
+        {/* ============ PREVIEW SHEETS (ảnh phiếu thật) ============ */}
+        <section className="sec" id="preview">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Xem trước phiếu thật</span>
+              <h2>Không phải minh họa — đây là ảnh chụp phiếu thật</h2>
+              <p>Mỗi ảnh dưới đây đại diện cho một phần trong lộ trình A→N, lấy thẳng từ bộ phiếu bạn sẽ nhận.</p>
+            </div>
+
+            <div className="pv-free-row">
+              {FREE_SLUGS.map((slug) => {
+                const l = lessonBySlug(slug);
+                if (!l) return null;
+                return (
+                  <Link key={slug} href={`/learn/${slug}`} className="pv-free-card">
+                    <span className="pv-free-tag">Xem miễn phí</span>
+                    <div className="pv-free-thumb">
+                      <img src={`/thumbs/${slug}.png`} alt={`Phiếu thật — Bài ${l.no} · ${l.title}`} loading="lazy" />
+                    </div>
+                    <div className="pv-free-title">{l.title}</div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="pv-grid">
+              {PREVIEW_SLUGS.map((slug) => {
+                const l = lessonBySlug(slug);
+                if (!l) return null;
+                return (
+                  <div className="pv-card" key={slug}>
+                    <div className="pv-thumb">
+                      <img src={`/thumbs/${slug}.png`} alt={`Phiếu thật — Bài ${l.no} · ${l.title}`} loading="lazy" />
+                      <span className="pv-part">Phần {l.part}</span>
+                    </div>
+                    <div className="pv-title">{l.title}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -380,8 +429,29 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* ============ PACKAGES ============ */}
+        <section className="sec sec-alt" id="packages">
+          <div className="lpc">
+            <div className="sec-head">
+              <span className="eyebrow">Bảng giá</span>
+              <h2>Chọn gói phù hợp — trả một lần, học trọn đời</h2>
+              <p>Không phí ẩn, không gia hạn hàng tháng. Thanh toán QR chuyển khoản, kích hoạt tức thì.</p>
+            </div>
+            <div className="pkg-grid">
+              {PRODUCTS.filter((p) => p.active).map((p) => (
+                <PackageCard
+                  key={p.id}
+                  p={p}
+                  launchActive={launchActive}
+                  giftPercent={giftPercents[p.id] ?? null}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ============ FAQ ============ */}
-        <section className="sec sec-alt" id="faq">
+        <section className="sec" id="faq">
           <div className="lpc">
             <div className="sec-head">
               <span className="eyebrow">Câu hỏi thường gặp</span>
@@ -416,23 +486,47 @@ export default async function Home() {
         </section>
 
         {/* ============ FINAL CTA ============ */}
-        <section className="sec">
+        <section className="sec sec-alt">
           <div className="lpc">
             <div className="final-cta">
-              <span className="eyebrow">★ Gói được chọn nhiều nhất</span>
+              {launchActive && !ownsK1 ? (
+                <span className="eyebrow">🎉 100 suất khai trương</span>
+              ) : (
+                <span className="eyebrow">★ Gói được chọn nhiều nhất</span>
+              )}
               <h2>Sẵn sàng hiểu AI từ gốc bằng chính đôi tay của bạn?</h2>
-              <p>Gói Pro: Khóa 1 + Khóa 2 + Khóa 3 — Toán nền tới Transformer &amp; LLM.</p>
+              {launchActive && !ownsK1 ? (
+                <p>Khóa 1: nền tảng toán cho AI — vectơ, ma trận, đạo hàm, xác suất trước khi vào Deep Learning.</p>
+              ) : (
+                <p>Gói Pro: Khóa 1 + Khóa 2 + Khóa 3 — Toán nền tới Transformer &amp; LLM.</p>
+              )}
               <div className="final-price-row">
-                <span className="price">{formatVnd(proPrice)}</span>
-                {proOld && proOld > proPrice && <span className="old">{formatVnd(proOld)}</span>}
-                {proOld && proOld > proPrice && (
-                  <span className="save-tag">Tiết kiệm {formatVnd(proOld - proPrice)}</span>
+                {launchActive && !ownsK1 ? (
+                  <>
+                    <span className="price">{formatVnd(K1_LAUNCH_PRICE)}</span>
+                    <span className="old">{formatVnd(K1_REGULAR_PRICE)}</span>
+                    <span className="save-tag">Tiết kiệm {formatVnd(K1_REGULAR_PRICE - K1_LAUNCH_PRICE)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="price">{formatVnd(proPrice)}</span>
+                    {proOld && proOld > proPrice && <span className="old">{formatVnd(proOld)}</span>}
+                    {proOld && proOld > proPrice && (
+                      <span className="save-tag">Tiết kiệm {formatVnd(proOld - proPrice)}</span>
+                    )}
+                  </>
                 )}
               </div>
               <div className="final-cta-btns">
-                <Link href="/checkout?product=k3" className="btn btn-amber btn-lg">
-                  Mua gói Pro ngay
-                </Link>
+                {launchActive && !ownsK1 ? (
+                  <Link href="/checkout?product=k1" className="btn btn-amber btn-lg">
+                    Nhận Khóa 1 ngay
+                  </Link>
+                ) : (
+                  <Link href="/checkout?product=k3" className="btn btn-amber btn-lg">
+                    Mua gói Pro ngay
+                  </Link>
+                )}
                 <Link
                   href="#curriculum"
                   className="btn btn-ghost btn-lg"

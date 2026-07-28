@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { NavProgress } from "@/components/nav-progress";
+import { MetaPixel } from "@/components/meta-pixel";
+import { UtmCapture } from "@/components/utm-capture";
 import "./globals.css";
 import "./landing.css";
 
@@ -47,6 +49,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans antialiased">
         {/* Phản hồi tức thì khi bấm link — chạy trước cả khi server trả HTML của route mới. */}
         <NavProgress />
+        {/* Meta Pixel: KHÔNG render gì nếu thiếu NEXT_PUBLIC_META_PIXEL_ID (xem component). */}
+        <MetaPixel />
+        {/* Ghi "traffic thật" (UTM/referrer ngoài site) vào DB 1 lần/phiên + bắn InitiateCheckout
+            khi vào /checkout — xem components/utm-capture.tsx. */}
+        <UtmCapture />
         {children}
         {/* Vercel Web Analytics: đếm lượt xem + khách duy nhất cho MỌI khách (kể cả ẩn danh).
             Xem biểu đồ traffic ở Vercel → Project → Analytics (cần bật Web Analytics trong project). */}

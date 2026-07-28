@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { LaunchPopup } from "@/components/launch-popup";
 import { GiftPopup } from "@/components/gift-popup";
 import { LandingCurriculum } from "@/components/landing-curriculum";
-import { promoExpired, K1_LAUNCH_PRICE, K1_REGULAR_PRICE } from "@/lib/promo";
+import { promoExpired } from "@/lib/promo";
 import { getApprovedReviews } from "@/lib/reviews";
 import { TOTAL_AVAILABLE, PARTS, FREE_SLUGS, lessonBySlug } from "@/lib/lessons";
 import { PRODUCTS, COURSES, productById, effectivePriceVnd, type Product } from "@/lib/products";
@@ -91,7 +91,7 @@ function PackageCard({
   return (
     <div className={`pkg-card ${featured ? "featured" : ""}`}>
       {launchRibbon ? (
-        <span className="pkg-launch-ribbon">🎉 Khai trương · chỉ 49K</span>
+        <span className="pkg-launch-ribbon">🎉 Khai trương · chỉ {formatVnd(price)}</span>
       ) : (
         featured && <span className="pkg-ribbon">★ Phổ biến nhất</span>
       )}
@@ -149,6 +149,12 @@ export default async function Home() {
   const proPrice = effectivePriceVnd(pro);
   const proOld = pro.compareAtVnd ?? null;
 
+  // Nguồn giá K1 DUY NHẤT cho mọi chỗ hiển thị ở trang này — không hardcode số nữa
+  // (products.ts đã bỏ nhánh promo trong effectivePriceVnd, xem ADR-002).
+  const k1 = productById("k1")!;
+  const k1Price = effectivePriceVnd(k1);
+  const k1Old = k1.compareAtVnd ?? null; // hiện null: K1 không còn giá gạch ngang nào
+
   return (
     <>
       <SiteHeader />
@@ -177,7 +183,7 @@ export default async function Home() {
               <div className="hero-ctas">
                 {launchActive && !ownsK1 ? (
                   <Link href="/checkout?product=k1" className="btn btn-primary btn-lg">
-                    Nhận Khóa 1 — 49.000đ
+                    Nhận Khóa 1 — {formatVnd(k1Price)}
                   </Link>
                 ) : (
                   <Link href="/checkout?product=k3" className="btn btn-primary btn-lg">
@@ -503,9 +509,11 @@ export default async function Home() {
               <div className="final-price-row">
                 {launchActive && !ownsK1 ? (
                   <>
-                    <span className="price">{formatVnd(K1_LAUNCH_PRICE)}</span>
-                    <span className="old">{formatVnd(K1_REGULAR_PRICE)}</span>
-                    <span className="save-tag">Tiết kiệm {formatVnd(K1_REGULAR_PRICE - K1_LAUNCH_PRICE)}</span>
+                    <span className="price">{formatVnd(k1Price)}</span>
+                    {k1Old && k1Old > k1Price && <span className="old">{formatVnd(k1Old)}</span>}
+                    {k1Old && k1Old > k1Price && (
+                      <span className="save-tag">Tiết kiệm {formatVnd(k1Old - k1Price)}</span>
+                    )}
                   </>
                 ) : (
                   <>
@@ -548,7 +556,8 @@ export default async function Home() {
             {launchActive && !ownsK1 ? (
               <>
                 <div className="mc-price">
-                  49.000đ <span className="mc-old">149.000đ</span>
+                  {formatVnd(k1Price)}
+                  {k1Old && k1Old > k1Price && <span className="mc-old">{formatVnd(k1Old)}</span>}
                 </div>
                 <div className="mc-label">Khóa 1 · ưu đãi khai trương</div>
               </>

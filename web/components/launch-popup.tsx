@@ -3,6 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmailOtpForm } from "@/components/email-otp-form";
+import { productById, effectivePriceVnd } from "@/lib/products";
+import { formatVnd } from "@/lib/utils";
+
+// Giá K1 sau khi hết suất free: đọc từ nguồn giá chung (ADR-002), không hardcode.
+// products.ts/lessons.ts là module dữ liệu thuần (không "server-only", không fs/db) nên
+// import được thẳng vào client component này — giống cách app/page.tsx (server) dùng.
+const k1Product = productById("k1")!;
+const k1PriceVnd = effectivePriceVnd(k1Product);
+const k1OldVnd =
+  k1Product.compareAtVnd && k1Product.compareAtVnd > k1PriceVnd ? k1Product.compareAtVnd : null;
 
 type Status = {
   limit: number;
@@ -18,7 +28,8 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-// Popup "Tưng bừng khai trương": tặng 100 suất K1 free. Hết suất / hết hạn → chuyển CTA mua K1 49k.
+// Popup "Tưng bừng khai trương": tặng 100 suất K1 free. Hết suất → chuyển CTA mua K1 giá hiện hành
+// (đọc effectivePriceVnd, xem k1PriceVnd ở trên) — KHÔNG hardcode số, giá đổi ở products.ts là đủ.
 export function LaunchPopup() {
   const router = useRouter();
   const [status, setStatus] = useState<Status | null>(null);
@@ -272,13 +283,19 @@ export function LaunchPopup() {
                 Trong dịp khai trương, bạn vẫn học trọn <b>Khóa 1</b> với giá ưu đãi:
               </p>
               <div className="mt-3 text-4xl font-extrabold text-amber-300">
-                49.000đ <span className="text-lg text-amber-100/50 line-through">149.000đ</span>
+                {formatVnd(k1PriceVnd)}
+                {k1OldVnd && (
+                  <span className="text-lg text-amber-100/50 line-through">
+                    {" "}
+                    {formatVnd(k1OldVnd)}
+                  </span>
+                )}
               </div>
               <a
                 href="/checkout?product=k1"
                 className="mt-5 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
               >
-                Học Khóa 1 chỉ 49.000đ →
+                Học Khóa 1 chỉ {formatVnd(k1PriceVnd)} →
               </a>
             </>
           )}

@@ -3,12 +3,10 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { QrCheckout } from "@/components/qr-checkout";
-import { ViewerCount } from "@/components/viewer-count";
 import { LoginForm } from "@/components/login-form";
 import { getUser, ownsProduct } from "@/lib/auth";
 import { DEFAULT_PRODUCT, isActiveProduct, productById, effectivePriceVnd } from "@/lib/products";
 import { effectiveGiftPercent, applyGift, GIFT_VISITOR_COOKIE } from "@/lib/gift";
-import { getFlashSale } from "@/lib/settings";
 import { formatVnd } from "@/lib/utils";
 
 export default async function CheckoutPage({
@@ -26,7 +24,6 @@ export default async function CheckoutPage({
   // để gắn quyền — chỉ đổi CHỖ đăng nhập, không đổi luồng cấp quyền (không migration).
   if (user && (await ownsProduct(user.id, productId))) redirect("/learn");
 
-  const flash = await getFlashSale();
   // Giá hiển thị PHẢI khớp số tiền đơn sẽ ghi (api/orders áp cùng activeGiftPercent + applyGift).
   // Trước đây chỗ này luôn hiện giá GỐC trong khi QR lại ra số đã giảm → khách thấy 149k rồi mới
   // thấy 44k ở bước cuối: vừa mất niềm tin, vừa giấu mất chính lợi ích đang thuyết phục họ mua.
@@ -86,16 +83,6 @@ export default async function CheckoutPage({
                     <span className="ck">✓</span> Tự động mở khóa khi nhận được chuyển khoản
                   </li>
                 </ul>
-              </div>
-            )}
-
-            {flash.enabled && (
-              <div className="co-viewer">
-                <ViewerCount
-                  min={flash.viewerMin}
-                  max={flash.viewerMax}
-                  label="người đang thanh toán"
-                />
               </div>
             )}
 

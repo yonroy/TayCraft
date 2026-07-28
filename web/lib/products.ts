@@ -4,7 +4,6 @@
 // Cam kết bền vững: Trọn bộ = trọn đời nội dung hiện có + cập nhật mới free 12 tháng
 // (không hứa "mọi phiếu tương lai trọn đời" để tránh gánh nặng vận hành).
 import type { Course } from "./lessons";
-import { promoExpired } from "./promo";
 
 // Giữ id "all-access" cho gói Trọn bộ để enrollment/đơn cũ vẫn được grandfather.
 export type ProductId = "k1" | "co-ban" | "k3" | "all-access";
@@ -40,17 +39,15 @@ export interface Product {
   active: boolean; // đang bán hay chưa
 }
 
-// 4 bậc cộng dồn: K1 lẻ (khai trương) → Cơ bản → Pro (nổi bật) → Trọn bộ.
+// 4 bậc cộng dồn: K1 lẻ → Cơ bản → Pro (nổi bật) → Trọn bộ.
 export const PRODUCTS: Product[] = [
   {
     id: "k1",
     label: "Khóa 1 · Nền tảng AI",
     tagline: "Toán nền + ML cổ điển + Nơ-ron/MLP",
     courses: ["K1"],
-    priceVnd: 49000,
-    compareAtVnd: 149000,
+    priceVnd: 99000,
     perks: ["Học một lần, xem trọn đời"],
-    badge: "Khai trương",
     active: true,
   },
   {
@@ -97,10 +94,8 @@ export function productById(id: string): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);
 }
 
-// Giá tính tiền/hiển thị có hiệu lực. Gói K1 = giá khai trương cho tới hết KM, sau đó về giá thường.
-// Dùng chung cho cả tạo đơn (amount) lẫn UI để không lệch.
+// Giá tính tiền/hiển thị có hiệu lực. Dùng chung cho cả tạo đơn (amount) lẫn UI để không lệch.
 export function effectivePriceVnd(p: Product): number {
-  if (p.id === "k1" && promoExpired()) return p.compareAtVnd ?? p.priceVnd;
   return p.priceVnd;
 }
 

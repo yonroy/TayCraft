@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { Lock, Gift } from "lucide-react";
 import { formatVnd } from "@/lib/utils";
 import { FREE_SLUGS, TOTAL_AVAILABLE, lessonBySlug, type Course } from "@/lib/lessons";
 import { getUser } from "@/lib/auth";
@@ -72,7 +73,9 @@ export async function Paywall({ title, course }: { title: string; course: Course
       )}
 
       <div className={`pw-card ${preview ? "" : "solo"}`}>
-        <div className="pw-lock">🔒</div>
+        <div className="pw-lock">
+          <Lock size={40} strokeWidth={2} aria-hidden />
+        </div>
         <h2>{title}</h2>
         <p className="pw-desc">
           Bài này nằm trong gói <b style={{ color: "var(--ink)" }}>{p.label}</b>. Mua một lần, mở
@@ -103,7 +106,10 @@ export async function Paywall({ title, course }: { title: string; course: Course
         <div className="pw-price">{formatVnd(price.final)}</div>
         {price.percent != null && (
           <div className="co-sum-gift">
-            🎁 Đã áp mã giảm giá của bạn — tiết kiệm {formatVnd(price.base - price.final)}
+            <span className="inline-flex items-center gap-1">
+              <Gift size={18} strokeWidth={2} aria-hidden />
+              Đã áp mã giảm giá của bạn — tiết kiệm {formatVnd(price.base - price.final)}
+            </span>
           </div>
         )}
         <p className="pw-price-note">Trọn đời · hoàn tiền trong 7 ngày nếu chưa hợp</p>

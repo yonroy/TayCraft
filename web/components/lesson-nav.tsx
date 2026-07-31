@@ -40,7 +40,7 @@ function NavCard({
   if (!lesson) {
     return (
       <div
-        className={`flex flex-col gap-0.5 rounded-2xl border border-line bg-paper px-4 py-3 opacity-50 ${align}`}
+        className={`flex flex-col gap-0.5 rounded-lg border border-line bg-paper px-4 py-3 opacity-50 ${align}`}
         aria-disabled
       >
         <span className="text-xs font-medium text-dim">{cue}</span>
@@ -52,7 +52,7 @@ function NavCard({
   return (
     <Link
       href={`/learn/${lesson.slug}`}
-      className={`group flex flex-col gap-0.5 rounded-2xl border border-line bg-white px-4 py-3 transition hover:border-accent ${align}`}
+      className={`group flex flex-col gap-0.5 rounded-lg border border-line bg-white px-4 py-3 transition hover:border-accent ${align}`}
     >
       <span className="text-xs font-medium text-dim group-hover:text-accent">{cue}</span>
       <span className="line-clamp-1 text-sm font-semibold text-ink group-hover:text-accent">

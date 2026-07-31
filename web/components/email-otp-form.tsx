@@ -24,8 +24,8 @@ export function EmailOtpForm({
   const [cooldown, setCooldown] = useState(0);
 
   const inputClass = dark
-    ? "w-full h-11 px-4 rounded-xl border border-white/20 bg-black/25 text-white placeholder:text-white/40 focus:border-amber-300 focus:outline-none"
-    : "w-full h-11 px-4 rounded-xl border border-line focus:border-accent focus:outline-none";
+    ? "w-full h-11 px-4 rounded-md border border-white/20 bg-black/25 text-white placeholder:text-white/40 focus:border-amber-300 focus:outline-none"
+    : "w-full h-11 px-4 rounded-md border border-line focus:border-accent focus:outline-none";
   const errorClass = dark ? "text-sm text-amber-200" : "text-sm text-accent-2";
   const hintClass = dark ? "text-xs text-amber-100/60" : "text-xs text-dim";
 
@@ -103,8 +103,7 @@ export function EmailOtpForm({
         ) : (
           <button
             type="submit"
-            className="btn btn-primary btn-lg"
-            style={{ width: "100%" }}
+            className="btn btn-primary btn-lg w-full"
             disabled={loading || code.length < 6}
           >
             {loading ? "Đang xác nhận…" : "Xác nhận →"}
@@ -157,12 +156,7 @@ export function EmailOtpForm({
           {loading ? "Đang gửi…" : "Gửi mã đăng nhập"}
         </Button>
       ) : (
-        <button
-          type="submit"
-          className="btn btn-primary btn-lg"
-          style={{ width: "100%" }}
-          disabled={loading}
-        >
+        <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
           {loading ? "Đang gửi…" : "Gửi mã đăng nhập"}
         </button>
       )}

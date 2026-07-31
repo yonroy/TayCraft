@@ -18,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
         "/checkout",
         "/auth",
         "/login",
-        "/danh-gia", // gated: redirect("/login?next=/danh-gia") khi chưa đăng nhập (app/danh-gia/page.tsx)
+        "/danh-gia", // trang gửi cảm nhận cá nhân hoá theo tài khoản — không cần Google index dù đã mở cho khách ẩn danh xem (app/danh-gia/page.tsx)
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

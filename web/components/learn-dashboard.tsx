@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { BookOpen, CircleCheckBig, Flame, Lock, Search } from "lucide-react";
 import {
   LESSONS,
   PARTS,
@@ -136,13 +137,11 @@ function ThePhieu({
   unlocked,
   done,
   onToggle,
-  packageLabel,
 }: {
   lesson: Lesson;
   unlocked: boolean;
   done: boolean;
   onToggle: (slug: string) => void;
-  packageLabel?: string;
 }) {
   const free = isFreeLesson(lesson);
   const [imgError, setImgError] = useState(false);
@@ -152,7 +151,8 @@ function ThePhieu({
   const thumb = (
     <div className="ld-thumb">
       {img ? (
-        // Ảnh phiếu thật; bài khóa thì làm mờ để vẫn thấy "phiếu dày, đáng mua".
+        // Ảnh phiếu thật, luôn sắc nét kể cả khi khóa — khóa chỉ báo bằng badge ổ khoá,
+        // không làm mờ (mờ 135/138 ảnh biến tài sản mạnh nhất của trang thành biển xám).
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={img}
@@ -182,9 +182,8 @@ function ThePhieu({
       )}
       {free && <span className="ld-flag free">FREE</span>}
       {state === "locked" && (
-        <span className="ld-lock">
-          🔒
-          {packageLabel && <b>Gói {packageLabel}</b>}
+        <span className="ld-lock" aria-hidden="true">
+          <Lock size={14} strokeWidth={2} />
         </span>
       )}
       {state === "soon" && <span className="ld-flag soon">sắp ra</span>}
@@ -290,7 +289,15 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
   // Phần G có G1 thuộc K3 (xem _SPEC-shared.md §2). Đếm "đã học" tính trên TOÀN BỘ
   // bài của phần đó (không chỉ bài đang hiển thị sau lọc), giữ mẫu số ổn định.
   const sections = useMemo(() => {
-    const list: { course: Course; part: Part; name: string; items: Lesson[]; total: number; doneCount: number }[] = [];
+    const list: {
+      course: Course;
+      part: Part;
+      name: string;
+      items: Lesson[];
+      total: number;
+      doneCount: number;
+      hasLocked: boolean;
+    }[] = [];
     for (const cid of COURSE_ORDER) {
       for (const part of PARTS) {
         const all = LESSONS.filter((l) => l.course === cid && l.part === part.id);
@@ -304,11 +311,12 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
           items,
           total: all.length,
           doneCount: all.filter((l) => l.slug && doneSet.has(l.slug)).length,
+          hasLocked: all.some((l) => l.available && !unlocked(l)),
         });
       }
     }
     return list;
-  }, [matches, doneSet]);
+  }, [matches, doneSet, unlocked]);
 
   return (
     <div className="ld lpc">
@@ -362,7 +370,7 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
       {/* ---------- 3 ô thống kê ---------- */}
       <section className="ld-stats">
         <div className="ld-stat">
-          <span className="ic">✅</span>
+          <CircleCheckBig className="ic" size={20} strokeWidth={2} aria-hidden="true" />
           <span>
             <span className="num">
               {doneCount}/{openLessons.length}
@@ -370,15 +378,22 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
             <span className="lbl">phiếu đã học</span>
           </span>
         </div>
-        <div className="ld-stat">
-          <span className="ic">🔥</span>
-          <span>
-            <span className="num">{streak} ngày</span>
-            <span className="lbl">chuỗi ngày học liên tục</span>
-          </span>
+        <div className={`ld-stat${streak === 0 ? " is-empty" : ""}`}>
+          <Flame className="ic" size={20} strokeWidth={2} aria-hidden="true" />
+          {streak > 0 ? (
+            <span>
+              <span className="num">{streak} ngày</span>
+              <span className="lbl">chuỗi ngày học liên tục</span>
+            </span>
+          ) : (
+            <span>
+              <span className="num">Bắt đầu chuỗi</span>
+              <span className="lbl">Học hôm nay để mở chuỗi ngày</span>
+            </span>
+          )}
         </div>
         <div className="ld-stat">
-          <span className="ic">📘</span>
+          <BookOpen className="ic" size={20} strokeWidth={2} aria-hidden="true" />
           <span>
             <span className="num">{openLessons.length - doneCount} phiếu</span>
             <span className="lbl">còn lại đang mở</span>
@@ -408,7 +423,9 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
                     <span className="ld-pct">{p}%</span>
                   )
                 ) : (
-                  <span className="ld-pct">🔒</span>
+                  <span className="ld-pct">
+                    <Lock size={14} strokeWidth={2} aria-hidden="true" />
+                  </span>
                 )}
               </div>
               <div className="ld-course-name">{meta.name}</div>
@@ -449,6 +466,7 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
         ))}
         <span className="ld-count">{shown.length} bài</span>
         <span className="ld-search">
+          <Search className="ld-search-icon" size={16} strokeWidth={2} aria-hidden="true" />
           <input
             type="search"
             value={q}
@@ -469,6 +487,12 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
               <span className="ld-part-badge">{s.part}</span>
               <span className="ld-part-name">{s.name}</span>
               <span className="ld-part-course">Khóa {s.course}</span>
+              {s.hasLocked && (
+                <span className="ld-part-lock">
+                  <Lock size={12} strokeWidth={2} aria-hidden="true" />
+                  Cần gói {packageOf(s.course)}
+                </span>
+              )}
               <span className="ld-part-count">
                 {s.doneCount}/{s.total} đã học
               </span>
@@ -481,7 +505,6 @@ export function LearnDashboard({ accessCourses = [] }: { accessCourses?: Course[
                   unlocked={unlocked(l)}
                   done={!!l.slug && doneSet.has(l.slug)}
                   onToggle={toggle}
-                  packageLabel={packageOf(l.course)}
                 />
               ))}
             </div>

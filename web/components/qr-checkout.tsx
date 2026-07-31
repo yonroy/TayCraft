@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { track } from "@vercel/analytics";
+import { TriangleAlert, MessageCircle, Mail } from "lucide-react";
 import { formatVnd } from "@/lib/utils";
 
 // Event Vercel Analytics cho phễu thanh toán — chỉ gửi `product` (không email/user_id/amount cá nhân).
@@ -144,7 +145,7 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
           Bạn đã mở khóa <b style={{ color: "var(--ink)" }}>{productLabel ?? "gói học"}</b> — chúc bạn
           học thật vui và hiểu AI tới tận con số ✍️
         </p>
-        <div style={{ marginTop: 22 }}>
+        <div className="mt-6">
           <button
             type="button"
             className="btn btn-primary btn-lg"
@@ -156,16 +157,14 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
             Vào học ngay →
           </button>
         </div>
-        <p className="tiny" style={{ color: "var(--dim)" }}>
-          Tự động chuyển vào khu học sau vài giây…
-        </p>
+        <p className="tiny text-dim">Tự động chuyển vào khu học sau vài giây…</p>
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="co-card" style={{ textAlign: "center" }}>
+      <div className="co-card text-center">
         <p className="co-qr-sub">Đang tạo đơn hàng…</p>
       </div>
     );
@@ -207,7 +206,13 @@ export function QrCheckout({ product, productLabel }: { product?: string; produc
       </div>
 
       <p className="co-warn">
-        ⚠️ Giữ <b>nguyên nội dung chuyển khoản</b> (cả từ khóa đầu) để hệ thống nhận diện đơn của bạn.
+        <TriangleAlert
+          size={18}
+          strokeWidth={2}
+          aria-hidden
+          className="mr-1 inline-block align-[-3px]"
+        />
+        Giữ <b>nguyên nội dung chuyển khoản</b> (cả từ khóa đầu) để hệ thống nhận diện đơn của bạn.
       </p>
 
       <div className="co-waiting">
@@ -245,15 +250,26 @@ function AdminFallback({
 
       <div className="co-actions">
         {CONTACT.zalo && (
-          <ContactLink href={`https://zalo.me/${CONTACT.zalo}`} label="💬 Nhắn Zalo" />
+          <ContactLink
+            href={`https://zalo.me/${CONTACT.zalo}`}
+            icon={<MessageCircle size={18} strokeWidth={2} aria-hidden />}
+            label="Nhắn Zalo"
+          />
         )}
-        {CONTACT.messenger && <ContactLink href={CONTACT.messenger} label="💬 Messenger" />}
+        {CONTACT.messenger && (
+          <ContactLink
+            href={CONTACT.messenger}
+            icon={<MessageCircle size={18} strokeWidth={2} aria-hidden />}
+            label="Messenger"
+          />
+        )}
         {CONTACT.email && (
           <ContactLink
             href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(
               subject,
             )}&body=${encodeURIComponent(msg)}`}
-            label="✉️ Gửi email"
+            icon={<Mail size={18} strokeWidth={2} aria-hidden />}
+            label="Gửi email"
           />
         )}
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => onCopy(msg, "msg")}>
@@ -262,17 +278,16 @@ function AdminFallback({
       </div>
 
       {!HAS_CONTACT && (
-        <p style={{ marginTop: 8 }}>
-          Copy lời nhắn trên rồi gửi cho admin qua kênh liên hệ trên trang chủ.
-        </p>
+        <p className="mt-2">Copy lời nhắn trên rồi gửi cho admin qua kênh liên hệ trên trang chủ.</p>
       )}
     </div>
   );
 }
 
-function ContactLink({ href, label }: { href: string; label: string }) {
+function ContactLink({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
   return (
     <a href={href} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
+      {icon}
       {label}
     </a>
   );

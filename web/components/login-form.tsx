@@ -29,8 +29,7 @@ export function LoginForm({ next }: { next: string }) {
     <div>
       <button
         type="button"
-        className="btn btn-ghost btn-lg"
-        style={{ width: "100%" }}
+        className="btn btn-ghost btn-lg w-full"
         onClick={signInGoogle}
         disabled={loading}
       >
@@ -46,9 +45,7 @@ export function LoginForm({ next }: { next: string }) {
         }}
       />
 
-      {error && (
-        <p style={{ marginTop: 12, fontSize: 13, color: "var(--accent-2)" }}>{error}</p>
-      )}
+      {error && <p className="mt-3 text-sm text-accent-2">{error}</p>}
     </div>
   );
 }

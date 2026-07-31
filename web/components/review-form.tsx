@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const COMMENT_MAX = 500;
@@ -14,7 +15,7 @@ export type ReviewFormInitial = {
   approved: boolean;
 } | null;
 
-const INPUT = "w-full h-11 px-4 rounded-xl border border-line focus:border-accent focus:outline-none";
+const INPUT = "w-full h-11 px-4 rounded-md border border-line focus:border-accent focus:outline-none";
 
 // Form gửi/sửa đánh giá của học viên. Gửi xong chờ admin duyệt mới hiện lên trang chủ.
 export function ReviewForm({
@@ -52,7 +53,7 @@ export function ReviewForm({
 
   if (done) {
     return (
-      <div className="rounded-2xl border border-line bg-paper p-8 text-center">
+      <div className="rounded-lg border border-line bg-paper p-8 text-center">
         <div className="text-5xl">🙏</div>
         <h2 className="mt-3 text-xl font-bold">Cảm ơn bạn!</h2>
         <p className="mt-2 text-dim">
@@ -70,7 +71,7 @@ export function ReviewForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       {initial && (
-        <p className="rounded-xl border border-line bg-paper px-4 py-3 text-sm text-dim">
+        <p className="rounded-md border border-line bg-paper px-4 py-3 text-sm text-dim">
           {initial.approved
             ? "Đánh giá của bạn đang hiển thị. Sửa và gửi lại sẽ cần duyệt lại."
             : "Đánh giá trước của bạn đang chờ duyệt — bạn có thể sửa rồi gửi lại."}
@@ -88,11 +89,16 @@ export function ReviewForm({
               aria-checked={rating === n}
               aria-label={`${n} sao`}
               onClick={() => setRating(n)}
-              className={`text-3xl leading-none transition ${
-                n <= rating ? "text-accent-2" : "text-line hover:text-accent-2/50"
+              className={`transition ${
+                n <= rating ? "text-accent-2" : "text-dim hover:text-accent-2/50"
               }`}
             >
-              ★
+              <Star
+                size={28}
+                strokeWidth={2}
+                fill={n <= rating ? "currentColor" : "none"}
+                aria-hidden
+              />
             </button>
           ))}
           <span className="ml-2 self-center text-sm text-dim">{rating}/5</span>
@@ -135,7 +141,7 @@ export function ReviewForm({
         </label>
         <textarea
           id="rv-comment"
-          className="mt-1.5 w-full rounded-xl border border-line px-4 py-3 focus:border-accent focus:outline-none"
+          className="mt-1.5 w-full rounded-md border border-line px-4 py-3 focus:border-accent focus:outline-none"
           rows={5}
           value={comment}
           onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}

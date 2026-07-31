@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { track } from "@vercel/analytics";
 import { EmailOtpForm } from "@/components/email-otp-form";
@@ -52,6 +52,7 @@ export function GiftPopup() {
   const [gone, setGone] = useState(false); // đã sở hữu / tính năng tắt → ẩn hẳn
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Đếm "đã THẤY hộp quà" (impression) — 1 lần/phiên; server chống trùng theo cookie.
   // Để /admin tính "số người không nhận" = số người thấy − số người nhận.
@@ -62,16 +63,62 @@ export function GiftPopup() {
     fetch("/api/gift/seen", { method: "POST", keepalive: true }).catch(() => {});
   }, []);
 
-  // Tự bung 1 lần mỗi phiên (không làm phiền mỗi lần cuộn). Nút quà nổi vẫn mở lại được.
+  // Tự bung 1 lần mỗi phiên — nhưng chỉ khi khách đã tỏ Ý ĐỊNH, không chặn trang lúc vừa vào:
+  //   - cuộn tới khu bảng giá (mọi thiết bị, section #packages có sẵn trong app/page.tsx)
+  //   - exit-intent: chuột rời lên mép trên viewport (chỉ máy có chuột thật, "(pointer: fine)")
+  //   - cuộn sâu quá 65% chiều cao trang (chỉ thiết bị KHÔNG có chuột — mobile không có exit-intent)
+  // Ai chạm ngưỡng nào trước thì bung, rồi gỡ hết listener. Nút quà nổi vẫn mở lại được bất cứ lúc nào.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (sessionStorage.getItem("giftSeen")) return;
-    const t = setTimeout(() => {
+
+    let fired = false;
+    const fire = (trigger: string) => {
+      if (fired) return;
+      fired = true;
       setOpen(true);
-      track("gift_shown", { trigger: "auto" });
+      track("gift_shown", { trigger });
       sessionStorage.setItem("giftSeen", "1");
-    }, 4000);
-    return () => clearTimeout(t);
+      teardown();
+    };
+
+    const pricingEl = document.getElementById("packages");
+    const io = pricingEl
+      ? new IntersectionObserver(
+          (entries) => {
+            if (entries[0]?.isIntersecting) fire("scroll_pricing");
+          },
+          { threshold: 0.2 },
+        )
+      : null;
+    io?.observe(pricingEl!);
+
+    const hasMouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    const onMouseOut = (e: MouseEvent) => {
+      if (e.clientY <= 0 && !e.relatedTarget) fire("exit_intent");
+    };
+    if (hasMouse) document.addEventListener("mouseout", onMouseOut);
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const doc = document.documentElement;
+        const scrollable = doc.scrollHeight - doc.clientHeight;
+        if (scrollable > 0 && window.scrollY / scrollable >= 0.65) fire("scroll_depth");
+      });
+    };
+    if (!hasMouse) window.addEventListener("scroll", onScroll, { passive: true });
+
+    function teardown() {
+      io?.disconnect();
+      document.removeEventListener("mouseout", onMouseOut);
+      window.removeEventListener("scroll", onScroll);
+    }
+    return teardown;
   }, []);
 
   const openGift = useCallback(async () => {
@@ -126,6 +173,53 @@ export function GiftPopup() {
     };
   }, [open]);
 
+  // Đóng bằng Esc + khoá focus trong dialog (focus trap) — bàn phím/trình đọc màn hình
+  // không được thoát ra ngoài lớp phủ trong lúc modal đang che kín màn hình.
+  useEffect(() => {
+    if (!open) return;
+    const dialogEl = dialogRef.current;
+
+    const getFocusable = () => {
+      if (!dialogEl) return [] as HTMLElement[];
+      return Array.from(
+        dialogEl.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+    };
+
+    // Focus ban đầu vào dialog để Tab đầu tiên đã ở trong bẫy.
+    (dialogEl?.querySelector<HTMLElement>('[aria-label="Đóng"]') ?? dialogEl)?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const inside = dialogEl?.contains(document.activeElement);
+      if (e.shiftKey) {
+        if (!inside || document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (!inside || document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, data, needLogin, claimProduct]);
+
   if (gone) return null;
 
   const left = data ? Math.max(0, new Date(data.expiresAt).getTime() - now) : 0;
@@ -146,7 +240,7 @@ export function GiftPopup() {
             track("gift_shown", { trigger: "reopen" });
           }}
           aria-label="Mở hộp quà ưu đãi"
-          className="gift-shake fixed bottom-24 right-4 z-[75] grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-rose-500 to-rose-700 text-2xl shadow-xl ring-2 ring-amber-300/60 hover:brightness-110 sm:bottom-6"
+          className="gift-shake fixed bottom-24 right-4 z-[75] grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-rose-500 to-rose-700 text-2xl shadow-md ring-2 ring-amber-300/60 hover:brightness-110 sm:bottom-6"
         >
           🎁
         </button>
@@ -154,13 +248,15 @@ export function GiftPopup() {
 
       {open && (
         <div
+          ref={dialogRef}
           className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 px-4 py-6"
           role="dialog"
           aria-modal="true"
+          tabIndex={-1}
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative max-h-full w-full max-w-md overflow-y-auto rounded-3xl bg-gradient-to-b from-[#7a0d0d] to-[#3a0606] text-white shadow-2xl ring-1 ring-amber-300/30"
+            className="relative max-h-full w-full max-w-md overflow-y-auto rounded-lg bg-gradient-to-b from-[#7a0d0d] to-[#3a0606] text-white shadow-lg ring-1 ring-amber-300/30"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -178,7 +274,7 @@ export function GiftPopup() {
                   <div className="text-7xl gift-shake" aria-hidden>
                     🎁
                   </div>
-                  <h2 className="mt-4 bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+                  <h2 className="mt-4 bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-xl leading-tight font-extrabold text-transparent">
                     Quà tặng cho bạn!
                   </h2>
                   <p className="mt-2 text-sm text-amber-100/80">
@@ -211,7 +307,7 @@ export function GiftPopup() {
                     <button
                       onClick={openGift}
                       disabled={opening}
-                      className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105 disabled:opacity-60"
+                      className="mt-6 w-full rounded-md bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105 disabled:opacity-60"
                     >
                       {opening ? "Đang mở…" : "Mở hộp quà 🎁"}
                     </button>
@@ -246,7 +342,7 @@ export function GiftPopup() {
                       <div className="mt-3 space-y-2 text-left">
                         {data.products.map((p) => {
                           const primary = p.id === data.primary;
-                          const rowClass = `flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition hover:brightness-110 ${
+                          const rowClass = `flex w-full items-center justify-between gap-3 rounded-md px-4 py-3 text-left transition hover:brightness-110 ${
                             primary
                               ? "bg-gradient-to-b from-amber-300 to-amber-500 text-[#5a0a0a]"
                               : "bg-black/25 text-white ring-1 ring-amber-300/20"
@@ -256,7 +352,7 @@ export function GiftPopup() {
                               <span className="min-w-0">
                                 <span className="block truncate text-sm font-extrabold">{p.label}</span>
                                 <span
-                                  className={`block text-xs ${primary ? "text-[#5a0a0a]/70" : "text-amber-100/55"}`}
+                                  className={`block text-xs ${primary ? "text-[#5a0a0a]" : "text-amber-100/55"}`}
                                 >
                                   {formatVnd(p.basePrice)} → còn {formatVnd(p.finalPrice)}
                                 </span>
@@ -266,7 +362,7 @@ export function GiftPopup() {
                                   {formatVnd(p.finalPrice)}
                                 </span>
                                 <span
-                                  className={`block text-[11px] font-bold ${primary ? "text-[#5a0a0a]/70" : "text-amber-200"}`}
+                                  className={`block text-xs font-bold ${primary ? "text-[#5a0a0a]" : "text-amber-200"}`}
                                 >
                                   −{data.percent}%
                                 </span>
@@ -299,7 +395,7 @@ export function GiftPopup() {
                       {/* Bước LẤY THƯỞNG cho khách ẩn danh: đăng nhập rồi sang thẳng thanh toán.
                           Quà đã neo ở cookie 'gv' → server tự gắn vào tài khoản vừa đăng nhập. */}
                       {data.needLoginToClaim && claimProduct && (
-                        <div className="mt-4 space-y-2 rounded-2xl bg-black/25 p-3 text-left ring-1 ring-amber-300/20">
+                        <div className="mt-4 space-y-2 rounded-md bg-black/25 p-3 text-left ring-1 ring-amber-300/20">
                           <p className="text-center text-xs text-amber-100/75">
                             Nhập email để <b className="text-amber-100">nhận giá này</b> — mã xác nhận
                             gửi qua email, không cần mật khẩu
@@ -334,7 +430,7 @@ export function GiftPopup() {
                       <Link
                         href="/#packages"
                         onClick={() => setOpen(false)}
-                        className="mt-4 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
+                        className="mt-4 block w-full rounded-md bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
                       >
                         Xem bảng giá →
                       </Link>

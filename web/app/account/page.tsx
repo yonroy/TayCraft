@@ -39,7 +39,7 @@ export default async function AccountPage() {
           <p>{user.email}</p>
         </PageHeading>
 
-        <div className="mt-6 rounded-2xl border border-line p-5 flex items-center justify-between">
+        <div className="mt-6 rounded-lg border border-line bg-surface-0 p-5 shadow-sm flex items-center justify-between">
           <div>
             <div className="font-semibold">Trạng thái</div>
             <div className="text-dim text-sm">
@@ -63,7 +63,7 @@ export default async function AccountPage() {
 
         <h2 className="mt-8 font-bold">Lịch sử đơn hàng</h2>
         {myOrders.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-line bg-paper px-4 py-6 text-center text-sm text-dim">
+          <div className="mt-3 rounded-md border border-line bg-paper px-4 py-6 text-center text-sm text-dim">
             Chưa có đơn hàng nào.
           </div>
         ) : (
@@ -71,7 +71,7 @@ export default async function AccountPage() {
             {myOrders.map((o) => (
               <div
                 key={o.id}
-                className="rounded-xl border border-line px-4 py-3 flex items-center justify-between text-sm"
+                className="rounded-md border border-line bg-surface-0 px-4 py-3 flex items-center justify-between text-sm"
               >
                 <div>
                   <span className="font-mono font-bold">{o.transferCode}</span>

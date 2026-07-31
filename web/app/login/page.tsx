@@ -20,24 +20,18 @@ export default async function LoginPage({
       <SiteHeader />
       <div className="lp">
         <section className="co-page">
-          <div className="co-wrap" style={{ maxWidth: 400 }}>
+          <div className="co-wrap max-w-[400px]">
             <div className="co-head">
               <span className="eyebrow">Tài khoản</span>
               <h1>Đăng nhập</h1>
-              <p style={{ color: "var(--dim)", fontSize: 14, marginTop: 8 }}>
-                Để vào học và mở khóa bài đã mua.
-              </p>
+              <p className="mt-2 text-sm text-dim">Để vào học và mở khóa bài đã mua.</p>
             </div>
             {error && (
-              <div className="co-alert" style={{ marginBottom: 16 }}>
-                <p style={{ marginBottom: reason ? 8 : 0 }}>
+              <div className="co-alert mb-4">
+                <p className={reason ? "mb-2" : ""}>
                   Đăng nhập chưa hoàn tất. Bạn thử lại bằng nút bên dưới nhé.
                 </p>
-                {reason && (
-                  <p className="co-mono" style={{ fontSize: 11, wordBreak: "break-all" }}>
-                    {reason}
-                  </p>
-                )}
+                {reason && <p className="co-mono text-xs break-all">{reason}</p>}
               </div>
             )}
             <div className="co-card">

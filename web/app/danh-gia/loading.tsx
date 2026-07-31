@@ -17,16 +17,16 @@ export default function LoadingReview() {
           </p>
         </PageHeading>
 
-        <div className="mt-8 rounded-2xl border border-line p-5">
+        <div className="mt-8 rounded-lg border border-line p-5">
           <Skel className="h-[15px] w-24" />
-          <Skel className="mt-2 h-11 w-full rounded-xl" />
+          <Skel className="mt-2 h-11 w-full rounded-md" />
           <Skel className="mt-4 h-[15px] w-28" />
-          <Skel className="mt-2 h-11 w-full rounded-xl" />
+          <Skel className="mt-2 h-11 w-full rounded-md" />
           <Skel className="mt-4 h-[15px] w-20" />
           <Skel className="mt-2 h-8 w-40" />
           <Skel className="mt-4 h-[15px] w-32" />
-          <Skel className="mt-2 h-28 w-full rounded-xl" />
-          <Skel className="mt-5 h-11 w-40 max-w-full rounded-xl" />
+          <Skel className="mt-2 h-28 w-full rounded-md" />
+          <Skel className="mt-5 h-11 w-40 max-w-full rounded-md" />
         </div>
       </main>
       <SiteFooter />

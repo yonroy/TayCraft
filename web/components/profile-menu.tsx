@@ -65,7 +65,7 @@ export function ProfileMenu({
             className="h-8 w-8 rounded-full border border-line object-cover"
           />
         ) : (
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/15 text-accent text-sm font-bold">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/12 text-accent text-sm font-bold">
             {initial}
           </span>
         )}
@@ -74,7 +74,7 @@ export function ProfileMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-paper shadow-lg z-50"
+          className="absolute right-0 mt-2 w-56 overflow-hidden rounded-md border border-line bg-paper shadow-lg z-50"
         >
           <div className="px-4 py-3 border-b border-line">
             <p className="text-sm font-semibold truncate">{displayName}</p>

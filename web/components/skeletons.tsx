@@ -1,3 +1,5 @@
+import { PencilLine } from "lucide-react";
+
 // Mảnh khung xương dùng chung cho các file loading.tsx.
 //
 // Lưu ý bố cục: SiteHeader nằm TRONG từng page (không nằm ở app/layout.tsx), nên khi
@@ -13,17 +15,20 @@ export function Skel({ className = "" }: { className?: string }) {
 
 export function HeaderSkeleton() {
   return (
-    <header className="border-b border-line">
+    <header className="border-b border-line bg-surface-0 shadow-sm">
       <div className="mx-auto max-w-5xl px-3 sm:px-5 h-16 flex items-center justify-between">
-        <span className="flex items-baseline gap-2">
+        <span className="flex items-center gap-1.5 sm:gap-2">
+          <span className="grid h-7 w-7 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-md bg-accent text-white">
+            <PencilLine size={16} strokeWidth={2.25} aria-hidden />
+          </span>
           <span className="text-base sm:text-xl font-extrabold tracking-tight whitespace-nowrap">
-            Làm toán <span className="text-accent">AI</span> ✍️
+            Làm toán <span className="text-accent">AI</span>
           </span>
         </span>
-        <nav className="flex items-center gap-2.5 sm:gap-4 text-sm sm:text-[15px] text-dim">
+        <nav className="flex items-center gap-2.5 sm:gap-4 text-sm sm:text-base text-dim">
           <span className="font-medium whitespace-nowrap">Bài học</span>
           <span className="font-medium whitespace-nowrap hidden min-[400px]:inline">Bảng giá</span>
-          <Skel className="h-9 w-[92px] shrink-0 rounded-xl" />
+          <Skel className="h-9 w-[92px] shrink-0 rounded-md" />
         </nav>
       </div>
     </header>

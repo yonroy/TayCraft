@@ -157,7 +157,7 @@ export function LaunchPopup() {
       onClick={close}
     >
       <div
-        className="relative max-h-full w-full max-w-md overflow-y-auto rounded-3xl bg-gradient-to-b from-[#7a0d0d] to-[#3a0606] text-white shadow-2xl ring-1 ring-amber-300/30"
+        className="relative max-h-full w-full max-w-md overflow-y-auto rounded-lg bg-gradient-to-b from-[#7a0d0d] to-[#3a0606] text-white shadow-lg ring-1 ring-amber-300/30"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -172,7 +172,7 @@ export function LaunchPopup() {
           {claimed ? (
             <>
               <div className="text-6xl">🎉</div>
-              <h2 className="mt-3 bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+              <h2 className="mt-3 bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-xl leading-tight font-extrabold text-transparent">
                 Chúc mừng bạn!
               </h2>
               <p className="mt-3 text-sm text-amber-100/85">
@@ -184,7 +184,7 @@ export function LaunchPopup() {
                   router.push("/learn");
                   router.refresh();
                 }}
-                className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
+                className="mt-6 w-full rounded-md bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
               >
                 Vào học ngay →
               </button>
@@ -200,7 +200,7 @@ export function LaunchPopup() {
 
           {!status.full ? (
             <>
-              <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+              <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-xl leading-tight font-extrabold text-transparent">
                 Tặng 100 bạn
                 <br />
                 gói Khóa 1 · Nền tảng AI
@@ -211,7 +211,7 @@ export function LaunchPopup() {
             </>
           ) : (
             <>
-              <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-3xl font-extrabold leading-tight text-transparent">
+              <h2 className="bg-gradient-to-b from-amber-200 to-amber-400 bg-clip-text text-xl leading-tight font-extrabold text-transparent">
                 Đã đủ {status.limit} người
                 <br />
                 nhận Khóa 1 miễn phí 🎉
@@ -224,7 +224,7 @@ export function LaunchPopup() {
 
           {!status.full ? (
             <>
-              <div className="mt-5 rounded-2xl bg-black/20 px-4 py-3">
+              <div className="mt-5 rounded-md bg-black/20 px-4 py-3">
                 <div className="text-4xl font-extrabold text-amber-300 tabular-nums">
                   Còn {status.remaining}
                   <span className="text-lg text-amber-100/60">/{status.limit} suất</span>
@@ -258,7 +258,7 @@ export function LaunchPopup() {
                 <button
                   onClick={claim}
                   disabled={claiming}
-                  className="mt-5 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105 disabled:opacity-60"
+                  className="mt-5 w-full rounded-md bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105 disabled:opacity-60"
                 >
                   {claiming ? "Đang xử lý…" : "Nhận Khóa 1 miễn phí →"}
                 </button>
@@ -271,7 +271,7 @@ export function LaunchPopup() {
             </>
           ) : (
             <>
-              <div className="mt-5 rounded-2xl bg-black/20 px-4 py-3">
+              <div className="mt-5 rounded-md bg-black/20 px-4 py-3">
                 <div className="text-2xl font-extrabold text-amber-300 tabular-nums">
                   Đã đủ {status.limit}/{status.limit} suất tặng
                 </div>
@@ -293,7 +293,7 @@ export function LaunchPopup() {
               </div>
               <a
                 href="/checkout?product=k1"
-                className="mt-5 block w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
+                className="mt-5 block w-full rounded-md bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3.5 text-base font-extrabold text-[#5a0a0a] shadow-lg transition hover:brightness-105"
               >
                 Học Khóa 1 chỉ {formatVnd(k1PriceVnd)} →
               </a>

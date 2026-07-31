@@ -86,7 +86,7 @@ export default async function CheckoutPage({
               </div>
             )}
 
-            <div style={{ marginTop: 16 }}>
+            <div className="mt-4">
               {user ? (
                 <QrCheckout product={productId} productLabel={meta?.label} />
               ) : (

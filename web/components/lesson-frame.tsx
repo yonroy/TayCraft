@@ -1,13 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Khung hiển thị phiếu (iframe A4) + skeleton lúc tải. Trước đây iframe nền trắng trơn
 // → lúc chờ tải là một khối trắng "trông như hỏng". Overlay quay tròn cho tới khi onLoad.
-// Mobile: phiếu A4 bị co nhỏ khó đọc → cho khung cuộn ngang với bề rộng tối thiểu (~46rem)
-// để chữ đủ to, kèm gợi ý "vuốt ngang". Từ breakpoint sm trở lên giữ nguyên desktop (w-full).
+//
+// Mobile: phiếu có bề rộng CỐ ĐỊNH theo mm (dọc 210mm, ngang canvas 297mm) — không tự co giãn
+// theo viewport. Trước đây bắt khách vuốt ngang (min-w-[46rem]). Route /api/learn phục vụ CÙNG
+// domain nên đọc được contentDocument (same-origin): đo kích thước THẬT của tài liệu sau khi tải
+// rồi tự co bằng transform:scale() cho vừa khít bề rộng khung — không viewport nào cần vuốt ngang.
 export function LessonFrame({ src, title }: { src: string; title: string }) {
   const [loaded, setLoaded] = useState(false);
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const [frameWidth, setFrameWidth] = useState(0);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setFrameWidth(entry.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  function handleLoad() {
+    setLoaded(true);
+    const doc = iframeRef.current?.contentDocument?.documentElement;
+    if (doc) setNatural({ w: doc.scrollWidth, h: doc.scrollHeight });
+  }
+
+  const scale = natural && frameWidth ? Math.min(1, frameWidth / natural.w) : 1;
+  const marginLeft = natural && scale >= 1 ? Math.max(0, (frameWidth - natural.w) / 2) : 0;
+
   return (
     <div className="relative bg-paper">
       {!loaded && (
@@ -18,17 +43,26 @@ export function LessonFrame({ src, title }: { src: string; title: string }) {
           </div>
         </div>
       )}
-      <div className="overflow-x-auto">
+      <div ref={frameRef} className="h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden">
         <iframe
+          ref={iframeRef}
           src={src}
           title={title}
-          onLoad={() => setLoaded(true)}
-          className="block h-[calc(100vh-8rem)] w-full min-w-[46rem] border-0 bg-white sm:min-w-0"
+          onLoad={handleLoad}
+          className="block border-0 bg-white"
+          style={
+            natural
+              ? {
+                  width: natural.w,
+                  height: natural.h,
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                  marginLeft,
+                }
+              : { width: "100%", height: "100%" }
+          }
         />
       </div>
-      <p className="px-5 pt-2 text-center text-xs text-dim sm:hidden">
-        ← Vuốt ngang để xem trọn bề rộng phiếu →
-      </p>
     </div>
   );
 }

@@ -9,6 +9,63 @@
   --color-paper: #eef2f6;
   --font-sans: var(--font-sans), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-mono: var(--font-mono), "Consolas", "JetBrains Mono", monospace;
+
+  /* ---- Bề mặt — phân tầng nền (SPEC §1.7). Namespace --color-* có chủ đích:
+     Tailwind sinh sẵn bg-surface-1/text-surface-ink… cho .tsx dùng. Màu mới,
+     chưa utility nào đang dùng → khai vào không đổi pixel gì hiện có. ---- */
+  --color-surface-0: #ffffff;
+  --color-surface-1: #f7f9fb;
+  --color-surface-2: #eef2f6;
+  --color-surface-ink: #0f1b28;
+
+  /* ---- Measure — khoá max-width cho khối chữ (SPEC §1.3) ---- */
+  --measure-display: 22ch;
+  --measure-heading: 28ch;
+  --measure-prose: 62ch;
+
+  /* ---- Lô 1b (SPEC §1.1/1.2/1.5/1.6) — 4 namespace sinh utility Tailwind v4.
+     Khai vào đây CỐ Ý đổi utility text-, leading-, rounded-, shadow- trên
+     TOÀN site ngay lập tức (142+/5/26/8 chỗ). Đây là mục đích của lô này, đã
+     soát ảnh trước/sau cả 6 trang — xem báo cáo scratchpad t1b-namespace.md. ---- */
+  --text-xs: 0.75rem; /* 12px — eyebrow, badge, caption */
+  --text-sm: 0.85rem; /* 13.6 — meta, footnote, nhãn phụ */
+  --text-base: 0.975rem; /* 15.6 — body */
+  --text-md: 1.125rem; /* 18 — lead paragraph, mô tả section */
+  --text-lg: 1.375rem; /* 22 — h4, tiêu đề thẻ */
+  --text-xl: 1.75rem; /* 28 — h3 */
+  --text-2xl: clamp(1.75rem, 1.6rem + 0.75vw, 2.25rem); /* 28→36 — h2 */
+  --text-3xl: clamp(2.1rem, 1.85rem + 1.2vw, 2.875rem); /* 34→46 — h1 hero */
+
+  --leading-tight: 1.15; /* h1, h2 */
+  --leading-snug: 1.3; /* h3, h4, tiêu đề thẻ */
+  --leading-normal: 1.55; /* body */
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(22, 32, 46, 0.06), 0 1px 1px rgba(22, 32, 46, 0.04);
+  --shadow-md: 0 4px 14px rgba(22, 32, 46, 0.08), 0 2px 4px rgba(22, 32, 46, 0.05);
+  --shadow-lg: 0 16px 40px rgba(22, 32, 46, 0.14), 0 4px 10px rgba(22, 32, 46, 0.06);
+}
+
+/* ---- Thang khoảng cách, gốc 4px (SPEC §1.4). Cố ý đặt NGOÀI @theme, không
+   phải bên trong: --space-N trùng namespace tương thích ngược mà Tailwind v4
+   dùng riêng cho space-x- và space-y- (đã thực đo bằng next build — --space-6
+   bên trong @theme làm .space-y-6 nhảy từ 24px lên 32px, ăn vào 1 chỗ đang
+   dùng ngoài lane này). Đặt trong :root vẫn dùng được qua var(--space-N) cho
+   landing.css/learn.css, chỉ không lọt vào máy sinh utility của Tailwind. ---- */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
 }
 
 html {

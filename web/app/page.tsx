@@ -172,11 +172,16 @@ export default async function Home() {
                   <span className="pill-launch">🎉 100 suất khai trương</span>
                 </div>
               )}
+              <div className="eyebrow">
+                {TOTAL_AVAILABLE} phiếu · 4 khóa · {PARTS.length} phần —{" "}
+                <b>khổ A4, in ra giải bằng bút chì</b>
+              </div>
               <h1>
-                Học AI bằng tay — <em>tự điền từng con số</em>, không code, không lý thuyết suông
+                Hiểu AI bằng cách <em>tự điền</em> từng con số
               </h1>
               <p className="hero-lede">
-                Hơn <strong>{TOTAL_AVAILABLE} phiếu tính tay</strong> khổ A4 theo tinh thần
+                Hơn <strong>{TOTAL_AVAILABLE} phiếu tính tay</strong>{" "}
+                khổ A4 theo tinh thần
                 &ldquo;AI by Hand&rdquo; của Prof. Tom Yeh. Mỗi phiếu 2 trang ĐỀ + ĐÁP ÁN, in ra
                 giải bằng bút chì, bấm 🎲 là ra bộ số mới — luyện tới khi thật sự hiểu.
               </p>
@@ -197,6 +202,17 @@ export default async function Home() {
               <p className="hero-sub-cta">
                 Cam kết <Link href="#guarantee">hoàn tiền 100% trong 7 ngày</Link> nếu không phù hợp
               </p>
+              <div className="legend">
+                <span className="lg">
+                  <i className="sw" style={{ background: "#0E7490" }} /> LAM = dữ liệu vào
+                </span>
+                <span className="lg">
+                  <i className="sw" style={{ background: "#C2410C" }} /> CAM = trọng số / đáp án
+                </span>
+                <span className="lg">
+                  <i className="sw" style={{ background: "#6D28D9" }} /> TÍM = thành phần 3
+                </span>
+              </div>
               <div className="hero-microproof">
                 {reviewCount > 0 ? (
                   <div className="txt">
@@ -211,36 +227,59 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Hero visual: 2 tờ A4 xếp chồng — ẢNH PHIẾU THẬT, tờ trước tự xoay vòng */}
+            {/* Hero visual: KHỐI PHIẾU SỐNG — chữ ký của trang, chép từ mockup A-vo-o-ly */}
             <div className="hero-visual">
-              <div className="floaty-tag tag-1">🎲 Đổi số vô hạn</div>
-              <div className="floaty-tag tag-2">✓ 2 trang: ĐỀ + ĐÁP ÁN</div>
-              <div className="sheet-stack">
-                <div className="sheet sheet-back">
-                  <img src="/hero/phieu-attention.png" alt="" aria-hidden="true" />
-                </div>
-                <div className="sheet sheet-front">
-                  <div className="sheet-carousel">
-                    <img
-                      className="hero-slide s1"
-                      src="/hero/phieu-nhan-ma-tran.png"
-                      alt="Phiếu thật — Bài A7 · Nhân ma trận"
-                    />
-                    <img
-                      className="hero-slide s2"
-                      src="/hero/phieu-phep-chieu.png"
-                      alt="Phiếu thật — Bài A5 · Phép chiếu vectơ"
-                      aria-hidden="true"
-                    />
-                    <img
-                      className="hero-slide s3"
-                      src="/hero/phieu-cnn.png"
-                      alt="Phiếu thật — Bài F1 · CNN tích chập"
-                      aria-hidden="true"
-                    />
+              <span className="tack tack-1">🎲 Đổi số vô hạn lần</span>
+              <span className="tack tack-2">✓ 2 trang: ĐỀ + ĐÁP ÁN</span>
+              <div className="sheet-live">
+                <div className="sheet-in">
+                  <div className="sheet-top">
+                    <span className="sheet-name">Nhân ma trận với vectơ</span>
+                    <span className="sheet-no">BÀI A7 · PHẦN A</span>
+                  </div>
+
+                  <div className="mx">
+                    <div className="brk">
+                      <div className="grid-n c2">
+                        <div className="n n-lam">2</div>
+                        <div className="n n-lam">−1</div>
+                        <div className="n n-lam">3</div>
+                        <div className="n n-lam">0</div>
+                        <div className="n n-lam">4</div>
+                        <div className="n n-lam">−2</div>
+                      </div>
+                    </div>
+                    <span className="op">×</span>
+                    <div className="brk">
+                      <div className="grid-n c1">
+                        <div className="n n-cam">1</div>
+                        <div className="n n-cam">−2</div>
+                        <div className="n n-cam">5</div>
+                      </div>
+                    </div>
+                    <span className="op">=</span>
+                    <div className="brk">
+                      <div className="grid-n c1">
+                        <div className="blank">
+                          <span className="hand">19</span>
+                        </div>
+                        <div className="blank"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="work">
+                    hàng 1: &nbsp;2×1 + (−1)×(−2) + 3×5 &nbsp;=&nbsp; <span className="u done">19</span>
+                    <br />
+                    hàng 2: &nbsp;0×1 + &nbsp;<span className="u"></span>&nbsp;×(−2) + (−2)×
+                    <span className="u"></span> &nbsp;=&nbsp; <span className="u"></span>
+                  </div>
+
+                  <div className="sheet-foot">
+                    <span className="dice">🎲 Đổi số</span>
+                    <span className="pg-lbl">TRANG 1/2 · ĐỀ</span>
                   </div>
                 </div>
-                <div className="dice-badge">🎲</div>
               </div>
             </div>
           </div>
